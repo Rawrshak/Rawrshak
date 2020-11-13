@@ -64,7 +64,8 @@ contract GameContract is ERC1155, AccessControl
 
     // chrsum-todo: figure out whether I want to do create an ItemList Structure or not.
     // Create New Item
-    function createItem(uint256 uuid) public returns (bool) {
+    function createItem(uint256 uuid) public returns (bool)
+    {
         require(hasRole(ITEM_MANAGER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
         require(_itemSet._inner.add(uuid), "This item already exists.");
 
@@ -77,7 +78,46 @@ contract GameContract is ERC1155, AccessControl
         return true;
     }
 
-    // Todo: Add/remove items
+    // Delete the item
+    function removeItem(uint256 uuid) public returns (bool)
+    {
+        require(hasRole(ITEM_MANAGER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
+        require(_itemSet._inner.contains(uuid), "This item does not exist.");
+        
+        delete _itemSet.ItemList[uuid];
+        
+        return _itemSet._inner.remove(uuid);
+    }
+    
+    // check if the item exists
+    function exists(uint256 uuid) public view returns (bool)
+    {
+        return _itemSet._inner.contains(uuid);
+    }
+
+    // Get Length of the item list
+    function length() public view returns (uint256)
+    {
+        return _itemSet._inner.length();
+    }
+
+    // Returns an array of UUIDs
+    function getAllItems() public view returns(uint256[] memory)
+    {
+        uint256 len = _itemSet._inner.length();
+        require(len != 0, "The list is empty.");
+
+        uint256[] memory uuidList = new uint[](len);
+        for (uint256 index = 0; index < len; index++)
+        {
+            uuidList[index] = _itemSet._inner.at(index);
+        }
+
+        return uuidList;
+    }
+
+    // Todo: Add item creation/deletion tests
     // Todo: mint and burn items
+    // Todo: Add item minting/burning tests
     // Todo: Query Items
 }
