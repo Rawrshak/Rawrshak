@@ -18,9 +18,8 @@
   },
   "homepage": "https://github.com/gcbsumid/B44#readme",
   "devDependencies": {
-    "@openzeppelin/contracts": "^3.2.0"
-  },
-  "dependencies": {
+    "@openzeppelin/contracts": "^3.2.0",
     "truffle": "^5.1.52"
-  }
+  },
+  "dependencies": {}
 }
