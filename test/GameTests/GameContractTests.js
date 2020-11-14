@@ -92,7 +92,7 @@ contract('Game Contract', (accounts) => {
         await gameContract.createItem(3, '0x0000000000000000000000000000000000000000', {from:itemManagerAddress, gasPrice: 1});
 
         // Check if the new items were added.
-        assert.equal((await gameContract.length()).toNumber(), 3, "The 2 new items were not created.");
+        assert.equal((await gameContract.length()).toNumber(), 3, "The 3 new items were not created.");
         assert.equal(await gameContract.exists(1), true, "Item 1 wasn't created.");
         assert.equal(await gameContract.exists(2), true, "Item 2 wasn't created.");
         assert.equal(await gameContract.exists(3), true, "Item 3 wasn't created.");
@@ -116,10 +116,33 @@ contract('Game Contract', (accounts) => {
         await gameContract.removeItem(3, {from:itemManagerAddress, gasPrice: 1});
 
         // Check if the new items were added.
-        assert.equal((await gameContract.length()).toNumber(), 2, "There is only 1 item left.");
+        assert.equal((await gameContract.length()).toNumber(), 2, "There is only 2 item left.");
         assert.equal(await gameContract.exists(1), true, "Item 1 was deleted.");
         assert.equal(await gameContract.exists(2), true, "Item 2 was deleted.");
         assert.equal(await gameContract.exists(3), false, "Item 2 was not deleted.");
+    });
+
+    it('Community Created Item', async() => {
+        const gameContract = await GameContract.deployed();
+        const item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
+        const itemManagerAddress = accounts[4];
+        const contentCreatorAddress = accounts[7];
+        
+        assert.equal(
+            await gameContract.hasRole(
+                item_manager_role,
+                itemManagerAddress),
+            true, "Item Manager Address didn't have the Item Manager Role");
+            
+        // Create Item with Content Creator's address
+        await gameContract.createItem(3, contentCreatorAddress, {from:itemManagerAddress, gasPrice: 1});
+
+        // Check if the new items were added.
+        assert.equal((await gameContract.length()).toNumber(), 3, "The community content creator's new item was not created.");
+
+        // check to see if address payable is the same
+        const itemPayableAdderss = await gameContract.getCreatorAddress(3, {gasPrice: 1});
+        assert.equal(itemPayableAdderss, contentCreatorAddress, "Community content creator's address was not set properly.");
     });
 
     it('Mint 10 Items of Item 1', async () => {
