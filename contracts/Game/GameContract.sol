@@ -9,9 +9,9 @@ contract GameContract is ERC1155, AccessControl
 {
     using EnumerableSet for EnumerableSet.UintSet;
 
+    /******** Data Structures ********/
     // Todo: Figure out mechanism whether to cap item supply or not.
-    struct Item
-    {
+    struct Item {
         uint256 uuid;
         string url;
         uint256 totalSupply;
@@ -37,15 +37,23 @@ contract GameContract is ERC1155, AccessControl
 
     /******** Roles ********/
     bytes32 public constant GAME_OWNER_ROLE = keccak256("GAME_OWNER_ROLE");
-    // These addresses should probably belong to the server api that the game and 
-    // developer app interfaces with.
+    // These addresses should probably belong to the server api that the game 
+    // and developer app interfaces with.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
     bytes32 public constant ITEM_MANAGER_ROLE = keccak256("ITEM_MANAGER_ROLE");
 
+    /******** Modifiers ********/
+    modifier checkPermissions(bytes32 role) {
+        require(
+            hasRole(role, msg.sender),
+            "Caller does not have the necessary permissions."
+        );
+        _;
+    }
+
     // url: "https://game.example/api/item/{id}.json"
-    constructor(string memory url) public ERC1155(url)
-    {
+    constructor(string memory url) public ERC1155(url) {
         // Contract Deployer is now the owner and can set roles
         gamePayableAddress = msg.sender;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -53,39 +61,39 @@ contract GameContract is ERC1155, AccessControl
     }
 
     // GamePayableAddress getter
-    function getGamePayableAddress() public view returns(address payable)
-    {
+    function getGamePayableAddress() public view  returns(address payable) {
         return gamePayableAddress;
     }
 
     // GamePayableAddress setter
-    function setGamePayableAddress(address payable newAddress) public
+    function setGamePayableAddress(address payable newAddress) 
+        public 
+        checkPermissions(GAME_OWNER_ROLE)
     {
-        require(hasRole(GAME_OWNER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
         gamePayableAddress = newAddress;
         emit GamePayableAddressChanged(newAddress);
     }
 
     // Create New Item
-    function createItem(uint256 id, address payable creatorAddress) public
+    function createItem(uint256 id, address payable creatorAddress)
+        public
+        checkPermissions(ITEM_MANAGER_ROLE)
     {
-        require(hasRole(ITEM_MANAGER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
         require(itemsMap.idSet.add(id), "This item already exists.");
 
         Item storage item = itemsMap.itemsList[id];
         item.uuid = id;
         item.url = this.uri(id);
         item.totalSupply = 0;
-        item.creatorAddress = (creatorAddress == address(0)) ? gamePayableAddress : creatorAddress;
+        item.creatorAddress = (creatorAddress == address(0))
+            ? gamePayableAddress: creatorAddress;
 
         emit ItemCreated(id);
     }
 
     // CHRSUM - should I be able to delete items from under the players?
     // Delete the item
-    function removeItem(uint256 id) public
-    {
-        require(hasRole(ITEM_MANAGER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
+    function removeItem(uint256 id) public checkPermissions(ITEM_MANAGER_ROLE) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
         
         delete itemsMap.itemsList[id];
@@ -95,8 +103,7 @@ contract GameContract is ERC1155, AccessControl
     }
     
     // check if the item exists
-    function exists(uint256 id) public view returns (bool)
-    {
+    function exists(uint256 id) public view returns (bool) {
         return itemsMap.idSet.contains(id);
     }
 
@@ -107,8 +114,7 @@ contract GameContract is ERC1155, AccessControl
     }
 
     // Returns an array of IDs
-    function getAllItems() public view returns(uint256[] memory)
-    {
+    function getAllItems() public view returns(uint256[] memory) {
         uint256 len = itemsMap.idSet.length();
         require(len != 0, "The list is empty.");
 
@@ -121,21 +127,20 @@ contract GameContract is ERC1155, AccessControl
         return idList;
     }
 
-    function getTotalSupply(uint256 id) public view returns(uint256)
-    {
+    function getTotalSupply(uint256 id) public view returns(uint256) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
         return itemsMap.itemsList[id].totalSupply;
     }
 
-    function getCreatorAddress(uint256 id) public view returns(address)
-    {
+    function getCreatorAddress(uint256 id) public view returns(address) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
         return itemsMap.itemsList[id].creatorAddress;
     }
 
-    function mint(address receivingAddress, uint256 itemId, uint256 amount) public 
+    function mint(address receivingAddress, uint256 itemId, uint256 amount)
+        public
+        checkPermissions(MINTER_ROLE)
     {
-        require(hasRole(MINTER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
         require(itemsMap.idSet.contains(itemId), "Item does not exist.");
         require(receivingAddress != address(0), "Cannot send to null adderss.");
 
@@ -144,9 +149,14 @@ contract GameContract is ERC1155, AccessControl
         emit ItemMinted(itemId, amount);
     }
 
-    function mintBatch(address receivingAddress, uint256[] memory itemIds, uint256[] memory amounts) public 
+    function mintBatch(
+        address receivingAddress,
+        uint256[] memory itemIds,
+        uint256[] memory amounts
+    )
+        public 
+        checkPermissions(MINTER_ROLE)
     {
-        require(hasRole(MINTER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
         require(itemIds.length == amounts.length, "item arrays don't match.");
         require(receivingAddress != address(0), "Cannot send to null adderss.");
 
@@ -155,20 +165,23 @@ contract GameContract is ERC1155, AccessControl
             require(itemsMap.idSet.contains(itemIds[i]), "Item does not exist.");
             itemsMap.itemsList[itemIds[i]].totalSupply += amounts[i];
 
-            // Future: maybe I don't actually need this. Add this for now, remove later if not needed.
+            // Future: maybe I don't actually need this. Add this for now, 
+            // remove later if not needed.
             emit ItemMinted(itemIds[i], amounts[i]);
         }
         _mintBatch(receivingAddress, itemIds, amounts, "");
     }
 
     // Todo: Burning needs approval from the account
-    function burn(address account, uint256 itemId, uint256 amount) public 
+    function burn(address account, uint256 itemId, uint256 amount)
+        public
+        checkPermissions(BURNER_ROLE)
     {
-        require(hasRole(BURNER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
         require(itemsMap.idSet.contains(itemId), "Item does not exist.");
         require(account != address(0), "Cannot send to null adderss.");
 
-        // _burn requirements are that account is non-zero and account has enough of these items
+        // _burn requirements are that account is non-zero and account has 
+        // enough of these items
         _burn(account, itemId, amount);
 
         // if _burn succeeds, then we know that totalSupply can be deducted.
@@ -177,19 +190,29 @@ contract GameContract is ERC1155, AccessControl
     }
 
     // Todo: Burning needs approval from the account
-    function burnBatch(address account, uint256[] memory itemIds, uint256[] memory amounts) public 
+    function burnBatch(
+        address account,
+        uint256[] memory itemIds,
+        uint256[] memory amounts
+    )
+        public
+        checkPermissions(BURNER_ROLE)
     {
-        require(hasRole(BURNER_ROLE, msg.sender), "Caller does not have the necessary permissions.");
         require(itemIds.length == amounts.length, "item arrays don't match.");
         require(account != address(0), "Cannot send to null adderss.");
 
-        // _burnBatch requirements are that account is non-zero and account has enough of these items
+        // _burnBatch requirements are that account is non-zero and account 
+        // has enough of these items
         _burnBatch(account, itemIds, amounts);
 
-        // if _burnBatch succeeds, then we know that totalSupply can be deducted.
+        // if _burnBatch succeeds, then we know that totalSupply can be 
+        // deducted.
         for (uint i = 0; i < itemIds.length; i++)
         {
-            require(itemsMap.idSet.contains(itemIds[i]), "Item does not exist.");
+            require(
+                itemsMap.idSet.contains(itemIds[i]),
+                "Item does not exist."
+            );
             itemsMap.itemsList[itemIds[i]].totalSupply -= amounts[i];
             emit ItemBurned(itemIds[i], amounts[i]);
         }
