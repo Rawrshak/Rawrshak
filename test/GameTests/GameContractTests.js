@@ -67,4 +67,54 @@ contract('Game Contract', (accounts) => {
                 burnerAddress),
             true, "account 2 didn't have the burner role");
     });
+
+    it('Create 2 Item', async () => {
+        const gameContract = await GameContract.deployed();
+        const item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
+
+        const deployerAddress = accounts[0];
+        const itemManagerAddress = accounts[4];
+
+        // deployer address grants item manager address a the item manager role
+        await gameContract.grantRole(item_manager_role, itemManagerAddress, {from:deployerAddress});
+
+        // check to see if item manager address has the item manger role
+        assert.equal(
+            await gameContract.hasRole(
+                item_manager_role,
+                itemManagerAddress),
+            true, "Item Manager Address didn't have the Item Manager Role");
+
+        // Create 2 New Items
+        await gameContract.createItem(1, {from:itemManagerAddress});
+        await gameContract.createItem(2, {from:itemManagerAddress});
+
+        // Check if the new items were added.
+        assert.equal((await gameContract.length()).toNumber(), 2, "The 2 new items were not created.");
+        assert.equal(await gameContract.exists(1), true, "Item 1 wasn't created.");
+        assert.equal(await gameContract.exists(2), true, "Item 2 wasn't created.");
+    });
+
+    // Should I be able to delete an item? probably not.
+    it('Delete 1 Item', async () => {
+        const gameContract = await GameContract.deployed();
+        const item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
+
+        const itemManagerAddress = accounts[4];
+
+        // check to see if account 1 is the minter role
+        assert.equal(
+            await gameContract.hasRole(
+                item_manager_role,
+                itemManagerAddress),
+            true, "Item Manager Address didn't have the Item Manager Role");
+
+        // Delete item with UUID 2
+        await gameContract.removeItem(2, {from:itemManagerAddress});
+
+        // Check if the new items were added.
+        assert.equal((await gameContract.length()).toNumber(), 1, "There is only 1 item left.");
+        assert.equal(await gameContract.exists(1), true, "Item 1 was deleted.");
+        assert.equal(await gameContract.exists(2), false, "Item 2 was not deleted.");
+    });
 });
