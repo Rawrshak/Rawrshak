@@ -25,14 +25,9 @@ contract CraftingContract is Ownable, AccessControl {
     struct CraftItem {
         address gameContractAddress;
         uint256 gameContractItemId;
-        EnumerableSet.UintSet recipes;
+        EnumerableSet.UintSet recipesAsMaterial;
+        EnumerableSet.UintSet recipesAsReward;
     }
-
-    // struct RecipeSet {
-    //     EnumerableSet.UintSet idSet;
-    //     // recipeID => recipe
-    //     mapping(uint256 => Recipe) recipeList;
-    // }
 
     struct CraftingItemSet {
         EnumerableSet.UintSet idSet;
@@ -41,9 +36,11 @@ contract CraftingContract is Ownable, AccessControl {
 
     /******** Stored Variables ********/
     Recipe[] private recipeList;
-    uint256 recipeIdCounter = 0;
-    CraftingItemSet private materialsMap;
-    CraftingItemSet private rewardsMap;
+    uint256 private recipeIdCounter = 0;
+    CraftingItemSet private gameItemMap;
+
+    EnumerableSet.UintSet private materialsMap;
+    EnumerableSet.UintSet private rewardsMap;
 
     /******** Roles ********/
     bytes32 public constant CRAFTING_MANAGER_ROLE = 
@@ -85,31 +82,33 @@ contract CraftingContract is Ownable, AccessControl {
         // Iterate through Materials List
         for (uint256 i = 0; i < materialIds.length; ++i)
         {
+            uint256 id = materialIds[i];
             require(
-                materialsMap.idSet.contains(materialIds[i]),
+                materialsMap.contains(id),
                 "Crafting Material doesn't exist."
             );
 
             // Add to crafting materials list
-            recipe.materials.push(ItemPair(materialIds[i], materialAmounts[i]));
+            recipe.materials.push(ItemPair(id, materialAmounts[i]));
 
             // Add recipe to crafting material's recipe list
-            materialsMap.craftItemList[materialIds[i]].recipes.add(recipeId);
+            gameItemMap.craftItemList[id].recipesAsMaterial.add(recipeId);
         }
 
         // Iterate through Rewards List
         for (uint256 i = 0; i < rewardIds.length; ++i)
         {
+            uint256 id = rewardIds[i];
             require(
-                rewardsMap.idSet.contains(rewardIds[i]),
+                rewardsMap.contains(id),
                 "Crafting Reward doesn't exist."
             );
             
             // Add to crafting rewards list
-            recipe.rewards.push(ItemPair(rewardIds[i], rewardAmounts[i]));
+            recipe.rewards.push(ItemPair(id, rewardAmounts[i]));
             
             // Add recipe to crafting reward's recipe list
-            rewardsMap.craftItemList[rewardIds[i]].recipes.add(recipeId);
+            gameItemMap.craftItemList[id].recipesAsReward.add(recipeId);
         }
 
         return recipeId;
@@ -136,21 +135,15 @@ contract CraftingContract is Ownable, AccessControl {
         );
         
         // Get Hashed ID using game contract address and contract item id
-        uint256 materialId = _getId(gameContractAddress, gameContractId);
-        require(
-            !materialsMap.idSet.contains(materialId),
-            "Crafting Material is already registered."
-        );
+        uint256 craftingItemId = _getId(gameContractAddress, gameContractId);
+
+        // Add to crafting map
+        _addCraftingItem(craftingItemId, gameContractAddress, gameContractId);
 
         // Add crafting id to ID Set
-        materialsMap.idSet.add(materialId);
-        
-        // Add crafting item data to Crafting Materials List
-        CraftItem storage craftItem = materialsMap.craftItemList[materialId];
-        craftItem.gameContractAddress = gameContractAddress;
-        craftItem.gameContractItemId = gameContractId;
-        
-        return materialId;
+        materialsMap.add(craftingItemId);
+
+        return craftingItemId;
     }
 
     function registerCraftingReward(
@@ -174,68 +167,107 @@ contract CraftingContract is Ownable, AccessControl {
         );
         
         // Get Hashed ID using game contract address and contract item id
-        uint256 rewardId = _getId(gameContractAddress, gameContractId);
-        require(
-            !rewardsMap.idSet.contains(rewardId),
-            "Crafting reward is already registered."
-        );
+        uint256 craftingItemId = _getId(gameContractAddress, gameContractId);
+
+        // Add to crafting map
+        _addCraftingItem(craftingItemId, gameContractAddress, gameContractId);
 
         // Add crafting id to ID Set
-        rewardsMap.idSet.add(rewardId);
+        rewardsMap.add(craftingItemId);
         
-        // Add crafting item data to Crafting Rewards List
-        CraftItem storage craftItem = rewardsMap.craftItemList[rewardId];
-        craftItem.gameContractAddress = gameContractAddress;
-        craftItem.gameContractItemId = gameContractId;
-        
-        return rewardId;
+        return craftingItemId;
     }
 
-    function setRecipeActive(uint256 id, bool activate) public {
-        // Todo:
+    function setRecipeActive(uint256 recipeId, bool activate) public {
+        recipeList[recipeId].isActive = activate;
     }
 
-    function setRecipeActiveBatch(uint256[] memory ids, bool[] memory activate) public {
-        // Todo:
+    function setRecipeActiveBatch(
+        uint256[] memory recipeIds,
+        bool[] memory activate
+    )
+        public
+    {
+        require(
+            recipeIds.length == activate.length,
+            "Input array lengths do not match"
+        );
+        for (uint256 i = 0; i < recipeIds.length; ++i)
+        {
+            recipeList[recipeIds[i]].isActive = activate[i];
+        }
     }
 
-    function isRecipeActive(uint256 id) public view returns(bool) {
-        // Todo:
+    function isRecipeActive(uint256 recipeId) public view returns(bool) {
+        return recipeList[recipeId].isActive;
     }
 
-    function updateRecipeCost(uint256 id, uint256 cost) public {
-        // Todo:
+    function updateRecipeCost(uint256 recipeId, uint256 cost) public {
+        recipeList[recipeId].cost = cost;
     }
 
-    function getRecipeCost(uint256 id) public view returns(uint256) {
-        // Todo:
+    function setupdateRecipeCostBatch(
+        uint256[] memory recipeIds,
+        uint256[] memory costs
+    )
+        public
+    {
+        require(
+            recipeIds.length == costs.length,
+            "Input array lengths do not match"
+        );
+        for (uint256 i = 0; i < recipeIds.length; ++i)
+        {
+            recipeList[recipeIds[i]].cost = costs[i];
+        }
     }
 
-    function craftItem(uint256 id) public {
-        // Todo:
+    function getRecipeCost(uint256 recipeId) public view returns(uint256) {
+        return recipeList[recipeId].cost;
     }
 
-    function getCraftingMaterialsList(uint256 /*recipeId*/)
+    // Gets materials list for the recipe
+    // Returns: (crafting item id, amount) list
+    function getCraftingMaterialsList(uint256 recipeId)
         public
         view
         returns(uint256[] memory, uint256[] memory)
     {
-        // Todo: Gets materials list for the recipe
-        //       returns (recipeIds, amount) list
-        uint256[] memory craftingItemIds;
-        uint256[] memory counts;
-        return (craftingItemIds, counts);
+        require(recipeId < recipeIdCounter, "Recipe does not exist.");
+
+        Recipe storage recipe = recipeList[recipeId];
+        uint256[] memory materialsIds = new uint256[](recipe.materials.length);
+        uint256[] memory counts = new uint256[](recipe.materials.length);
+
+        for (uint i = 0; i < recipe.materials.length; ++i)
+        {
+            ItemPair storage itemPair = recipe.materials[i];
+            materialsIds[i] = itemPair.craftingItemId;
+            counts[i] = itemPair.count;
+        }
+
+        return (materialsIds, counts);
     }
 
-    function getRewardsList(uint256 /*recipeId*/)
+    // Gets rewards list for the recipe
+    // Returns: (crafting item id, amount) list
+    function getRewardsList(uint256 recipeId)
         public
         view
         returns(uint256[] memory, uint256[] memory)
     {
-        // Todo: Gets rewards list for the recipe 
-        //       returns (recipeIds, amount) list
-        uint256[] memory rewardItemIds;
-        uint256[] memory counts;
+        require(recipeId < recipeIdCounter, "Recipe does not exist.");
+
+        Recipe storage recipe = recipeList[recipeId];
+        uint256[] memory rewardItemIds = new uint256[](recipe.rewards.length);
+        uint256[] memory counts = new uint256[](recipe.rewards.length);
+        for (uint i = 0; i < recipe.rewards.length; ++i)
+        {
+            ItemPair storage itemPair = recipe.rewards[i];
+            rewardItemIds[i] = itemPair.craftingItemId;
+            counts[i] = itemPair.count;
+        }
+
         return (rewardItemIds, counts);
     }
 
@@ -282,6 +314,22 @@ contract CraftingContract is Ownable, AccessControl {
         uint256[] memory rewardsItemIds;
         return rewardsItemIds;
     }
+
+    function craftItem(uint256 id) public {
+        // Todo:
+    }
+
+    function getGameContractId(uint256 craftItemId)
+        public
+        view
+        returns(address gameContractId, uint256 gameItemId)
+    {
+        require(gameItemMap.idSet.contains(craftItemId));
+        return (
+            gameItemMap.craftItemList[craftItemId].gameContractAddress,
+            gameItemMap.craftItemList[craftItemId].gameContractItemId
+        );
+    }
     
     /******** Internal Functions ********/
     function _getId(
@@ -296,5 +344,22 @@ contract CraftingContract is Ownable, AccessControl {
             gameContractAddress,
             gameContractId
         )));
+    }
+
+    function _addCraftingItem(
+        uint256 craftingItemId,
+        address gameContractAddress,
+        uint256 gameContractId
+    )
+        internal
+    {
+        // If it already exists, ignore
+        if (gameItemMap.idSet.add(craftingItemId))
+        {
+            // Add crafting item data to Crafting Materials List
+            CraftItem storage item = gameItemMap.craftItemList[craftingItemId];
+            item.gameContractAddress = gameContractAddress;
+            item.gameContractItemId = gameContractId;
+        }
     }
 }
