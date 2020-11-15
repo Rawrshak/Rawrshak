@@ -87,9 +87,9 @@ contract('Game Contract', (accounts) => {
 
         // Create 2 New Items
         // 0 is the solidity equivalent of address(0)
-        await gameContract.createItem(1, '0x0000000000000000000000000000000000000000', {from:itemManagerAddress, gasPrice: 1});
-        await gameContract.createItem(2, '0x0000000000000000000000000000000000000000', {from:itemManagerAddress, gasPrice: 1});
-        await gameContract.createItem(3, '0x0000000000000000000000000000000000000000', {from:itemManagerAddress, gasPrice: 1});
+        await gameContract.methods['createItem(uint256)'](1, {from:itemManagerAddress, gasPrice: 1});
+        await gameContract.methods['createItem(uint256,address)'](2, itemManagerAddress, {from:itemManagerAddress, gasPrice: 1});
+        await gameContract.methods['createItem(uint256,address,uint256)'](3, itemManagerAddress, 10, {from:itemManagerAddress, gasPrice: 1});
 
         // Check if the new items were added.
         assert.equal((await gameContract.length()).toNumber(), 3, "The 3 new items were not created.");
@@ -113,7 +113,7 @@ contract('Game Contract', (accounts) => {
             true, "Item Manager Address didn't have the Item Manager Role");
 
         // Delete item with UUID 2
-        await gameContract.removeItem(3, {from:itemManagerAddress, gasPrice: 1});
+        await gameContract.deleteItem(3, {from:itemManagerAddress, gasPrice: 1});
 
         // Check if the new items were added.
         assert.equal((await gameContract.length()).toNumber(), 2, "There is only 2 item left.");
@@ -135,7 +135,7 @@ contract('Game Contract', (accounts) => {
             true, "Item Manager Address didn't have the Item Manager Role");
             
         // Create Item with Content Creator's address
-        await gameContract.createItem(3, contentCreatorAddress, {from:itemManagerAddress, gasPrice: 1});
+        await gameContract.methods['createItem(uint256,address)'](3, contentCreatorAddress, {from:itemManagerAddress, gasPrice: 1});
 
         // Check if the new items were added.
         assert.equal((await gameContract.length()).toNumber(), 3, "The community content creator's new item was not created.");

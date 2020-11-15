@@ -13,8 +13,8 @@ contract GameContract is ERC1155, AccessControl
     // Todo: Figure out mechanism whether to cap item supply or not.
     struct Item {
         uint256 uuid;
-        string url;
         uint256 totalSupply;
+        bool isSupplyCapped;
         address payable creatorAddress;
     }
 
@@ -75,27 +75,35 @@ contract GameContract is ERC1155, AccessControl
     }
 
     // Create New Item
-    function createItem(uint256 id, address payable creatorAddress)
-        public
-        checkPermissions(ITEM_MANAGER_ROLE)
+    function createItem(uint256 id) public
     {
-        require(itemsMap.idSet.add(id), "This item already exists.");
-
-        Item storage item = itemsMap.itemsList[id];
-        item.uuid = id;
-        item.url = this.uri(id);
-        item.totalSupply = 0;
-        item.creatorAddress = (creatorAddress == address(0))
-            ? gamePayableAddress: creatorAddress;
-
-        emit ItemCreated(id);
+        _createItem(id, gamePayableAddress, 0);
     }
 
-    // CHRSUM - should I be able to delete items from under the players?
+    function createItem(uint256 id, address creatorAddress) public
+    {
+        _createItem(id, payable(creatorAddress), 0);
+    }
+
+    function createItem(
+        uint256 id,
+        address creatorAddress,
+        uint256 maxSupply
+    )
+        public
+    {
+        _createItem(id, payable(creatorAddress), maxSupply);
+        _mint(creatorAddress, id, maxSupply, "");
+    }
+
     // Delete the item
-    function removeItem(uint256 id) public checkPermissions(ITEM_MANAGER_ROLE) {
+    function deleteItem(uint256 id) public checkPermissions(ITEM_MANAGER_ROLE) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
-        
+        require(
+            itemsMap.itemsList[id].totalSupply == balanceOf(msg.sender, id),
+            "You must own the entire supply of this asset to delete it."
+        );
+
         delete itemsMap.itemsList[id];
         
         itemsMap.idSet.remove(id);
@@ -143,6 +151,10 @@ contract GameContract is ERC1155, AccessControl
     {
         require(itemsMap.idSet.contains(itemId), "Item does not exist.");
         require(receivingAddress != address(0), "Cannot send to null adderss.");
+        require(
+            !itemsMap.itemsList[itemId].isSupplyCapped,
+            "Supply cannot be increased."
+        );
 
         itemsMap.itemsList[itemId].totalSupply += amount;
         _mint(receivingAddress, itemId, amount, "");
@@ -163,6 +175,11 @@ contract GameContract is ERC1155, AccessControl
         for (uint i = 0; i < itemIds.length; i++)
         {
             require(itemsMap.idSet.contains(itemIds[i]), "Item does not exist.");
+            require(
+                !itemsMap.itemsList[i].isSupplyCapped,
+                "Supply cannot be increased."
+            );
+
             itemsMap.itemsList[itemIds[i]].totalSupply += amounts[i];
 
             // Future: maybe I don't actually need this. Add this for now, 
@@ -172,7 +189,6 @@ contract GameContract is ERC1155, AccessControl
         _mintBatch(receivingAddress, itemIds, amounts, "");
     }
 
-    // Todo: Burning needs approval from the account
     function burn(address account, uint256 itemId, uint256 amount)
         public
         checkPermissions(BURNER_ROLE)
@@ -189,7 +205,6 @@ contract GameContract is ERC1155, AccessControl
         emit ItemBurned(itemId, amount);
     }
 
-    // Todo: Burning needs approval from the account
     function burnBatch(
         address account,
         uint256[] memory itemIds,
@@ -216,5 +231,26 @@ contract GameContract is ERC1155, AccessControl
             itemsMap.itemsList[itemIds[i]].totalSupply -= amounts[i];
             emit ItemBurned(itemIds[i], amounts[i]);
         }
+    }
+
+    /******** Internal Functions ********/
+    function _createItem(
+        uint256 id,
+        address payable creatorAddress,
+        uint256 maxSupply
+    )
+        public
+        checkPermissions(ITEM_MANAGER_ROLE)
+    {
+        require(itemsMap.idSet.add(id), "This item already exists.");
+
+        Item storage item = itemsMap.itemsList[id];
+        item.uuid = id;
+        item.isSupplyCapped = (maxSupply != 0);
+        item.totalSupply = (maxSupply != 0) ? maxSupply : 0;
+        item.creatorAddress = (creatorAddress == address(0))
+            ? gamePayableAddress: creatorAddress;
+
+        emit ItemCreated(id);
     }
 }
