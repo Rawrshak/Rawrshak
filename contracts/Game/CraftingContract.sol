@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "./GameContract.sol";
 
 contract CraftingContract is Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -15,8 +16,8 @@ contract CraftingContract is Ownable, AccessControl {
     }
     struct Recipe {
         uint256 recipeId;
-        ItemPair[] materialsId;
-        ItemPair[] rewardsId;
+        ItemPair[] materials;
+        ItemPair[] rewards;
         uint256 cost;
         bool isActive;
     }
@@ -24,45 +25,170 @@ contract CraftingContract is Ownable, AccessControl {
     struct CraftItem {
         address gameContractAddress;
         uint256 gameContractItemId;
-        // instanceCount[recipeId]
-        mapping(uint256 => uint256) instanceCount;
         EnumerableSet.UintSet recipes;
     }
 
-    struct RecipeSet {
-        EnumerableSet.UintSet idSet;
-        // recipeID => recipe
-        mapping(uint256 => Recipe) recipeList;
-    }
+    // struct RecipeSet {
+    //     EnumerableSet.UintSet idSet;
+    //     // recipeID => recipe
+    //     mapping(uint256 => Recipe) recipeList;
+    // }
 
     struct CraftingItemSet {
         EnumerableSet.UintSet idSet;
-        // craftItemList[hash(gameContractAddress) + hash(gameContractId)]
-        // Todo: ID: keccak256(abi.encodePacket(gameContractAddress, gameContractId))
         mapping(uint256 => CraftItem) craftItemList;
     }
 
     /******** Stored Variables ********/
-    RecipeSet private recipeMap;
-    CraftingItemSet private craftingMaterialsMap;
-    CraftingItemSet private craftingRewardsMap;
+    Recipe[] private recipeList;
+    uint256 recipeIdCounter = 0;
+    CraftingItemSet private materialsMap;
+    CraftingItemSet private rewardsMap;
 
     /******** Roles ********/
     bytes32 public constant CRAFTING_MANAGER_ROLE = 
         keccak256("CRAFTING_MANAGER_ROLE");
 
     /******** Public API ********/
-    function createRecipe() public {
-        // Todo:
-        // Todo: Check whether this contract has the minter and burner roles
-        //       on the contract before adding it.
-        // Todo: Someone has to add the minter/burner roles to this crafting
-        //       contract;
-        
+    function createRecipe(
+        uint256[] memory materialIds,
+        uint256[] memory materialAmounts,
+        uint256[] memory rewardIds,
+        uint256[] memory rewardAmounts,
+        uint256 cost,
+        bool isActive
+    )
+        public
+        returns(uint256)
+    {
+        require(
+            hasRole(CRAFTING_MANAGER_ROLE, msg.sender),
+            "Caller does not have the necessary permissions."
+        );
+        require(
+            materialIds.length == materialAmounts.length,
+            "Materials lists do not match."
+        );
+        require(
+            rewardIds.length == rewardAmounts.length,
+            "Rewards lists do not match."
+        );
+
+        // The recipes do not get deleted so the recipe id counter is only ever 
+        // incremented;
+        uint256 recipeId = recipeIdCounter++;
+        Recipe storage recipe = recipeList[recipeId];
+        recipe.recipeId = recipeId;
+        recipe.cost = cost;
+        recipe.isActive = isActive;
+
+        // Iterate through Materials List
+        for (uint256 i = 0; i < materialIds.length; ++i)
+        {
+            require(
+                materialsMap.idSet.contains(materialIds[i]),
+                "Crafting Material doesn't exist."
+            );
+
+            // Add to crafting materials list
+            recipe.materials.push(ItemPair(materialIds[i], materialAmounts[i]));
+
+            // Add recipe to crafting material's recipe list
+            materialsMap.craftItemList[materialIds[i]].recipes.add(recipeId);
+        }
+
+        // Iterate through Rewards List
+        for (uint256 i = 0; i < rewardIds.length; ++i)
+        {
+            require(
+                rewardsMap.idSet.contains(rewardIds[i]),
+                "Crafting Reward doesn't exist."
+            );
+            
+            // Add to crafting rewards list
+            recipe.rewards.push(ItemPair(rewardIds[i], rewardAmounts[i]));
+            
+            // Add recipe to crafting reward's recipe list
+            rewardsMap.craftItemList[rewardIds[i]].recipes.add(recipeId);
+        }
+
+        return recipeId;
     }
-    
-    function createRecipeBatch() public {
-        // Todo:
+
+    function registerCraftingMaterial(
+        address gameContractAddress,
+        uint256 gameContractId
+    )
+        public
+        returns(uint256) 
+    {
+        require(
+            hasRole(CRAFTING_MANAGER_ROLE, msg.sender),
+            "Caller does not have the necessary permissions."
+        );
+
+        // Check GameContract for burner role
+        GameContract gameContract = GameContract(gameContractAddress);
+        bytes32 burner_role = gameContract.BURNER_ROLE();
+        require(
+            gameContract.hasRole(burner_role, address(this)),
+            "This Crafting Contract doesn't have burning permissions."
+        );
+        
+        // Get Hashed ID using game contract address and contract item id
+        uint256 materialId = _getId(gameContractAddress, gameContractId);
+        require(
+            !materialsMap.idSet.contains(materialId),
+            "Crafting Material is already registered."
+        );
+
+        // Add crafting id to ID Set
+        materialsMap.idSet.add(materialId);
+        
+        // Add crafting item data to Crafting Materials List
+        CraftItem storage craftItem = materialsMap.craftItemList[materialId];
+        craftItem.gameContractAddress = gameContractAddress;
+        craftItem.gameContractItemId = gameContractId;
+        
+        return materialId;
+    }
+
+    function registerCraftingReward(
+        address gameContractAddress,
+        uint256 gameContractId
+    )
+        public
+        returns(uint256) 
+    {
+        require(
+            hasRole(CRAFTING_MANAGER_ROLE, msg.sender),
+            "Caller does not have the necessary permissions."
+        );
+
+        // Check GameContract for minter role
+        GameContract gameContract = GameContract(gameContractAddress);
+        bytes32 minter_role = gameContract.MINTER_ROLE();
+        require(
+            gameContract.hasRole(minter_role, address(this)),
+            "This Crafting Contract doesn't have minting permissions."
+        );
+        
+        // Get Hashed ID using game contract address and contract item id
+        uint256 rewardId = _getId(gameContractAddress, gameContractId);
+        require(
+            !rewardsMap.idSet.contains(rewardId),
+            "Crafting reward is already registered."
+        );
+
+        // Add crafting id to ID Set
+        rewardsMap.idSet.add(rewardId);
+        
+        // Add crafting item data to Crafting Rewards List
+        CraftItem storage craftItem = rewardsMap.craftItemList[rewardId];
+        craftItem.gameContractAddress = gameContractAddress;
+        craftItem.gameContractItemId = gameContractId;
+        
+        return rewardId;
     }
 
     function setRecipeActive(uint256 id, bool activate) public {
@@ -157,4 +283,18 @@ contract CraftingContract is Ownable, AccessControl {
         return rewardsItemIds;
     }
     
+    /******** Internal Functions ********/
+    function _getId(
+        address gameContractAddress,
+        uint256 gameContractId
+    )
+        internal
+        pure
+        returns(uint256)
+    {
+        return uint(keccak256(abi.encodePacked(
+            gameContractAddress,
+            gameContractId
+        )));
+    }
 }
