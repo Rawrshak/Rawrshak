@@ -5,12 +5,10 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 
-contract GameContract is ERC1155, AccessControl
-{
+contract GameContract is ERC1155, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
 
     /******** Data Structures ********/
-    // Todo: Figure out mechanism whether to cap item supply or not.
     struct Item {
         uint256 uuid;
         uint256 totalSupply;
@@ -52,6 +50,7 @@ contract GameContract is ERC1155, AccessControl
         _;
     }
 
+    /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
     constructor(string memory url) public ERC1155(url) {
         // Contract Deployer is now the owner and can set roles
