@@ -36,11 +36,9 @@ contract CraftingContract is Ownable, AccessControl {
 
     /******** Stored Variables ********/
     Recipe[] private recipeList;
+    uint256 public activeRecipesCount = 0;
     uint256 private recipeIdCounter = 0;
     CraftingItemSet private gameItemMap;
-
-    EnumerableSet.UintSet private materialsMap;
-    EnumerableSet.UintSet private rewardsMap;
 
     /******** Roles ********/
     bytes32 public constant CRAFTING_MANAGER_ROLE = 
@@ -78,13 +76,16 @@ contract CraftingContract is Ownable, AccessControl {
         recipe.recipeId = recipeId;
         recipe.cost = cost;
         recipe.isActive = isActive;
+        if (isActive) {
+            activeRecipesCount++;
+        }
 
         // Iterate through Materials List
         for (uint256 i = 0; i < materialIds.length; ++i)
         {
             uint256 id = materialIds[i];
             require(
-                materialsMap.contains(id),
+                gameItemMap.idSet.contains(id),
                 "Crafting Material doesn't exist."
             );
 
@@ -100,7 +101,7 @@ contract CraftingContract is Ownable, AccessControl {
         {
             uint256 id = rewardIds[i];
             require(
-                rewardsMap.contains(id),
+                gameItemMap.idSet.contains(id),
                 "Crafting Reward doesn't exist."
             );
             
@@ -140,9 +141,6 @@ contract CraftingContract is Ownable, AccessControl {
         // Add to crafting map
         _addCraftingItem(craftingItemId, gameContractAddress, gameContractId);
 
-        // Add crafting id to ID Set
-        materialsMap.add(craftingItemId);
-
         return craftingItemId;
     }
 
@@ -171,15 +169,17 @@ contract CraftingContract is Ownable, AccessControl {
 
         // Add to crafting map
         _addCraftingItem(craftingItemId, gameContractAddress, gameContractId);
-
-        // Add crafting id to ID Set
-        rewardsMap.add(craftingItemId);
         
         return craftingItemId;
     }
 
     function setRecipeActive(uint256 recipeId, bool activate) public {
         recipeList[recipeId].isActive = activate;
+        if (activate) {
+            activeRecipesCount++;
+        } else {
+            activeRecipesCount--;
+        }
     }
 
     function setRecipeActiveBatch(
@@ -194,7 +194,7 @@ contract CraftingContract is Ownable, AccessControl {
         );
         for (uint256 i = 0; i < recipeIds.length; ++i)
         {
-            recipeList[recipeIds[i]].isActive = activate[i];
+            setRecipeActive(recipeIds[i], activate[i]);
         }
     }
 
@@ -271,51 +271,139 @@ contract CraftingContract is Ownable, AccessControl {
         return (rewardItemIds, counts);
     }
 
-    function getItemAsCraftingMaterialList(uint256 /*itemId*/)
+    // List of recipes where id is a material
+    // returns recipe id list
+    function getItemAsCraftingMaterialList(
+        address gameContract,
+        uint256 itemId
+    )
         public
         view
         returns(uint256[] memory)
     {
-        // Todo: List of recipes where id is a material
-        //       returns recipe id list
-        uint256[] memory recipeIds;
+        uint256 id = _getId(gameContract, itemId);
+        require(
+            gameItemMap.idSet.contains(id),
+            "Item is not a registered crafting item."
+        );
+
+        CraftItem storage item = gameItemMap.craftItemList[id];
+        uint256 len = item.recipesAsMaterial.length();
+        uint256[] memory recipeIds = new uint256[](len);
+        for (uint i = 0; i < len; ++i)
+        {
+            recipeIds[i] = item.recipesAsMaterial.at(i);
+        }
         return recipeIds;
-    }
-    
-    function getItemAsRewardList(uint256 /*itemId*/)
-        public
-        view
-        returns(uint256[] memory)
-    {
-        // Todo: List of recipes where item is a reward
-        //       returns recipe id list
-        uint256[] memory recipeIds;
-        return recipeIds;
-    }
-    
-    function getAllRecipes()
-        public
-        view
-        returns(uint256[] memory)
-    {
-        // Todo: List of all Recipes
-        //       returns recipe id list
-        uint256[] memory recipeIds;
-        return recipeIds;
-    }
-    
-    function getAllCraftableItems()
-        public
-        view
-        returns(uint256[] memory)
-    {
-        // Todo: List of all craftable items
-        //       returns rewards ids list - Game Contract item ID
-        uint256[] memory rewardsItemIds;
-        return rewardsItemIds;
     }
 
-    function craftItem(uint256 id) public {
+    // Crafting ID
+    function getItemAsCraftingMaterialList(uint256 id)
+        public
+        view
+        returns(uint256[] memory)
+    {
+        require(
+            gameItemMap.idSet.contains(id),
+            "Item is not a registered crafting item."
+        );
+
+        CraftItem storage item = gameItemMap.craftItemList[id];
+        uint256 len = item.recipesAsMaterial.length();
+        uint256[] memory recipeIds = new uint256[](len);
+        for (uint i = 0; i < len; ++i)
+        {
+            recipeIds[i] = item.recipesAsMaterial.at(i);
+        }
+
+        return recipeIds;
+    }
+    
+    // List of recipes where item is a reward
+    // returns recipe id list
+    function getItemAsRewardList(
+        address gameContract,
+        uint256 itemId
+    )
+        public
+        view
+        returns(uint256[] memory)
+    {
+        uint256 id = _getId(gameContract, itemId);
+        require(
+            gameItemMap.idSet.contains(id),
+            "Item is not a registered crafting item."
+        );
+
+        CraftItem storage item = gameItemMap.craftItemList[id];
+        uint256 len = item.recipesAsReward.length();
+        uint256[] memory recipeIds = new uint256[](len);
+        for (uint i = 0; i < len; ++i)
+        {
+            recipeIds[i] = item.recipesAsReward.at(i);
+        }
+
+        return recipeIds;
+    }
+
+    // Crafting ID
+    function getItemAsRewardList(uint256 id)
+        public
+        view
+        returns(uint256[] memory)
+    {
+        require(
+            gameItemMap.idSet.contains(id),
+            "Item is not a registered crafting item."
+        );
+
+        CraftItem storage item = gameItemMap.craftItemList[id];
+        uint256 len = item.recipesAsReward.length();
+        uint256[] memory recipeIds = new uint256[](len);
+        for (uint i = 0; i < len; ++i)
+        {
+            recipeIds[i] = item.recipesAsReward.at(i);
+        }
+
+        return recipeIds;
+    }
+
+    // List of all active Recipes
+    // returns recipe id list
+    function getActiveRecipes()
+        public
+        view
+        returns(uint256[] memory)
+    {
+        if (activeRecipesCount == 0)
+        {
+            uint256[] memory empty;
+            return empty;
+        }
+
+        uint256[] memory recipeIds = new uint256[](activeRecipesCount);
+        uint256 activeRecipeIterator = 0;
+
+        for (uint i = 0; i < recipeIdCounter; ++i)
+        {
+            // only return active recipes
+            if (recipeList[i].isActive)
+            {
+                recipeIds[activeRecipeIterator++] = recipeList[i].recipeId;
+            }
+        }
+        
+        // all active recipes were added to the list
+        require(activeRecipeIterator == activeRecipesCount);
+        return recipeIds;
+    }
+
+    function getActiveRecipesCount() public view returns(uint256)
+    {
+        return activeRecipesCount;
+    }
+
+    function craftItem(uint256 recipeId) public {
         // Todo:
     }
 
@@ -324,7 +412,10 @@ contract CraftingContract is Ownable, AccessControl {
         view
         returns(address gameContractId, uint256 gameItemId)
     {
-        require(gameItemMap.idSet.contains(craftItemId));
+        require(
+            gameItemMap.idSet.contains(craftItemId),
+            "Item is not a registered crafting item."
+        );
         return (
             gameItemMap.craftItemList[craftItemId].gameContractAddress,
             gameItemMap.craftItemList[craftItemId].gameContractItemId
