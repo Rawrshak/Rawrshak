@@ -44,7 +44,21 @@ contract CraftingContract is Ownable, AccessControl {
     bytes32 public constant CRAFTING_MANAGER_ROLE = 
         keccak256("CRAFTING_MANAGER_ROLE");
 
+    /******** Modifiers ********/
+    modifier checkPermissions(bytes32 role) {
+        require(
+            hasRole(role, msg.sender),
+            "Caller does not have the necessary permissions."
+        );
+        _;
+    }
+
     /******** Public API ********/
+    constructor() public {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(CRAFTING_MANAGER_ROLE, msg.sender);
+    }
+
     function createRecipe(
         uint256[] memory materialIds,
         uint256[] memory materialAmounts,
@@ -54,12 +68,9 @@ contract CraftingContract is Ownable, AccessControl {
         bool isActive
     )
         public
+        checkPermissions(CRAFTING_MANAGER_ROLE)
         returns(uint256)
     {
-        require(
-            hasRole(CRAFTING_MANAGER_ROLE, msg.sender),
-            "Caller does not have the necessary permissions."
-        );
         require(
             materialIds.length == materialAmounts.length,
             "Materials lists do not match."
@@ -120,13 +131,9 @@ contract CraftingContract is Ownable, AccessControl {
         uint256 gameContractId
     )
         public
+        checkPermissions(CRAFTING_MANAGER_ROLE)
         returns(uint256) 
     {
-        require(
-            hasRole(CRAFTING_MANAGER_ROLE, msg.sender),
-            "Caller does not have the necessary permissions."
-        );
-
         // Check GameContract for burner role
         GameContract gameContract = GameContract(gameContractAddress);
         bytes32 burner_role = gameContract.BURNER_ROLE();
@@ -149,13 +156,9 @@ contract CraftingContract is Ownable, AccessControl {
         uint256 gameContractId
     )
         public
+        checkPermissions(CRAFTING_MANAGER_ROLE)
         returns(uint256) 
     {
-        require(
-            hasRole(CRAFTING_MANAGER_ROLE, msg.sender),
-            "Caller does not have the necessary permissions."
-        );
-
         // Check GameContract for minter role
         GameContract gameContract = GameContract(gameContractAddress);
         bytes32 minter_role = gameContract.MINTER_ROLE();
@@ -206,7 +209,7 @@ contract CraftingContract is Ownable, AccessControl {
         recipeList[recipeId].cost = cost;
     }
 
-    function setupdateRecipeCostBatch(
+    function updateRecipeCostBatch(
         uint256[] memory recipeIds,
         uint256[] memory costs
     )
@@ -404,7 +407,7 @@ contract CraftingContract is Ownable, AccessControl {
     }
 
     function craftItem(uint256 recipeId) public {
-        // Todo:
+        // Todo: Decent chunk of work.
     }
 
     function getGameContractId(uint256 craftItemId)
