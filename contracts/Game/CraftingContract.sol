@@ -29,16 +29,16 @@ contract CraftingContract is Ownable, AccessControl {
         EnumerableSet.UintSet recipesAsReward;
     }
 
-    struct CraftingItemSet {
-        EnumerableSet.UintSet idSet;
-        mapping(uint256 => CraftItem) craftItemList;
-    }
-
     /******** Stored Variables ********/
+    // Todo: temporarily making recipeList, recipeIdCounter and gameItemMap public
     Recipe[] private recipeList;
     uint256 public activeRecipesCount = 0;
     uint256 private recipeIdCounter = 0;
-    CraftingItemSet private gameItemMap;
+    EnumerableSet.UintSet private craftItemIds;
+    mapping(uint256 => CraftItem) private craftItems;
+
+    /******** Events ********/
+    event AddedCraftingItem(uint256);
 
     /******** Roles ********/
     bytes32 public constant CRAFTING_MANAGER_ROLE = 
@@ -96,7 +96,7 @@ contract CraftingContract is Ownable, AccessControl {
         {
             uint256 id = materialIds[i];
             require(
-                gameItemMap.idSet.contains(id),
+                craftItemIds.contains(id),
                 "Crafting Material doesn't exist."
             );
 
@@ -104,7 +104,7 @@ contract CraftingContract is Ownable, AccessControl {
             recipe.materials.push(ItemPair(id, materialAmounts[i]));
 
             // Add recipe to crafting material's recipe list
-            gameItemMap.craftItemList[id].recipesAsMaterial.add(recipeId);
+            craftItems[id].recipesAsMaterial.add(recipeId);
         }
 
         // Iterate through Rewards List
@@ -112,7 +112,7 @@ contract CraftingContract is Ownable, AccessControl {
         {
             uint256 id = rewardIds[i];
             require(
-                gameItemMap.idSet.contains(id),
+                craftItemIds.contains(id),
                 "Crafting Reward doesn't exist."
             );
             
@@ -120,7 +120,7 @@ contract CraftingContract is Ownable, AccessControl {
             recipe.rewards.push(ItemPair(id, rewardAmounts[i]));
             
             // Add recipe to crafting reward's recipe list
-            gameItemMap.craftItemList[id].recipesAsReward.add(recipeId);
+            craftItems[id].recipesAsReward.add(recipeId);
         }
 
         return recipeId;
@@ -132,8 +132,8 @@ contract CraftingContract is Ownable, AccessControl {
     )
         public
         checkPermissions(CRAFTING_MANAGER_ROLE)
-        returns(uint256) 
     {
+        // Todo: check that GameContractAddress is a GameContract
         // Check GameContract for burner role
         GameContract gameContract = GameContract(gameContractAddress);
         bytes32 burner_role = gameContract.BURNER_ROLE();
@@ -142,13 +142,22 @@ contract CraftingContract is Ownable, AccessControl {
             "This Crafting Contract doesn't have burning permissions."
         );
         
+        require(
+            gameContract.exists(gameContractId),
+            "This item does not exist."
+        );
+        
         // Get Hashed ID using game contract address and contract item id
-        uint256 craftingItemId = _getId(gameContractAddress, gameContractId);
+        uint256 hashId = _getId(gameContractAddress, gameContractId);
 
         // Add to crafting map
-        _addCraftingItem(craftingItemId, gameContractAddress, gameContractId);
-
-        return craftingItemId;
+        require(
+            _addCraftingItem(
+                hashId,
+                gameContractAddress,
+                gameContractId),
+            "This crafting item is already stored."
+        );
     }
 
     function registerCraftingReward(
@@ -157,7 +166,6 @@ contract CraftingContract is Ownable, AccessControl {
     )
         public
         checkPermissions(CRAFTING_MANAGER_ROLE)
-        returns(uint256) 
     {
         // Check GameContract for minter role
         GameContract gameContract = GameContract(gameContractAddress);
@@ -167,13 +175,22 @@ contract CraftingContract is Ownable, AccessControl {
             "This Crafting Contract doesn't have minting permissions."
         );
         
+        require(
+            gameContract.exists(gameContractId),
+            "This item does not exist."
+        );
+        
         // Get Hashed ID using game contract address and contract item id
-        uint256 craftingItemId = _getId(gameContractAddress, gameContractId);
+        uint256 hashId = _getId(gameContractAddress, gameContractId);
 
         // Add to crafting map
-        _addCraftingItem(craftingItemId, gameContractAddress, gameContractId);
-        
-        return craftingItemId;
+        require(
+            _addCraftingItem(
+                hashId,
+                gameContractAddress,
+                gameContractId),
+            "This crafting item is already stored."
+        );
     }
 
     function setRecipeActive(uint256 recipeId, bool activate) public {
@@ -286,11 +303,11 @@ contract CraftingContract is Ownable, AccessControl {
     {
         uint256 id = _getId(gameContract, itemId);
         require(
-            gameItemMap.idSet.contains(id),
+            craftItemIds.contains(id),
             "Item is not a registered crafting item."
         );
 
-        CraftItem storage item = gameItemMap.craftItemList[id];
+        CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsMaterial.length();
         uint256[] memory recipeIds = new uint256[](len);
         for (uint i = 0; i < len; ++i)
@@ -307,11 +324,11 @@ contract CraftingContract is Ownable, AccessControl {
         returns(uint256[] memory)
     {
         require(
-            gameItemMap.idSet.contains(id),
+            craftItemIds.contains(id),
             "Item is not a registered crafting item."
         );
 
-        CraftItem storage item = gameItemMap.craftItemList[id];
+        CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsMaterial.length();
         uint256[] memory recipeIds = new uint256[](len);
         for (uint i = 0; i < len; ++i)
@@ -334,11 +351,11 @@ contract CraftingContract is Ownable, AccessControl {
     {
         uint256 id = _getId(gameContract, itemId);
         require(
-            gameItemMap.idSet.contains(id),
+            craftItemIds.contains(id),
             "Item is not a registered crafting item."
         );
 
-        CraftItem storage item = gameItemMap.craftItemList[id];
+        CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsReward.length();
         uint256[] memory recipeIds = new uint256[](len);
         for (uint i = 0; i < len; ++i)
@@ -356,11 +373,11 @@ contract CraftingContract is Ownable, AccessControl {
         returns(uint256[] memory)
     {
         require(
-            gameItemMap.idSet.contains(id),
+            craftItemIds.contains(id),
             "Item is not a registered crafting item."
         );
 
-        CraftItem storage item = gameItemMap.craftItemList[id];
+        CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsReward.length();
         uint256[] memory recipeIds = new uint256[](len);
         for (uint i = 0; i < len; ++i)
@@ -416,13 +433,33 @@ contract CraftingContract is Ownable, AccessControl {
         returns(address gameContractId, uint256 gameItemId)
     {
         require(
-            gameItemMap.idSet.contains(craftItemId),
-            "Item is not a registered crafting item."
+            craftItemIds.contains(craftItemId),
+            "Item is not a registered crafting item"
         );
-        return (
-            gameItemMap.craftItemList[craftItemId].gameContractAddress,
-            gameItemMap.craftItemList[craftItemId].gameContractItemId
-        );
+        gameContractId =
+            craftItems[craftItemId].gameContractAddress;
+        gameItemId = craftItems[craftItemId].gameContractItemId;
+    }
+
+    function getCraftItemId(
+        address gameContractAddress,
+        uint256 gameContractId
+    )
+        public
+        pure
+        returns(uint256)
+    {
+        return _getId(gameContractAddress, gameContractId);
+    }
+    
+    function getCraftItemsLength() public view returns(uint256) {
+        return craftItemIds.length();
+    }
+
+    /******** TEST Functions ********/
+    // Todo: Delete these
+    function getItemHash(uint256 index) public view returns(uint256) {
+        return craftItemIds.at(index);
     }
     
     /******** Internal Functions ********/
@@ -434,26 +471,30 @@ contract CraftingContract is Ownable, AccessControl {
         pure
         returns(uint256)
     {
-        return uint(keccak256(abi.encodePacked(
+        return uint256(keccak256(abi.encodePacked(
             gameContractAddress,
             gameContractId
         )));
     }
 
     function _addCraftingItem(
-        uint256 craftingItemId,
+        uint256 hashId,
         address gameContractAddress,
         uint256 gameContractId
     )
         internal
+        returns(bool)
     {
         // If it already exists, ignore
-        if (gameItemMap.idSet.add(craftingItemId))
+        if (craftItemIds.add(hashId))
         {
             // Add crafting item data to Crafting Materials List
-            CraftItem storage item = gameItemMap.craftItemList[craftingItemId];
+            CraftItem storage item = craftItems[hashId];
             item.gameContractAddress = gameContractAddress;
             item.gameContractItemId = gameContractId;
+            emit AddedCraftingItem(hashId);
+            return true;
         }
+        return false;
     }
 }
