@@ -10,9 +10,8 @@ const CraftingContract = artifacts.require("CraftingContract");
 // const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 contract('Crafting Contract', (accounts) => {
-    const deployerAddress = accounts[0];
-    const itemManagerAddress = accounts[1];
-    const craftingManagerAddress = accounts[2];
+    const [deployerAddress, itemManagerAddress, craftingManagerAddress] = accounts;
+    const [material1, material2, material3, reward1, reward2] = [1,2,3,4,5];
 
     it('Check Crafting Contract Roles', async () => {
         const gameContract = await GameContract.deployed();
@@ -60,7 +59,7 @@ contract('Crafting Contract', (accounts) => {
         const gameContract = await GameContract.deployed();
         const item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
         
-        await gameContract.grantRole(item_manager_role, itemManagerAddress,{from:deployerAddress, gasPrice: 1});
+        await gameContract.grantRole(item_manager_role, itemManagerAddress,{from:deployerAddress});
         
         // check to see if item manager address has the item manger role
         assert.equal(
@@ -70,23 +69,11 @@ contract('Crafting Contract', (accounts) => {
             true, "Item Manager Address didn't have the Item Manager Role");
 
         // Add 5 items
-        await gameContract.methods['createItem(uint256)'](1, {from:itemManagerAddress, gasPrice: 1});
-        await gameContract.methods['createItem(uint256)'](
-            2,
-            {from:itemManagerAddress, gasPrice: 1}
-        );
-        await gameContract.methods['createItem(uint256)'](
-            3,
-            {from:itemManagerAddress, gasPrice: 1}
-        );
-        await gameContract.methods['createItem(uint256)'](
-            4,
-            {from:itemManagerAddress, gasPrice: 1}
-        );
-        await gameContract.methods['createItem(uint256)'](
-            5,
-            {from:itemManagerAddress, gasPrice: 1}
-        );
+        await gameContract.methods['createItem(uint256)'](material1, {from:itemManagerAddress});
+        await gameContract.methods['createItem(uint256)'](material2, {from:itemManagerAddress});
+        await gameContract.methods['createItem(uint256)'](material3, {from:itemManagerAddress});
+        await gameContract.methods['createItem(uint256)'](reward1, {from:itemManagerAddress});
+        await gameContract.methods['createItem(uint256)'](reward2, {from:itemManagerAddress});
 
         // Check if the new items were added.
         assert.equal(
@@ -97,29 +84,29 @@ contract('Crafting Contract', (accounts) => {
     });
 
     it('Add Crafting Materials', async () => {
-        // Tests registerCraftingMaterial()
-        // Tests getGameContractId()
-
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
         const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
         
-        await craftingContract.grantRole(crafting_manager_role, craftingManagerAddress, {from:deployerAddress, gasPrice: 1});
+        // Set crafting manager address the crafting manager role
+        await craftingContract.grantRole(crafting_manager_role, craftingManagerAddress, {from:deployerAddress});
         
-        var event = await craftingContract.registerCraftingMaterial(gameContract.address,1,{from:craftingManagerAddress, gasPrice: 1});
-        
-        // console.log("CraftItem: " + craftItemId.toString());
-        // console.log("CraftItem: " + toBytes32(craftItemId));
+        // register a crafting material
+        var event = await craftingContract.registerCraftingMaterial(gameContract.address,material1,{from:craftingManagerAddress});
+        await craftingContract.registerCraftingMaterial(gameContract.address,material2,{from:craftingManagerAddress});
+        await craftingContract.registerCraftingMaterial(gameContract.address,material3,{from:craftingManagerAddress});
 
+        // Returns the crafting id hash
         craftItemId = event.logs[0].args[0].toString();
 
+        // check if the item is registered correctly
         resultPair = await craftingContract.getGameContractId(
             craftItemId,
-            {from:craftingManagerAddress, gasPrice: 1});
+            {from:craftingManagerAddress});
         
         assert.equal(
             resultPair[1],
-            1,
+            material1,
             "Game Id is incorrect."
         );
         assert.equal(
@@ -127,14 +114,53 @@ contract('Crafting Contract', (accounts) => {
             gameContract.address,
             "Game Contract Address is incorrect."
         );
+
+        // make sure all 3 items were added correctly
+        assert.equal(
+            (await craftingContract.getCraftItemsLength()).toNumber(),
+            3,
+            "The material items were not added correctly."
+        );
     });
 
-    
+    it('Add Crafting Rewards', async () => {
+        const gameContract = await GameContract.deployed();
+        const craftingContract = await CraftingContract.deployed();
+        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        
+        // Set crafting manager address the crafting manager role
+        await craftingContract.grantRole(crafting_manager_role, craftingManagerAddress, {from:deployerAddress});
+        
+        // register a crafting material
+        var event = await craftingContract.registerCraftingMaterial(gameContract.address,reward1,{from:craftingManagerAddress});
+        await craftingContract.registerCraftingMaterial(gameContract.address,reward2,{from:craftingManagerAddress});
 
-    // it('Add Crafting Rewards', async () => {
+        // Returns the crafting id hash
+        craftItemId = event.logs[0].args[0].toString();
 
-    //     // Tests registerCraftingReward()
-    // });
+        // check if the item is registered correctly
+        resultPair = await craftingContract.getGameContractId(
+            craftItemId,
+            {from:craftingManagerAddress});
+        
+        assert.equal(
+            resultPair[1],
+            reward1,
+            "Game Id is incorrect."
+        );
+        assert.equal(
+            resultPair[0],
+            gameContract.address,
+            "Game Contract Address is incorrect."
+        );
+
+        // make sure all 3 items were added correctly
+        assert.equal(
+            (await craftingContract.getCraftItemsLength()).toNumber(),
+            5,
+            "The material items were not added correctly."
+        );
+    });
 
     // it('Add Recipes', async () => {
 
