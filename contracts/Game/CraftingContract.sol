@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./GameContract.sol";
 
+// Todo: Single Game Crafting Contract: more efficient for single game contracts
+// Todo: Multi-Game Crafting Contract
+
 contract CraftingContract is Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
     
@@ -39,10 +42,13 @@ contract CraftingContract is Ownable, AccessControl {
     /******** Events ********/
     event AddedCraftingItem(uint256);
     event RecipeCreated(uint256);
+    event ItemCrafted();
 
     /******** Roles ********/
     bytes32 public constant CRAFTING_MANAGER_ROLE = 
         keccak256("CRAFTING_MANAGER_ROLE");
+    bytes32 public constant SMITH_ROLE = 
+        keccak256("SMITH_ROLE");
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 role) {
@@ -79,8 +85,8 @@ contract CraftingContract is Ownable, AccessControl {
             "Rewards lists do not match."
         );
 
-        // // The recipes do not get deleted so the recipe id counter is only ever 
-        // // incremented;
+        // The recipes do not get deleted so the recipe id counter is only ever 
+        // incremented;
         uint256 recipeId = recipeList.length;
         Recipe storage recipe = recipeList.push();
         recipe.recipeId = recipeId;
@@ -432,8 +438,47 @@ contract CraftingContract is Ownable, AccessControl {
         return activeRecipesCount;
     }
 
-    function craftItem(uint256 recipeId) public {
-        // Todo: Decent chunk of work.
+    function craftItem(uint256 recipeId, address payable account)
+        public
+        checkPermissions(SMITH_ROLE)
+    {
+        require(recipeId < recipeList.length, "Recipe does not exist.");
+        require(recipeList[recipeId].isActive, "Recipe is not active.");
+        
+        Recipe storage recipe = recipeList[recipeId];
+
+        // Todo: check the cost amount
+
+        // Burns the materials in the game contract
+        for (uint256 i = 0; i < recipe.materials.length; ++i)
+        {
+            // Get Crafting Item
+            CraftItem storage item = craftItems[recipe.materials[i].craftingItemId];
+
+            // Get Game Contracts
+            GameContract gameContract = GameContract(item.gameContractAddress);
+
+            // Burn() will fail if this contract does not have the necessary 
+            // permissions or if the account does not have enough materials
+            gameContract.burn(account, item.gameContractItemId, recipe.materials[i].count);
+        }
+
+        // Mint Reward
+        for (uint256 i = 0; i < recipe.rewards.length; ++i)
+        {
+            // Get Crafting Item
+            CraftItem storage item = craftItems[recipe.rewards[i].craftingItemId];
+
+            // Get Game Contracts
+            GameContract gameContract = GameContract(item.gameContractAddress);
+
+            // Mint() will fail if this contract does not have the necessary 
+            // permissions 
+            gameContract.mint(account, item.gameContractItemId, recipe.rewards[i].count);
+        }
+
+        // Notify user of item getting crafted
+        emit ItemCrafted();
     }
 
     function getGameContractId(uint256 craftItemId)
