@@ -30,15 +30,15 @@ contract CraftingContract is Ownable, AccessControl {
     }
 
     /******** Stored Variables ********/
-    // Todo: temporarily making recipeList, recipeIdCounter and gameItemMap public
+    // Todo: temporarily making recipeList and gameItemMap public
     Recipe[] private recipeList;
     uint256 public activeRecipesCount = 0;
-    uint256 private recipeIdCounter = 0;
     EnumerableSet.UintSet private craftItemIds;
     mapping(uint256 => CraftItem) private craftItems;
 
     /******** Events ********/
     event AddedCraftingItem(uint256);
+    event RecipeCreated(uint256);
 
     /******** Roles ********/
     bytes32 public constant CRAFTING_MANAGER_ROLE = 
@@ -69,7 +69,6 @@ contract CraftingContract is Ownable, AccessControl {
     )
         public
         checkPermissions(CRAFTING_MANAGER_ROLE)
-        returns(uint256)
     {
         require(
             materialIds.length == materialAmounts.length,
@@ -80,10 +79,10 @@ contract CraftingContract is Ownable, AccessControl {
             "Rewards lists do not match."
         );
 
-        // The recipes do not get deleted so the recipe id counter is only ever 
-        // incremented;
-        uint256 recipeId = recipeIdCounter++;
-        Recipe storage recipe = recipeList[recipeId];
+        // // The recipes do not get deleted so the recipe id counter is only ever 
+        // // incremented;
+        uint256 recipeId = recipeList.length;
+        Recipe storage recipe = recipeList.push();
         recipe.recipeId = recipeId;
         recipe.cost = cost;
         recipe.isActive = isActive;
@@ -123,7 +122,7 @@ contract CraftingContract is Ownable, AccessControl {
             craftItems[id].recipesAsReward.add(recipeId);
         }
 
-        return recipeId;
+        emit RecipeCreated(recipeId);
     }
 
     function registerCraftingMaterial(
@@ -193,7 +192,14 @@ contract CraftingContract is Ownable, AccessControl {
         );
     }
 
-    function setRecipeActive(uint256 recipeId, bool activate) public {
+    function setRecipeActive(uint256 recipeId, bool activate) 
+        public
+        checkPermissions(CRAFTING_MANAGER_ROLE)
+    {
+        require(
+            recipeList[recipeId].isActive != activate,
+            "A recipe is already set properly."
+        );
         recipeList[recipeId].isActive = activate;
         if (activate) {
             activeRecipesCount++;
@@ -207,6 +213,7 @@ contract CraftingContract is Ownable, AccessControl {
         bool[] memory activate
     )
         public
+        checkPermissions(CRAFTING_MANAGER_ROLE)
     {
         require(
             recipeIds.length == activate.length,
@@ -222,7 +229,10 @@ contract CraftingContract is Ownable, AccessControl {
         return recipeList[recipeId].isActive;
     }
 
-    function updateRecipeCost(uint256 recipeId, uint256 cost) public {
+    function updateRecipeCost(uint256 recipeId, uint256 cost)
+        public
+        checkPermissions(CRAFTING_MANAGER_ROLE)
+    {
         recipeList[recipeId].cost = cost;
     }
 
@@ -231,6 +241,7 @@ contract CraftingContract is Ownable, AccessControl {
         uint256[] memory costs
     )
         public
+        checkPermissions(CRAFTING_MANAGER_ROLE)
     {
         require(
             recipeIds.length == costs.length,
@@ -253,7 +264,7 @@ contract CraftingContract is Ownable, AccessControl {
         view
         returns(uint256[] memory, uint256[] memory)
     {
-        require(recipeId < recipeIdCounter, "Recipe does not exist.");
+        require(recipeId < recipeList.length, "Recipe does not exist.");
 
         Recipe storage recipe = recipeList[recipeId];
         uint256[] memory materialsIds = new uint256[](recipe.materials.length);
@@ -274,21 +285,19 @@ contract CraftingContract is Ownable, AccessControl {
     function getRewardsList(uint256 recipeId)
         public
         view
-        returns(uint256[] memory, uint256[] memory)
+        returns(uint256[] memory rewardItemIds, uint256[] memory counts)
     {
-        require(recipeId < recipeIdCounter, "Recipe does not exist.");
+        require(recipeId < recipeList.length, "Recipe does not exist.");
 
         Recipe storage recipe = recipeList[recipeId];
-        uint256[] memory rewardItemIds = new uint256[](recipe.rewards.length);
-        uint256[] memory counts = new uint256[](recipe.rewards.length);
+        rewardItemIds = new uint256[](recipe.rewards.length);
+        counts = new uint256[](recipe.rewards.length);
         for (uint i = 0; i < recipe.rewards.length; ++i)
         {
             ItemPair storage itemPair = recipe.rewards[i];
             rewardItemIds[i] = itemPair.craftingItemId;
             counts[i] = itemPair.count;
         }
-
-        return (rewardItemIds, counts);
     }
 
     // List of recipes where id is a material
@@ -404,7 +413,7 @@ contract CraftingContract is Ownable, AccessControl {
         uint256[] memory recipeIds = new uint256[](activeRecipesCount);
         uint256 activeRecipeIterator = 0;
 
-        for (uint i = 0; i < recipeIdCounter; ++i)
+        for (uint i = 0; i < recipeList.length; ++i)
         {
             // only return active recipes
             if (recipeList[i].isActive)
