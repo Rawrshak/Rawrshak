@@ -285,7 +285,6 @@ contract('Crafting Contract', (accounts) => {
         recipesToActivate = [false, false];
         await craftingContract.setRecipeActiveBatch(recipeIds, recipesToActivate, {from:craftingManagerAddress});
 
-        isRecipeActive = await craftingContract.isRecipeActive(recipe1);
         assert.equal(
             await craftingContract.isRecipeActive(recipe1),
             false,
@@ -395,23 +394,106 @@ contract('Crafting Contract', (accounts) => {
         assert.equal(counts[0], 1, "Recipe 0 item reward count is incorrect.");
     });
 
-    // it('Get List of Recipes that use specific crafting material', async () => {
+    it('Get List of Recipes that use specific crafting material', async () => {
+        const gameContract = await GameContract.deployed();
+        const craftingContract = await CraftingContract.deployed();
+        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+
+        // check proper role set to crafting manager address
+        assert.equal(
+            await craftingContract.hasRole(
+                crafting_manager_role,
+                craftingManagerAddress),
+            true,
+            "Crafting Manager Address does not have the crafting manager role"
+        );
+
+        // Get All recipes that use Material 1
+        recipeIds = await craftingContract.getItemAsCraftingMaterialList(
+            gameContract.address,
+            material1
+        );
+        assert.equal(recipeIds.length, 3, "Incorrect number of recipes.");
+        assert.equal(recipeIds[0], recipe0, "Recipe 0 was not listed.");
+        assert.equal(recipeIds[1], recipe1, "Recipe 1 was not listed.");
+        assert.equal(recipeIds[2], recipe2, "Recipe 2 was not listed.");
+
+        // Get All recipes that use Material 3
+        material3CraftItemId = await craftingContract.getCraftItemId(
+            gameContract.address,
+            material3
+        );
+        recipeIds = await craftingContract.getItemAsCraftingMaterialList(
+            material3CraftItemId
+        );
+        assert.equal(recipeIds.length, 2, "Incorrect number of recipes.");
+        assert.equal(recipeIds[0], recipe0, "Recipe 0 was not listed.");
+        assert.equal(recipeIds[1], recipe1, "Recipe 1 was not listed.");
+    });
+
+    it('Get List of Recipes that reward specific crafting item', async () => {
+        const gameContract = await GameContract.deployed();
+        const craftingContract = await CraftingContract.deployed();
+        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+
+        // check proper role set to crafting manager address
+        assert.equal(
+            await craftingContract.hasRole(
+                crafting_manager_role,
+                craftingManagerAddress),
+            true,
+            "Crafting Manager Address does not have the crafting manager role"
+        );
+
+        // Get All recipes that use Material 1
+        recipeIds = await craftingContract.getItemAsRewardList(
+            gameContract.address,
+            reward1
+        );
+        assert.equal(recipeIds.length, 1, "Incorrect number of recipes.");
+        assert.equal(recipeIds[0], recipe0, "Recipe 0 was not listed.");
+
+        // Get All recipes that use Material 3
+        reward2CraftItemId = await craftingContract.getCraftItemId(
+            gameContract.address,
+            reward2
+        );
+        recipeIds = await craftingContract.getItemAsRewardList(
+            reward2CraftItemId
+        );
+        assert.equal(recipeIds.length, 2, "Incorrect number of recipes.");
+        assert.equal(recipeIds[0], recipe1, "Recipe 1 was not listed.");
+        assert.equal(recipeIds[1], recipe2, "Recipe 2 was not listed.");
+    });
+
+    it('Get All Active Recipes', async () => {
+        const gameContract = await GameContract.deployed();
+        const craftingContract = await CraftingContract.deployed();
+        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+
+        // check proper role set to crafting manager address
+        assert.equal(
+            await craftingContract.hasRole(
+                crafting_manager_role,
+                craftingManagerAddress),
+            true,
+            "Crafting Manager Address does not have the crafting manager role"
+        );
+
+        activeRecipesCount = await craftingContract.getActiveRecipesCount();
+        assert.equal(activeRecipesCount, 1, "Incorrect number of active recipes.");
+
+        recipeIds = await craftingContract.getActiveRecipes();
+        assert.equal(recipeIds.length, 1, "Incorrect number of active recipes.");
+        assert.equal(recipeIds[0], recipe0, "Recipe 1 was not listed.");
         
-    //     // Tests getItemAsCraftingMaterialList(contract, itemId);
-    //     // Tests getItemAsCraftingMaterialList(craftId)
-    // });
-
-    // it('Get List of Recipes that reward specific crafting item', async () => {
-
-    //     // Tests getItemAsRewardList(contract, itemId);
-    //     // Tests getItemAsRewardList(craftId)
-    // });
-
-    // it('Get All Active Recipes', async () => {
-
-    //     // Tests getActiveRecipes();
-    //     // Tests getActiveRecipesCount();
-    // });
+        recipeIds = [recipe1, recipe2];
+        recipesToActivate = [true, true];
+        await craftingContract.setRecipeActiveBatch(recipeIds, recipesToActivate, {from:craftingManagerAddress});
+        
+        activeRecipesCount = await craftingContract.getActiveRecipesCount();
+        assert.equal(activeRecipesCount, 3, "Incorrect number of active recipes.");
+    });
 
     // it('Craft an Item', async () => {
     // });

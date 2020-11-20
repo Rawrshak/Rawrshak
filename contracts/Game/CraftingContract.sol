@@ -308,7 +308,7 @@ contract CraftingContract is Ownable, AccessControl {
     )
         public
         view
-        returns(uint256[] memory)
+        returns(uint256[] memory recipeIds)
     {
         uint256 id = _getId(gameContract, itemId);
         require(
@@ -318,7 +318,7 @@ contract CraftingContract is Ownable, AccessControl {
 
         CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsMaterial.length();
-        uint256[] memory recipeIds = new uint256[](len);
+        recipeIds = new uint256[](len);
         for (uint i = 0; i < len; ++i)
         {
             recipeIds[i] = item.recipesAsMaterial.at(i);
