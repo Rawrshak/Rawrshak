@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-abstract contract TokenBase is ERC20, ERC165, AccessControl
+contract TokenBase is ERC20, ERC165, AccessControl
 {
     // Create a new role identifier for the minter role. Limiting what each component of a system 
     // can do is known as "principle of least privilege" and is good security practice.

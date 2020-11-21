@@ -1,6 +1,7 @@
 const _deploy_contracts = require("../../migrations/2_deploy_contracts");
 const GameContract = artifacts.require("GameContract");
 const CraftingContract = artifacts.require("CraftingContract");
+const OVCToken = artifacts.require("OVCToken");
 
 // const w3utils = require('web3-utils'); // todo: delete
 
@@ -15,7 +16,8 @@ contract('Crafting Contract', (accounts) => {
         itemManagerAddress,         // Developer Address for managing the Game Contract
         craftingManagerAddress,     // Developer Address for managing the Crafting Contract
         smithAddress,               // Crafting Service Address
-        playerAddress               // Player Address
+        playerAddress,              // Player Address
+        developerWalletAddress      // Developer Wallet Address
     ] = accounts;
     const [material1, material2, material3, reward1, reward2] = [0,1,2,3,4];
     const [recipe0, recipe1, recipe2] = [0,1,2];
@@ -63,10 +65,13 @@ contract('Crafting Contract', (accounts) => {
 
     it("Game Contract Data Setup", async () => {
         const gameContract = await GameContract.deployed();
+        const craftingContract = await CraftingContract.deployed();
         const item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
         const minter_role = await gameContract.MINTER_ROLE();
         const burner_role = await gameContract.BURNER_ROLE();
 
+        // transfer the crafting contract ownership
+        await craftingContract.transferOwnership(developerWalletAddress);
         
         await gameContract.grantRole(item_manager_role, itemManagerAddress,{from:deployerAddress});
         await gameContract.grantRole(minter_role, itemManagerAddress,{from:deployerAddress});
@@ -508,9 +513,12 @@ contract('Crafting Contract', (accounts) => {
     it('Craft an Item', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
+        const ovcToken = await OVCToken.deployed();
         const smith_role = await craftingContract.SMITH_ROLE();
 
         await craftingContract.grantRole(smith_role, smithAddress, {from:deployerAddress});
+        await ovcToken.transfer(playerAddress, 300, {from:deployerAddress});
+        assert.equal(await ovcToken.balanceOf(playerAddress), 300, "Player was not sent 300 OVC Tokens.");
 
         // mint materials and give to player
         itemIds = [material1, material2, material3];
@@ -529,9 +537,20 @@ contract('Crafting Contract', (accounts) => {
         assert.equal(balances[2], 0, "Material 2 was not burned.");
         assert.equal(balances[3], 0, "Material 3 was not burned.");
 
+        // Player must approve Crafting Contract for the specified recipe cost
+        cost = await craftingContract.getRecipeCost(recipe2);
+        tokenAddress = await craftingContract.getTokenAddressForCrafting();
+        assert.equal(tokenAddress.toString(), ovcToken.address, "Token Addresses are not the same.");
+        ovcToken.approve(craftingContract.address, cost, {from: playerAddress, gasPrice: 1}); 
+
         // craft recipe 2 for player
         await craftingContract.craftItem(recipe2, playerAddress, {from:smithAddress});
         assert.equal(await gameContract.balanceOf(playerAddress, reward2), 1, "Reward Item was not created.");
         assert.equal(await gameContract.balanceOf(playerAddress, material1), 0, "Material 1 was not burned.");
+        assert.equal(await ovcToken.balanceOf(playerAddress), 100, "Recipe did not consume 200 OVC Tokens.");
+        assert.equal(
+            await ovcToken.balanceOf(developerWalletAddress),
+            200,
+            "200 OVC tokens were not sent to the developer wallet as crafting payment.");
     });
 });

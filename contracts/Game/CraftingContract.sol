@@ -40,7 +40,7 @@ contract CraftingContract is Ownable, AccessControl {
     uint256 public activeRecipesCount = 0;
     EnumerableSet.UintSet private craftItemIds;
     mapping(uint256 => CraftItem) private craftItems;
-    TokenBase coin;
+    address tokenContractAddress;
 
     /******** Events ********/
     event AddedCraftingItem(uint256);
@@ -72,7 +72,7 @@ contract CraftingContract is Ownable, AccessControl {
         public
         checkAddressIsContract(coinAddress)
     {
-        coin = TokenBase(coin);
+        tokenContractAddress = coinAddress;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(CRAFTING_MANAGER_ROLE, msg.sender);
     }
@@ -273,6 +273,11 @@ contract CraftingContract is Ownable, AccessControl {
         }
     }
 
+    function getTokenAddressForCrafting() public view returns(address)
+    {
+        return tokenContractAddress;
+    }
+
     function getRecipeCost(uint256 recipeId) public view returns(uint256) {
         return recipeList[recipeId].cost;
     }
@@ -461,7 +466,13 @@ contract CraftingContract is Ownable, AccessControl {
         
         Recipe storage recipe = recipeList[recipeId];
 
-        // Todo: check the cost amount
+        if (recipe.cost > 0)
+        {
+            // This will fail if the account doesn't have enough to cover the 
+            // cost of crafting this item
+            TokenBase token = TokenBase(tokenContractAddress);
+            token.transferFrom(account, owner(), recipe.cost);
+        }
 
         // Burns the materials in the game contract
         for (uint256 i = 0; i < recipe.materials.length; ++i)
