@@ -10,8 +10,14 @@ const CraftingContract = artifacts.require("CraftingContract");
 // const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 contract('Crafting Contract', (accounts) => {
-    const [deployerAddress, itemManagerAddress, craftingManagerAddress] = accounts;
-    const [material1, material2, material3, reward1, reward2] = [1,2,3,4,5];
+    const [
+        deployerAddress,            // Address that deployed contracts
+        itemManagerAddress,         // Developer Address for managing the Game Contract
+        craftingManagerAddress,     // Developer Address for managing the Crafting Contract
+        smithAddress,               // Crafting Service Address
+        playerAddress               // Player Address
+    ] = accounts;
+    const [material1, material2, material3, reward1, reward2] = [0,1,2,3,4];
     const [recipe0, recipe1, recipe2] = [0,1,2];
 
     it('Check Crafting Contract Roles', async () => {
@@ -35,7 +41,6 @@ contract('Crafting Contract', (accounts) => {
             true,
             "Deployer address does not have the crafting manager role");
 
-        
         const minter_role = await gameContract.MINTER_ROLE();
         const burner_role = await gameContract.BURNER_ROLE();
 
@@ -59,8 +64,13 @@ contract('Crafting Contract', (accounts) => {
     it("Game Contract Data Setup", async () => {
         const gameContract = await GameContract.deployed();
         const item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
+        const minter_role = await gameContract.MINTER_ROLE();
+        const burner_role = await gameContract.BURNER_ROLE();
+
         
         await gameContract.grantRole(item_manager_role, itemManagerAddress,{from:deployerAddress});
+        await gameContract.grantRole(minter_role, itemManagerAddress,{from:deployerAddress});
+        await gameContract.grantRole(burner_role, itemManagerAddress,{from:deployerAddress});
         
         // check to see if item manager address has the item manger role
         assert.equal(
@@ -495,6 +505,33 @@ contract('Crafting Contract', (accounts) => {
         assert.equal(activeRecipesCount, 3, "Incorrect number of active recipes.");
     });
 
-    // it('Craft an Item', async () => {
-    // });
+    it('Craft an Item', async () => {
+        const gameContract = await GameContract.deployed();
+        const craftingContract = await CraftingContract.deployed();
+        const smith_role = await craftingContract.SMITH_ROLE();
+
+        await craftingContract.grantRole(smith_role, smithAddress, {from:deployerAddress});
+
+        // mint materials and give to player
+        itemIds = [material1, material2, material3];
+        amounts = [6, 2, 10];
+        await gameContract.mintBatch(playerAddress, itemIds, amounts, {from:itemManagerAddress, gasPrice: 1});
+
+        // craft recipe 0 for player
+        await craftingContract.craftItem(recipe0, playerAddress, {from:smithAddress});
+        
+        // Check to see item was minted and sent to the player
+        accountIds = [playerAddress, playerAddress, playerAddress, playerAddress];
+        itemIds = [reward1, material1, material2, material3];
+        balances = await gameContract.balanceOfBatch(accountIds, itemIds);
+        assert.equal(balances[0], 1, "Reward Item was not created.");
+        assert.equal(balances[1], 5, "Material 1 was not burned.");
+        assert.equal(balances[2], 0, "Material 2 was not burned.");
+        assert.equal(balances[3], 0, "Material 3 was not burned.");
+
+        // craft recipe 2 for player
+        await craftingContract.craftItem(recipe2, playerAddress, {from:smithAddress});
+        assert.equal(await gameContract.balanceOf(playerAddress, reward2), 1, "Reward Item was not created.");
+        assert.equal(await gameContract.balanceOf(playerAddress, material1), 0, "Material 1 was not burned.");
+    });
 });

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-import "./OVCTokenBase.sol";
+import "./TokenBase.sol";
 
-contract OVCToken is OVCTokenBase
+contract OVCToken is TokenBase
 {
-    constructor(uint256 initialSupply) public OVCTokenBase("Omniverse Credits", "OVC", initialSupply)
+    constructor(uint256 initialSupply) public TokenBase("Omniverse Credits", "OVC", initialSupply)
     {
     }
 }

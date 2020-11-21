@@ -4,13 +4,16 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "./GameContract.sol";
+import "../Tokens/TokenBase.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
 
 contract CraftingContract is Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
+    using Address for address;
     
     /******** Data Structures ********/
     struct ItemPair {
@@ -33,11 +36,11 @@ contract CraftingContract is Ownable, AccessControl {
     }
 
     /******** Stored Variables ********/
-    // Todo: temporarily making recipeList and gameItemMap public
     Recipe[] private recipeList;
     uint256 public activeRecipesCount = 0;
     EnumerableSet.UintSet private craftItemIds;
     mapping(uint256 => CraftItem) private craftItems;
+    TokenBase coin;
 
     /******** Events ********/
     event AddedCraftingItem(uint256);
@@ -59,8 +62,17 @@ contract CraftingContract is Ownable, AccessControl {
         _;
     }
 
+    modifier checkAddressIsContract(address contractAddress) {
+        require(Address.isContract(contractAddress), "Coin address is not valid");
+        _;
+    }
+
     /******** Public API ********/
-    constructor() public {
+    constructor(address coinAddress)
+        public
+        checkAddressIsContract(coinAddress)
+    {
+        coin = TokenBase(coin);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(CRAFTING_MANAGER_ROLE, msg.sender);
     }
@@ -137,8 +149,9 @@ contract CraftingContract is Ownable, AccessControl {
     )
         public
         checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkAddressIsContract(gameContractAddress)
     {
-        // Todo: check that GameContractAddress is a GameContract
+        // Todo: check that GameContractAddress is a GameContract interface
         // Check GameContract for burner role
         GameContract gameContract = GameContract(gameContractAddress);
         bytes32 burner_role = gameContract.BURNER_ROLE();
@@ -171,6 +184,7 @@ contract CraftingContract is Ownable, AccessControl {
     )
         public
         checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkAddressIsContract(gameContractAddress)
     {
         // Check GameContract for minter role
         GameContract gameContract = GameContract(gameContractAddress);
@@ -500,7 +514,8 @@ contract CraftingContract is Ownable, AccessControl {
         uint256 gameContractId
     )
         public
-        pure
+        view
+        checkAddressIsContract(gameContractAddress)
         returns(uint256)
     {
         return _getId(gameContractAddress, gameContractId);

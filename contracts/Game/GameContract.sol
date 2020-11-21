@@ -160,6 +160,9 @@ contract GameContract is ERC1155, AccessControl {
         emit ItemMinted(itemId, amount);
     }
 
+    // mint several items to a single addreess
+    // Todo: mint single item to several addresses
+    // Todo: mint several items to several addresses
     function mintBatch(
         address receivingAddress,
         uint256[] memory itemIds,
