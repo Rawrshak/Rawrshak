@@ -12,7 +12,7 @@ import "../utils/Utils.sol";
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
 
-contract CraftingContract is Ownable, AccessControl {
+contract Crafting is Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using Utils for *;
