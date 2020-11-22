@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./GameContract.sol";
@@ -43,15 +43,14 @@ contract CraftingContract is Ownable, AccessControl {
     address tokenContractAddress;
 
     /******** Events ********/
+    // Todo: AddedCraftingItemBatch()
     event AddedCraftingItem(uint256);
     event RecipeCreated(uint256);
     event ItemCrafted();
 
     /******** Roles ********/
-    bytes32 public constant CRAFTING_MANAGER_ROLE = 
-        keccak256("CRAFTING_MANAGER_ROLE");
-    bytes32 public constant SMITH_ROLE = 
-        keccak256("SMITH_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant SMITH_ROLE = keccak256("SMITH_ROLE");
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 role) {
@@ -74,7 +73,7 @@ contract CraftingContract is Ownable, AccessControl {
     {
         tokenContractAddress = coinAddress;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(CRAFTING_MANAGER_ROLE, msg.sender);
+        _setupRole(MANAGER_ROLE, msg.sender);
     }
 
     function createRecipe(
@@ -86,7 +85,7 @@ contract CraftingContract is Ownable, AccessControl {
         bool isActive
     )
         public
-        checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
     {
         require(
             materialIds.length == materialAmounts.length,
@@ -143,12 +142,13 @@ contract CraftingContract is Ownable, AccessControl {
         emit RecipeCreated(recipeId);
     }
 
+    // Todo: registerCraftingMaterialBatch()
     function registerCraftingMaterial(
         address gameContractAddress,
         uint256 gameContractId
     )
         public
-        checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(gameContractAddress)
     {
         // Todo: check that GameContractAddress is a GameContract interface
@@ -178,12 +178,13 @@ contract CraftingContract is Ownable, AccessControl {
         );
     }
 
+    // Todo: registerCraftingRewardBatch()
     function registerCraftingReward(
         address gameContractAddress,
         uint256 gameContractId
     )
         public
-        checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(gameContractAddress)
     {
         // Check GameContract for minter role
@@ -214,7 +215,7 @@ contract CraftingContract is Ownable, AccessControl {
 
     function setRecipeActive(uint256 recipeId, bool activate) 
         public
-        checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
     {
         require(
             recipeList[recipeId].isActive != activate,
@@ -233,7 +234,7 @@ contract CraftingContract is Ownable, AccessControl {
         bool[] memory activate
     )
         public
-        checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
     {
         require(
             recipeIds.length == activate.length,
@@ -251,7 +252,7 @@ contract CraftingContract is Ownable, AccessControl {
 
     function updateRecipeCost(uint256 recipeId, uint256 cost)
         public
-        checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
     {
         recipeList[recipeId].cost = cost;
     }
@@ -261,7 +262,7 @@ contract CraftingContract is Ownable, AccessControl {
         uint256[] memory costs
     )
         public
-        checkPermissions(CRAFTING_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
     {
         require(
             recipeIds.length == costs.length,

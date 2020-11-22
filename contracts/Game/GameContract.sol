@@ -32,6 +32,8 @@ contract GameContract is ERC1155, AccessControl {
     event ItemRemoved(uint256);
     event ItemMinted(uint256,uint256);
     event ItemBurned(uint256,uint256);
+    event ItemMintedBatch(uint256[],uint256[]);
+    event ItemBurnedBatch(uint256[],uint256[]);
 
     /******** Roles ********/
     bytes32 public constant GAME_OWNER_ROLE = keccak256("GAME_OWNER_ROLE");
@@ -39,7 +41,7 @@ contract GameContract is ERC1155, AccessControl {
     // and developer app interfaces with.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 public constant ITEM_MANAGER_ROLE = keccak256("ITEM_MANAGER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 role) {
@@ -96,7 +98,7 @@ contract GameContract is ERC1155, AccessControl {
     }
 
     // Delete the item
-    function deleteItem(uint256 id) public checkPermissions(ITEM_MANAGER_ROLE) {
+    function deleteItem(uint256 id) public checkPermissions(MANAGER_ROLE) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
         require(
             itemsMap.itemsList[id].totalSupply == balanceOf(msg.sender, id),
@@ -183,12 +185,9 @@ contract GameContract is ERC1155, AccessControl {
             );
 
             itemsMap.itemsList[itemIds[i]].totalSupply += amounts[i];
-
-            // Future: maybe I don't actually need this. Add this for now, 
-            // remove later if not needed.
-            emit ItemMinted(itemIds[i], amounts[i]);
         }
         _mintBatch(receivingAddress, itemIds, amounts, "");
+        emit ItemMintedBatch(itemIds, amounts);
     }
 
     function burn(address account, uint256 itemId, uint256 amount)
@@ -231,8 +230,8 @@ contract GameContract is ERC1155, AccessControl {
                 "Item does not exist."
             );
             itemsMap.itemsList[itemIds[i]].totalSupply -= amounts[i];
-            emit ItemBurned(itemIds[i], amounts[i]);
         }
+        emit ItemBurnedBatch(itemIds, amounts);
     }
 
     /******** Internal Functions ********/
@@ -242,7 +241,7 @@ contract GameContract is ERC1155, AccessControl {
         uint256 maxSupply
     )
         public
-        checkPermissions(ITEM_MANAGER_ROLE)
+        checkPermissions(MANAGER_ROLE)
     {
         require(itemsMap.idSet.add(id), "This item already exists.");
 

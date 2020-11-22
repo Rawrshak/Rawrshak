@@ -1,6 +1,7 @@
 const OVCTokenContract = artifacts.require("OVCToken");
 const GameContract = artifacts.require("GameContract");
 const CraftingContract = artifacts.require("CraftingContract");
+const LootBoxContract = artifacts.require("LootBoxContract");
 
 module.exports = async function(deployer, networks, accounts) {
     // deploy OVC token with 1,000,000,000 initial supply.
@@ -12,6 +13,9 @@ module.exports = async function(deployer, networks, accounts) {
     
     // deploy Crafting Contract
     await deployer.deploy(CraftingContract, ovcTokenContract.address);
+    
+    // deploy Crafting Contract
+    await deployer.deploy(LootBoxContract);
 
     // Assign crafting contract the minter and burner roles
     gameContract = await GameContract.deployed();
@@ -23,8 +27,8 @@ module.exports = async function(deployer, networks, accounts) {
     gameContract.grantRole(burner_role,craftingContract.address,{from: deployerAddress});
 
     // // Note: This is for debugging purposes
-    // item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
-    // await gameContract.grantRole(item_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});
+    // gc_manager_role = await gameContract.MANAGER_ROLE();
+    // await gameContract.grantRole(gc_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});
 
     // await gameContract.methods['createItem(uint256)'](1, {from:deployerAddress, gasPrice: 1});
     // await gameContract.methods['createItem(uint256)'](2, {from:deployerAddress, gasPrice: 1});
@@ -32,8 +36,8 @@ module.exports = async function(deployer, networks, accounts) {
     // await gameContract.methods['createItem(uint256)'](4, {from:deployerAddress, gasPrice: 1});
     // await gameContract.methods['createItem(uint256)'](5, {from:deployerAddress, gasPrice: 1});
 
-    // crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
-    // await craftingContract.grantRole(crafting_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});
+    // cc_manager_role = await craftingContract.MANAGER_ROLE();
+    // await craftingContract.grantRole(cc_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});
 
     // // await craftingContract.registerCraftingMaterial.call(gameContract.address,1,{from:deployerAddress, gasPrice: 1})
     // await craftingContract.registerCraftingMaterial(gameContract.address,1,{from:deployerAddress, gasPrice: 1});

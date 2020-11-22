@@ -13,8 +13,8 @@ const OVCToken = artifacts.require("OVCToken");
 contract('Crafting Contract', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
-        itemManagerAddress,         // Developer Address for managing the Game Contract
-        craftingManagerAddress,     // Developer Address for managing the Crafting Contract
+        gcManagerAddress,           // Developer Address for managing the Game Contract
+        ccManagerAddress,           // Developer Address for managing the Crafting Contract
         smithAddress,               // Crafting Service Address
         playerAddress,              // Player Address
         developerWalletAddress      // Developer Wallet Address
@@ -26,8 +26,8 @@ contract('Crafting Contract', (accounts) => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
         const default_admin_role = await craftingContract.DEFAULT_ADMIN_ROLE();
-        const crafting_manager_role = 
-            await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = 
+            await craftingContract.MANAGER_ROLE();
 
         assert.equal(
             await craftingContract.hasRole(
@@ -38,7 +38,7 @@ contract('Crafting Contract', (accounts) => {
             
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
+                cc_manager_role,
                 deployerAddress),
             true,
             "Deployer address does not have the crafting manager role");
@@ -66,30 +66,30 @@ contract('Crafting Contract', (accounts) => {
     it("Game Contract Data Setup", async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const item_manager_role = await gameContract.ITEM_MANAGER_ROLE();
+        const gc_manager_role = await gameContract.MANAGER_ROLE();
         const minter_role = await gameContract.MINTER_ROLE();
         const burner_role = await gameContract.BURNER_ROLE();
 
         // transfer the crafting contract ownership
         await craftingContract.transferOwnership(developerWalletAddress);
         
-        await gameContract.grantRole(item_manager_role, itemManagerAddress,{from:deployerAddress});
-        await gameContract.grantRole(minter_role, itemManagerAddress,{from:deployerAddress});
-        await gameContract.grantRole(burner_role, itemManagerAddress,{from:deployerAddress});
+        await gameContract.grantRole(gc_manager_role, gcManagerAddress,{from:deployerAddress});
+        await gameContract.grantRole(minter_role, gcManagerAddress,{from:deployerAddress});
+        await gameContract.grantRole(burner_role, gcManagerAddress,{from:deployerAddress});
         
         // check to see if item manager address has the item manger role
         assert.equal(
             await gameContract.hasRole(
-                item_manager_role,
-                itemManagerAddress),
+                gc_manager_role,
+                gcManagerAddress),
             true, "Item Manager Address didn't have the Item Manager Role");
 
         // Add 5 items
-        await gameContract.methods['createItem(uint256)'](material1, {from:itemManagerAddress});
-        await gameContract.methods['createItem(uint256)'](material2, {from:itemManagerAddress});
-        await gameContract.methods['createItem(uint256)'](material3, {from:itemManagerAddress});
-        await gameContract.methods['createItem(uint256)'](reward1, {from:itemManagerAddress});
-        await gameContract.methods['createItem(uint256)'](reward2, {from:itemManagerAddress});
+        await gameContract.methods['createItem(uint256)'](material1, {from:gcManagerAddress});
+        await gameContract.methods['createItem(uint256)'](material2, {from:gcManagerAddress});
+        await gameContract.methods['createItem(uint256)'](material3, {from:gcManagerAddress});
+        await gameContract.methods['createItem(uint256)'](reward1, {from:gcManagerAddress});
+        await gameContract.methods['createItem(uint256)'](reward2, {from:gcManagerAddress});
 
         // Check if the new items were added.
         assert.equal(
@@ -102,15 +102,15 @@ contract('Crafting Contract', (accounts) => {
     it('Add Crafting Materials', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
         
         // Set crafting manager address the crafting manager role
-        await craftingContract.grantRole(crafting_manager_role, craftingManagerAddress, {from:deployerAddress});
+        await craftingContract.grantRole(cc_manager_role, ccManagerAddress, {from:deployerAddress});
         
         // register a crafting material
-        var event = await craftingContract.registerCraftingMaterial(gameContract.address,material1,{from:craftingManagerAddress});
-        await craftingContract.registerCraftingMaterial(gameContract.address,material2,{from:craftingManagerAddress});
-        await craftingContract.registerCraftingMaterial(gameContract.address,material3,{from:craftingManagerAddress});
+        var event = await craftingContract.registerCraftingMaterial(gameContract.address,material1,{from:ccManagerAddress});
+        await craftingContract.registerCraftingMaterial(gameContract.address,material2,{from:ccManagerAddress});
+        await craftingContract.registerCraftingMaterial(gameContract.address,material3,{from:ccManagerAddress});
 
         // Returns the crafting id hash
         craftItemId = event.logs[0].args[0].toString();
@@ -118,7 +118,7 @@ contract('Crafting Contract', (accounts) => {
         // check if the item is registered correctly
         resultPair = await craftingContract.getGameContractId(
             craftItemId,
-            {from:craftingManagerAddress});
+            {from:ccManagerAddress});
         
         assert.equal(
             resultPair[1],
@@ -142,14 +142,14 @@ contract('Crafting Contract', (accounts) => {
     it('Add Crafting Rewards', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
         
         // Set crafting manager address the crafting manager role
-        await craftingContract.grantRole(crafting_manager_role, craftingManagerAddress, {from:deployerAddress});
+        await craftingContract.grantRole(cc_manager_role, ccManagerAddress, {from:deployerAddress});
         
         // register a crafting material
-        var event = await craftingContract.registerCraftingMaterial(gameContract.address,reward1,{from:craftingManagerAddress});
-        await craftingContract.registerCraftingMaterial(gameContract.address,reward2,{from:craftingManagerAddress});
+        var event = await craftingContract.registerCraftingMaterial(gameContract.address,reward1,{from:ccManagerAddress});
+        await craftingContract.registerCraftingMaterial(gameContract.address,reward2,{from:ccManagerAddress});
 
         // Returns the crafting id hash
         craftItemId = event.logs[0].args[0].toString();
@@ -157,7 +157,7 @@ contract('Crafting Contract', (accounts) => {
         // check if the item is registered correctly
         resultPair = await craftingContract.getGameContractId(
             craftItemId,
-            {from:craftingManagerAddress});
+            {from:ccManagerAddress});
         
         assert.equal(
             resultPair[1],
@@ -181,13 +181,13 @@ contract('Crafting Contract', (accounts) => {
     it('Add Recipes', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
 
         // check proper role set to crafting manager address
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
-                craftingManagerAddress),
+                cc_manager_role,
+                ccManagerAddress),
             true,
             "Crafting Manager Address does not have the crafting manager role");
         
@@ -226,7 +226,7 @@ contract('Crafting Contract', (accounts) => {
             rewardAmounts,
             0,
             true,
-            {from:craftingManagerAddress}
+            {from:ccManagerAddress}
         );
 
         recipeId = recipeCreatedEvent.logs[0].args[0].toNumber();
@@ -245,7 +245,7 @@ contract('Crafting Contract', (accounts) => {
             rewardAmounts,
             0,
             true,
-            {from:craftingManagerAddress}
+            {from:ccManagerAddress}
         );
 
         recipeId = recipeCreatedEvent.logs[0].args[0].toNumber();
@@ -264,7 +264,7 @@ contract('Crafting Contract', (accounts) => {
             rewardAmounts,
             100,
             false,
-            {from:craftingManagerAddress}
+            {from:ccManagerAddress}
         );
 
         recipeId = recipeCreatedEvent.logs[0].args[0].toNumber();
@@ -277,19 +277,19 @@ contract('Crafting Contract', (accounts) => {
     it('Update Recipes', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
 
         // check proper role set to crafting manager address
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
-                craftingManagerAddress),
+                cc_manager_role,
+                ccManagerAddress),
             true,
             "Crafting Manager Address does not have the crafting manager role"
         );
 
         // Test the Recipe Active functions
-        await craftingContract.setRecipeActive(recipe2, true, {from:craftingManagerAddress});
+        await craftingContract.setRecipeActive(recipe2, true, {from:ccManagerAddress});
         assert.equal(
             await craftingContract.isRecipeActive(recipe2),
             true,
@@ -298,7 +298,7 @@ contract('Crafting Contract', (accounts) => {
 
         recipeIds = [recipe1, recipe2];
         recipesToActivate = [false, false];
-        await craftingContract.setRecipeActiveBatch(recipeIds, recipesToActivate, {from:craftingManagerAddress});
+        await craftingContract.setRecipeActiveBatch(recipeIds, recipesToActivate, {from:ccManagerAddress});
 
         assert.equal(
             await craftingContract.isRecipeActive(recipe1),
@@ -317,7 +317,7 @@ contract('Crafting Contract', (accounts) => {
         );
 
         // Test the Recipe Cost functions
-        await craftingContract.updateRecipeCost(recipe1, 300, {from:craftingManagerAddress});
+        await craftingContract.updateRecipeCost(recipe1, 300, {from:ccManagerAddress});
         assert.equal(
             await craftingContract.getRecipeCost(recipe1),
             300,
@@ -326,7 +326,7 @@ contract('Crafting Contract', (accounts) => {
 
         recipeIds = [recipe1, recipe2];
         recipeCosts = [0, 200];
-        await craftingContract.updateRecipeCostBatch(recipeIds, recipeCosts, {from:craftingManagerAddress});
+        await craftingContract.updateRecipeCostBatch(recipeIds, recipeCosts, {from:ccManagerAddress});
         assert.equal(
             await craftingContract.getRecipeCost(recipe1),
             0,
@@ -342,13 +342,13 @@ contract('Crafting Contract', (accounts) => {
     it('Get Crafting Materials for Recipe', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
 
         // check proper role set to crafting manager address
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
-                craftingManagerAddress),
+                cc_manager_role,
+                ccManagerAddress),
             true,
             "Crafting Manager Address does not have the crafting manager role"
         );
@@ -383,13 +383,13 @@ contract('Crafting Contract', (accounts) => {
     it('Get Crafting Rewards for Recipe', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
 
         // check proper role set to crafting manager address
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
-                craftingManagerAddress),
+                cc_manager_role,
+                ccManagerAddress),
             true,
             "Crafting Manager Address does not have the crafting manager role"
         );
@@ -412,13 +412,13 @@ contract('Crafting Contract', (accounts) => {
     it('Get List of Recipes that use specific crafting material', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
 
         // check proper role set to crafting manager address
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
-                craftingManagerAddress),
+                cc_manager_role,
+                ccManagerAddress),
             true,
             "Crafting Manager Address does not have the crafting manager role"
         );
@@ -449,13 +449,13 @@ contract('Crafting Contract', (accounts) => {
     it('Get List of Recipes that reward specific crafting item', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
 
         // check proper role set to crafting manager address
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
-                craftingManagerAddress),
+                cc_manager_role,
+                ccManagerAddress),
             true,
             "Crafting Manager Address does not have the crafting manager role"
         );
@@ -484,13 +484,13 @@ contract('Crafting Contract', (accounts) => {
     it('Get All Active Recipes', async () => {
         const gameContract = await GameContract.deployed();
         const craftingContract = await CraftingContract.deployed();
-        const crafting_manager_role = await craftingContract.CRAFTING_MANAGER_ROLE();
+        const cc_manager_role = await craftingContract.MANAGER_ROLE();
 
         // check proper role set to crafting manager address
         assert.equal(
             await craftingContract.hasRole(
-                crafting_manager_role,
-                craftingManagerAddress),
+                cc_manager_role,
+                ccManagerAddress),
             true,
             "Crafting Manager Address does not have the crafting manager role"
         );
@@ -504,7 +504,7 @@ contract('Crafting Contract', (accounts) => {
         
         recipeIds = [recipe1, recipe2];
         recipesToActivate = [true, true];
-        await craftingContract.setRecipeActiveBatch(recipeIds, recipesToActivate, {from:craftingManagerAddress});
+        await craftingContract.setRecipeActiveBatch(recipeIds, recipesToActivate, {from:ccManagerAddress});
         
         activeRecipesCount = await craftingContract.getActiveRecipesCount();
         assert.equal(activeRecipesCount, 3, "Incorrect number of active recipes.");
@@ -523,7 +523,7 @@ contract('Crafting Contract', (accounts) => {
         // mint materials and give to player
         itemIds = [material1, material2, material3];
         amounts = [6, 2, 10];
-        await gameContract.mintBatch(playerAddress, itemIds, amounts, {from:itemManagerAddress, gasPrice: 1});
+        await gameContract.mintBatch(playerAddress, itemIds, amounts, {from:gcManagerAddress, gasPrice: 1});
 
         // craft recipe 0 for player
         await craftingContract.craftItem(recipe0, playerAddress, {from:smithAddress});
@@ -541,6 +541,8 @@ contract('Crafting Contract', (accounts) => {
         cost = await craftingContract.getRecipeCost(recipe2);
         tokenAddress = await craftingContract.getTokenAddressForCrafting();
         assert.equal(tokenAddress.toString(), ovcToken.address, "Token Addresses are not the same.");
+        assert.equal(await ovcToken.balanceOf(playerAddress), 300, "balance is 300.");
+        assert.equal(cost, 200, "Cost is 200.");
         ovcToken.approve(craftingContract.address, cost, {from: playerAddress, gasPrice: 1}); 
 
         // craft recipe 2 for player
