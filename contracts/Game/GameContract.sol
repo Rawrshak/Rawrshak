@@ -108,8 +108,7 @@ contract GameContract is ERC1155, AccessControl {
         public
     {
         // check for existence
-        for (uint256 i = 0; i < ids.length; ++i)
-        {
+        for (uint256 i = 0; i < ids.length; ++i) {
             _createItem(ids[i], gamePayableAddress, 0);
         }
 
@@ -123,8 +122,7 @@ contract GameContract is ERC1155, AccessControl {
         public
     {
         // check for existence
-        for (uint256 i = 0; i < ids.length; ++i)
-        {
+        for (uint256 i = 0; i < ids.length; ++i) {
             _createItem(ids[i], payable(creatorAddress), 0);
         }
 
@@ -140,8 +138,7 @@ contract GameContract is ERC1155, AccessControl {
     {
         require(ids.length == maxSupplies.length, "IDs and Max Supply array size do not match");
         // check for existence
-        for (uint256 i = 0; i < ids.length; ++i)
-        {
+        for (uint256 i = 0; i < ids.length; ++i) {
             _createItem(ids[i], payable(creatorAddress), maxSupplies[i]);
         }
 
@@ -182,8 +179,7 @@ contract GameContract is ERC1155, AccessControl {
         require(len != 0, "The list is empty.");
 
         uint256[] memory idList = new uint[](len);
-        for (uint256 index = 0; index < len; index++)
-        {
+        for (uint256 index = 0; index < len; index++) {
             idList[index] = itemsMap.idSet.at(index);
         }
 
@@ -230,8 +226,7 @@ contract GameContract is ERC1155, AccessControl {
         require(itemIds.length == amounts.length, "item arrays don't match.");
         require(receivingAddress != address(0), "Cannot send to null adderss.");
 
-        for (uint i = 0; i < itemIds.length; i++)
-        {
+        for (uint i = 0; i < itemIds.length; i++) {
             require(itemsMap.idSet.contains(itemIds[i]), "Item does not exist.");
             require(
                 !itemsMap.itemsList[i].isSupplyCapped,
@@ -277,12 +272,12 @@ contract GameContract is ERC1155, AccessControl {
 
         // if _burnBatch succeeds, then we know that totalSupply can be 
         // deducted.
-        for (uint i = 0; i < itemIds.length; i++)
-        {
+        for (uint i = 0; i < itemIds.length; i++) {
             require(
                 itemsMap.idSet.contains(itemIds[i]),
                 "Item does not exist."
             );
+
             itemsMap.itemsList[itemIds[i]].totalSupply -= amounts[i];
         }
         emit ItemBurnedBatch(itemIds, amounts);
@@ -303,7 +298,6 @@ contract GameContract is ERC1155, AccessControl {
         item.uuid = id;
         item.isSupplyCapped = (maxSupply != 0);
         item.totalSupply = (maxSupply != 0) ? maxSupply : 0;
-        item.creatorAddress = (creatorAddress == address(0))
-            ? gamePayableAddress: creatorAddress;
+        item.creatorAddress = (creatorAddress == address(0)) ? gamePayableAddress: creatorAddress;
     }
 }

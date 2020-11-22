@@ -108,8 +108,7 @@ contract CraftingContract is Ownable, AccessControl {
         }
 
         // Iterate through Materials List
-        for (uint256 i = 0; i < materialIds.length; ++i)
-        {
+        for (uint256 i = 0; i < materialIds.length; ++i) {
             uint256 id = materialIds[i];
             require(
                 craftItemIds.contains(id),
@@ -124,8 +123,7 @@ contract CraftingContract is Ownable, AccessControl {
         }
 
         // Iterate through Rewards List
-        for (uint256 i = 0; i < rewardIds.length; ++i)
-        {
+        for (uint256 i = 0; i < rewardIds.length; ++i) {
             uint256 id = rewardIds[i];
             require(
                 craftItemIds.contains(id),
@@ -165,17 +163,11 @@ contract CraftingContract is Ownable, AccessControl {
             "This item does not exist."
         );
         
-        // Get Hashed ID using game contract address and contract item id
-        uint256 hashId = _getId(gameContractAddress, gameContractId);
-
         // Add to crafting map
-        require(
-            _addCraftingItem(
-                hashId,
-                gameContractAddress,
-                gameContractId),
-            "This crafting item is already stored."
-        );
+        (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
+        require(success, "This crafting item is already stored.");
+
+        emit AddedCraftingItem(hashId);
     }
 
     // Todo: registerCraftingRewardBatch()
@@ -199,18 +191,12 @@ contract CraftingContract is Ownable, AccessControl {
             gameContract.exists(gameContractId),
             "This item does not exist."
         );
-        
-        // Get Hashed ID using game contract address and contract item id
-        uint256 hashId = _getId(gameContractAddress, gameContractId);
 
         // Add to crafting map
-        require(
-            _addCraftingItem(
-                hashId,
-                gameContractAddress,
-                gameContractId),
-            "This crafting item is already stored."
-        );
+        (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
+        require(success, "This crafting item is already stored.");
+
+        emit AddedCraftingItem(hashId);
     }
 
     function setRecipeActive(uint256 recipeId, bool activate) 
@@ -221,6 +207,7 @@ contract CraftingContract is Ownable, AccessControl {
             recipeList[recipeId].isActive != activate,
             "A recipe is already set properly."
         );
+
         recipeList[recipeId].isActive = activate;
         if (activate) {
             activeRecipesCount++;
@@ -240,8 +227,8 @@ contract CraftingContract is Ownable, AccessControl {
             recipeIds.length == activate.length,
             "Input array lengths do not match"
         );
-        for (uint256 i = 0; i < recipeIds.length; ++i)
-        {
+
+        for (uint256 i = 0; i < recipeIds.length; ++i) {
             setRecipeActive(recipeIds[i], activate[i]);
         }
     }
@@ -268,8 +255,8 @@ contract CraftingContract is Ownable, AccessControl {
             recipeIds.length == costs.length,
             "Input array lengths do not match"
         );
-        for (uint256 i = 0; i < recipeIds.length; ++i)
-        {
+
+        for (uint256 i = 0; i < recipeIds.length; ++i) {
             recipeList[recipeIds[i]].cost = costs[i];
         }
     }
@@ -296,8 +283,7 @@ contract CraftingContract is Ownable, AccessControl {
         uint256[] memory materialsIds = new uint256[](recipe.materials.length);
         uint256[] memory counts = new uint256[](recipe.materials.length);
 
-        for (uint i = 0; i < recipe.materials.length; ++i)
-        {
+        for (uint i = 0; i < recipe.materials.length; ++i) {
             ItemPair storage itemPair = recipe.materials[i];
             materialsIds[i] = itemPair.craftingItemId;
             counts[i] = itemPair.count;
@@ -318,8 +304,7 @@ contract CraftingContract is Ownable, AccessControl {
         Recipe storage recipe = recipeList[recipeId];
         rewardItemIds = new uint256[](recipe.rewards.length);
         counts = new uint256[](recipe.rewards.length);
-        for (uint i = 0; i < recipe.rewards.length; ++i)
-        {
+        for (uint i = 0; i < recipe.rewards.length; ++i) {
             ItemPair storage itemPair = recipe.rewards[i];
             rewardItemIds[i] = itemPair.craftingItemId;
             counts[i] = itemPair.count;
@@ -345,8 +330,7 @@ contract CraftingContract is Ownable, AccessControl {
         CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsMaterial.length();
         recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i)
-        {
+        for (uint i = 0; i < len; ++i) {
             recipeIds[i] = item.recipesAsMaterial.at(i);
         }
         return recipeIds;
@@ -366,8 +350,7 @@ contract CraftingContract is Ownable, AccessControl {
         CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsMaterial.length();
         uint256[] memory recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i)
-        {
+        for (uint i = 0; i < len; ++i) {
             recipeIds[i] = item.recipesAsMaterial.at(i);
         }
 
@@ -393,8 +376,7 @@ contract CraftingContract is Ownable, AccessControl {
         CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsReward.length();
         uint256[] memory recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i)
-        {
+        for (uint i = 0; i < len; ++i) {
             recipeIds[i] = item.recipesAsReward.at(i);
         }
 
@@ -415,8 +397,7 @@ contract CraftingContract is Ownable, AccessControl {
         CraftItem storage item = craftItems[id];
         uint256 len = item.recipesAsReward.length();
         uint256[] memory recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i)
-        {
+        for (uint i = 0; i < len; ++i) {
             recipeIds[i] = item.recipesAsReward.at(i);
         }
 
@@ -430,8 +411,7 @@ contract CraftingContract is Ownable, AccessControl {
         view
         returns(uint256[] memory)
     {
-        if (activeRecipesCount == 0)
-        {
+        if (activeRecipesCount == 0) {
             uint256[] memory empty;
             return empty;
         }
@@ -439,8 +419,7 @@ contract CraftingContract is Ownable, AccessControl {
         uint256[] memory recipeIds = new uint256[](activeRecipesCount);
         uint256 activeRecipeIterator = 0;
 
-        for (uint i = 0; i < recipeList.length; ++i)
-        {
+        for (uint i = 0; i < recipeList.length; ++i) {
             // only return active recipes
             if (recipeList[i].isActive)
             {
@@ -467,8 +446,7 @@ contract CraftingContract is Ownable, AccessControl {
         
         Recipe storage recipe = recipeList[recipeId];
 
-        if (recipe.cost > 0)
-        {
+        if (recipe.cost > 0) {
             // This will fail if the account doesn't have enough to cover the 
             // cost of crafting this item
             TokenBase token = TokenBase(tokenContractAddress);
@@ -476,8 +454,7 @@ contract CraftingContract is Ownable, AccessControl {
         }
 
         // Burns the materials in the game contract
-        for (uint256 i = 0; i < recipe.materials.length; ++i)
-        {
+        for (uint256 i = 0; i < recipe.materials.length; ++i) {
             // Get Crafting Item
             CraftItem storage item = craftItems[recipe.materials[i].craftingItemId];
 
@@ -490,8 +467,7 @@ contract CraftingContract is Ownable, AccessControl {
         }
 
         // Mint Reward
-        for (uint256 i = 0; i < recipe.rewards.length; ++i)
-        {
+        for (uint256 i = 0; i < recipe.rewards.length; ++i) {
             // Get Crafting Item
             CraftItem storage item = craftItems[recipe.rewards[i].craftingItemId];
 
@@ -548,17 +524,19 @@ contract CraftingContract is Ownable, AccessControl {
         return uint256(keccak256(abi.encodePacked(contractAddress, id)));
     }
 
-    function _addCraftingItem(uint256 hashId, address contractAddress, uint256 id) internal returns(bool) {
+    function _addCraftingItem(address contractAddress, uint256 id) internal returns(uint256 hashId, bool success) {
+        // Get Hashed ID using game contract address and contract item id
+        hashId = _getId(contractAddress, id);
+        
         // If it already exists, ignore
-        if (craftItemIds.add(hashId))
-        {
+        if (craftItemIds.add(hashId)) {
             // Add crafting item data to Crafting Materials List
             CraftItem storage item = craftItems[hashId];
             item.gameContractAddress = contractAddress;
             item.gameContractItemId = id;
             emit AddedCraftingItem(hashId);
-            return true;
+            success = true;
         }
-        return false;
+        success = false;
     }
 }
