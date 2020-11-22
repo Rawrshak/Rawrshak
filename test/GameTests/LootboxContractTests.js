@@ -1,5 +1,5 @@
 const Game = artifacts.require("Game");
-const LootboxContract = artifacts.require("LootboxContract");
+const Lootbox = artifacts.require("Lootbox");
 
 contract('Lootbox Contract', (accounts) => {
     const [
@@ -15,17 +15,17 @@ contract('Lootbox Contract', (accounts) => {
 
     it('Check Lootbox Contract Roles', async () => {
         const game = await Game.deployed();
-        const lootboxContract = await LootboxContract.deployed();
-        const default_admin_role = await lootboxContract.DEFAULT_ADMIN_ROLE();
-        const lb_manager_role = await lootboxContract.MANAGER_ROLE();
+        const lootbox = await Lootbox.deployed();
+        const default_admin_role = await lootbox.DEFAULT_ADMIN_ROLE();
+        const lb_manager_role = await lootbox.MANAGER_ROLE();
 
         assert.equal(
-            await lootboxContract.hasRole(default_admin_role, deployerAddress),
+            await lootbox.hasRole(default_admin_role, deployerAddress),
             true,
             "Deployer address does not have the default admin role");
             
         assert.equal(
-            await lootboxContract.hasRole(lb_manager_role, deployerAddress),
+            await lootbox.hasRole(lb_manager_role, deployerAddress),
             true,
             "Deployer address does not have the lootbox manager role");
 
@@ -33,25 +33,25 @@ contract('Lootbox Contract', (accounts) => {
         const burner_role = await game.BURNER_ROLE();
 
         assert.equal(
-            await game.hasRole(minter_role, lootboxContract.address),
+            await game.hasRole(minter_role, lootbox.address),
             true,
             "Lootbox Contract does not have the burner role on Game Contract");
 
         assert.equal(
-            await game.hasRole(burner_role, lootboxContract.address),
+            await game.hasRole(burner_role, lootbox.address),
             true,
             "Lootbox Contract does not have the burner role on Game Contract");
     });
 
     // it("Game Contract Data Setup", async () => {
     //     const game = await Game.deployed();
-    //     const lootboxContract = await LootboxContract.deployed();
+    //     const lootbox = await Lootbox.deployed();
     //     const gc_manager_role = await game.MANAGER_ROLE();
     //     const minter_role = await game.MINTER_ROLE();
     //     const burner_role = await game.BURNER_ROLE();
 
     //     // transfer the lootbox contract ownership
-    //     await lootboxContract.transferOwnership(developerWalletAddress);
+    //     await lootbox.transferOwnership(developerWalletAddress);
         
     //     await game.grantRole(gc_manager_role, gcManagerAddress, {from:deployerAddress});
     //     await game.grantRole(minter_role, gcManagerAddress, {from:deployerAddress});

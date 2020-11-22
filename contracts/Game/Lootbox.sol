@@ -13,7 +13,7 @@ import "../utils/Utils.sol";
 //       probabilities flat.
 // Todo: Developer can add multiple kinds of lootboxes per contract
 
-contract LootboxContract is AccessControl, ERC1155 {
+contract Lootbox is AccessControl, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using SafeMath for *;
