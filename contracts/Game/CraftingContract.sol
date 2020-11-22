@@ -7,13 +7,15 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./GameContract.sol";
 import "../Tokens/TokenBase.sol";
+import "../Utils/Utils.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
 
 contract CraftingContract is Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
-    using Address for address;
+    using Address for *;
+    using Utils for *;
     
     /******** Data Structures ********/
     struct ItemPair {
@@ -321,7 +323,7 @@ contract CraftingContract is Ownable, AccessControl {
         view
         returns(uint256[] memory recipeIds)
     {
-        uint256 id = _getId(gameContract, itemId);
+        uint256 id = Utils.getId(gameContract, itemId);
         require(
             craftItemIds.contains(id),
             "Item is not a registered crafting item."
@@ -367,7 +369,7 @@ contract CraftingContract is Ownable, AccessControl {
         view
         returns(uint256[] memory)
     {
-        uint256 id = _getId(gameContract, itemId);
+        uint256 id = Utils.getId(gameContract, itemId);
         require(
             craftItemIds.contains(id),
             "Item is not a registered crafting item."
@@ -506,7 +508,7 @@ contract CraftingContract is Ownable, AccessControl {
         checkAddressIsContract(gameContractAddress)
         returns(uint256)
     {
-        return _getId(gameContractAddress, gameContractId);
+        return Utils.getId(gameContractAddress, gameContractId);
     }
     
     function getCraftItemsLength() public view returns(uint256) {
@@ -514,19 +516,15 @@ contract CraftingContract is Ownable, AccessControl {
     }
 
     /******** TEST Functions ********/
-    // Todo: Delete these
-    function getItemHash(uint256 index) public view returns(uint256) {
-        return craftItemIds.at(index);
-    }
+    // // Todo: Delete these
+    // function getItemHash(uint256 index) public view returns(uint256) {
+    //     return craftItemIds.at(index);
+    // }
     
     /******** Internal Functions ********/
-    function _getId(address contractAddress, uint256 id) internal pure returns(uint256) {
-        return uint256(keccak256(abi.encodePacked(contractAddress, id)));
-    }
-
     function _addCraftingItem(address contractAddress, uint256 id) internal returns(uint256 hashId, bool success) {
         // Get Hashed ID using game contract address and contract item id
-        hashId = _getId(contractAddress, id);
+        hashId = Utils.getId(contractAddress, id);
         
         // If it already exists, ignore
         if (craftItemIds.add(hashId)) {

@@ -23,5 +23,7 @@
     "truffle": "^5.1.53",
     "web3-utils": "^1.3.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "truffle-contract-size": "^2.0.1"
+  }
 }

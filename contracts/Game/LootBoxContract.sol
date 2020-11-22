@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./GameContract.sol";
+import "../Utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
 // Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item. For now, just keep the 
@@ -16,6 +17,7 @@ contract LootboxContract is AccessControl, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using SafeMath for *;
+    using Utils for *;
 
     /******** Constants ********/
     uint256 public LOOTBOX = 0;
@@ -90,7 +92,14 @@ contract LootboxContract is AccessControl, ERC1155 {
     constructor(string memory url) public ERC1155(url) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
-        _setupProbabilities();
+        
+        probabilities[uint8(Rarity.Mythic)] = 1;
+        probabilities[uint8(Rarity.Exotic)] = 25;
+        probabilities[uint8(Rarity.SuperRare)] = 200;
+        probabilities[uint8(Rarity.Rare)] = 1000;
+        probabilities[uint8(Rarity.Scarce)] = 5000;
+        probabilities[uint8(Rarity.Uncommon)] = 25000;
+        probabilities[uint8(Rarity.Common)] = 100000;
     }
 
     function registerInputItem(address contractAddress, uint256 id, uint256 amount, uint256 multiplier)
@@ -101,9 +110,8 @@ contract LootboxContract is AccessControl, ERC1155 {
         // Todo: check that GameContractAddress is a GameContract interface
         // Check GameContract for burner role
         GameContract gameContract = GameContract(contractAddress);
-        bytes32 burner_role = gameContract.BURNER_ROLE();
         require(
-            gameContract.hasRole(burner_role, address(this)),
+            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
             "This Lootbox Contract doesn't have burning permissions."
         );
         require(gameContract.exists(id), "This item does not exist.");
@@ -134,9 +142,8 @@ contract LootboxContract is AccessControl, ERC1155 {
         // Todo: check that GameContractAddress is a GameContract interface
         // Check GameContract for burner role
         GameContract gameContract = GameContract(contractAddress);
-        bytes32 burner_role = gameContract.BURNER_ROLE();
         require(
-            gameContract.hasRole(burner_role, address(this)),
+            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
             "This Lootbox Contract doesn't have burning permissions."
         );
 
@@ -167,9 +174,8 @@ contract LootboxContract is AccessControl, ERC1155 {
         // Todo: check that GameContractAddress is a GameContract interface
         // Check GameContract for burner role
         GameContract gameContract = GameContract(contractAddress);
-        bytes32 burner_role = gameContract.BURNER_ROLE();
         require(
-            gameContract.hasRole(burner_role, address(this)),
+            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
             "This Lootbox Contract doesn't have burning permissions."
         );
         require(gameContract.exists(id), "This item does not exist.");
@@ -204,9 +210,8 @@ contract LootboxContract is AccessControl, ERC1155 {
         // Todo: check that GameContractAddress is a GameContract interface
         // Check GameContract for burner role
         GameContract gameContract = GameContract(contractAddress);
-        bytes32 burner_role = gameContract.BURNER_ROLE();
         require(
-            gameContract.hasRole(burner_role, address(this)),
+            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
             "This Lootbox Contract doesn't have burning permissions."
         );
 
@@ -286,14 +291,19 @@ contract LootboxContract is AccessControl, ERC1155 {
         // Generate an item
         for (uint256 i = 0; i < count; ++i) {
             // random number between 1-100000
-            uint32 rng = uint32(_random(100000));
+            uint32 rng = uint32(Utils.random(100000));
 
             // determine the rarity result
-            uint8 rarity = _getRarity(rng);
+            uint8 rarity = uint8(probabilities.length) - 1;
+            for (uint8 j = 0; j < uint8(probabilities.length); ++j) {
+                if (rng < probabilities[j]) {
+                    rarity = j;
+                }
+            }
 
             // random number between 0 and rewardsList.length
-            require(rewardsList[uint8(rarity)].ids.length() > 0, "There are no items in this rarity level");
-            uint256 itemIndex = _random(rewardsList[rarity].ids.length());
+            require(rewardsList[rarity].ids.length() > 0, "There are no items in this rarity level");
+            uint256 itemIndex = Utils.random(rewardsList[rarity].ids.length());
             uint256 rewardId = rewardsList[rarity].ids.at(itemIndex);
             Reward storage reward = rewardsList[rarity].map[rewardId];
 
@@ -308,8 +318,16 @@ contract LootboxContract is AccessControl, ERC1155 {
         emit LootboxOpened(count);
     }
 
-    function getRewards(Rarity /*rarity*/) public view /*returns(uint256[] ids)*/ {
-        // Todo: returns the item ids in the rarity band
+    function getRewards(Rarity rarity) public view returns(uint256[] memory hashIds, uint256[] memory rewardCounts) {
+        RewardSet storage rewardsSet = rewardsList[uint8(rarity)];
+        for (uint256 i = 0; i < rewardsSet.ids.length(); ++i) {
+            hashIds[i] = rewardsSet.map[rewardsSet.ids.at(i)].lootboxId;
+            rewardCounts[i] = rewardsSet.map[rewardsSet.ids.at(i)].amount;
+        }
+    }
+
+    function getInputItemCount(uint256 hashId) public view returns(uint256) {
+        return inputsList[hashId].requiredAmount;
     }
 
     function getLootboxId(address contractAddress, uint256 id)
@@ -318,15 +336,19 @@ contract LootboxContract is AccessControl, ERC1155 {
         checkAddressIsContract(contractAddress)
         returns(uint256)
     {
-        return _getId(contractAddress, id);
+        return Utils.getId(contractAddress, id);
     }
 
-    function getRarity(uint256 /*hashId*/)
+    function getRarity(uint256 hashId)
         public
         view
-        // returns(Rarity[])
+        returns(Rarity[] memory rarities)
     {
-        // Todo: returns rarities
+        require(itemIds.contains(hashId), "Item does not exist in the Lootbox items list.");
+        ItemGameInfo storage item = items[hashId];
+        for (uint256 i = 0; i < item.rarity.length(); ++i) {
+            rarities[i] = Rarity(item.rarity.at(i));
+        }
     }
 
     function setRequiredInputItemsCount(uint256 count) public checkPermissions(MANAGER_ROLE) {
@@ -338,31 +360,8 @@ contract LootboxContract is AccessControl, ERC1155 {
     }
 
     /******** Internal Functions ********/
-    function _getId(address contractAddress, uint256 id) internal pure returns(uint256) {
-        return uint256(keccak256(abi.encodePacked(contractAddress, id)));
-    }
-
-    function _getRarity(uint32 rng) internal view returns(uint8) {
-        for (uint8 i = 0; i < probabilities.length; ++i) {
-            if (rng < probabilities[i]) {
-                return i;
-            }
-        }
-        return uint8(Rarity.Common);
-    }
-
-    function _setupProbabilities() private {
-        probabilities[uint8(Rarity.Mythic)] = 1;
-        probabilities[uint8(Rarity.Exotic)] = 25;
-        probabilities[uint8(Rarity.SuperRare)] = 200;
-        probabilities[uint8(Rarity.Rare)] = 1000;
-        probabilities[uint8(Rarity.Scarce)] = 5000;
-        probabilities[uint8(Rarity.Uncommon)] = 25000;
-        probabilities[uint8(Rarity.Common)] = 100000;
-    }
-
     function _addLootboxItem(address contractAddress, uint256 id) internal returns (uint256 hashId, bool success) {
-        hashId = _getId(contractAddress, id);
+        hashId = Utils.getId(contractAddress, id);
         if (itemIds.add(hashId)) {
             ItemGameInfo storage item = items[hashId];
             item.gameContractAddress = contractAddress;
@@ -370,9 +369,5 @@ contract LootboxContract is AccessControl, ERC1155 {
             success = true;
         }
         success = false;
-    }
-
-    function _random(uint256 modulus) internal view returns (uint256) {
-        return uint(keccak256(abi.encodePacked(now, msg.sig, block.timestamp))) % modulus;
     }
 }
