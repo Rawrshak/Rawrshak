@@ -1,7 +1,7 @@
 const OVCTokenContract = artifacts.require("OVCToken");
 const GameContract = artifacts.require("GameContract");
 const CraftingContract = artifacts.require("CraftingContract");
-const LootBoxContract = artifacts.require("LootBoxContract");
+const LootboxContract = artifacts.require("LootboxContract");
 
 module.exports = async function(deployer, networks, accounts) {
     // deploy OVC token with 1,000,000,000 initial supply.
@@ -15,17 +15,20 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.deploy(CraftingContract, ovcTokenContract.address);
     
     // deploy Crafting Contract
-    await deployer.deploy(LootBoxContract);
+    await deployer.deploy(LootboxContract, "https://testgame.com/api/item/{id}.json");
 
     // Assign crafting contract the minter and burner roles
     gameContract = await GameContract.deployed();
     craftingContract = await CraftingContract.deployed();
+    lootboxContract = await LootboxContract.deployed();
     minter_role = await gameContract.MINTER_ROLE();
     burner_role = await gameContract.BURNER_ROLE();
     deployerAddress = accounts[0];
-    gameContract.grantRole(minter_role,craftingContract.address,{from: deployerAddress});
-    gameContract.grantRole(burner_role,craftingContract.address,{from: deployerAddress});
-
+    await gameContract.grantRole(minter_role, craftingContract.address, {from: deployerAddress});
+    await gameContract.grantRole(burner_role, craftingContract.address, {from: deployerAddress});
+    await gameContract.grantRole(minter_role, lootboxContract.address, {from: deployerAddress});
+    await gameContract.grantRole(burner_role, lootboxContract.address, {from: deployerAddress});
+        
     // // Note: This is for debugging purposes
     // gc_manager_role = await gameContract.MANAGER_ROLE();
     // await gameContract.grantRole(gc_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});

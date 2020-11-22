@@ -544,35 +544,18 @@ contract CraftingContract is Ownable, AccessControl {
     }
     
     /******** Internal Functions ********/
-    function _getId(
-        address gameContractAddress,
-        uint256 gameContractId
-    )
-        internal
-        pure
-        returns(uint256)
-    {
-        return uint256(keccak256(abi.encodePacked(
-            gameContractAddress,
-            gameContractId
-        )));
+    function _getId(address contractAddress, uint256 id) internal pure returns(uint256) {
+        return uint256(keccak256(abi.encodePacked(contractAddress, id)));
     }
 
-    function _addCraftingItem(
-        uint256 hashId,
-        address gameContractAddress,
-        uint256 gameContractId
-    )
-        internal
-        returns(bool)
-    {
+    function _addCraftingItem(uint256 hashId, address contractAddress, uint256 id) internal returns(bool) {
         // If it already exists, ignore
         if (craftItemIds.add(hashId))
         {
             // Add crafting item data to Crafting Materials List
             CraftItem storage item = craftItems[hashId];
-            item.gameContractAddress = gameContractAddress;
-            item.gameContractItemId = gameContractId;
+            item.gameContractAddress = contractAddress;
+            item.gameContractItemId = id;
             emit AddedCraftingItem(hashId);
             return true;
         }

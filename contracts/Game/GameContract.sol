@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 
 contract GameContract is ERC1155, AccessControl {
@@ -29,6 +29,7 @@ contract GameContract is ERC1155, AccessControl {
     /******** Events ********/
     event GamePayableAddressChanged(address);
     event ItemCreated(uint256);
+    event ItemCreatedBatch(uint256[]);
     event ItemRemoved(uint256);
     event ItemMinted(uint256,uint256);
     event ItemBurned(uint256,uint256);
@@ -79,11 +80,13 @@ contract GameContract is ERC1155, AccessControl {
     function createItem(uint256 id) public
     {
         _createItem(id, gamePayableAddress, 0);
+        emit ItemCreated(id);
     }
 
     function createItem(uint256 id, address creatorAddress) public
     {
         _createItem(id, payable(creatorAddress), 0);
+        emit ItemCreated(id);
     }
 
     function createItem(
@@ -95,6 +98,57 @@ contract GameContract is ERC1155, AccessControl {
     {
         _createItem(id, payable(creatorAddress), maxSupply);
         _mint(creatorAddress, id, maxSupply, "");
+
+        emit ItemCreated(id);
+    }
+
+    function createItemBatch(
+        uint256[] memory ids
+    )
+        public
+    {
+        // check for existence
+        for (uint256 i = 0; i < ids.length; ++i)
+        {
+            _createItem(ids[i], gamePayableAddress, 0);
+        }
+
+        emit ItemCreatedBatch(ids);
+    }
+
+    function createItemBatch(
+        uint256[] memory ids,
+        address creatorAddress
+    )
+        public
+    {
+        // check for existence
+        for (uint256 i = 0; i < ids.length; ++i)
+        {
+            _createItem(ids[i], payable(creatorAddress), 0);
+        }
+
+        emit ItemCreatedBatch(ids);
+    }
+
+    function createItemBatch(
+        uint256[] memory ids,
+        address creatorAddress,
+        uint256[] memory maxSupplies
+    )
+        public
+    {
+        require(ids.length == maxSupplies.length, "IDs and Max Supply array size do not match");
+        // check for existence
+        for (uint256 i = 0; i < ids.length; ++i)
+        {
+            _createItem(ids[i], payable(creatorAddress), maxSupplies[i]);
+        }
+
+        // Todo: figure out who should own the newly minted items - game developer or creator?
+        _mintBatch(creatorAddress, ids, maxSupplies, "");
+
+        emit ItemCreatedBatch(ids);
     }
 
     // Delete the item
@@ -251,7 +305,5 @@ contract GameContract is ERC1155, AccessControl {
         item.totalSupply = (maxSupply != 0) ? maxSupply : 0;
         item.creatorAddress = (creatorAddress == address(0))
             ? gamePayableAddress: creatorAddress;
-
-        emit ItemCreated(id);
     }
 }
