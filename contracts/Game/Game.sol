@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 
-contract GameContract is ERC1155, AccessControl {
+contract Game is ERC1155, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
 
     /******** Data Structures ********/

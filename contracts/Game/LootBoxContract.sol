@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./GameContract.sol";
-import "../Utils/Utils.sol";
+import "./Game.sol";
+import "../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
 // Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item. For now, just keep the 
@@ -64,7 +64,7 @@ contract LootboxContract is AccessControl, ERC1155 {
     uint256 private requiredInputItemsCount = 4;
     
     // uint8(Rarity.Common)
-    uint32[] probabilities;
+    uint32[7] probabilities;
     
     /******** Events ********/
     event AddedInputItem(uint256, bool);
@@ -79,12 +79,12 @@ contract LootboxContract is AccessControl, ERC1155 {
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 role) {
-        require(hasRole(role, msg.sender), "Caller does not have the necessary permissions.");
+        require(hasRole(role, msg.sender), "Caller missing permissions");
         _;
     }
 
     modifier checkAddressIsContract(address contractAddress) {
-        require(Address.isContract(contractAddress), "Coin address is not valid");
+        require(Address.isContract(contractAddress), "Address not valid");
         _;
     }
 
@@ -108,13 +108,13 @@ contract LootboxContract is AccessControl, ERC1155 {
         checkAddressIsContract(contractAddress)
     {
         // Todo: check that GameContractAddress is a GameContract interface
-        // Check GameContract for burner role
-        GameContract gameContract = GameContract(contractAddress);
+        // Check for burner role
+        Game game = Game(contractAddress);
         require(
-            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
-            "This Lootbox Contract doesn't have burning permissions."
+            game.hasRole(game.BURNER_ROLE(), address(this)),
+            "Contract missing permissions."
         );
-        require(gameContract.exists(id), "This item does not exist.");
+        require(game.exists(id), "Item does not exist.");
 
         // Add to items map
         (uint256 hashId, bool result) = _addLootboxItem(contractAddress, id);
@@ -136,22 +136,21 @@ contract LootboxContract is AccessControl, ERC1155 {
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
-        require(ids.length == amounts.length, "ids and amounts array length do not match.");
-        require(ids.length == multipliers.length, "ids and multiplier array length do not match.");
+        require(ids.length == amounts.length && ids.length == multipliers.length, "Input array length mismatch");
         
         // Todo: check that GameContractAddress is a GameContract interface
         // Check GameContract for burner role
-        GameContract gameContract = GameContract(contractAddress);
+        Game game = Game(contractAddress);
         require(
-            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
-            "This Lootbox Contract doesn't have burning permissions."
+            game.hasRole(game.BURNER_ROLE(), address(this)),
+            "Contract missing permissions."
         );
 
         // Add to items map
         uint256[] memory hashIds;
         bool[] memory results;
         for (uint256 i = 0; i < ids.length; ++i) {
-            require(gameContract.exists(ids[i]), "This item does not exist.");
+            require(game.exists(ids[i]), "Item does not exist.");
 
             (uint256 hashId, bool result) = _addLootboxItem(contractAddress, ids[i]);
 
@@ -171,14 +170,14 @@ contract LootboxContract is AccessControl, ERC1155 {
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
-        // Todo: check that GameContractAddress is a GameContract interface
-        // Check GameContract for burner role
-        GameContract gameContract = GameContract(contractAddress);
+        // Todo: check that GameContractAddress is a Gamece
+        // Check Gamener role
+        Game game = Game(contractAddress);
         require(
-            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
-            "This Lootbox Contract doesn't have burning permissions."
+            game.hasRole(game.BURNER_ROLE(), address(this)),
+            "Contract missing permissions."
         );
-        require(gameContract.exists(id), "This item does not exist.");
+        require(game.exists(id), "Item does not exist.");
 
         // Add to items map. There can be multiple amounts per item so the reward hash should take that into account.
         (uint256 lootboxId, bool result) = _addLootboxItem(contractAddress, id);
@@ -204,22 +203,21 @@ contract LootboxContract is AccessControl, ERC1155 {
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
-        require(ids.length == rarities.length, "ids and raruties array length do not match.");
-        require(ids.length == amounts.length, "ids and amounts array length do not match.");
+        require(ids.length == rarities.length && ids.length == amounts.length, "Input array length mismatch");
         
-        // Todo: check that GameContractAddress is a GameContract interface
-        // Check GameContract for burner role
-        GameContract gameContract = GameContract(contractAddress);
+        // Todo: check that GameContractAddress is a Gamece
+        // Check Gamener role
+        Game game = Game(contractAddress);
         require(
-            gameContract.hasRole(gameContract.BURNER_ROLE(), address(this)),
-            "This Lootbox Contract doesn't have burning permissions."
+            game.hasRole(game.BURNER_ROLE(), address(this)),
+            "Contract missing permissions."
         );
 
         // Add to items map
         uint256[] memory hashIds;
         bool[] memory results;
         for (uint256 i = 0; i < ids.length; ++i) {
-            require(gameContract.exists(ids[i]), "This item does not exist.");
+            require(game.exists(ids[i]), "Item does not exist.");
 
             // Add to items map. There can be multiple amounts per item so the reward hash should take 
             // that into account.
@@ -241,23 +239,20 @@ contract LootboxContract is AccessControl, ERC1155 {
     }
 
     function generateLootbox(uint256[] memory ids, uint256[] memory amounts) public {
-        require(ids.length == amounts.length, "ids and amounts array length do not match.");
+        require(ids.length == amounts.length, "Input array length mismatch");
 
         uint256 validInputCount = 0;
         
         // Count how many lootboxes the msg.sender can generate
         for (uint256 i = 0; i < ids.length; ++i) {
             if (itemIds.contains(ids[i])) {
-                uint256 requiredAmount = inputsList[ids[i]].requiredAmount;
-                uint256 count = SafeMath.div(amounts[i], requiredAmount);
-
-                validInputCount += count;
+                validInputCount += SafeMath.div(amounts[i], inputsList[ids[i]].requiredAmount);
             }
         }
 
         // Check to see if we can generate at least one lootbox given the input items
         uint256 lootboxCount = SafeMath.div(validInputCount, requiredInputItemsCount);
-        require(lootboxCount > 0, "There aren't enough input items.");
+        require(lootboxCount > 0, "Insufficient Input");
         uint256 itemsToBurn = SafeMath.mul(lootboxCount, requiredInputItemsCount);
         
         // Burn items
@@ -266,12 +261,12 @@ contract LootboxContract is AccessControl, ERC1155 {
                 uint256 requiredAmount = inputsList[ids[i]].requiredAmount;
                 uint256 count = SafeMath.div(amounts[i], requiredAmount);
 
-                GameContract gameContract = GameContract(items[ids[i]].gameContractAddress);
+                Game game = Game(items[ids[i]].gameContractAddress);
                 if (itemsToBurn > count) {
-                    gameContract.burn(msg.sender, items[ids[i]].gameContractItemId, count * requiredAmount);
+                    game.burn(msg.sender, items[ids[i]].gameContractItemId, count * requiredAmount);
                     itemsToBurn -= count;
                 } else {
-                    gameContract.burn(msg.sender, items[ids[i]].gameContractItemId, itemsToBurn * requiredAmount);
+                     game.burn(msg.sender, items[ids[i]].gameContractItemId, itemsToBurn * requiredAmount);
                     itemsToBurn = 0;
                 }
             }
@@ -284,7 +279,7 @@ contract LootboxContract is AccessControl, ERC1155 {
     }
 
     function openLootbox(uint256 count) public {
-        require(balanceOf(msg.sender, LOOTBOX) == count, "User does not own enough lootboxes.");
+        require(balanceOf(msg.sender, LOOTBOX) == count, "Invalid count");
 
         _burn(msg.sender, LOOTBOX, count);
 
@@ -302,18 +297,17 @@ contract LootboxContract is AccessControl, ERC1155 {
             }
 
             // random number between 0 and rewardsList.length
-            require(rewardsList[rarity].ids.length() > 0, "There are no items in this rarity level");
+            require(rewardsList[rarity].ids.length() > 0, "Rewards List is empty");
             uint256 itemIndex = Utils.random(rewardsList[rarity].ids.length());
-            uint256 rewardId = rewardsList[rarity].ids.at(itemIndex);
-            Reward storage reward = rewardsList[rarity].map[rewardId];
+            Reward storage reward = rewardsList[rarity].map[rewardsList[rarity].ids.at(itemIndex)];
 
             ItemGameInfo storage item = items[reward.lootboxId];
 
             // Get Game Contracts
-            GameContract gameContract = GameContract(item.gameContractAddress);
+            Game game = Game(item.gameContractAddress);
 
             // Mint() will fail if this contract does not have the necessary permissions 
-            gameContract.mint(msg.sender, item.gameContractItemId, reward.amount);
+            game.mint(msg.sender, item.gameContractItemId, reward.amount);
         }
         emit LootboxOpened(count);
     }
@@ -339,25 +333,26 @@ contract LootboxContract is AccessControl, ERC1155 {
         return Utils.getId(contractAddress, id);
     }
 
-    function getRarity(uint256 hashId)
-        public
-        view
-        returns(Rarity[] memory rarities)
-    {
-        require(itemIds.contains(hashId), "Item does not exist in the Lootbox items list.");
-        ItemGameInfo storage item = items[hashId];
-        for (uint256 i = 0; i < item.rarity.length(); ++i) {
-            rarities[i] = Rarity(item.rarity.at(i));
-        }
-    }
+    // // Todo: uncomment below. Compartmentalize contracts
+    // function getRarity(uint256 hashId)
+    //     public
+    //     view
+    //     returns(Rarity[] memory rarities)
+    // {
+    //     require(itemIds.contains(hashId), "Item does not exist.");
+    //     ItemGameInfo storage item = items[hashId];
+    //     for (uint256 i = 0; i < item.rarity.length(); ++i) {
+    //         rarities[i] = Rarity(item.rarity.at(i));
+    //     }
+    // }
 
-    function setRequiredInputItemsCount(uint256 count) public checkPermissions(MANAGER_ROLE) {
-        requiredInputItemsCount = count;
-    }
+    // function setRequiredInputItemsCount(uint256 count) public checkPermissions(MANAGER_ROLE) {
+    //     requiredInputItemsCount = count;
+    // }
 
-    function getRequiredInputItemsCount() public view returns(uint256) {
-        return requiredInputItemsCount;
-    }
+    // function getRequiredInputItemsCount() public view returns(uint256) {
+    //     return requiredInputItemsCount;
+    // }
 
     /******** Internal Functions ********/
     function _addLootboxItem(address contractAddress, uint256 id) internal returns (uint256 hashId, bool success) {
