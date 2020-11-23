@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "./Game.sol";
+import "../interfaces/IGame.sol";
 import "../tokens/TokenBase.sol";
 import "../utils/Utils.sol";
 
@@ -151,17 +151,8 @@ contract Crafting is Ownable, AccessControl {
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(gameContractAddress)
     {
-        // Todo: check that GameContractAddress is a Game interface
-        // Check Game for burner role
-        Game game = Game(gameContractAddress);
-        bytes32 burner_role = game.BURNER_ROLE();
         require(
-            game.hasRole(burner_role, address(this)),
-            "This Crafting Contract doesn't have burning permissions."
-        );
-        
-        require(
-            game.exists(gameContractId),
+            IGame(gameContractAddress).exists(gameContractId),
             "This item does not exist."
         );
         
@@ -181,16 +172,8 @@ contract Crafting is Ownable, AccessControl {
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(gameContractAddress)
     {
-        // Check Game for minter role
-        Game game = Game(gameContractAddress);
-        bytes32 minter_role = game.MINTER_ROLE();
         require(
-            game.hasRole(minter_role, address(this)),
-            "This Crafting Contract doesn't have minting permissions."
-        );
-        
-        require(
-            game.exists(gameContractId),
+            IGame(gameContractAddress).exists(gameContractId),
             "This item does not exist."
         );
 
@@ -460,12 +443,9 @@ contract Crafting is Ownable, AccessControl {
             // Get Crafting Item
             CraftItem storage item = craftItems[recipe.materials[i].craftingItemId];
 
-            // Get Game Contracts
-            Game game = Game(item.gameContractAddress);
-
             // Burn() will fail if this contract does not have the necessary 
             // permissions or if the account does not have enough materials
-            game.burn(account, item.gameContractItemId, recipe.materials[i].count);
+            IGame(item.gameContractAddress).burn(account, item.gameContractItemId, recipe.materials[i].count);
         }
 
         // Mint Reward
@@ -473,12 +453,9 @@ contract Crafting is Ownable, AccessControl {
             // Get Crafting Item
             CraftItem storage item = craftItems[recipe.rewards[i].craftingItemId];
 
-            // Get Game Contracts
-            Game game = Game(item.gameContractAddress);
-
             // Mint() will fail if this contract does not have the necessary 
             // permissions 
-            game.mint(account, item.gameContractItemId, recipe.rewards[i].count);
+            IGame(item.gameContractAddress).mint(account, item.gameContractItemId, recipe.rewards[i].count);
         }
 
         // Notify user of item getting crafted

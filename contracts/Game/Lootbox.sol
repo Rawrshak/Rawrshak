@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./Game.sol";
+import "../interfaces/IGame.sol";
 import "../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
@@ -108,13 +108,7 @@ contract Lootbox is AccessControl, ERC1155 {
         checkAddressIsContract(contractAddress)
     {
         // Todo: check that GameContractAddress is a GameContract interface
-        // Check for burner role
-        Game game = Game(contractAddress);
-        require(
-            game.hasRole(game.BURNER_ROLE(), address(this)),
-            "Contract missing permissions."
-        );
-        require(game.exists(id), "Item does not exist.");
+        require(IGame(contractAddress).exists(id), "Item does not exist.");
 
         // Add to items map
         (uint256 hashId, bool result) = _addLootboxItem(contractAddress, id);
@@ -139,12 +133,7 @@ contract Lootbox is AccessControl, ERC1155 {
         require(ids.length == amounts.length && ids.length == multipliers.length, "Input array length mismatch");
         
         // Todo: check that GameContractAddress is a GameContract interface
-        // Check GameContract for burner role
-        Game game = Game(contractAddress);
-        require(
-            game.hasRole(game.BURNER_ROLE(), address(this)),
-            "Contract missing permissions."
-        );
+        IGame game = IGame(contractAddress);
 
         // Add to items map
         uint256[] memory hashIds;
@@ -170,14 +159,8 @@ contract Lootbox is AccessControl, ERC1155 {
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
-        // Todo: check that GameContractAddress is a Gamece
-        // Check Gamener role
-        Game game = Game(contractAddress);
-        require(
-            game.hasRole(game.BURNER_ROLE(), address(this)),
-            "Contract missing permissions."
-        );
-        require(game.exists(id), "Item does not exist.");
+        // Todo: check that GameContractAddress is a GameContract interface
+        require(IGame(contractAddress).exists(id), "Item does not exist.");
 
         // Add to items map. There can be multiple amounts per item so the reward hash should take that into account.
         (uint256 lootboxId, bool result) = _addLootboxItem(contractAddress, id);
@@ -205,13 +188,8 @@ contract Lootbox is AccessControl, ERC1155 {
     {
         require(ids.length == rarities.length && ids.length == amounts.length, "Input array length mismatch");
         
-        // Todo: check that GameContractAddress is a Gamece
-        // Check Gamener role
-        Game game = Game(contractAddress);
-        require(
-            game.hasRole(game.BURNER_ROLE(), address(this)),
-            "Contract missing permissions."
-        );
+        // Todo: check that GameContractAddress is a Game contract
+        IGame game = IGame(contractAddress);
 
         // Add to items map
         uint256[] memory hashIds;
@@ -260,13 +238,13 @@ contract Lootbox is AccessControl, ERC1155 {
             if (itemIds.contains(ids[i]) && itemsToBurn > 0) {
                 uint256 requiredAmount = inputsList[ids[i]].requiredAmount;
                 uint256 count = SafeMath.div(amounts[i], requiredAmount);
-
-                Game game = Game(items[ids[i]].gameContractAddress);
+                
+                IGame game = IGame(items[ids[i]].gameContractAddress);
                 if (itemsToBurn > count) {
                     game.burn(msg.sender, items[ids[i]].gameContractItemId, count * requiredAmount);
                     itemsToBurn -= count;
                 } else {
-                     game.burn(msg.sender, items[ids[i]].gameContractItemId, itemsToBurn * requiredAmount);
+                    game.burn(msg.sender, items[ids[i]].gameContractItemId, itemsToBurn * requiredAmount);
                     itemsToBurn = 0;
                 }
             }
@@ -303,11 +281,8 @@ contract Lootbox is AccessControl, ERC1155 {
 
             ItemGameInfo storage item = items[reward.lootboxId];
 
-            // Get Game Contracts
-            Game game = Game(item.gameContractAddress);
-
             // Mint() will fail if this contract does not have the necessary permissions 
-            game.mint(msg.sender, item.gameContractItemId, reward.amount);
+            IGame(item.gameContractAddress).mint(msg.sender, item.gameContractItemId, reward.amount);
         }
         emit LootboxOpened(count);
     }

@@ -4,8 +4,9 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "../interfaces/IGame.sol";
 
-contract Game is ERC1155, AccessControl {
+contract Game is IGame, ERC1155, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
 
     /******** Data Structures ********/
@@ -63,13 +64,14 @@ contract Game is ERC1155, AccessControl {
     }
 
     // GamePayableAddress getter
-    function getGamePayableAddress() public view  returns(address payable) {
+    function getGamePayableAddress() external view override returns(address payable) {
         return gamePayableAddress;
     }
 
     // GamePayableAddress setter
     function setGamePayableAddress(address payable newAddress) 
-        public 
+        external
+        override
         checkPermissions(GAME_OWNER_ROLE)
     {
         gamePayableAddress = newAddress;
@@ -77,13 +79,13 @@ contract Game is ERC1155, AccessControl {
     }
 
     // Create New Item
-    function createItem(uint256 id) public
+    function createItem(uint256 id) external override
     {
         _createItem(id, gamePayableAddress, 0);
         emit ItemCreated(id);
     }
 
-    function createItem(uint256 id, address creatorAddress) public
+    function createItem(uint256 id, address creatorAddress) external override
     {
         _createItem(id, payable(creatorAddress), 0);
         emit ItemCreated(id);
@@ -94,7 +96,8 @@ contract Game is ERC1155, AccessControl {
         address creatorAddress,
         uint256 maxSupply
     )
-        public
+        external
+        override
     {
         _createItem(id, payable(creatorAddress), maxSupply);
         _mint(creatorAddress, id, maxSupply, "");
@@ -103,9 +106,10 @@ contract Game is ERC1155, AccessControl {
     }
 
     function createItemBatch(
-        uint256[] memory ids
+        uint256[] calldata ids
     )
-        public
+        external
+        override
     {
         // check for existence
         for (uint256 i = 0; i < ids.length; ++i) {
@@ -116,10 +120,11 @@ contract Game is ERC1155, AccessControl {
     }
 
     function createItemBatch(
-        uint256[] memory ids,
+        uint256[] calldata ids,
         address creatorAddress
     )
-        public
+        external
+        override
     {
         // check for existence
         for (uint256 i = 0; i < ids.length; ++i) {
@@ -130,11 +135,12 @@ contract Game is ERC1155, AccessControl {
     }
 
     function createItemBatch(
-        uint256[] memory ids,
+        uint256[] calldata ids,
         address creatorAddress,
-        uint256[] memory maxSupplies
+        uint256[] calldata maxSupplies
     )
-        public
+        external
+        override
     {
         require(ids.length == maxSupplies.length, "IDs and Max Supply array size do not match");
         // check for existence
@@ -149,7 +155,7 @@ contract Game is ERC1155, AccessControl {
     }
 
     // Delete the item
-    function deleteItem(uint256 id) public checkPermissions(MANAGER_ROLE) {
+    function deleteItem(uint256 id) external override checkPermissions(MANAGER_ROLE) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
         require(
             itemsMap.itemsList[id].totalSupply == balanceOf(msg.sender, id),
@@ -163,18 +169,18 @@ contract Game is ERC1155, AccessControl {
     }
     
     // check if the item exists
-    function exists(uint256 id) public view returns (bool) {
+    function exists(uint256 id) external override view returns (bool) {
         return itemsMap.idSet.contains(id);
     }
 
     // Get Length of the item list
-    function length() public view returns (uint256)
+    function length() external override view returns (uint256)
     {
         return itemsMap.idSet.length();
     }
 
     // Returns an array of IDs
-    function getAllItems() public view returns(uint256[] memory) {
+    function getAllItems() external override view returns(uint256[] memory) {
         uint256 len = itemsMap.idSet.length();
         require(len != 0, "The list is empty.");
 
@@ -186,18 +192,19 @@ contract Game is ERC1155, AccessControl {
         return idList;
     }
 
-    function getTotalSupply(uint256 id) public view returns(uint256) {
+    function getTotalSupply(uint256 id) external override view returns(uint256) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
         return itemsMap.itemsList[id].totalSupply;
     }
 
-    function getCreatorAddress(uint256 id) public view returns(address) {
+    function getCreatorAddress(uint256 id) external override view returns(address) {
         require(itemsMap.idSet.contains(id), "This item does not exist.");
         return itemsMap.itemsList[id].creatorAddress;
     }
 
     function mint(address receivingAddress, uint256 itemId, uint256 amount)
-        public
+        external
+        override
         checkPermissions(MINTER_ROLE)
     {
         require(itemsMap.idSet.contains(itemId), "Item does not exist.");
@@ -217,10 +224,11 @@ contract Game is ERC1155, AccessControl {
     // Todo: mint several items to several addresses
     function mintBatch(
         address receivingAddress,
-        uint256[] memory itemIds,
-        uint256[] memory amounts
+        uint256[] calldata itemIds,
+        uint256[] calldata amounts
     )
-        public 
+        external
+        override
         checkPermissions(MINTER_ROLE)
     {
         require(itemIds.length == amounts.length, "item arrays don't match.");
@@ -240,7 +248,8 @@ contract Game is ERC1155, AccessControl {
     }
 
     function burn(address account, uint256 itemId, uint256 amount)
-        public
+        external
+        override
         checkPermissions(BURNER_ROLE)
     {
         require(itemsMap.idSet.contains(itemId), "Item does not exist.");
@@ -257,10 +266,11 @@ contract Game is ERC1155, AccessControl {
 
     function burnBatch(
         address account,
-        uint256[] memory itemIds,
-        uint256[] memory amounts
+        uint256[] calldata itemIds,
+        uint256[] calldata amounts
     )
-        public
+        external
+        override
         checkPermissions(BURNER_ROLE)
     {
         require(itemIds.length == amounts.length, "item arrays don't match.");
@@ -289,7 +299,7 @@ contract Game is ERC1155, AccessControl {
         address payable creatorAddress,
         uint256 maxSupply
     )
-        public
+        internal
         checkPermissions(MANAGER_ROLE)
     {
         require(itemsMap.idSet.add(id), "This item already exists.");
