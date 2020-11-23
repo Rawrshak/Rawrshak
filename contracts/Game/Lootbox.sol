@@ -53,7 +53,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     mapping(uint256 => Input) private inputsList;
     // uint8(Rarity.Common)
     mapping(uint8 => RewardSet) private rewardsList;
-    uint8 private requiredInputItemsAmount = 4;
+    uint8 private tradeInMinimum = 4;
     
     // uint8(Rarity.Common)
     uint32[7] probabilities;
@@ -225,9 +225,9 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         }
 
         // Check to see if we can generate at least one lootbox given the input items
-        uint256 lootboxCount = SafeMath.div(validInputCount, requiredInputItemsAmount);
+        uint256 lootboxCount = SafeMath.div(validInputCount, tradeInMinimum);
         require(lootboxCount > 0, "Insufficient Input");
-        uint256 itemsToBurn = SafeMath.mul(lootboxCount, requiredInputItemsAmount);
+        uint256 itemsToBurn = SafeMath.mul(lootboxCount, tradeInMinimum);
         
         // Burn items
         for (uint256 i = 0; i < ids.length; ++i) {
@@ -253,7 +253,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     }
 
     function openLootbox(uint256 count) external override {
-        require(balanceOf(msg.sender, LOOTBOX) == count, "Invalid count");
+        require(balanceOf(msg.sender, LOOTBOX) >= count, "Invalid count");
 
         _burn(msg.sender, LOOTBOX, count);
 
@@ -285,6 +285,8 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
 
     function getRewards(Rarity rarity) external view override returns(uint256[] memory hashIds, uint256[] memory rewardCounts) {
         RewardSet storage rewardsSet = rewardsList[uint8(rarity)];
+        hashIds = new uint256[](rewardsSet.ids.length());
+        rewardCounts = new uint256[](rewardsSet.ids.length());
         for (uint256 i = 0; i < rewardsSet.ids.length(); ++i) {
             hashIds[i] = rewardsSet.map[rewardsSet.ids.at(i)].lootboxId;
             rewardCounts[i] = rewardsSet.map[rewardsSet.ids.at(i)].amount;
@@ -313,6 +315,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     {
         require(itemIds.contains(hashId), "Item does not exist.");
         ItemGameInfo storage item = items[hashId];
+        rarities = new Rarity[](item.rarity.length());
         for (uint256 i = 0; i < item.rarity.length(); ++i) {
             rarities[i] = Rarity(item.rarity.at(i));
         }
@@ -331,13 +334,18 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     //     gameItemId = items[lootboxId].gameContractItemId;
     // }
 
-    function setRequiredInputItemsAmount(uint8 count) external override checkPermissions(MANAGER_ROLE) {
-        requiredInputItemsAmount = count;
+    function setTradeInMinimum(uint8 count) external override checkPermissions(MANAGER_ROLE) {
+        tradeInMinimum = count;
     }
 
-    function getRequiredInputItemsAmount() external view override returns(uint8) {
-        return requiredInputItemsAmount;
+    function getTradeInMinimum() external view override returns(uint8) {
+        return tradeInMinimum;
     }
+
+    // /******** TEST Functions ********/
+    // function mintLootbox(address account, uint256 amount) public {
+    //     _mint(account, LOOTBOX, amount, "");
+    // }
 
     /******** Internal Functions ********/
     function _addLootboxItem(address contractAddress, uint256 id) internal returns (uint256 hashId, bool success) {

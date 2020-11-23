@@ -36,6 +36,6 @@ interface ILootbox {
     function getRequiredInputItemAmount(uint256 hashId) external view returns(uint256);
     function getLootboxId(address contractAddress, uint256 id) external view returns(uint256);
     function getRarity(uint256 hashId) external view returns(Rarity[] memory rarities);
-    function setRequiredInputItemsAmount(uint8 count) external;
-    function getRequiredInputItemsAmount() external view returns(uint8);
+    function setTradeInMinimum(uint8 count) external;
+    function getTradeInMinimum() external view returns(uint8);
 }
