@@ -2,10 +2,12 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../interfaces/IGame.sol";
+import "../interfaces/ILootbox.sol";
 import "../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
@@ -13,25 +15,15 @@ import "../utils/Utils.sol";
 //       probabilities flat.
 // Todo: Developer can add multiple kinds of lootboxes per contract
 
-contract Lootbox is AccessControl, ERC1155 {
+contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using SafeMath for *;
     using Utils for *;
 
     /******** Constants ********/
-    uint256 public LOOTBOX = 0;
-
-    /******** Enums ********/
-    enum Rarity {
-        Mythic,
-        Exotic,
-        SuperRare,
-        Rare,
-        Scarce,
-        Uncommon,
-        Common
-    }
+    uint256 private LOOTBOX = 0;
+    // uint8 private DEFAULT_REQUIRED_INPUT_ITEMS_AMOUNT = 4;
 
     /******** Data Structures ********/
     struct ItemGameInfo {
@@ -61,7 +53,7 @@ contract Lootbox is AccessControl, ERC1155 {
     mapping(uint256 => Input) private inputsList;
     // uint8(Rarity.Common)
     mapping(uint8 => RewardSet) private rewardsList;
-    uint256 private requiredInputItemsCount = 4;
+    uint8 private requiredInputItemsAmount = 4;
     
     // uint8(Rarity.Common)
     uint32[7] probabilities;
@@ -103,7 +95,8 @@ contract Lootbox is AccessControl, ERC1155 {
     }
 
     function registerInputItem(address contractAddress, uint256 id, uint256 amount, uint256 multiplier)
-        public
+        external
+        override
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
@@ -122,11 +115,12 @@ contract Lootbox is AccessControl, ERC1155 {
 
     function registerInputItemBatch(
         address contractAddress,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        uint256[] memory multipliers
+        uint256[] calldata ids,
+        uint256[] calldata amounts,
+        uint256[] calldata multipliers
     ) 
-        public
+        external
+        override
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
@@ -136,8 +130,8 @@ contract Lootbox is AccessControl, ERC1155 {
         IGame game = IGame(contractAddress);
 
         // Add to items map
-        uint256[] memory hashIds;
-        bool[] memory results;
+        uint256[] memory hashIds = new uint256[](ids.length);
+        bool[] memory results = new bool[](ids.length);
         for (uint256 i = 0; i < ids.length; ++i) {
             require(game.exists(ids[i]), "Item does not exist.");
 
@@ -155,7 +149,8 @@ contract Lootbox is AccessControl, ERC1155 {
     }
 
     function registerReward(address contractAddress, uint256 id, Rarity rarity, uint256 amount)
-        public
+        external
+        override
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
@@ -173,16 +168,17 @@ contract Lootbox is AccessControl, ERC1155 {
         rewardItem.lootboxId = lootboxId;
         rewardItem.amount = amount;
 
-        emit AddedReward(rewardHashId, result);
+        emit AddedReward(lootboxId, result);
     }
 
     function registerRewardBatch(
         address contractAddress,
-        uint256[] memory ids,
-        Rarity[] memory rarities,
-        uint256[] memory amounts
+        uint256[] calldata ids,
+        Rarity[] calldata rarities,
+        uint256[] calldata amounts
     ) 
-        public
+        external
+        override
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(contractAddress)
     {
@@ -192,8 +188,8 @@ contract Lootbox is AccessControl, ERC1155 {
         IGame game = IGame(contractAddress);
 
         // Add to items map
-        uint256[] memory hashIds;
-        bool[] memory results;
+        uint256[] memory hashIds = new uint256[](ids.length);
+        bool[] memory results = new bool[](ids.length);
         for (uint256 i = 0; i < ids.length; ++i) {
             require(game.exists(ids[i]), "Item does not exist.");
 
@@ -209,14 +205,14 @@ contract Lootbox is AccessControl, ERC1155 {
             rewardItem.lootboxId = lootboxId;
             rewardItem.amount = amounts[i];
 
-            hashIds[i] = rewardHashId;
+            hashIds[i] = lootboxId;
             results[i] = result;
         }
 
         emit AddedRewardBatch(hashIds, results);
     }
 
-    function generateLootbox(uint256[] memory ids, uint256[] memory amounts) public {
+    function generateLootbox(uint256[] calldata ids, uint256[] calldata amounts) external override {
         require(ids.length == amounts.length, "Input array length mismatch");
 
         uint256 validInputCount = 0;
@@ -229,9 +225,9 @@ contract Lootbox is AccessControl, ERC1155 {
         }
 
         // Check to see if we can generate at least one lootbox given the input items
-        uint256 lootboxCount = SafeMath.div(validInputCount, requiredInputItemsCount);
+        uint256 lootboxCount = SafeMath.div(validInputCount, requiredInputItemsAmount);
         require(lootboxCount > 0, "Insufficient Input");
-        uint256 itemsToBurn = SafeMath.mul(lootboxCount, requiredInputItemsCount);
+        uint256 itemsToBurn = SafeMath.mul(lootboxCount, requiredInputItemsAmount);
         
         // Burn items
         for (uint256 i = 0; i < ids.length; ++i) {
@@ -256,7 +252,7 @@ contract Lootbox is AccessControl, ERC1155 {
         emit LootboxGenerated(lootboxCount);
     }
 
-    function openLootbox(uint256 count) public {
+    function openLootbox(uint256 count) external override {
         require(balanceOf(msg.sender, LOOTBOX) == count, "Invalid count");
 
         _burn(msg.sender, LOOTBOX, count);
@@ -287,7 +283,7 @@ contract Lootbox is AccessControl, ERC1155 {
         emit LootboxOpened(count);
     }
 
-    function getRewards(Rarity rarity) public view returns(uint256[] memory hashIds, uint256[] memory rewardCounts) {
+    function getRewards(Rarity rarity) external view override returns(uint256[] memory hashIds, uint256[] memory rewardCounts) {
         RewardSet storage rewardsSet = rewardsList[uint8(rarity)];
         for (uint256 i = 0; i < rewardsSet.ids.length(); ++i) {
             hashIds[i] = rewardsSet.map[rewardsSet.ids.at(i)].lootboxId;
@@ -295,49 +291,63 @@ contract Lootbox is AccessControl, ERC1155 {
         }
     }
 
-    function getInputItemCount(uint256 hashId) public view returns(uint256) {
+    function getRequiredInputItemAmount(uint256 hashId) external view override returns(uint256) {
         return inputsList[hashId].requiredAmount;
     }
 
     function getLootboxId(address contractAddress, uint256 id)
-        public
+        external
         view
+        override
         checkAddressIsContract(contractAddress)
         returns(uint256)
     {
         return Utils.getId(contractAddress, id);
     }
 
-    // // Todo: uncomment below. Compartmentalize contracts
-    // function getRarity(uint256 hashId)
-    //     public
+    function getRarity(uint256 hashId)
+        external
+        view
+        override
+        returns(Rarity[] memory rarities)
+    {
+        require(itemIds.contains(hashId), "Item does not exist.");
+        ItemGameInfo storage item = items[hashId];
+        for (uint256 i = 0; i < item.rarity.length(); ++i) {
+            rarities[i] = Rarity(item.rarity.at(i));
+        }
+    }
+
+    // function getGameContractId(uint256 lootboxId)
+    //     external
     //     view
-    //     returns(Rarity[] memory rarities)
+    //     returns(address gameContractId, uint256 gameItemId)
     // {
-    //     require(itemIds.contains(hashId), "Item does not exist.");
-    //     ItemGameInfo storage item = items[hashId];
-    //     for (uint256 i = 0; i < item.rarity.length(); ++i) {
-    //         rarities[i] = Rarity(item.rarity.at(i));
-    //     }
+    //     require(
+    //         itemIds.contains(lootboxId),
+    //         "Item is not a registered crafting item"
+    //     );
+    //     gameContractId = items[lootboxId].gameContractAddress;
+    //     gameItemId = items[lootboxId].gameContractItemId;
     // }
 
-    // function setRequiredInputItemsCount(uint256 count) public checkPermissions(MANAGER_ROLE) {
-    //     requiredInputItemsCount = count;
-    // }
+    function setRequiredInputItemsAmount(uint8 count) external override checkPermissions(MANAGER_ROLE) {
+        requiredInputItemsAmount = count;
+    }
 
-    // function getRequiredInputItemsCount() public view returns(uint256) {
-    //     return requiredInputItemsCount;
-    // }
+    function getRequiredInputItemsAmount() external view override returns(uint8) {
+        return requiredInputItemsAmount;
+    }
 
     /******** Internal Functions ********/
     function _addLootboxItem(address contractAddress, uint256 id) internal returns (uint256 hashId, bool success) {
         hashId = Utils.getId(contractAddress, id);
+        success = false;
         if (itemIds.add(hashId)) {
             ItemGameInfo storage item = items[hashId];
             item.gameContractAddress = contractAddress;
             item.gameContractItemId = id;
             success = true;
         }
-        success = false;
     }
 }
