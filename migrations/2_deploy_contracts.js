@@ -3,11 +3,15 @@ const Game = artifacts.require("Game");
 const Crafting = artifacts.require("Crafting");
 const Lootbox = artifacts.require("Lootbox");
 const Utils = artifacts.require("Utils");
+const NameRegistry = artifacts.require("NameRegistry");
 
 module.exports = async function(deployer, networks, accounts) {
     // deploy OVC token with 1,000,000,000 initial supply.
     await deployer.deploy(OVCTokenContract, 1000000000);
     ovcTokenContract = await OVCTokenContract.deployed();
+
+    // Deploy Name Registry
+    await deployer.deploy(NameRegistry);
 
     // deploy Game with test URL
     await deployer.deploy(Game, "https://testgame.com/api/item/{id}.json");
