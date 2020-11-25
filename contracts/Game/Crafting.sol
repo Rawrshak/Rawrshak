@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IGame.sol";
+import "../interfaces/ICrafting.sol";
 import "../tokens/TokenBase.sol";
 import "../utils/Utils.sol";
 
@@ -13,7 +14,7 @@ import "../utils/Utils.sol";
 // Todo: Multi-Game Crafting Contract
 // Todo: Recipe Storage 
 
-contract Crafting is Ownable, AccessControl {
+contract Crafting is ICrafting, Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using Utils for *;
@@ -80,14 +81,15 @@ contract Crafting is Ownable, AccessControl {
     }
 
     function createRecipe(
-        uint256[] memory materialIds,
-        uint256[] memory materialAmounts,
-        uint256[] memory rewardIds,
-        uint256[] memory rewardAmounts,
+        uint256[] calldata materialIds,
+        uint256[] calldata materialAmounts,
+        uint256[] calldata rewardIds,
+        uint256[] calldata rewardAmounts,
         uint256 cost,
         bool isActive
     )
-        public
+        external
+        override
         checkPermissions(MANAGER_ROLE)
     {
         require(
@@ -144,11 +146,9 @@ contract Crafting is Ownable, AccessControl {
     }
 
     // Todo: registerCraftingMaterialBatch()
-    function registerCraftingMaterial(
-        address gameContractAddress,
-        uint256 gameContractId
-    )
-        public
+    function registerCraftingMaterial(address gameContractAddress, uint256 gameContractId)
+        external
+        override
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(gameContractAddress)
     {
@@ -165,11 +165,9 @@ contract Crafting is Ownable, AccessControl {
     }
 
     // Todo: registerCraftingRewardBatch()
-    function registerCraftingReward(
-        address gameContractAddress,
-        uint256 gameContractId
-    )
-        public
+    function registerCraftingReward(address gameContractAddress, uint256 gameContractId)
+        external
+        override
         checkPermissions(MANAGER_ROLE)
         checkAddressIsContract(gameContractAddress)
     {
@@ -186,27 +184,16 @@ contract Crafting is Ownable, AccessControl {
     }
 
     function setRecipeActive(uint256 recipeId, bool activate) 
-        public
+        external
+        override
         checkPermissions(MANAGER_ROLE)
     {
-        require(
-            recipeList[recipeId].isActive != activate,
-            "A recipe is already set properly."
-        );
-
-        recipeList[recipeId].isActive = activate;
-        if (activate) {
-            activeRecipesCount++;
-        } else {
-            activeRecipesCount--;
-        }
+        _setActiveRecipe(recipeId, activate);
     }
 
-    function setRecipeActiveBatch(
-        uint256[] memory recipeIds,
-        bool[] memory activate
-    )
-        public
+    function setRecipeActiveBatch(uint256[] calldata recipeIds, bool[] calldata activate)
+        external
+        override
         checkPermissions(MANAGER_ROLE)
     {
         require(
@@ -215,26 +202,25 @@ contract Crafting is Ownable, AccessControl {
         );
 
         for (uint256 i = 0; i < recipeIds.length; ++i) {
-            setRecipeActive(recipeIds[i], activate[i]);
+            _setActiveRecipe(recipeIds[i], activate[i]);
         }
     }
 
-    function isRecipeActive(uint256 recipeId) public view returns(bool) {
+    function isRecipeActive(uint256 recipeId) external view override returns(bool) {
         return recipeList[recipeId].isActive;
     }
 
     function updateRecipeCost(uint256 recipeId, uint256 cost)
-        public
+        external
+        override
         checkPermissions(MANAGER_ROLE)
     {
         recipeList[recipeId].cost = cost;
     }
 
-    function updateRecipeCostBatch(
-        uint256[] memory recipeIds,
-        uint256[] memory costs
-    )
-        public
+    function updateRecipeCostBatch(uint256[] calldata recipeIds, uint256[] calldata costs)
+        external
+        override
         checkPermissions(MANAGER_ROLE)
     {
         require(
@@ -247,20 +233,21 @@ contract Crafting is Ownable, AccessControl {
         }
     }
 
-    function getTokenAddressForCrafting() public view returns(address)
+    function getTokenAddressForCrafting() external view override returns(address)
     {
         return tokenContractAddress;
     }
 
-    function getRecipeCost(uint256 recipeId) public view returns(uint256) {
+    function getRecipeCost(uint256 recipeId) external view override returns(uint256) {
         return recipeList[recipeId].cost;
     }
 
     // Gets materials list for the recipe
     // Returns: (crafting item id, amount) list
     function getCraftingMaterialsList(uint256 recipeId)
-        public
+        external
         view
+        override
         returns(uint256[] memory, uint256[] memory)
     {
         require(recipeId < recipeList.length, "Recipe does not exist.");
@@ -281,8 +268,9 @@ contract Crafting is Ownable, AccessControl {
     // Gets rewards list for the recipe
     // Returns: (crafting item id, amount) list
     function getRewardsList(uint256 recipeId)
-        public
+        external
         view
+        override
         returns(uint256[] memory rewardItemIds, uint256[] memory counts)
     {
         require(recipeId < recipeList.length, "Recipe does not exist.");
@@ -299,12 +287,10 @@ contract Crafting is Ownable, AccessControl {
 
     // List of recipes where id is a material
     // returns recipe id list
-    function getItemAsCraftingMaterialList(
-        address game,
-        uint256 itemId
-    )
-        public
+    function getItemAsCraftingMaterialList(address game, uint256 itemId)
+        external
         view
+        override
         returns(uint256[] memory recipeIds)
     {
         uint256 id = Utils.getId(game, itemId);
@@ -324,8 +310,9 @@ contract Crafting is Ownable, AccessControl {
 
     // Crafting ID
     function getItemAsCraftingMaterialList(uint256 id)
-        public
+        external
         view
+        override
         returns(uint256[] memory)
     {
         require(
@@ -345,12 +332,10 @@ contract Crafting is Ownable, AccessControl {
     
     // List of recipes where item is a reward
     // returns recipe id list
-    function getItemAsRewardList(
-        address game,
-        uint256 itemId
-    )
-        public
+    function getItemAsRewardList(address game, uint256 itemId)
+        external
         view
+        override
         returns(uint256[] memory)
     {
         uint256 id = Utils.getId(game, itemId);
@@ -370,10 +355,7 @@ contract Crafting is Ownable, AccessControl {
     }
 
     // Crafting ID
-    function getItemAsRewardList(uint256 id)
-        public
-        view
-        returns(uint256[] memory)
+    function getItemAsRewardList(uint256 id) external view override returns(uint256[] memory)
     {
         require(
             craftItemIds.contains(id),
@@ -392,10 +374,7 @@ contract Crafting is Ownable, AccessControl {
 
     // List of all active Recipes
     // returns recipe id list
-    function getActiveRecipes()
-        public
-        view
-        returns(uint256[] memory)
+    function getActiveRecipes() external view override returns(uint256[] memory)
     {
         if (activeRecipesCount == 0) {
             uint256[] memory empty;
@@ -418,13 +397,14 @@ contract Crafting is Ownable, AccessControl {
         return recipeIds;
     }
 
-    function getActiveRecipesCount() public view returns(uint256)
+    function getActiveRecipesCount() external view override returns(uint256)
     {
         return activeRecipesCount;
     }
 
     function craftItem(uint256 recipeId, address payable account)
-        public
+        external
+        override
         checkPermissions(SMITH_ROLE)
     {
         require(recipeId < recipeList.length, "Recipe does not exist.");
@@ -464,8 +444,9 @@ contract Crafting is Ownable, AccessControl {
     }
 
     function getGameContractId(uint256 craftItemId)
-        public
+        external
         view
+        override
         returns(address gameContractId, uint256 gameItemId)
     {
         require(
@@ -477,19 +458,17 @@ contract Crafting is Ownable, AccessControl {
         gameItemId = craftItems[craftItemId].gameContractItemId;
     }
 
-    function getCraftItemId(
-        address gameContractAddress,
-        uint256 gameContractId
-    )
-        public
+    function getCraftItemId(address gameContractAddress, uint256 gameContractId)
+        external
         view
+        override
         checkAddressIsContract(gameContractAddress)
         returns(uint256)
     {
         return Utils.getId(gameContractAddress, gameContractId);
     }
     
-    function getCraftItemsLength() public view returns(uint256) {
+    function getCraftItemsLength() external view override returns(uint256) {
         return craftItemIds.length();
     }
 
@@ -512,6 +491,20 @@ contract Crafting is Ownable, AccessControl {
             item.gameContractItemId = id;
             emit AddedCraftingItem(hashId);
             success = true;
+        }
+    }
+
+    function _setActiveRecipe(uint256 recipeId, bool activate) internal {
+        require(
+            recipeList[recipeId].isActive != activate,
+            "A recipe is already set properly."
+        );
+
+        recipeList[recipeId].isActive = activate;
+        if (activate) {
+            activeRecipesCount++;
+        } else {
+            activeRecipesCount--;
         }
     }
 }
