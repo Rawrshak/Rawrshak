@@ -33,8 +33,8 @@ contract('Lootbox Contract', (accounts) => {
     ] = [10,11,12,13,14,15,16];
 
     const Rarity = {Mythic:0, Exotic:1, SuperRare:2, Rare:3, Scarce:4, Uncommon:5, Common:6};
-    
     const DEFAULT_REQUIRED_INPUT_ITEMS_AMOUNT = 4;
+    const zero_address = "0x0000000000000000000000000000000000000000";
 
     it('Check Lootbox Contract Roles', async () => {
         const game = await Game.deployed();
@@ -110,7 +110,8 @@ contract('Lootbox Contract', (accounts) => {
             exoticReward,
             mythicReward
         ];
-        await game.methods['createItemBatch(uint256[])'](itemIds, {from:gcManagerAddress});
+        maxSupplies = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        await game.createItemBatch(zero_address, itemIds, maxSupplies, {from:gcManagerAddress});
         
         // Check if the new items were added.
         assert.equal((await game.length()).toNumber(), 17, "The 17 new items were not created");

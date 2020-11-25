@@ -11,6 +11,7 @@ import "../utils/Utils.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
+// Todo: Recipe Storage 
 
 contract Crafting is Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -152,7 +153,7 @@ contract Crafting is Ownable, AccessControl {
         checkAddressIsContract(gameContractAddress)
     {
         require(
-            IGame(gameContractAddress).exists(gameContractId),
+            IGame(gameContractAddress).contains(gameContractId),
             "This item does not exist."
         );
         
@@ -173,7 +174,7 @@ contract Crafting is Ownable, AccessControl {
         checkAddressIsContract(gameContractAddress)
     {
         require(
-            IGame(gameContractAddress).exists(gameContractId),
+            IGame(gameContractAddress).contains(gameContractId),
             "This item does not exist."
         );
 

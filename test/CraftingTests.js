@@ -21,6 +21,7 @@ contract('Crafting Contract', (accounts) => {
     ] = accounts;
     const [material1, material2, material3, reward1, reward2] = [0,1,2,3,4];
     const [recipe0, recipe1, recipe2] = [0,1,2];
+    const zero_address = "0x0000000000000000000000000000000000000000";
 
     it('Check Crafting Contract Roles', async () => {
         const game = await Game.deployed();
@@ -85,11 +86,11 @@ contract('Crafting Contract', (accounts) => {
             true, "Item Manager Address didn't have the Item Manager Role");
 
         // Add 5 items
-        await game.methods['createItem(uint256)'](material1, {from:gcManagerAddress});
-        await game.methods['createItem(uint256)'](material2, {from:gcManagerAddress});
-        await game.methods['createItem(uint256)'](material3, {from:gcManagerAddress});
-        await game.methods['createItem(uint256)'](reward1, {from:gcManagerAddress});
-        await game.methods['createItem(uint256)'](reward2, {from:gcManagerAddress});
+        await game.createItem(zero_address, material1, 0, {from:gcManagerAddress});
+        await game.createItem(zero_address, material2, 0, {from:gcManagerAddress});
+        await game.createItem(zero_address, material3, 0, {from:gcManagerAddress});
+        await game.createItem(zero_address, reward1, 0, {from:gcManagerAddress});
+        await game.createItem(zero_address, reward2, 0, {from:gcManagerAddress});
 
         // Check if the new items were added.
         assert.equal(

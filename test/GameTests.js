@@ -14,6 +14,7 @@ contract('Game Contract', (accounts) => {
     ] = accounts;
     const [material1, material2, material3, reward1, reward2] = [0,1,2,3,4];
     const [recipe0, recipe1, recipe2] = [0,1,2];
+    const zero_address = "0x0000000000000000000000000000000000000000";
 
     it('Check Default Admin Role', async () => {
         const game = await Game.deployed();
@@ -91,39 +92,37 @@ contract('Game Contract', (accounts) => {
             true, "Item Manager Address didn't have the Item Manager Role");
 
         // Create 2 New Items
-        // 0 is the solidity equivalent of address(0)
-        await game.methods['createItem(uint256)'](material1, {from:managerAddress, gasPrice: 1});
-        await game.methods['createItem(uint256,address)'](material2, managerAddress, {from:managerAddress, gasPrice: 1});
-        await game.methods['createItem(uint256,address,uint256)'](material3, managerAddress, 10, {from:managerAddress, gasPrice: 1});
+        // 0 is the solidity equivalent of address(0)        
+        await game.createItem(zero_address, material1, 0, {from:managerAddress, gasPrice: 1});
+        await game.createItem(managerAddress, material2, 0, {from:managerAddress, gasPrice: 1});
 
         // Check if the new items were added.
-        assert.equal((await game.length()).toNumber(), 3, "The 3 new items were not created.");
-        assert.equal(await game.exists(material1), true, "Material 1 wasn't created.");
-        assert.equal(await game.exists(material2), true, "Material 2 wasn't created.");
-        assert.equal(await game.exists(material3), true, "Material 3 wasn't created.");
+        assert.equal((await game.length()).toNumber(), 2, "The 2 new items were not created.");
+        assert.equal(await game.contains(material1), true, "Material 1 wasn't created.");
+        assert.equal(await game.contains(material2), true, "Material 2 wasn't created.");
     });
 
-    // Should I be able to delete an item? probably not.
-    it('Delete 1 Item', async () => {
-        const game = await Game.deployed();
-        const manager_role = await game.MANAGER_ROLE();
+    // // Should I be able to delete an item? probably not.
+    // it('Delete 1 Item', async () => {
+    //     const game = await Game.deployed();
+    //     const manager_role = await game.MANAGER_ROLE();
 
-        // check to see if item manager address has the item manger role
-        assert.equal(
-            await game.hasRole(
-                manager_role,
-                managerAddress),
-            true, "Item Manager Address didn't have the Item Manager Role");
+    //     // check to see if item manager address has the item manger role
+    //     assert.equal(
+    //         await game.hasRole(
+    //             manager_role,
+    //             managerAddress),
+    //         true, "Item Manager Address didn't have the Item Manager Role");
 
-        // Delete item with UUID 2
-        await game.deleteItem(material3, {from:managerAddress, gasPrice: 1});
+    //     // Delete item with UUID 2
+    //     await game.deleteItem(material3, {from:managerAddress, gasPrice: 1});
 
-        // Check if the new items were added.
-        assert.equal((await game.length()).toNumber(), 2, "There is only 2 item left.");
-        assert.equal(await game.exists(material1), true, "Material 1 was deleted.");
-        assert.equal(await game.exists(material2), true, "Material 2 was deleted.");
-        assert.equal(await game.exists(material3), false, "Material 2 was not deleted.");
-    });
+    //     // Check if the new items were added.
+    //     assert.equal((await game.length()).toNumber(), 2, "There is only 2 item left.");
+    //     assert.equal(await game.contains(material1), true, "Material 1 was deleted.");
+    //     assert.equal(await game.contains(material2), true, "Material 2 was deleted.");
+    //     assert.equal(await game.contains(material3), false, "Material 2 was not deleted.");
+    // });
 
     it('Community Created Item', async() => {
         const game = await Game.deployed();
@@ -135,8 +134,8 @@ contract('Game Contract', (accounts) => {
                 managerAddress),
             true, "Item Manager Address didn't have the Item Manager Role");
             
-        // Create Item with Content Creator's address
-        await game.methods['createItem(uint256,address)'](material3, contentCreatorAddress, {from:managerAddress, gasPrice: 1});
+        // Create Item with Content Creator's address        
+        await game.createItem(contentCreatorAddress, material3, 0, {from:managerAddress, gasPrice: 1});
 
         // Check if the new items were added.
         assert.equal((await game.length()).toNumber(), 3, "The community content creator's new item was not created.");

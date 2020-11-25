@@ -14,6 +14,7 @@ import "../utils/Utils.sol";
 // Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item. For now, just keep the 
 //       probabilities flat.
 // Todo: Developer can add multiple kinds of lootboxes per contract
+// Todo: Lootbox Storage
 
 contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -101,7 +102,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         checkAddressIsContract(contractAddress)
     {
         // Todo: check that GameContractAddress is a GameContract interface
-        require(IGame(contractAddress).exists(id), "Item does not exist.");
+        require(IGame(contractAddress).contains(id), "Item does not exist.");
 
         // Add to items map
         (uint256 hashId, bool result) = _addLootboxItem(contractAddress, id);
@@ -133,7 +134,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         uint256[] memory hashIds = new uint256[](ids.length);
         bool[] memory results = new bool[](ids.length);
         for (uint256 i = 0; i < ids.length; ++i) {
-            require(game.exists(ids[i]), "Item does not exist.");
+            require(game.contains(ids[i]), "Item does not exist.");
 
             (uint256 hashId, bool result) = _addLootboxItem(contractAddress, ids[i]);
 
@@ -155,7 +156,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         checkAddressIsContract(contractAddress)
     {
         // Todo: check that GameContractAddress is a GameContract interface
-        require(IGame(contractAddress).exists(id), "Item does not exist.");
+        require(IGame(contractAddress).contains(id), "Item does not exist.");
 
         // Add to items map. There can be multiple amounts per item so the reward hash should take that into account.
         (uint256 lootboxId, bool result) = _addLootboxItem(contractAddress, id);
@@ -191,7 +192,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         uint256[] memory hashIds = new uint256[](ids.length);
         bool[] memory results = new bool[](ids.length);
         for (uint256 i = 0; i < ids.length; ++i) {
-            require(game.exists(ids[i]), "Item does not exist.");
+            require(game.contains(ids[i]), "Item does not exist.");
 
             // Add to items map. There can be multiple amounts per item so the reward hash should take 
             // that into account.
