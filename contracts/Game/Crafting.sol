@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IGame.sol";
 import "../interfaces/ICrafting.sol";
+import "../interfaces/IGlobalItemRegistry.sol";
 import "../tokens/TokenBase.sol";
-import "../utils/Utils.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
@@ -17,11 +17,10 @@ import "../utils/Utils.sol";
 contract Crafting is ICrafting, Ownable, AccessControl {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
-    using Utils for *;
     
     /******** Data Structures ********/
     struct ItemPair {
-        uint256 craftingItemId;
+        uint256 uuid;
         uint256 count;
     }
     struct Recipe {
@@ -33,8 +32,6 @@ contract Crafting is ICrafting, Ownable, AccessControl {
     }
 
     struct CraftItem {
-        address gameContractAddress;
-        uint256 gameContractItemId;
         EnumerableSet.UintSet recipesAsMaterial;
         EnumerableSet.UintSet recipesAsReward;
     }
@@ -42,9 +39,9 @@ contract Crafting is ICrafting, Ownable, AccessControl {
     /******** Stored Variables ********/
     Recipe[] private recipeList;
     uint256 public activeRecipesCount = 0;
-    EnumerableSet.UintSet private craftItemIds;
     mapping(uint256 => CraftItem) private craftItems;
     address tokenContractAddress;
+    address globalItemRegistryAddr;
 
     /******** Events ********/
     // Todo: AddedCraftingItemBatch()
@@ -65,39 +62,47 @@ contract Crafting is ICrafting, Ownable, AccessControl {
         _;
     }
 
-    modifier checkAddressIsContract(address contractAddress) {
-        require(Address.isContract(contractAddress), "Coin address is not valid");
+    modifier checkItemExists(uint256 uuid) {
+        require(globalItemRegistry().contains(uuid), "Item does not exist.");
         _;
     }
 
     /******** Public API ********/
     constructor(address coinAddress)
         public
-        checkAddressIsContract(coinAddress)
     {
+        require(Address.isContract(coinAddress), "Coin address is not valid");
         tokenContractAddress = coinAddress;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
     }
 
+    function setGlobalItemRegistryAddr(address _addr)
+        public
+        checkPermissions(MANAGER_ROLE)
+    {
+        require(Address.isContract(_addr), "Address not valid");
+        globalItemRegistryAddr = _addr;
+    }
+
     function createRecipe(
-        uint256[] calldata materialIds,
-        uint256[] calldata materialAmounts,
-        uint256[] calldata rewardIds,
-        uint256[] calldata rewardAmounts,
-        uint256 cost,
-        bool isActive
+        uint256[] calldata _materialUuids,
+        uint256[] calldata _materialAmounts,
+        uint256[] calldata _rewardUuids,
+        uint256[] calldata _rewardAmounts,
+        uint256 _cost,
+        bool _isActive
     )
         external
         override
         checkPermissions(MANAGER_ROLE)
     {
         require(
-            materialIds.length == materialAmounts.length,
+            _materialUuids.length == _materialAmounts.length,
             "Materials lists do not match."
         );
         require(
-            rewardIds.length == rewardAmounts.length,
+            _rewardUuids.length == _rewardAmounts.length,
             "Rewards lists do not match."
         );
 
@@ -106,131 +111,128 @@ contract Crafting is ICrafting, Ownable, AccessControl {
         uint256 recipeId = recipeList.length;
         Recipe storage recipe = recipeList.push();
         recipe.recipeId = recipeId;
-        recipe.cost = cost;
-        recipe.isActive = isActive;
-        if (isActive) {
+        recipe.cost = _cost;
+        recipe.isActive = _isActive;
+        if (_isActive) {
             activeRecipesCount++;
         }
 
         // Iterate through Materials List
-        for (uint256 i = 0; i < materialIds.length; ++i) {
-            uint256 id = materialIds[i];
-            require(
-                craftItemIds.contains(id),
-                "Crafting Material doesn't exist."
-            );
+        for (uint256 i = 0; i < _materialUuids.length; ++i) {
+            require(globalItemRegistry().contains(_materialUuids[i]), "Item does not exist.");
 
             // Add to crafting materials list
-            recipe.materials.push(ItemPair(id, materialAmounts[i]));
+            ItemPair memory pair;
+            pair.uuid = _materialUuids[i];
+            pair.count = _materialAmounts[i];
+            recipe.materials.push(pair);
 
             // Add recipe to crafting material's recipe list
-            craftItems[id].recipesAsMaterial.add(recipeId);
+            craftItems[pair.uuid].recipesAsMaterial.add(recipeId);
         }
 
         // Iterate through Rewards List
-        for (uint256 i = 0; i < rewardIds.length; ++i) {
-            uint256 id = rewardIds[i];
-            require(
-                craftItemIds.contains(id),
-                "Crafting Reward doesn't exist."
-            );
+        for (uint256 i = 0; i < _rewardUuids.length; ++i) {
+            require(globalItemRegistry().contains(_rewardUuids[i]), "Item does not exist.");
             
             // Add to crafting rewards list
-            recipe.rewards.push(ItemPair(id, rewardAmounts[i]));
+            ItemPair memory pair;
+            pair.uuid = _rewardUuids[i];
+            pair.count = _rewardAmounts[i];
+            recipe.rewards.push(pair);
             
             // Add recipe to crafting reward's recipe list
-            craftItems[id].recipesAsReward.add(recipeId);
+            craftItems[pair.uuid].recipesAsReward.add(recipeId);
         }
 
         emit RecipeCreated(recipeId);
     }
 
     // Todo: registerCraftingMaterialBatch()
-    function registerCraftingMaterial(address gameContractAddress, uint256 gameContractId)
+    // function registerCraftingMaterial(uint256 uuid)
+    //     external
+    //     override
+    //     checkPermissions(MANAGER_ROLE)
+    //     checkItemExists(uuid)
+    // {
+    //     // Add crafting item data to Crafting Materials List
+    //     CraftItem storage item = craftItems[hashId];
+    //     item.gameContractAddress = contractAddress;
+    //     item.gameContractItemId = id;
+    //     emit AddedCraftingItem(hashId);
+
+    //     // Add to crafting map
+    //     (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
+    //     require(success, "This crafting item is already stored.");
+
+    //     emit AddedCraftingItem(hashId);
+    // }
+
+    // // Todo: registerCraftingRewardBatch()
+    // function registerCraftingReward(address gameContractAddress, uint256 gameContractId)
+    //     external
+    //     override
+    //     checkPermissions(MANAGER_ROLE)
+    //     checkAddressIsContract(gameContractAddress)
+    // {
+    //     require(
+    //         IGame(gameContractAddress).contains(gameContractId),
+    //         "This item does not exist."
+    //     );
+
+    //     // Add to crafting map
+    //     (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
+    //     require(success, "This crafting item is already stored.");
+
+    //     emit AddedCraftingItem(hashId);
+    // }
+
+    function setRecipeActive(uint256 _recipeId, bool _activate) 
         external
         override
         checkPermissions(MANAGER_ROLE)
-        checkAddressIsContract(gameContractAddress)
     {
-        require(
-            IGame(gameContractAddress).contains(gameContractId),
-            "This item does not exist."
-        );
-        
-        // Add to crafting map
-        (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
-        require(success, "This crafting item is already stored.");
-
-        emit AddedCraftingItem(hashId);
+        _setActiveRecipe(_recipeId, _activate);
     }
 
-    // Todo: registerCraftingRewardBatch()
-    function registerCraftingReward(address gameContractAddress, uint256 gameContractId)
-        external
-        override
-        checkPermissions(MANAGER_ROLE)
-        checkAddressIsContract(gameContractAddress)
-    {
-        require(
-            IGame(gameContractAddress).contains(gameContractId),
-            "This item does not exist."
-        );
-
-        // Add to crafting map
-        (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
-        require(success, "This crafting item is already stored.");
-
-        emit AddedCraftingItem(hashId);
-    }
-
-    function setRecipeActive(uint256 recipeId, bool activate) 
+    function setRecipeActiveBatch(uint256[] calldata _recipeIds, bool[] calldata _activate)
         external
         override
         checkPermissions(MANAGER_ROLE)
     {
-        _setActiveRecipe(recipeId, activate);
-    }
+        require(_recipeIds.length == _activate.length, "Input array lengths do not match");
 
-    function setRecipeActiveBatch(uint256[] calldata recipeIds, bool[] calldata activate)
-        external
-        override
-        checkPermissions(MANAGER_ROLE)
-    {
-        require(
-            recipeIds.length == activate.length,
-            "Input array lengths do not match"
-        );
-
-        for (uint256 i = 0; i < recipeIds.length; ++i) {
-            _setActiveRecipe(recipeIds[i], activate[i]);
+        for (uint256 i = 0; i < _recipeIds.length; ++i) {
+            _setActiveRecipe(_recipeIds[i], _activate[i]);
         }
     }
 
-    function isRecipeActive(uint256 recipeId) external view override returns(bool) {
-        return recipeList[recipeId].isActive;
+    function isRecipeActive(uint256 _recipeId) external view override returns(bool) {
+        return recipeList[_recipeId].isActive;
     }
 
-    function updateRecipeCost(uint256 recipeId, uint256 cost)
+    function updateRecipeCost(uint256 _recipeId, uint256 _cost)
         external
         override
         checkPermissions(MANAGER_ROLE)
     {
-        recipeList[recipeId].cost = cost;
+        recipeList[_recipeId].cost = _cost;
     }
 
-    function updateRecipeCostBatch(uint256[] calldata recipeIds, uint256[] calldata costs)
+    function updateRecipeCostBatch(uint256[] calldata _recipeIds, uint256[] calldata _costs)
         external
         override
         checkPermissions(MANAGER_ROLE)
     {
-        require(
-            recipeIds.length == costs.length,
-            "Input array lengths do not match"
-        );
+        require(_recipeIds.length == _costs.length, "Input array lengths do not match");
 
-        for (uint256 i = 0; i < recipeIds.length; ++i) {
-            recipeList[recipeIds[i]].cost = costs[i];
+        for (uint256 i = 0; i < _recipeIds.length; ++i) {
+            recipeList[_recipeIds[i]].cost = _costs[i];
         }
+    }
+
+    function getRecipeCost(uint256 _recipeId) external view override returns(uint256) {
+        return recipeList[_recipeId].cost;
     }
 
     function getTokenAddressForCrafting() external view override returns(address)
@@ -238,150 +240,86 @@ contract Crafting is ICrafting, Ownable, AccessControl {
         return tokenContractAddress;
     }
 
-    function getRecipeCost(uint256 recipeId) external view override returns(uint256) {
-        return recipeList[recipeId].cost;
-    }
-
     // Gets materials list for the recipe
     // Returns: (crafting item id, amount) list
-    function getCraftingMaterialsList(uint256 recipeId)
+    function getCraftingMaterialsList(uint256 _recipeId)
         external
         view
         override
-        returns(uint256[] memory, uint256[] memory)
+        returns(uint256[] memory uuids, uint256[] memory counts)
     {
-        require(recipeId < recipeList.length, "Recipe does not exist.");
+        require(_recipeId < recipeList.length, "Recipe does not exist.");
 
-        Recipe storage recipe = recipeList[recipeId];
-        uint256[] memory materialsIds = new uint256[](recipe.materials.length);
-        uint256[] memory counts = new uint256[](recipe.materials.length);
+        Recipe storage recipe = recipeList[_recipeId];
+        uuids = new uint256[](recipe.materials.length);
+        counts = new uint256[](recipe.materials.length);
 
         for (uint i = 0; i < recipe.materials.length; ++i) {
             ItemPair storage itemPair = recipe.materials[i];
-            materialsIds[i] = itemPair.craftingItemId;
+            uuids[i] = itemPair.uuid;
             counts[i] = itemPair.count;
         }
-
-        return (materialsIds, counts);
     }
 
     // Gets rewards list for the recipe
     // Returns: (crafting item id, amount) list
-    function getRewardsList(uint256 recipeId)
+    function getRewardsList(uint256 _recipeId)
         external
         view
         override
-        returns(uint256[] memory rewardItemIds, uint256[] memory counts)
+        returns(uint256[] memory uuids, uint256[] memory counts)
     {
-        require(recipeId < recipeList.length, "Recipe does not exist.");
+        require(_recipeId < recipeList.length, "Recipe does not exist.");
 
-        Recipe storage recipe = recipeList[recipeId];
-        rewardItemIds = new uint256[](recipe.rewards.length);
+        Recipe storage recipe = recipeList[_recipeId];
+        uuids = new uint256[](recipe.rewards.length);
         counts = new uint256[](recipe.rewards.length);
         for (uint i = 0; i < recipe.rewards.length; ++i) {
             ItemPair storage itemPair = recipe.rewards[i];
-            rewardItemIds[i] = itemPair.craftingItemId;
+            uuids[i] = itemPair.uuid;
             counts[i] = itemPair.count;
         }
     }
 
     // List of recipes where id is a material
     // returns recipe id list
-    function getItemAsCraftingMaterialList(address game, uint256 itemId)
+    function getItemAsCraftingMaterialList(uint256 _uuid)
         external
         view
         override
+        checkItemExists(_uuid)
         returns(uint256[] memory recipeIds)
     {
-        uint256 id = Utils.getId(game, itemId);
-        require(
-            craftItemIds.contains(id),
-            "Item is not a registered crafting item."
-        );
-
-        CraftItem storage item = craftItems[id];
-        uint256 len = item.recipesAsMaterial.length();
-        recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i) {
-            recipeIds[i] = item.recipesAsMaterial.at(i);
+        recipeIds = new uint256[](craftItems[_uuid].recipesAsMaterial.length());
+        for (uint i = 0; i < craftItems[_uuid].recipesAsMaterial.length(); ++i) {
+            recipeIds[i] = craftItems[_uuid].recipesAsMaterial.at(i);
         }
-        return recipeIds;
-    }
-
-    // Crafting ID
-    function getItemAsCraftingMaterialList(uint256 id)
-        external
-        view
-        override
-        returns(uint256[] memory)
-    {
-        require(
-            craftItemIds.contains(id),
-            "Item is not a registered crafting item."
-        );
-
-        CraftItem storage item = craftItems[id];
-        uint256 len = item.recipesAsMaterial.length();
-        uint256[] memory recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i) {
-            recipeIds[i] = item.recipesAsMaterial.at(i);
-        }
-
-        return recipeIds;
     }
     
     // List of recipes where item is a reward
     // returns recipe id list
-    function getItemAsRewardList(address game, uint256 itemId)
+    function getItemAsRewardList(uint256 _uuid)
         external
         view
         override
-        returns(uint256[] memory)
+        checkItemExists(_uuid)
+        returns(uint256[] memory recipeIds)
     {
-        uint256 id = Utils.getId(game, itemId);
-        require(
-            craftItemIds.contains(id),
-            "Item is not a registered crafting item."
-        );
-
-        CraftItem storage item = craftItems[id];
-        uint256 len = item.recipesAsReward.length();
-        uint256[] memory recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i) {
-            recipeIds[i] = item.recipesAsReward.at(i);
+        recipeIds = new uint256[](craftItems[_uuid].recipesAsReward.length());
+        for (uint i = 0; i < craftItems[_uuid].recipesAsReward.length(); ++i) {
+            recipeIds[i] = craftItems[_uuid].recipesAsReward.at(i);
         }
-
-        return recipeIds;
-    }
-
-    // Crafting ID
-    function getItemAsRewardList(uint256 id) external view override returns(uint256[] memory)
-    {
-        require(
-            craftItemIds.contains(id),
-            "Item is not a registered crafting item."
-        );
-
-        CraftItem storage item = craftItems[id];
-        uint256 len = item.recipesAsReward.length();
-        uint256[] memory recipeIds = new uint256[](len);
-        for (uint i = 0; i < len; ++i) {
-            recipeIds[i] = item.recipesAsReward.at(i);
-        }
-
-        return recipeIds;
     }
 
     // List of all active Recipes
     // returns recipe id list
-    function getActiveRecipes() external view override returns(uint256[] memory)
+    function getActiveRecipes() external view override returns(uint256[] memory recipeIds)
     {
         if (activeRecipesCount == 0) {
-            uint256[] memory empty;
-            return empty;
+            return recipeIds;
         }
 
-        uint256[] memory recipeIds = new uint256[](activeRecipesCount);
+        recipeIds = new uint256[](activeRecipesCount);
         uint256 activeRecipeIterator = 0;
 
         for (uint i = 0; i < recipeList.length; ++i) {
@@ -394,7 +332,6 @@ contract Crafting is ICrafting, Ownable, AccessControl {
         
         // all active recipes were added to the list
         require(activeRecipeIterator == activeRecipesCount);
-        return recipeIds;
     }
 
     function getActiveRecipesCount() external view override returns(uint256)
@@ -402,98 +339,50 @@ contract Crafting is ICrafting, Ownable, AccessControl {
         return activeRecipesCount;
     }
 
-    function craftItem(uint256 recipeId, address payable account)
+    function craftItem(uint256 _recipeId, address payable _account)
         external
         override
         checkPermissions(SMITH_ROLE)
     {
-        require(recipeId < recipeList.length, "Recipe does not exist.");
-        require(recipeList[recipeId].isActive, "Recipe is not active.");
+        require(_recipeId < recipeList.length, "Recipe does not exist.");
+        require(recipeList[_recipeId].isActive, "Recipe is not active.");
         
-        Recipe storage recipe = recipeList[recipeId];
+        Recipe storage recipe = recipeList[_recipeId];
 
         if (recipe.cost > 0) {
             // This will fail if the account doesn't have enough to cover the 
             // cost of crafting this item
             TokenBase token = TokenBase(tokenContractAddress);
-            token.transferFrom(account, owner(), recipe.cost);
+            token.transferFrom(_account, owner(), recipe.cost);
         }
+        
+        IGlobalItemRegistry registry = globalItemRegistry();
 
         // Burns the materials in the game contract
         for (uint256 i = 0; i < recipe.materials.length; ++i) {
-            // Get Crafting Item
-            CraftItem storage item = craftItems[recipe.materials[i].craftingItemId];
+            // Get game information
+            (address gameAddr, uint256 gameId) = registry.getItemInfo(recipe.materials[i].uuid);
 
             // Burn() will fail if this contract does not have the necessary 
             // permissions or if the account does not have enough materials
-            IGame(item.gameContractAddress).burn(account, item.gameContractItemId, recipe.materials[i].count);
+            IGame(gameAddr).burn(_account, gameId, recipe.materials[i].count);
         }
 
         // Mint Reward
         for (uint256 i = 0; i < recipe.rewards.length; ++i) {
-            // Get Crafting Item
-            CraftItem storage item = craftItems[recipe.rewards[i].craftingItemId];
+            // Get game information
+            (address gameAddr, uint256 gameId) = registry.getItemInfo(recipe.rewards[i].uuid);
 
             // Mint() will fail if this contract does not have the necessary 
             // permissions 
-            IGame(item.gameContractAddress).mint(account, item.gameContractItemId, recipe.rewards[i].count);
+            IGame(gameAddr).mint(_account, gameId, recipe.rewards[i].count);
         }
 
         // Notify user of item getting crafted
         emit ItemCrafted();
     }
 
-    function getGameContractId(uint256 craftItemId)
-        external
-        view
-        override
-        returns(address gameContractId, uint256 gameItemId)
-    {
-        require(
-            craftItemIds.contains(craftItemId),
-            "Item is not a registered crafting item"
-        );
-        gameContractId =
-            craftItems[craftItemId].gameContractAddress;
-        gameItemId = craftItems[craftItemId].gameContractItemId;
-    }
-
-    function getCraftItemId(address gameContractAddress, uint256 gameContractId)
-        external
-        view
-        override
-        checkAddressIsContract(gameContractAddress)
-        returns(uint256)
-    {
-        return Utils.getId(gameContractAddress, gameContractId);
-    }
-    
-    function getCraftItemsLength() external view override returns(uint256) {
-        return craftItemIds.length();
-    }
-
-    /******** TEST Functions ********/
-    // // Todo: Delete these
-    // function getItemHash(uint256 index) public view returns(uint256) {
-    //     return craftItemIds.at(index);
-    // }
-    
     /******** Internal Functions ********/
-    function _addCraftingItem(address contractAddress, uint256 id) internal returns(uint256 hashId, bool success) {
-        // Get Hashed ID using game contract address and contract item id
-        hashId = Utils.getId(contractAddress, id);
-        
-        // If it already exists, ignore
-        if (craftItemIds.add(hashId)) {
-            // Add crafting item data to Crafting Materials List
-            CraftItem storage item = craftItems[hashId];
-            item.gameContractAddress = contractAddress;
-            item.gameContractItemId = id;
-            emit AddedCraftingItem(hashId);
-            success = true;
-        }
-    }
-
     function _setActiveRecipe(uint256 recipeId, bool activate) internal {
         require(
             recipeList[recipeId].isActive != activate,
@@ -506,5 +395,9 @@ contract Crafting is ICrafting, Ownable, AccessControl {
         } else {
             activeRecipesCount--;
         }
+    }
+    
+    function globalItemRegistry() internal view returns (IGlobalItemRegistry) {
+        return IGlobalItemRegistry(globalItemRegistryAddr);
     }
 }

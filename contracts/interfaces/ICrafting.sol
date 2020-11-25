@@ -3,70 +3,51 @@ pragma solidity >=0.6.0 <0.8.0;
 
 interface ICrafting {
     // view 
-    function isRecipeActive(uint256 recipeId) external view returns(bool);
+    function isRecipeActive(uint256 _recipeId) external view returns(bool);
 
     function getTokenAddressForCrafting() external view returns(address);
 
-    function getRecipeCost(uint256 recipeId) external view returns(uint256);
+    function getRecipeCost(uint256 _recipeId) external view returns(uint256);
 
-    function getCraftingMaterialsList(uint256 recipeId)
+    function getCraftingMaterialsList(uint256 _recipeId)
         external
         view
-        returns(uint256[] memory, uint256[] memory);
+        returns(uint256[] memory uuids, uint256[] memory counts);
 
-    function getRewardsList(uint256 recipeId)
+    function getRewardsList(uint256 _recipeId)
         external
         view
-        returns(uint256[] memory rewardItemIds, uint256[] memory counts);
+        returns(uint256[] memory uuids, uint256[] memory counts);
 
-    function getItemAsCraftingMaterialList(address game, uint256 itemId)
-        external
-        view
-        returns(uint256[] memory recipeIds);
-
-    function getItemAsCraftingMaterialList(uint256 id) external view returns(uint256[] memory);
+    function getItemAsCraftingMaterialList(uint256 _uuid) external view returns(uint256[] memory recipeIds);
     
-    function getItemAsRewardList(address game, uint256 itemId) external view returns(uint256[] memory);
+    function getItemAsRewardList(uint256 _uuid) external view returns(uint256[] memory recipeIds);
 
-    function getItemAsRewardList(uint256 id) external view returns(uint256[] memory);
-
-    function getActiveRecipes() external view returns(uint256[] memory);
+    function getActiveRecipes() external view returns(uint256[] memory recipeIds);
 
     function getActiveRecipesCount() external view returns(uint256);
 
-    function getGameContractId(uint256 craftItemId)
-        external
-        view
-        returns(address gameContractId, uint256 gameItemId);
-
-    function getCraftItemId(address gameContractAddress, uint256 gameContractId)
-        external
-        view
-        returns(uint256);
-
-    function getCraftItemsLength() external view returns(uint256);
-
     // mutative 
     function createRecipe(
-        uint256[] calldata materialIds,
-        uint256[] calldata materialAmounts,
-        uint256[] calldata rewardIds,
-        uint256[] calldata rewardAmounts,
-        uint256 cost,
-        bool isActive
+        uint256[] calldata _materialIds,
+        uint256[] calldata _materialAmounts,
+        uint256[] calldata _rewardIds,
+        uint256[] calldata _rewardAmounts,
+        uint256 _cost,
+        bool _isActive
     ) external;
 
-    function registerCraftingMaterial(address gameContractAddress, uint256 gameContractId) external;
+    // function registerCraftingMaterial(address gameContractAddress, uint256 gameContractId) external;
 
-    function registerCraftingReward(address gameContractAddress, uint256 gameContractId) external;
+    // function registerCraftingReward(address gameContractAddress, uint256 gameContractId) external;
 
-    function setRecipeActive(uint256 recipeId, bool activate) external;
+    function setRecipeActive(uint256 _recipeId, bool _activate) external;
 
-    function setRecipeActiveBatch(uint256[] calldata recipeIds, bool[] calldata activate) external;
+    function setRecipeActiveBatch(uint256[] calldata _recipeIds, bool[] calldata _activate) external;
 
-    function updateRecipeCost(uint256 recipeId, uint256 cost) external;
+    function updateRecipeCost(uint256 _recipeId, uint256 _cost) external;
 
-    function updateRecipeCostBatch(uint256[] calldata recipeIds, uint256[] calldata costs) external;
+    function updateRecipeCostBatch(uint256[] calldata _recipeIds, uint256[] calldata _costs) external;
 
-    function craftItem(uint256 recipeId, address payable account) external;
+    function craftItem(uint256 _recipeId, address payable _account) external;
 }

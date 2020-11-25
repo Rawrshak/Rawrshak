@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../interfaces/IGame.sol";
-import "../interfaces/ILootbox.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
+import "../interfaces/ILootbox.sol";
 import "../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
@@ -181,6 +181,8 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         emit AddedRewardBatch(_uuids);
     }
 
+    // Todo: instead of passing in amounts, just pass the ids, and then have the lootbox query
+    //       for the data from the game
     function generateLootbox(uint256[] calldata _uuids, uint256[] calldata _amounts) external override {
         require(_uuids.length == _amounts.length, "Input array length mismatch");
 
