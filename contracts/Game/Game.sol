@@ -8,10 +8,7 @@ import "../interfaces/IGame.sol";
 import "./ItemInfoStorage.sol";
 
 contract Game is IGame, ERC1155, AccessControl {
-    using EnumerableSet for EnumerableSet.UintSet;
-
-    /******** Data Structures ********/
-    
+    using EnumerableSet for EnumerableSet.UintSet;    
 
     /******** Stored Variables ********/
     // This is the address where transactions are sent to.
