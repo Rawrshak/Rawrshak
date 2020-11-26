@@ -57,7 +57,6 @@ contract ItemInfoStorage is IItemInfoStorage, Ownable, ERC165 {
     }
 
     function getItemInfo(uint256 _id) external view override returns(address, uint256)  {
-        // Todo: figure out if this returns address(0) if it doesn't exist
         return (items[_id].creatorAddress, items[_id].maxSupply);
     }
 

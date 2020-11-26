@@ -190,45 +190,6 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
         emit RecipeCreated(recipeId);
     }
 
-    // // Todo: registerCraftingMaterialBatch()
-    // function registerCraftingMaterial(uint256 uuid)
-    //     external
-    //     override
-    //     checkPermissions(MANAGER_ROLE)
-    //     checkItemExists(uuid)
-    // {
-    //     // Add crafting item data to Crafting Materials List
-    //     CraftItem storage item = craftItems[hashId];
-    //     item.gameContractAddress = contractAddress;
-    //     item.gameContractItemId = id;
-    //     emit AddedCraftingItem(hashId);
-
-    //     // Add to crafting map
-    //     (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
-    //     require(success, "This crafting item is already stored.");
-
-    //     emit AddedCraftingItem(hashId);
-    // }
-
-    // // Todo: registerCraftingRewardBatch()
-    // function registerCraftingReward(address gameContractAddress, uint256 gameContractId)
-    //     external
-    //     override
-    //     checkPermissions(MANAGER_ROLE)
-    //     checkAddressIsContract(gameContractAddress)
-    // {
-    //     require(
-    //         IGame(gameContractAddress).contains(gameContractId),
-    //         "This item does not exist."
-    //     );
-
-    //     // Add to crafting map
-    //     (uint256 hashId, bool success) = _addCraftingItem(gameContractAddress, gameContractId);
-    //     require(success, "This crafting item is already stored.");
-
-    //     emit AddedCraftingItem(hashId);
-    // }
-
     function setRecipeActive(uint256 _recipeId, bool _activate) 
         external
         override

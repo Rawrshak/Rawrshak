@@ -37,10 +37,6 @@ interface ICrafting {
         bool _isActive
     ) external;
 
-    // function registerCraftingMaterial(address gameContractAddress, uint256 gameContractId) external;
-
-    // function registerCraftingReward(address gameContractAddress, uint256 gameContractId) external;
-
     function setRecipeActive(uint256 _recipeId, bool _activate) external;
 
     function setRecipeActiveBatch(uint256[] calldata _recipeIds, bool[] calldata _activate) external;

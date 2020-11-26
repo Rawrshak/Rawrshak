@@ -458,7 +458,7 @@ contract('Crafting Contract', (accounts) => {
         assert.equal(tokenAddress.toString(), ovcToken.address, "Token Addresses are not the same.");
         assert.equal(await ovcToken.balanceOf(playerAddress), 300, "balance is 300.");
         assert.equal(cost, 200, "Cost is 200.");
-        ovcToken.approve(crafting.address, cost, {from: playerAddress, gasPrice: 1}); 
+        ovcToken.approve(crafting.address, cost+1, {from: playerAddress, gasPrice: 1}); 
 
         // craft recipe 2 for player
         await crafting.craftItem(recipe2, playerAddress, {from:smithAddress});
