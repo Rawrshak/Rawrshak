@@ -1,5 +1,6 @@
 const Game = artifacts.require("Game");
 const Lootbox = artifacts.require("Lootbox");
+const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 
 contract('Lootbox Contract', (accounts) => {
     const [
@@ -33,8 +34,8 @@ contract('Lootbox Contract', (accounts) => {
     ] = [10,11,12,13,14,15,16];
 
     const Rarity = {Mythic:0, Exotic:1, SuperRare:2, Rare:3, Scarce:4, Uncommon:5, Common:6};
-    
     const DEFAULT_REQUIRED_INPUT_ITEMS_AMOUNT = 4;
+    const zero_address = "0x0000000000000000000000000000000000000000";
 
     it('Check Lootbox Contract Roles', async () => {
         const game = await Game.deployed();
@@ -72,6 +73,7 @@ contract('Lootbox Contract', (accounts) => {
     it("Game Contract Data Setup", async () => {
         const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
+        const registry = await GlobalItemRegistry.deployed();
         const gc_manager_role = await game.MANAGER_ROLE();
         const minter_role = await game.MINTER_ROLE();
         const burner_role = await game.BURNER_ROLE();
@@ -110,15 +112,20 @@ contract('Lootbox Contract', (accounts) => {
             exoticReward,
             mythicReward
         ];
-        await game.methods['createItemBatch(uint256[])'](itemIds, {from:gcManagerAddress});
+        maxSupplies = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        await game.createItemBatch(zero_address, itemIds, maxSupplies, {from:gcManagerAddress});
         
         // Check if the new items were added.
-        assert.equal((await game.length()).toNumber(), 17, "The 17 new items were not created");
+        assert.equal(await game.length(), 17, "The 17 new items were not created.");
+
+        // make sure all 5 items were added in the global registry correctly
+        assert.equal(await registry.length(), 17, "The items were not added in the registry correctly.");
     });
 
     it("Register Input Items", async () => {
         const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
+        const registry = await GlobalItemRegistry.deployed();
         const manager_role = await lootbox.MANAGER_ROLE();
 
         assert.equal(
@@ -128,45 +135,41 @@ contract('Lootbox Contract', (accounts) => {
         );
 
         // Test Register Input Item 
-        addedInputItemEvent = await lootbox.registerInputItem(
-            game.address,
-            inputItem0,
-            1,
-            1,
-            {from:lbManagerAddress}
-        );
-        id = await lootbox.getLootboxId(game.address, inputItem0, {from:lbManagerAddress});
-
+        input1UUID = await registry.getUUID(game.address, inputItem0);
+        addedInputItemEvent = await lootbox.registerInputItem(input1UUID, 1, 1, {from:lbManagerAddress});
         assert.equal(
             addedInputItemEvent.logs[0].args[0].toString(),
-            id,
+            input1UUID,
             "InputItem 0 was not added"
         );
         
         // Test Register Input Item Batch
-        ids = [
-            inputItem1, inputItem2, inputItem3,
-            inputItem4, inputItem5, inputItem6,
-            inputItem7, inputItem8, inputItem9
+        uuids = [
+            await registry.getUUID(game.address, inputItem1),
+            await registry.getUUID(game.address, inputItem2),
+            await registry.getUUID(game.address, inputItem3),
+            await registry.getUUID(game.address, inputItem4),
+            await registry.getUUID(game.address, inputItem5),
+            await registry.getUUID(game.address, inputItem6),
+            await registry.getUUID(game.address, inputItem7),
+            await registry.getUUID(game.address, inputItem8),
+            await registry.getUUID(game.address, inputItem9)
         ];
         
         amounts = [2, 2, 2, 3, 3, 3, 4, 4, 4];
         multipliers = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
         addedInputItemBatchEvent = await lootbox.registerInputItemBatch(
-            game.address,
-            ids,
+            uuids,
             amounts,
             multipliers,
             {from:lbManagerAddress}
         );
 
-        // Check if item 1 was added
-        id = await lootbox.getLootboxId(game.address, inputItem1, {from:lbManagerAddress});
-        
+        // Check if item 1 was added        
         assert.equal(
             addedInputItemBatchEvent.logs[0].args[0][0].toString(),
-            id,
+            uuids[0],
             "InputItem 1 was not added"
         );        
     });
@@ -174,6 +177,7 @@ contract('Lootbox Contract', (accounts) => {
     it("Register Reward Items", async () => {
         const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
+        const registry = await GlobalItemRegistry.deployed();
         const manager_role = await lootbox.MANAGER_ROLE();
 
         assert.equal(
@@ -183,44 +187,33 @@ contract('Lootbox Contract', (accounts) => {
         );
 
         // Test Register Reward Item 
-        addedRewardEvent = await lootbox.registerReward(
-            game.address,
-            commonReward,
-            Rarity.Common,
-            1,
-            {from:lbManagerAddress}
-        );
-        id = await lootbox.getLootboxId(game.address, commonReward, {from:lbManagerAddress});
+        commonUuid = await registry.getUUID(game.address, commonReward),
+        addedRewardEvent = await lootbox.registerReward(commonUuid, Rarity.Common, 1, {from:lbManagerAddress});
 
         assert.equal(
             addedRewardEvent.logs[0].args[0].toString(),
-            id,
+            commonUuid,
             "common reward was not added"
         );
         
         // Test Register Reward Item Batch
-        ids = [
-            uncommonReward, scarceReward, rareReward,
-            superRareReward, exoticReward, mythicReward
+        uuids = [
+            await registry.getUUID(game.address, uncommonReward),
+            await registry.getUUID(game.address, scarceReward),
+            await registry.getUUID(game.address, rareReward),
+            await registry.getUUID(game.address, superRareReward),
+            await registry.getUUID(game.address, exoticReward),
+            await registry.getUUID(game.address, mythicReward)
         ];
         
         rarities = [Rarity.Uncommon, Rarity.Scarce, Rarity.Rare, Rarity.SuperRare, Rarity.Exotic, Rarity.Mythic];
         amounts = [1, 1, 1, 1, 1, 1];
+        addedRewardBatchEvent = await lootbox.registerRewardBatch(uuids, rarities, amounts, {from:lbManagerAddress});
 
-        addedRewardBatchEvent = await lootbox.registerRewardBatch(
-            game.address,
-            ids,
-            rarities,
-            amounts,
-            {from:lbManagerAddress}
-        );
-
-        // Check if item 1 was added
-        id = await lootbox.getLootboxId(game.address, uncommonReward, {from:lbManagerAddress});
-        
+        // Check if item 1 was added        
         assert.equal(
             addedRewardBatchEvent.logs[0].args[0][0].toString(),
-            id,
+            uuids[0],
             "Uncommon reward item was not added"
         );  
     });
@@ -228,88 +221,91 @@ contract('Lootbox Contract', (accounts) => {
     it("View Rewards", async () => {
         const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
+        const registry = await GlobalItemRegistry.deployed();
 
         // check Mythic rewards
         rewards = await lootbox.getRewards(Rarity.Mythic);
-        hashId = await lootbox.getLootboxId(game.address, mythicReward);
-        assert.equal(rewards[0][0].toString(), hashId, "Mythic Reward item is not the same.");
+        uuid = await registry.getUUID(game.address, mythicReward);
+        assert.equal(rewards[0][0].toString(), uuid, "Mythic Reward item is not the same.");
         assert.equal(rewards[1][0], 1, "Mythic Reward item amount is not correct.");
         
         // check Exotic rewards
         rewards = await lootbox.getRewards(Rarity.Exotic);
-        hashId = await lootbox.getLootboxId(game.address, exoticReward);
-        assert.equal(rewards[0][0].toString(), hashId, "Exotic Reward item is not the same.");
+        uuid = await registry.getUUID(game.address, exoticReward);
+        assert.equal(rewards[0][0].toString(), uuid, "Exotic Reward item is not the same.");
         assert.equal(rewards[1][0], 1, "Exotic Reward item amount is not correct.");
         
         // check SuperRare rewards
         rewards = await lootbox.getRewards(Rarity.SuperRare);
-        hashId = await lootbox.getLootboxId(game.address, superRareReward);
-        assert.equal(rewards[0][0].toString(), hashId, "SuperRare Reward item is not the same.");
+        uuid = await registry.getUUID(game.address, superRareReward);
+        assert.equal(rewards[0][0].toString(), uuid, "SuperRare Reward item is not the same.");
         assert.equal(rewards[1][0], 1, "SuperRare Reward item amount is not correct.");
         
         // check Rare rewards
         rewards = await lootbox.getRewards(Rarity.Rare);
-        hashId = await lootbox.getLootboxId(game.address, rareReward);
-        assert.equal(rewards[0][0].toString(), hashId, "Rare Reward item is not the same.");
+        uuid = await registry.getUUID(game.address, rareReward);
+        assert.equal(rewards[0][0].toString(), uuid, "Rare Reward item is not the same.");
         assert.equal(rewards[1][0], 1, "Rare Reward item amount is not correct.");
         
         // check Scarce rewards
         rewards = await lootbox.getRewards(Rarity.Scarce);
-        hashId = await lootbox.getLootboxId(game.address, scarceReward);
-        assert.equal(rewards[0][0].toString(), hashId, "Scarce Reward item is not the same.");
+        uuid = await registry.getUUID(game.address, scarceReward);
+        assert.equal(rewards[0][0].toString(), uuid, "Scarce Reward item is not the same.");
         assert.equal(rewards[1][0], 1, "Scarce Reward item amount is not correct.");
         
         // check Uncommon rewards
         rewards = await lootbox.getRewards(Rarity.Uncommon);
-        hashId = await lootbox.getLootboxId(game.address, uncommonReward);
-        assert.equal(rewards[0][0].toString(), hashId, "Uncommon Reward item is not the same.");
+        uuid = await registry.getUUID(game.address, uncommonReward);
+        assert.equal(rewards[0][0].toString(), uuid, "Uncommon Reward item is not the same.");
         assert.equal(rewards[1][0], 1, "Uncommon Reward item amount is not correct.");
 
         // check Common rewards
         rewards = await lootbox.getRewards(Rarity.Common);
-        hashId = await lootbox.getLootboxId(game.address, commonReward);
-        assert.equal(rewards[0][0].toString(), hashId, "Common Reward item is not the same.");
+        uuid = await registry.getUUID(game.address, commonReward);
+        assert.equal(rewards[0][0].toString(), uuid, "Common Reward item is not the same.");
         assert.equal(rewards[1][0], 1, "Common Reward item amount is not correct.");
     });
 
     it("Get Required Input Item Amount", async () => {
         const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
+        const registry = await GlobalItemRegistry.deployed();
 
-        hashId = await lootbox.getLootboxId(game.address, inputItem0);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 1, "Input Item 0 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem1);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 2, "Input Item 1 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem2);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 2, "Input Item 2 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem3);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 2, "Input Item 3 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem4);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 3, "Input Item 4 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem5);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 3, "Input Item 5 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem6);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 3, "Input Item 6 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem7);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 4, "Input Item 7 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem8);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 4, "Input Item 8 amount incorrect.");
-        hashId = await lootbox.getLootboxId(game.address, inputItem9);
-        assert.equal(await lootbox.getRequiredInputItemAmount(hashId), 4, "Input Item 9 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem0);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 1, "Input Item 0 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem1);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 2, "Input Item 1 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem2);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 2, "Input Item 2 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem3);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 2, "Input Item 3 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem4);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 3, "Input Item 4 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem5);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 3, "Input Item 5 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem6);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 3, "Input Item 6 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem7);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 4, "Input Item 7 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem8);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 4, "Input Item 8 amount incorrect.");
+        uuid = await registry.getUUID(game.address, inputItem9);
+        assert.equal(await lootbox.getRequiredInputItemAmount(uuid), 4, "Input Item 9 amount incorrect.");
     });
 
     it("Get Game Asset information", async () => {
         const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
+        const registry = await GlobalItemRegistry.deployed();
 
         // check rarity for input item
-        hashId = await lootbox.getLootboxId(game.address, inputItem0);
-        result = await lootbox.getRarity(hashId);
+        uuid = await registry.getUUID(game.address, inputItem0);
+        result = await lootbox.getRarity(uuid);
         assert.equal(result.length, 0, "Input Item 0 shouldn't have any rarities.");
         
         // check rarity for reward item
-        hashId = await lootbox.getLootboxId(game.address, mythicReward);
-        result = await lootbox.getRarity(hashId);
+        uuid = await registry.getUUID(game.address, mythicReward);
+        result = await lootbox.getRarity(uuid);
         assert.equal(result[0], Rarity.Mythic, "Rarity for mythic item is not set to Mythic.");
     });
 
@@ -339,6 +335,7 @@ contract('Lootbox Contract', (accounts) => {
     it("Generate Lootbox", async () => {
         const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
+        const registry = await GlobalItemRegistry.deployed();
 
         // Mint the items and send to the player address
         items = [inputItem0, inputItem1, inputItem4];
@@ -346,11 +343,11 @@ contract('Lootbox Contract', (accounts) => {
         await game.mintBatch(playerAddress, items, amounts, {from: gcManagerAddress});
 
         // Generate a loot box
-        hashId0 = await lootbox.getLootboxId(game.address, inputItem0);
-        hashId1 = await lootbox.getLootboxId(game.address, inputItem1);
-        hashId4= await lootbox.getLootboxId(game.address, inputItem4);
-        hashIds = [hashId0, hashId1, hashId4];
-        await lootbox.generateLootbox(hashIds, amounts, {from: playerAddress});
+        uuid0 = await registry.getUUID(game.address, inputItem0);
+        uuid1 = await registry.getUUID(game.address, inputItem1);
+        uuid4 = await registry.getUUID(game.address, inputItem4);
+        uuids = [uuid0, uuid1, uuid4];
+        await lootbox.generateLootbox(uuids, amounts, {from: playerAddress});
         
         // check how many lootboxes were created
         assert.equal(await lootbox.balanceOf(playerAddress, 0), 1, "Incorrect number of lootboxes");

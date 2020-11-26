@@ -3,24 +3,33 @@ const Game = artifacts.require("Game");
 const Crafting = artifacts.require("Crafting");
 const Lootbox = artifacts.require("Lootbox");
 const Utils = artifacts.require("Utils");
+const NameRegistry = artifacts.require("NameRegistry");
+const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 
 module.exports = async function(deployer, networks, accounts) {
     // deploy OVC token with 1,000,000,000 initial supply.
     await deployer.deploy(OVCTokenContract, 1000000000);
     ovcTokenContract = await OVCTokenContract.deployed();
 
+    // Deploy Name Registry
+    await deployer.deploy(NameRegistry);
+
+    // deploy GlobalItemRegistry Contract
+    await deployer.deploy(GlobalItemRegistry);
+    registry = await GlobalItemRegistry.deployed();
+
     // deploy Game with test URL
-    await deployer.deploy(Game, "https://testgame.com/api/item/{id}.json");
+    await deployer.deploy(Game, "https://testgame.com/api/item/{id}.json", registry.address);
     
     // Link Library
     await deployer.deploy(Utils);
     await deployer.link(Utils, [Crafting, Lootbox]);
 
     // deploy Crafting Contract
-    await deployer.deploy(Crafting, ovcTokenContract.address);
+    await deployer.deploy(Crafting, ovcTokenContract.address, registry.address);
     
-    // deploy Crafting Contract
-    await deployer.deploy(Lootbox, "https://testgame.com/api/lootbox/{id}.json");
+    // deploy Lootbox Contract
+    await deployer.deploy(Lootbox, "https://testgame.com/api/lootbox/{id}.json", registry.address);
 
     // Assign crafting contract the minter and burner roles
     game = await Game.deployed();

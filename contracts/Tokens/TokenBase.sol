@@ -12,38 +12,34 @@ contract TokenBase is ERC20, ERC165, AccessControl
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    /*     Todo: When creating the ITokenBase interface, based off of this pattern below,
-     *           generate the _INTERFACE_ID_TOKEN_BASE
-     *     bytes4(keccak256('mint(address, uint256)')) == 0x********
-     *     bytes4(keccak256('burn(address, uint256)')) == 0x********
+    /*
+     *     bytes4(keccak256('mint(address,uint256)')) == 0x40c10f19
+     *     bytes4(keccak256('burn(address,uint256)')) == 0x9dc29fac
      *
-     *     => 0x******** ^ 0x******** == 0x********
+     *     => 0x40c10f19 ^ 0x9dc29fac == 0xdd0390b5
      */
-    // bytes4 private constant _INTERFACE_ID_ERC721 = 0x********;
+    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
 
-
-    constructor(string memory name, string memory symbol, uint256 initialSupply) public ERC20(name, symbol)
+    constructor(string memory _name, string memory _symbol, uint256 _initialSupply) public ERC20(_name, _symbol)
     {
         // Contract Deployer is now the owner and can set roles
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         // mint initial supply of tokens
-        _mint(msg.sender, initialSupply);
+        _mint(msg.sender, _initialSupply);
 
-        // Todo: uncomment when creating the ITokenBase interface
-        // register the Token
-        // _registerInterface(_INTERFACE_ID_ERC721);
+        _registerInterface(_INTERFACE_ID_TOKENBASE);
     }
 
-    function mint(address to, uint256 amount) public 
+    function mint(address _to, uint256 _amount) public 
     {
         require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
-        _mint(to, amount);
+        _mint(_to, _amount);
     }
     
-    function burn(address from, uint256 amount) public 
+    function burn(address _from, uint256 _amount) public 
     {
         require(hasRole(BURNER_ROLE, msg.sender), "Caller is not a burner");
-        _burn(from, amount);
+        _burn(_from, _amount);
     }
 }

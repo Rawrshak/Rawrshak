@@ -2,25 +2,45 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface IGame {
+    // view
     function getGamePayableAddress() external view returns(address payable);
-    function setGamePayableAddress(address payable newAddress) external;
     
-    function createItem(uint256 id) external;
-    function createItem(uint256 id, address creatorAddress) external;
-    function createItem(uint256 id,address creatorAddress,uint256 maxSupply) external;
-    function createItemBatch(uint256[] calldata ids) external;
-    function createItemBatch(uint256[] calldata ids, address creatorAddress) external;
-    function createItemBatch(uint256[] calldata ids,address creatorAddress,uint256[] calldata maxSupplies) external;
-    
-    function deleteItem(uint256 id) external;
-    function exists(uint256 id) external view returns (bool);
+    function contains(uint256 _id) external view returns (bool);
+
     function length() external view returns (uint256);
+
     function getAllItems() external view returns(uint256[] memory);
-    function getTotalSupply(uint256 id) external view returns(uint256);
-    function getCreatorAddress(uint256 id) external view returns(address);
-    function mint(address receivingAddress, uint256 itemId, uint256 amount) external;
-    function mintBatch(address receivingAddress, uint256[] calldata itemIds, uint256[] calldata amounts)
-        external;
-    function burn(address account, uint256 itemId, uint256 amount) external;
-    function burnBatch(address account, uint256[] calldata itemIds, uint256[] calldata amounts) external;
+
+    function getTotalSupply(uint256 _id) external view returns(uint256);
+
+    function getMaxSupply(uint256 _id) external view returns(uint256);
+
+    function getCreatorAddress(uint256 _id) external view returns(address);
+
+    // Mutative
+    function setGamePayableAddress(address payable _newAddress) external;
+    
+    function createItem(address _creatorAddress, uint256 _id, uint256 _maxSupply) external;
+
+    function createItemBatch(
+        address _creatorAddress,
+        uint256[] calldata _ids,
+        uint256[] calldata _maxSupplies
+    ) external;
+
+    function mint(address _receivingAddress, uint256 _itemId, uint256 _amount) external;
+
+    function mintBatch(
+        address _receivingAddress,
+        uint256[] calldata _itemIds,
+        uint256[] calldata _amounts
+    ) external;
+
+    function burn(address _account, uint256 _itemId, uint256 _amount) external;
+
+    function burnBatch(
+        address _account,
+        uint256[] calldata _itemIds,
+        uint256[] calldata _amounts
+    ) external;
 }
