@@ -77,8 +77,6 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
     address globalItemRegistryAddr;
 
     /******** Events ********/
-    // // Todo: AddedCraftingItemBatch()
-    // // event AddedCraftingItem(uint256);
     event RecipeCreated(uint256);
     event ItemCrafted();
 

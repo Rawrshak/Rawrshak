@@ -13,8 +13,8 @@ import "../interfaces/ILootbox.sol";
 import "../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
-// Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item. For now, just keep the 
-//       probabilities flat.
+// Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item.
+//       For now, just keep the probabilities flat.
 // Todo: Developer can add multiple kinds of lootboxes per contract
 // Todo: Lootbox Storage
 
@@ -210,7 +210,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     }
 
     // Todo: instead of passing in amounts, just pass the ids, and then have the lootbox query
-    //       for the data from the game
+    //       for the data from the game. If the user doesn't have enough items, just call a revert()
     function generateLootbox(uint256[] calldata _uuids, uint256[] calldata _amounts) external override {
         require(_uuids.length == _amounts.length, "Input array length mismatch");
 

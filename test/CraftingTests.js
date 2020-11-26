@@ -4,13 +4,6 @@ const Crafting = artifacts.require("Crafting");
 const OVCToken = artifacts.require("OVCToken");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 
-// const w3utils = require('web3-utils'); // todo: delete
-
-// /**
-//  * Converts a string into a hex representation of bytes32, with right padding
-//  */
-// const toBytes32 = key => w3utils.rightPad(w3utils.asciiToHex(key), 64);
-
 contract('Crafting Contract', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -458,7 +451,7 @@ contract('Crafting Contract', (accounts) => {
         assert.equal(tokenAddress.toString(), ovcToken.address, "Token Addresses are not the same.");
         assert.equal(await ovcToken.balanceOf(playerAddress), 300, "balance is 300.");
         assert.equal(cost, 200, "Cost is 200.");
-        ovcToken.approve(crafting.address, cost+1, {from: playerAddress, gasPrice: 1}); 
+        await ovcToken.approve(crafting.address, cost, {from: playerAddress, gasPrice: 1}); 
 
         // craft recipe 2 for player
         await crafting.craftItem(recipe2, playerAddress, {from:smithAddress});

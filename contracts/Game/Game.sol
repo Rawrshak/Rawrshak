@@ -212,8 +212,6 @@ contract Game is ERC1155, AccessControl, IGame {
     }
 
     // mint several items to a single addreess
-    // Todo: mint single item to several addresses
-    // Todo: mint several items to several addresses
     function mintBatch(
         address _receivingAddress,
         uint256[] calldata _itemIds,
