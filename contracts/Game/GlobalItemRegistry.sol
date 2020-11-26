@@ -46,7 +46,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     modifier isCallerGame() {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_IGAME),
-            "Caller does not support IGame Interface."
+            "Caller does not support Interface."
         );
         _;
     }

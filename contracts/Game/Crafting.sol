@@ -50,7 +50,7 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
     bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
     bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
-    
+        
     /******** Data Structures ********/
     struct ItemPair {
         uint256 uuid;
@@ -100,11 +100,11 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
         require(Address.isContract(_itemRegistryAddr), "Address not valid");
         require(
             ERC165Checker.supportsInterface(_coinAddress, _INTERFACE_ID_TOKENBASE),
-            "Caller does not support IGame Interface."
+            "Caller does not support Interface."
         );
         require(
             ERC165Checker.supportsInterface(_itemRegistryAddr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support IGame Interface."
+            "Caller does not support Interface."
         );
         tokenContractAddress = _coinAddress;
         globalItemRegistryAddr = _itemRegistryAddr;
@@ -120,7 +120,7 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
         require(Address.isContract(_addr), "Address not valid");
         require(
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support IGame Interface."
+            "Caller does not support Interface."
         );
         globalItemRegistryAddr = _addr;
     }

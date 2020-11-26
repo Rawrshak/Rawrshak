@@ -79,7 +79,7 @@ contract Game is ERC1155, AccessControl, IGame {
         require(Address.isContract(_itemRegistryAddr), "Address not valid");
         require(
             ERC165Checker.supportsInterface(_itemRegistryAddr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support IGame Interface."
+            "Caller does not support Interface."
         );
 
         // Contract Deployer is now the owner and can set roles

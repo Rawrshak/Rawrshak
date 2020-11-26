@@ -117,7 +117,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         require(Address.isContract(_addr), "Address not valid");
         require(
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support IGame Interface."
+            "Caller does not support Interface."
         );
         globalItemRegistryAddr = _addr;
     }
