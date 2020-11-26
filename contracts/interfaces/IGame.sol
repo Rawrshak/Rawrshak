@@ -5,20 +5,20 @@ interface IGame {
     // view
     function getGamePayableAddress() external view returns(address payable);
     
-    function contains(uint256 id) external view returns (bool);
+    function contains(uint256 _id) external view returns (bool);
 
     function length() external view returns (uint256);
 
     function getAllItems() external view returns(uint256[] memory);
 
-    function getTotalSupply(uint256 id) external view returns(uint256);
+    function getTotalSupply(uint256 _id) external view returns(uint256);
 
-    function getMaxSupply(uint256 id) external view returns(uint256);
+    function getMaxSupply(uint256 _id) external view returns(uint256);
 
-    function getCreatorAddress(uint256 id) external view returns(address);
+    function getCreatorAddress(uint256 _id) external view returns(address);
 
     // Mutative
-    function setGamePayableAddress(address payable newAddress) external;
+    function setGamePayableAddress(address payable _newAddress) external;
     
     function createItem(address _creatorAddress, uint256 _id, uint256 _maxSupply) external;
 
@@ -28,12 +28,19 @@ interface IGame {
         uint256[] calldata _maxSupplies
     ) external;
 
-    function mint(address receivingAddress, uint256 itemId, uint256 amount) external;
+    function mint(address _receivingAddress, uint256 _itemId, uint256 _amount) external;
 
-    function mintBatch(address receivingAddress, uint256[] calldata itemIds, uint256[] calldata amounts)
-        external;
+    function mintBatch(
+        address _receivingAddress,
+        uint256[] calldata _itemIds,
+        uint256[] calldata _amounts
+    ) external;
 
-    function burn(address account, uint256 itemId, uint256 amount) external;
+    function burn(address _account, uint256 _itemId, uint256 _amount) external;
 
-    function burnBatch(address account, uint256[] calldata itemIds, uint256[] calldata amounts) external;
+    function burnBatch(
+        address _account,
+        uint256[] calldata _itemIds,
+        uint256[] calldata _amounts
+    ) external;
 }

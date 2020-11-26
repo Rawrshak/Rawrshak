@@ -5,7 +5,7 @@ import "./TokenBase.sol";
 
 contract OVCToken is TokenBase
 {
-    constructor(uint256 initialSupply) public TokenBase("Omniverse Credits", "OVC", initialSupply)
+    constructor(uint256 _initialSupply) public TokenBase("Omniverse Credits", "OVC", _initialSupply)
     {
     }
 }

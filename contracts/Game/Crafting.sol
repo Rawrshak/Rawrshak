@@ -83,16 +83,16 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
     event ItemCrafted();
 
     /******** Modifiers ********/
-    modifier checkPermissions(bytes32 role) {
+    modifier checkPermissions(bytes32 _role) {
         require(
-            hasRole(role, msg.sender),
+            hasRole(_role, msg.sender),
             "Caller does not have the necessary permissions."
         );
         _;
     }
 
-    modifier checkItemExists(uint256 uuid) {
-        require(globalItemRegistry().contains(uuid), "Item does not exist.");
+    modifier checkItemExists(uint256 _uuid) {
+        require(globalItemRegistry().contains(_uuid), "Item does not exist.");
         _;
     }
 
@@ -386,14 +386,14 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
     }
 
     /******** Internal Functions ********/
-    function _setActiveRecipe(uint256 recipeId, bool activate) internal {
+    function _setActiveRecipe(uint256 _recipeId, bool _activate) internal {
         require(
-            recipeList[recipeId].isActive != activate,
+            recipeList[_recipeId].isActive != _activate,
             "A recipe is already set properly."
         );
 
-        recipeList[recipeId].isActive = activate;
-        if (activate) {
+        recipeList[_recipeId].isActive = _activate;
+        if (_activate) {
             activeRecipesCount++;
         } else {
             activeRecipesCount--;

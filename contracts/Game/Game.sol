@@ -65,9 +65,9 @@ contract Game is ERC1155, AccessControl, IGame {
     event ItemBurnedBatch(uint256[],uint256[]);
 
     /******** Modifiers ********/
-    modifier checkPermissions(bytes32 role) {
+    modifier checkPermissions(bytes32 _role) {
         require(
-            hasRole(role, msg.sender),
+            hasRole(_role, msg.sender),
             "Caller does not have the necessary permissions."
         );
         _;
@@ -100,13 +100,13 @@ contract Game is ERC1155, AccessControl, IGame {
     }
 
     // GamePayableAddress setter
-    function setGamePayableAddress(address payable newAddress) 
+    function setGamePayableAddress(address payable _newAddress) 
         external
         override
         checkPermissions(GAME_OWNER_ROLE)
     {
-        gamePayableAddress = newAddress;
-        emit GamePayableAddressChanged(newAddress);
+        gamePayableAddress = _newAddress;
+        emit GamePayableAddressChanged(_newAddress);
     }
 
     // Create New Item

@@ -84,13 +84,13 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     event LootboxOpened(uint256);
 
     /******** Modifiers ********/
-    modifier checkPermissions(bytes32 role) {
-        require(hasRole(role, msg.sender), "Caller missing permissions");
+    modifier checkPermissions(bytes32 _role) {
+        require(hasRole(_role, msg.sender), "Caller missing permissions");
         _;
     }
 
-    modifier checkItemExists(uint256 uuid) {
-        require(globalItemRegistry().contains(uuid), "Item does not exist.");
+    modifier checkItemExists(uint256 _uuid) {
+        require(globalItemRegistry().contains(_uuid), "Item does not exist.");
         _;
     }
 
