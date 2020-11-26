@@ -12,15 +12,13 @@ contract TokenBase is ERC20, ERC165, AccessControl
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
 
-    /*     Todo: When creating the ITokenBase interface, based off of this pattern below,
-     *           generate the _INTERFACE_ID_TOKEN_BASE
-     *     bytes4(keccak256('mint(address, uint256)')) == 0x********
-     *     bytes4(keccak256('burn(address, uint256)')) == 0x********
+    /*
+     *     bytes4(keccak256('mint(address,uint256)')) == 0x40c10f19
+     *     bytes4(keccak256('burn(address,uint256)')) == 0x9dc29fac
      *
-     *     => 0x******** ^ 0x******** == 0x********
+     *     => 0x40c10f19 ^ 0x9dc29fac == 0xdd0390b5
      */
-    // bytes4 private constant _INTERFACE_ID_ERC721 = 0x********;
-
+    bytes4 public constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
 
     constructor(string memory name, string memory symbol, uint256 initialSupply) public ERC20(name, symbol)
     {
@@ -30,9 +28,7 @@ contract TokenBase is ERC20, ERC165, AccessControl
         // mint initial supply of tokens
         _mint(msg.sender, initialSupply);
 
-        // Todo: uncomment when creating the ITokenBase interface
-        // register the Token
-        // _registerInterface(_INTERFACE_ID_ERC721);
+        _registerInterface(_INTERFACE_ID_TOKENBASE);
     }
 
     function mint(address to, uint256 amount) public 

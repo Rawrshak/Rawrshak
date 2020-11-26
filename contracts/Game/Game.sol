@@ -7,8 +7,40 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGame.sol";
 import "./ItemInfoStorage.sol";
 
-contract Game is IGame, ERC1155, AccessControl {
-    using EnumerableSet for EnumerableSet.UintSet;    
+contract Game is ERC1155, AccessControl, IGame {
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    /******** Constants ********/
+    bytes32 public constant GAME_OWNER_ROLE = keccak256("GAME_OWNER_ROLE");
+
+    // These addresses should probably belong to the server api that the game 
+    // and developer app interfaces with.
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    
+    /*
+     *     bytes4(keccak256('getGamePayableAddress()')) == 0x27da96f6
+     *     bytes4(keccak256('contains(uint256)')) == 0xc34052e0
+     *     bytes4(keccak256('length()')) == 0x1f7b6d32
+     *     bytes4(keccak256('getAllItems()')) == 0x4ba1d6aa
+     *     bytes4(keccak256('getTotalSupply(uint256)')) == 0x92ab723e
+     *     bytes4(keccak256('getMaxSupply(uint256)')) == 0x5e495d74
+     *     bytes4(keccak256('getCreatorAddress(uint256)')) == 0xa30b4db9
+     *     bytes4(keccak256('setGamePayableAddress(address)')) == 0xd1a6aab5
+     *     bytes4(keccak256('createItem(address,uint256,uint256)')) == 0x57baf0fb
+     *     bytes4(keccak256('createItemBatch(address,uint256[],uint256[])')) == 0x00ff4688
+     *     bytes4(keccak256('mint(address,uint256,uint256)')) == 0x156e29f6
+     *     bytes4(keccak256('mintBatch(address,uint256[],uint256[])')) == 0xd81d0a15
+     *     bytes4(keccak256('burn(address,uint256,uint256)')) == 0xf5298aca
+     *     bytes4(keccak256('burnBatch(address,uint256[],uint256[])')) == 0x6b20c454
+     *
+     *     => 0x27da96f6 ^ 0xc34052e0 ^ 0x1f7b6d32 ^ 0x4ba1d6aa
+     *      ^ 0x92ab723e ^ 0x5e495d74 ^ 0xa30b4db9 ^ 0xd1a6aab5
+     *      ^ 0x57baf0fb ^ 0x00ff4688 ^ 0x156e29f6 ^ 0xd81d0a15
+     *      ^ 0xf5298aca ^ 0x6b20c454 == 0x0a306cc6
+     */
+    bytes4 public constant _INTERFACE_ID_IGAME = 0x0a306cc6;
 
     /******** Stored Variables ********/
     // This is the address where transactions are sent to.
@@ -24,14 +56,6 @@ contract Game is IGame, ERC1155, AccessControl {
     event ItemBurned(uint256,uint256);
     event ItemMintedBatch(uint256[],uint256[]);
     event ItemBurnedBatch(uint256[],uint256[]);
-
-    /******** Roles ********/
-    bytes32 public constant GAME_OWNER_ROLE = keccak256("GAME_OWNER_ROLE");
-    // These addresses should probably belong to the server api that the game 
-    // and developer app interfaces with.
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 role) {
@@ -52,6 +76,8 @@ contract Game is IGame, ERC1155, AccessControl {
 
         // Create Item Info Storage
         itemInfoStorageAddr = address(new ItemInfoStorage());
+
+        _registerInterface(_INTERFACE_ID_IGAME);
     }
 
     // GamePayableAddress getter

@@ -2,13 +2,31 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-// import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/introspection/ERC165.sol";
+import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 
-contract GlobalItemRegistry is IGlobalItemRegistry {
+contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     using Address for address;
     using EnumerableSet for EnumerableSet.UintSet;
+    using ERC165Checker for *;
+
+    /******** Constants ********/
+    /*
+     *     bytes4(keccak256('getUUID(address,uint256)')) == 0x5c26f843
+     *     bytes4(keccak256('getItemInfo(uint256)')) == 0xde7fe3e7
+     *     bytes4(keccak256('contains(uint256)')) == 0xc34052e0
+     *     bytes4(keccak256('length()')) == 0x1f7b6d32
+     *     bytes4(keccak256('add(uint256)')) == 0x1003e2d2
+     *     bytes4(keccak256('addBatch(uint256[])')) == 0x56634921
+     *
+     *     => 0x5c26f843 ^ 0xde7fe3e7 ^ 0xc34052e0 ^ 0x1f7b6d32
+     *      ^ 0x1003e2d2 ^ 0x56634921 == 0x18028f85
+     */
+    bytes4 public constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x0a306cc6;
 
     /******** Data Structures ********/
     struct Item {
@@ -25,24 +43,25 @@ contract GlobalItemRegistry is IGlobalItemRegistry {
     event AddedItemBatch(address gameAddress, uint256[] gameIds, uint256[] uuids);
 
     /******** Modifiers ********/
-    // Todo: check if it's a game contract making the call
-    // modifier isCallerGame(bytes32 role) {
-    //     require(hasRole(role, msg.sender), "Caller missing permissions");
-    //     _;
-    // }
+    modifier isCallerGame() {
+        require(
+            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_IGAME),
+            "Caller does not support IGame Interface."
+        );
+        _;
+    }
 
-    // constructor() public {
-    //     _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    //     _setupRole(MANAGER_ROLE, msg.sender);
-    // }
+    /******** Public API ********/
+    constructor() public {
+        _registerInterface(_INTERFACE_ID_IGLOBALITEMREGISTRY);
+    }
 
     function getUUID(address _gameAddr, uint256 _id)
         external
-        view
+        pure
         override
         returns(uint256)
     {
-        require(Address.isContract(_gameAddr), "Address is not valid");
         return _getId(_gameAddr, _id);
     }
     
@@ -59,8 +78,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry {
     }
 
     // Mutative
-    function add(uint256 _id) external override {
-        // Todo: add isCallerGame()
+    function add(uint256 _id) external override isCallerGame() {        
         uint256 uuid = _getId(msg.sender, _id);
         
         // check to see if item was previously added
@@ -71,8 +89,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry {
         emit AddedItem(msg.sender, _id, uuid);
     }
     
-    function addBatch(uint256[] calldata _ids) external override {
-        // Todo: add isCallerGame()
+    function addBatch(uint256[] calldata _ids) external override isCallerGame() {
         uint256[] memory uuids = new uint256[](_ids.length);
         for (uint256 i = 0; i < _ids.length; ++i) {
             uuids[i] = _getId(msg.sender, _ids[i]);

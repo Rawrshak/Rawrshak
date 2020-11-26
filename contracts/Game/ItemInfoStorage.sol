@@ -2,11 +2,26 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IItemInfoStorage.sol";
 
-contract ItemInfoStorage is IItemInfoStorage, Ownable {
+contract ItemInfoStorage is IItemInfoStorage, Ownable, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
+
+    /******** Constants ********/
+    /*
+     *     bytes4(keccak256('contains(uint256)')) == 0xc34052e0
+     *     bytes4(keccak256('length()')) == 0x1f7b6d32
+     *     bytes4(keccak256('listItems()')) == 0x355eefc8
+     *     bytes4(keccak256('getItemInfo(uint256)')) == 0xde7fe3e7
+     *     bytes4(keccak256('createItem(address,uint256,uint256)')) == 0x57baf0fb
+     *     bytes4(keccak256('createItemBatch(address,uint256[],uint256[])')) == 0x00ff4688
+     *
+     *     => 0xc34052e0 ^ 0x1f7b6d32 ^ 0x355eefc8 ^ 0xde7fe3e7
+     *      ^ 0x57baf0fb ^ 0x00ff4688 == 0x605f858e
+     */
+    bytes4 private constant _INTERFACE_ID_IITEMINFOSTORAGE = 0x605f858e;
 
     /******** Data Structures ********/
     struct Item {
@@ -17,6 +32,11 @@ contract ItemInfoStorage is IItemInfoStorage, Ownable {
     /******** Stored Variables ********/
     EnumerableSet.UintSet idSet;
     mapping(uint256 => Item) items;
+
+    /******** Public API ********/
+    constructor() public {
+        _registerInterface(_INTERFACE_ID_IITEMINFOSTORAGE);
+    }
 
     // view
     function contains(uint256 _id) external view override returns (bool) {

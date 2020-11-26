@@ -23,6 +23,28 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     using SafeMath for *;
     using Utils for *;
 
+    /******** Constant ********/
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    
+    /*
+     *     bytes4(keccak256('registerInputItem(uint256,uint256,uint256)')) == 0xfa34d53c
+     *     bytes4(keccak256('registerInputItemBatch(uint256[],uint256[],uint256[])')) == 0xa534c68e
+     *     bytes4(keccak256('registerReward(uint256,Rarity,uint256)')) == 0x076ea9c8
+     *     bytes4(keccak256('registerRewardBatch(uint256[],Rarity[],uint256[])')) == 0x0e38dbce
+     *     bytes4(keccak256('generateLootbox(uint256[],uint256[])')) == 0xcadb08fa
+     *     bytes4(keccak256('openLootbox(uint256)')) == 0x7ff48190
+     *     bytes4(keccak256('getRewards(Rarity)')) == 0x586dd396
+     *     bytes4(keccak256('getRequiredInputItemAmount(uint256)')) == 0x1354442e
+     *     bytes4(keccak256('getRarity(uint256)')) == 0x48758697
+     *     bytes4(keccak256('setTradeInMinimum(uint8)')) == 0x14743353
+     *     bytes4(keccak256('getTradeInMinimum()')) == 0x10dfc82b
+     *
+     *     => 0xfa34d53c ^ 0xa534c68e ^ 0x076ea9c8 ^ 0x0e38dbce
+     *      ^ 0xcadb08fa ^ 0x7ff48190 ^ 0x586dd396 ^ 0x1354442e
+     *      ^ 0x48758697 ^ 0x14743353 ^ 0x10dfc82b == 0xe49e0289
+     */
+    bytes4 public constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
+
     /******** Constants ********/
     uint256 private LOOTBOX = 0;
     // uint8 private DEFAULT_REQUIRED_INPUT_ITEMS_AMOUNT = 4;
@@ -58,9 +80,6 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     event LootboxGenerated(uint256);
     event LootboxOpened(uint256);
 
-    /******** Roles ********/
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 role) {
         require(hasRole(role, msg.sender), "Caller missing permissions");
@@ -76,6 +95,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     constructor(string memory _url) public ERC1155(_url) {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
+        _registerInterface(_INTERFACE_ID_ILOOTBOX);
         
         probabilities[uint8(Rarity.Mythic)] = 1;
         probabilities[uint8(Rarity.Exotic)] = 25;

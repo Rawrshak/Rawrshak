@@ -3,6 +3,7 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IGame.sol";
@@ -14,9 +15,37 @@ import "../tokens/TokenBase.sol";
 // Todo: Multi-Game Crafting Contract
 // Todo: Recipe Storage 
 
-contract Crafting is ICrafting, Ownable, AccessControl {
+contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
+
+    /******** Constants ********/
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant SMITH_ROLE = keccak256("SMITH_ROLE");
+
+    /*
+     *     bytes4(keccak256('isRecipeActive(uint256)')) == 0x4e22a7bd
+     *     bytes4(keccak256('getTokenAddressForCrafting()')) == 0x2d7d6043
+     *     bytes4(keccak256('getRecipeCost(uint256)')) == 0x7352706d
+     *     bytes4(keccak256('getCraftingMaterialsList(uint256)')) == 0x1f728011
+     *     bytes4(keccak256('getRewardsList(uint256)')) == 0xb9653829
+     *     bytes4(keccak256('getItemAsCraftingMaterialList(uint256)')) == 0xb0d26341
+     *     bytes4(keccak256('getItemAsRewardList(uint256)')) == 0x7bb901d1
+     *     bytes4(keccak256('getActiveRecipes()')) == 0x345964c9
+     *     bytes4(keccak256('getActiveRecipesCount()')) == 0x1564aed9
+     *     bytes4(keccak256('createRecipe(uint256[],uint256[],uint256[],uint256[],uin256,bool)')) == 0xc2592024
+     *     bytes4(keccak256('setRecipeActive(uin256,bool)')) == 0x26f0021d
+     *     bytes4(keccak256('setRecipeActiveBatch(uint256[],bool[])')) == 0x5c5e19b7
+     *     bytes4(keccak256('updateRecipeCost(uint256,uint256)')) == 0xfd317879
+     *     bytes4(keccak256('updateRecipeCostBatch(uint256[],uint256[])')) == 0x142695d8
+     *     bytes4(keccak256('craftItem(uint256,address)')) == 0x66b3f13e
+     *
+     *     => 0x4e22a7bd ^ 0x2d7d6043 ^ 0x7352706d ^ 0x1f728011
+     *      ^ 0xb9653829 ^ 0xb0d26341 ^ 0x7bb901d1 ^ 0x345964c9
+     *      ^ 0x1564aed9 ^ 0xc2592024 ^ 0x26f0021d ^ 0x5c5e19b7
+     *      ^ 0xfd317879 ^ 0x142695d8 ^ 0x66b3f13e == 0x6b1f803a
+     */
+    bytes4 public constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
     
     /******** Data Structures ********/
     struct ItemPair {
@@ -44,14 +73,10 @@ contract Crafting is ICrafting, Ownable, AccessControl {
     address globalItemRegistryAddr;
 
     /******** Events ********/
-    // Todo: AddedCraftingItemBatch()
-    event AddedCraftingItem(uint256);
+    // // Todo: AddedCraftingItemBatch()
+    // // event AddedCraftingItem(uint256);
     event RecipeCreated(uint256);
     event ItemCrafted();
-
-    /******** Roles ********/
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    bytes32 public constant SMITH_ROLE = keccak256("SMITH_ROLE");
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 role) {
@@ -68,13 +93,12 @@ contract Crafting is ICrafting, Ownable, AccessControl {
     }
 
     /******** Public API ********/
-    constructor(address coinAddress)
-        public
-    {
+    constructor(address coinAddress) public {
         require(Address.isContract(coinAddress), "Coin address is not valid");
         tokenContractAddress = coinAddress;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
+        _registerInterface(_INTERFACE_ID_ICRAFTING);
     }
 
     function setGlobalItemRegistryAddr(address _addr)
@@ -148,7 +172,7 @@ contract Crafting is ICrafting, Ownable, AccessControl {
         emit RecipeCreated(recipeId);
     }
 
-    // Todo: registerCraftingMaterialBatch()
+    // // Todo: registerCraftingMaterialBatch()
     // function registerCraftingMaterial(uint256 uuid)
     //     external
     //     override
