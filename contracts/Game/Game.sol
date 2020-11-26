@@ -2,13 +2,18 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IGame.sol";
+import "../interfaces/IGlobalItemRegistry.sol";
 import "./ItemInfoStorage.sol";
 
 contract Game is ERC1155, AccessControl, IGame {
     using EnumerableSet for EnumerableSet.UintSet;
+    using Address for *;
+    using ERC165Checker for *;
 
     /******** Constants ********/
     bytes32 public constant GAME_OWNER_ROLE = keccak256("GAME_OWNER_ROLE");
@@ -40,12 +45,14 @@ contract Game is ERC1155, AccessControl, IGame {
      *      ^ 0x57baf0fb ^ 0x00ff4688 ^ 0x156e29f6 ^ 0xd81d0a15
      *      ^ 0xf5298aca ^ 0x6b20c454 == 0x0a306cc6
      */
-    bytes4 public constant _INTERFACE_ID_IGAME = 0x0a306cc6;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x0a306cc6;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
 
     /******** Stored Variables ********/
     // This is the address where transactions are sent to.
     address payable private gamePayableAddress;
     address itemInfoStorageAddr;
+    address itemRegistryAddr;
     mapping(uint256 => uint256) currentSupply;
 
     /******** Events ********/
@@ -68,7 +75,13 @@ contract Game is ERC1155, AccessControl, IGame {
 
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
-    constructor(string memory url) public ERC1155(url) {
+    constructor(string memory _url, address _itemRegistryAddr) public ERC1155(_url) {
+        require(Address.isContract(_itemRegistryAddr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_itemRegistryAddr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            "Caller does not support IGame Interface."
+        );
+
         // Contract Deployer is now the owner and can set roles
         gamePayableAddress = msg.sender;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -76,6 +89,7 @@ contract Game is ERC1155, AccessControl, IGame {
 
         // Create Item Info Storage
         itemInfoStorageAddr = address(new ItemInfoStorage());
+        itemRegistryAddr = _itemRegistryAddr;
 
         _registerInterface(_INTERFACE_ID_IGAME);
     }
@@ -104,6 +118,9 @@ contract Game is ERC1155, AccessControl, IGame {
             (_creatorAddress != address(0)) ? payable(_creatorAddress) : gamePayableAddress,
             _id,
             _maxSupply);
+
+        // Register item with in the global item registry
+        itemRegistry().add(_id);
         
         // mint max supply if there is a max supply
         _mint(
@@ -129,6 +146,9 @@ contract Game is ERC1155, AccessControl, IGame {
         for (uint256 i = 0; i < _ids.length; ++i) {
             require(!itemInfoStorage().contains(_ids[i]), "Item already exists.");
         }
+
+        // Register item with in the global item registry
+        itemRegistry().addBatch(_ids);
         
         itemInfoStorage().createItemBatch(
             (_creatorAddress != address(0)) ? payable(_creatorAddress) : gamePayableAddress,
@@ -265,5 +285,9 @@ contract Game is ERC1155, AccessControl, IGame {
     // internal 
     function itemInfoStorage() internal view returns(ItemInfoStorage) {
         return ItemInfoStorage(itemInfoStorageAddr);
+    }
+    
+    function itemRegistry() internal view returns(IGlobalItemRegistry) {
+        return IGlobalItemRegistry(itemRegistryAddr);
     }
 }

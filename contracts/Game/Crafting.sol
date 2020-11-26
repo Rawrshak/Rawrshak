@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/introspection/ERC165.sol";
+import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IGame.sol";
@@ -18,6 +19,7 @@ import "../tokens/TokenBase.sol";
 contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
+    using ERC165Checker for *;
 
     /******** Constants ********/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -45,7 +47,9 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
      *      ^ 0x1564aed9 ^ 0xc2592024 ^ 0x26f0021d ^ 0x5c5e19b7
      *      ^ 0xfd317879 ^ 0x142695d8 ^ 0x66b3f13e == 0x6b1f803a
      */
-    bytes4 public constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
+    bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
     
     /******** Data Structures ********/
     struct ItemPair {
@@ -93,9 +97,19 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
     }
 
     /******** Public API ********/
-    constructor(address coinAddress) public {
-        require(Address.isContract(coinAddress), "Coin address is not valid");
-        tokenContractAddress = coinAddress;
+    constructor(address _coinAddress, address _itemRegistryAddr) public {
+        require(Address.isContract(_coinAddress), "Address not valid");
+        require(Address.isContract(_itemRegistryAddr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_coinAddress, _INTERFACE_ID_TOKENBASE),
+            "Caller does not support IGame Interface."
+        );
+        require(
+            ERC165Checker.supportsInterface(_itemRegistryAddr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            "Caller does not support IGame Interface."
+        );
+        tokenContractAddress = _coinAddress;
+        globalItemRegistryAddr = _itemRegistryAddr;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
         _registerInterface(_INTERFACE_ID_ICRAFTING);
@@ -106,6 +120,10 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
         checkPermissions(MANAGER_ROLE)
     {
         require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            "Caller does not support IGame Interface."
+        );
         globalItemRegistryAddr = _addr;
     }
 

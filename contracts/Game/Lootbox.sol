@@ -3,6 +3,7 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -22,6 +23,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     using Address for *;
     using SafeMath for *;
     using Utils for *;
+    using ERC165Checker for *;
 
     /******** Constant ********/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -43,7 +45,8 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
      *      ^ 0xcadb08fa ^ 0x7ff48190 ^ 0x586dd396 ^ 0x1354442e
      *      ^ 0x48758697 ^ 0x14743353 ^ 0x10dfc82b == 0xe49e0289
      */
-    bytes4 public constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
 
     /******** Constants ********/
     uint256 private LOOTBOX = 0;
@@ -92,7 +95,8 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     }
 
     /******** Public API ********/
-    constructor(string memory _url) public ERC1155(_url) {
+    constructor(string memory _url, address _itemRegistryAddr) public ERC1155(_url) {
+        globalItemRegistryAddr = _itemRegistryAddr;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
         _registerInterface(_INTERFACE_ID_ILOOTBOX);
@@ -111,6 +115,10 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         checkPermissions(MANAGER_ROLE)
     {
         require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            "Caller does not support IGame Interface."
+        );
         globalItemRegistryAddr = _addr;
     }
 
