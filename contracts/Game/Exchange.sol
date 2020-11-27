@@ -74,7 +74,7 @@ contract Exchange is IExchange {
         external
         override
     {
-        require(items[_uuid].asks.contains(_user), "Existing item bid and ask from user");
+        require(!items[_uuid].asks.contains(_user), "Existing item bid and ask from user");
 
         // This will throw if _token address doesn't support the necessary
         escrow().addToken(_token);
@@ -106,7 +106,7 @@ contract Exchange is IExchange {
         external
         override
     {
-        require(items[_uuid].bids.contains(_user), "Existing item bid and ask from user");
+        require(!items[_uuid].bids.contains(_user), "Existing item bid and ask from user");
 
         // This will throw if _token address doesn't support the necessary
         escrow().addToken(_token);
