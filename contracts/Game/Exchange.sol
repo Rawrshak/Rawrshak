@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
@@ -25,8 +27,6 @@ contract Exchange is IExchange {
     struct Item {
         ExtendedEnumerableMaps.AddressToUintMap bids;
         ExtendedEnumerableMaps.AddressToUintMap asks;
-        // mapping(address => uint256) bids;
-        // mapping(address => uint256) asks;
     }
 
     struct Data {
@@ -50,6 +50,8 @@ contract Exchange is IExchange {
     event AskPlaced(uint256);
     event OrderFilled(uint256);
     event DataEntryDeleted(uint256);
+    event OrderFullfilled(uint256);
+    event Claimed(uint256);
 
     /******** Modifiers ********/
     modifier checkItemExists(uint256 _uuid) {
@@ -74,7 +76,11 @@ contract Exchange is IExchange {
     {
         require(items[_uuid].asks.contains(_user), "Existing item bid and ask from user");
 
-        // Todo: check if the user has enough tokens. If so, move tokens to escrow.
+        // This will throw if _token address doesn't support the necessary
+        escrow().addToken(_token);
+
+        // Will throw if user does not have enough tokens
+        IERC20(_token).transferFrom(_user, escrowAddr, SafeMath.mul(_amount, _price));
 
         uint256 dataId = generateDataId(_user, _token, _uuid);
 
@@ -101,8 +107,15 @@ contract Exchange is IExchange {
         override
     {
         require(items[_uuid].bids.contains(_user), "Existing item bid and ask from user");
-        
-        // Todo: check if the user has enough of the items. If so, move the item to escrow.
+
+        // This will throw if _token address doesn't support the necessary
+        escrow().addToken(_token);
+
+        // Get game information
+        (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(_uuid);
+
+        // Will throw if user's balanace of the id is not enough
+        IERC1155(gameAddr).safeTransferFrom(_user, escrowAddr, gameId, _amount, "");
         
         uint256 dataId = generateDataId(_user, _token, _uuid);
 
@@ -124,17 +137,7 @@ contract Exchange is IExchange {
     }
 
     function deleteDataEntry(uint256 _dataId) external override {
-        // delete from userdata->dataId map
-        Data storage dataEntry = data[_dataId];
-        userData[dataEntry.user].remove(_dataId);
-
-        // delete from item ask/bids map
-        items[dataEntry.itemUUID].asks.remove(dataEntry.user);
-        items[dataEntry.itemUUID].bids.remove(dataEntry.user);
-
-        // delete stored data
-        delete data[_dataId];
-
+        _deleteData(_dataId);
         emit DataEntryDeleted(_dataId);
     }
 
@@ -184,10 +187,72 @@ contract Exchange is IExchange {
     }
 
     function fullfillOrder(uint256 _dataId) external override {
-        // Todo:
+        // This will fail if _token address doesn't support the necessary
+        Data storage dataEntry = data[_dataId];
+        address sellerAddr;
+        address buyerAddr;
+
+        if (dataEntry.isBid) {
+            sellerAddr = msg.sender;
+            buyerAddr = escrowAddr;
+        } else {
+            sellerAddr = escrowAddr;
+            buyerAddr = msg.sender;
+        }
+        
+        // Will fail if user does not have enough tokens
+        IERC20(dataEntry.token).transferFrom(
+            buyerAddr,
+            sellerAddr,
+            SafeMath.mul(dataEntry.amount, dataEntry.price)
+        );
+
+        // Get game information
+        (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+
+        // Will fail if escrow's balanace of the id is not enough
+        IERC1155(gameAddr).safeTransferFrom(sellerAddr, buyerAddr, gameId, dataEntry.amount, "");
+
+        emit OrderFullfilled(_dataId);
+    }
+
+    function claim(uint256 _dataId) external override {
+        require(msg.sender == data[_dataId].user, "Invalid user claim");
+        
+        Data storage dataEntry = data[_dataId];
+
+        if (data[_dataId].isBid) {
+            // Get game information
+            (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+
+            // Will fail if escrow's balanace of the id is not enough
+            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
+        } else {
+            IERC20(dataEntry.token).transferFrom(
+                escrowAddr,
+                msg.sender,
+                SafeMath.mul(dataEntry.amount, dataEntry.price)
+            );
+        }
+
+        _deleteData(_dataId);
+        emit Claimed(_dataId);
     }
 
     /******** Internal Functions ********/
+    function _deleteData(uint256 _dataId) internal {
+        // delete from userdata->dataId map
+        Data storage dataEntry = data[_dataId];
+        userData[dataEntry.user].remove(_dataId);
+
+        // delete from item ask/bids map
+        items[dataEntry.itemUUID].asks.remove(dataEntry.user);
+        items[dataEntry.itemUUID].bids.remove(dataEntry.user);
+
+        // delete stored data
+        delete data[_dataId];
+    }
+
     function globalItemRegistry() internal view returns (IGlobalItemRegistry) {
         return IGlobalItemRegistry(globalItemRegistryAddr);
     }

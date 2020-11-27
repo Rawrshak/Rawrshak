@@ -3,10 +3,11 @@ pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155Holder.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 
-contract ExchangeEscrow is Ownable {
+contract ExchangeEscrow is Ownable, ERC1155Holder {
     using EnumerableSet for EnumerableSet.AddressSet;
     using Address for *;
     using ERC165Checker for *;

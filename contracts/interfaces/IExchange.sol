@@ -26,5 +26,7 @@ interface IExchange {
         view
         returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid);
 
+    function claim(uint256 _dataId) external;
+
     function fullfillOrder(uint256 _dataId) external;
 }
