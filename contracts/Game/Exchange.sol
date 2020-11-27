@@ -2,32 +2,46 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IExchange.sol";
+import "../utils/ExtendedEnumerableMaps.sol";
 import "./ExchangeEscrow.sol";
+
+// Todo: Add multiple bids/asks per user
+// Todo: Allow both bid and ask at the same time (but not for the same price)
 
 contract Exchange is IExchange {
     using ERC165Checker for *;
+    using SafeMath for *;
+    using EnumerableSet for *;
+    using ExtendedEnumerableMaps for *;
 
     /******** Constants ********/
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
     
     /******** Data Structures ********/
     struct Item {
-        mapping(address => uint256) bids;
-        mapping(address => uint256) asks;
+        ExtendedEnumerableMaps.AddressToUintMap bids;
+        ExtendedEnumerableMaps.AddressToUintMap asks;
+        // mapping(address => uint256) bids;
+        // mapping(address => uint256) asks;
     }
 
     struct Data {
         address user;
+        address token;
+        uint256 itemUUID;
 		uint price;
         uint amount;
+        bool isBid;
     }
 
     /******** Stored Variables ********/
     address globalItemRegistryAddr;
     mapping(uint256 => Item) items;
-    mapping(address => uint256) userData;
+    mapping(address => EnumerableSet.UintSet) userData;
     mapping(uint256 => Data) data;
     address escrowAddr;
 
@@ -35,6 +49,7 @@ contract Exchange is IExchange {
     event BidPlaced(uint256);
     event AskPlaced(uint256);
     event OrderFilled(uint256);
+    event DataEntryDeleted(uint256);
 
     /******** Modifiers ********/
     modifier checkItemExists(uint256 _uuid) {
@@ -57,43 +72,115 @@ contract Exchange is IExchange {
         external
         override
     {
-        // Todo:
-        emit BidPlaced(generateDataId(_user, _token, _uuid, _amount, _price));
+        require(items[_uuid].asks.contains(_user), "Existing item bid and ask from user");
+
+        // Todo: check if the user has enough tokens. If so, move tokens to escrow.
+
+        uint256 dataId = generateDataId(_user, _token, _uuid);
+
+        // if there's already an existing bid, replace it.
+        Data storage dataEntry = data[dataId];
+        dataEntry.user = _user;
+        dataEntry.token = _token;
+        dataEntry.itemUUID = _uuid;
+        dataEntry.price = _price;
+        dataEntry.amount = _amount;
+        dataEntry.isBid = true;
+
+        // replaces item if it already exists in the map
+        items[_uuid].bids.set(_user, dataId);
+
+        // No-op if it already exists
+        userData[_user].add(dataId);
+
+        emit BidPlaced(dataId);
     }
 
     function placeAsk(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price) 
         external
         override
     {
-        // Todo:
-        emit AskPlaced(generateDataId(_user, _token, _uuid, _amount, _price));
+        require(items[_uuid].bids.contains(_user), "Existing item bid and ask from user");
+        
+        // Todo: check if the user has enough of the items. If so, move the item to escrow.
+        
+        uint256 dataId = generateDataId(_user, _token, _uuid);
+
+        Data storage dataEntry = data[dataId];
+        dataEntry.user = _user;
+        dataEntry.token = _token;
+        dataEntry.itemUUID = _uuid;
+        dataEntry.price = _price;
+        dataEntry.amount = _amount;
+        dataEntry.isBid = false;
+
+        // replaces item if it already exists in the map
+        items[_uuid].bids.set(_user, dataId);
+        
+        // No-op if it already exists
+        userData[_user].add(dataId);
+
+        emit AskPlaced(dataId);
     }
 
-    function getUserData(address _user)
+    function deleteDataEntry(uint256 _dataId) external override {
+        // delete from userdata->dataId map
+        Data storage dataEntry = data[_dataId];
+        userData[dataEntry.user].remove(_dataId);
+
+        // delete from item ask/bids map
+        items[dataEntry.itemUUID].asks.remove(dataEntry.user);
+        items[dataEntry.itemUUID].bids.remove(dataEntry.user);
+
+        // delete stored data
+        delete data[_dataId];
+
+        emit DataEntryDeleted(_dataId);
+    }
+
+    function getUserOrders(address _user)
+        external
+        view
+        override
+        returns(uint256[] memory orders)
+    {
+        orders = new uint256[](userData[_user].length());
+        for (uint256 i = 0; i < orders.length; ++i) {
+            orders[i] = userData[_user].at(i);
+        }
+    }
+
+    function getItemData(uint256 _uuid)
         external
         view
         override
         returns(uint256[] memory bidIds, uint256[] memory askIds)
     {
-        // Todo:
+        bidIds = new uint256[](items[_uuid].bids.length());
+        for (uint256 i = 0; i < bidIds.length; ++i) {
+            (, bidIds[i]) = items[_uuid].bids.at(i);
+        }
+
+        askIds = new uint256[](items[_uuid].asks.length());
+        for (uint256 i = 0; i < askIds.length; ++i) {
+            (, askIds[i]) = items[_uuid].asks.at(i);
+        }
     }
 
-    function getItemData(address _user)
+    function getDataEntry(uint256 _dataId)
         external
         view
         override
-        returns(uint256[] memory bidIds, uint256[] memory askIds)
+        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid)
     {
-        // Todo:
-    }
-
-    function getData(uint256 _dataId)
-        external
-        view
-        override
-        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
-    {
-        // Todo:
+        return (
+            data[_dataId].user,
+            data[_dataId].token,
+            data[_dataId].itemUUID,
+            data[_dataId].price,    
+            data[_dataId].amount,
+            data[_dataId].isBid
+        );
     }
 
     function fullfillOrder(uint256 _dataId) external override {
@@ -112,14 +199,12 @@ contract Exchange is IExchange {
     function generateDataId(
         address _user,
         address _token,
-        uint256 _uuid,
-        uint256 _amount,
-        uint256 _price
+        uint256 _uuid
     )
         internal
         pure
         returns(uint256)
     {
-        return uint256(keccak256(abi.encodePacked(_user, _token, _uuid, _amount, _price)));
+        return uint256(keccak256(abi.encodePacked(_user, _token, _uuid)));
     }
 }
