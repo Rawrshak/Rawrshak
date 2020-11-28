@@ -70,19 +70,25 @@ contract Exchange is IExchange {
         escrowAddr = address(new ExchangeEscrow());
     }
 
+    // Todo: Register game contract
+    // Todo: check if uuid is valid
     function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
         external
         override
     {
-        require(!items[_uuid].asks.contains(_user), "Existing item bid and ask from user");
+        require(!items[_uuid].asks.contains(_user), "Existing item ask from user");
 
         // This will throw if _token address doesn't support the necessary
         escrow().addToken(_token);
 
+        // Get game address and register on escrow
+        (address gameAddr,) = globalItemRegistry().getItemInfo(_uuid);
+        escrow().addGame(gameAddr);
+
         // Will throw if user does not have enough tokens
         IERC20(_token).transferFrom(_user, escrowAddr, SafeMath.mul(_amount, _price));
 
-        uint256 dataId = generateDataId(_user, _token, _uuid);
+        uint256 dataId = _generateDataId(_user, _token, _uuid);
 
         // if there's already an existing bid, replace it.
         Data storage dataEntry = data[dataId];
@@ -106,18 +112,19 @@ contract Exchange is IExchange {
         external
         override
     {
-        require(!items[_uuid].bids.contains(_user), "Existing item bid and ask from user");
+        require(!items[_uuid].bids.contains(_user), "Existing item bid from user");
 
         // This will throw if _token address doesn't support the necessary
         escrow().addToken(_token);
 
-        // Get game information
+        // Get game address and register on escrow
         (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(_uuid);
+        escrow().addGame(gameAddr);
 
         // Will throw if user's balanace of the id is not enough
         IERC1155(gameAddr).safeTransferFrom(_user, escrowAddr, gameId, _amount, "");
         
-        uint256 dataId = generateDataId(_user, _token, _uuid);
+        uint256 dataId = _generateDataId(_user, _token, _uuid);
 
         Data storage dataEntry = data[dataId];
         dataEntry.user = _user;
@@ -128,7 +135,7 @@ contract Exchange is IExchange {
         dataEntry.isBid = false;
 
         // replaces item if it already exists in the map
-        items[_uuid].bids.set(_user, dataId);
+        items[_uuid].asks.set(_user, dataId);
         
         // No-op if it already exists
         userData[_user].add(dataId);
@@ -180,8 +187,8 @@ contract Exchange is IExchange {
             data[_dataId].user,
             data[_dataId].token,
             data[_dataId].itemUUID,
-            data[_dataId].price,    
             data[_dataId].amount,
+            data[_dataId].price,
             data[_dataId].isBid
         );
     }
@@ -189,15 +196,30 @@ contract Exchange is IExchange {
     function fullfillOrder(uint256 _dataId) external override {
         // This will fail if _token address doesn't support the necessary
         Data storage dataEntry = data[_dataId];
+        require(data[_dataId].user != msg.sender, "Order owner cannot fullfill order.");
         address sellerAddr;
         address buyerAddr;
+
+        // Get game information
+        (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
 
         if (dataEntry.isBid) {
             sellerAddr = msg.sender;
             buyerAddr = escrowAddr;
+
+            // Approve escrow to move tokens to user
+            require(
+                escrow().approveToken(
+                    data[_dataId].token,
+                    SafeMath.mul(dataEntry.amount, dataEntry.price)),
+                "Token is not supported."
+            );
         } else {
             sellerAddr = escrowAddr;
             buyerAddr = msg.sender;
+
+            // Approve escrow to move asset to user
+            escrow().approveGame(gameAddr, true); 
         }
         
         // Will fail if user does not have enough tokens
@@ -207,11 +229,16 @@ contract Exchange is IExchange {
             SafeMath.mul(dataEntry.amount, dataEntry.price)
         );
 
-        // Get game information
-        (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
-
         // Will fail if escrow's balanace of the id is not enough
         IERC1155(gameAddr).safeTransferFrom(sellerAddr, buyerAddr, gameId, dataEntry.amount, "");
+
+        if (dataEntry.isBid) {
+            // Set allowance back to 0
+            escrow().approveToken(data[_dataId].token, 0);
+        } else {
+            // Set approval off
+            escrow().approveGame(gameAddr, false);
+        }
 
         emit OrderFullfilled(_dataId);
     }
@@ -240,6 +267,15 @@ contract Exchange is IExchange {
     }
 
     /******** Internal Functions ********/
+
+    function globalItemRegistry() internal view returns (IGlobalItemRegistry) {
+        return IGlobalItemRegistry(globalItemRegistryAddr);
+    }
+    
+    function escrow() internal view returns(ExchangeEscrow) {
+        return ExchangeEscrow(escrowAddr);
+    }
+    
     function _deleteData(uint256 _dataId) internal {
         // delete from userdata->dataId map
         Data storage dataEntry = data[_dataId];
@@ -252,16 +288,8 @@ contract Exchange is IExchange {
         // delete stored data
         delete data[_dataId];
     }
-
-    function globalItemRegistry() internal view returns (IGlobalItemRegistry) {
-        return IGlobalItemRegistry(globalItemRegistryAddr);
-    }
     
-    function escrow() internal view returns(ExchangeEscrow) {
-        return ExchangeEscrow(escrowAddr);
-    }
-    
-    function generateDataId(
+    function _generateDataId(
         address _user,
         address _token,
         uint256 _uuid
