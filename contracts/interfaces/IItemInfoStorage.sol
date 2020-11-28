@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface IItemInfoStorage {
-    // view
+    /******** View Functions ********/
     function contains(uint256 _id) external view returns (bool);
 
     function length() external view returns (uint256);
@@ -11,7 +11,7 @@ interface IItemInfoStorage {
 
     function getItemInfo(uint256 _id) external view returns(address, uint256) ;
 
-    // Mutative
+    /******** Mutative Functions ********/
     function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external;
     
     function createItemBatch(

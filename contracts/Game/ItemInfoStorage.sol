@@ -38,7 +38,7 @@ contract ItemInfoStorage is IItemInfoStorage, Ownable, ERC165 {
         _registerInterface(_INTERFACE_ID_IITEMINFOSTORAGE);
     }
 
-    // view
+    /******** View Functions ********/
     function contains(uint256 _id) external view override returns (bool) {
         return idSet.contains(_id);
     }
@@ -60,7 +60,7 @@ contract ItemInfoStorage is IItemInfoStorage, Ownable, ERC165 {
         return (items[_id].creatorAddress, items[_id].maxSupply);
     }
 
-    // Mutative    
+    /******** Mutative Functions ********/   
     function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override onlyOwner {
         idSet.add(_id);
         Item storage item = items[_id];

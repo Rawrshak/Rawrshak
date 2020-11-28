@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface IGame {
-    // view
+    /******** View Functions ********/
     function getGamePayableAddress() external view returns(address payable);
     
     function contains(uint256 _id) external view returns (bool);
@@ -17,7 +17,7 @@ interface IGame {
 
     function getCreatorAddress(uint256 _id) external view returns(address);
 
-    // Mutative
+    /******** Mutative Functions ********/
     function setGamePayableAddress(address payable _newAddress) external;
     
     function createItem(address _creatorAddress, uint256 _id, uint256 _maxSupply) external;

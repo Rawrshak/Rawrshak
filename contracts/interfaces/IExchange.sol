@@ -2,14 +2,8 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface IExchange {
-    
-    function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
-        external;
-
-    function placeAsk(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
-        external;
-
-    function deleteDataEntry(uint256 _dataId) external;
+    /******** View Functions ********/ 
+    function getClaimable(address _user) external view returns(uint256[] memory dataIds);
 
     function getUserOrders(address _user)
         external
@@ -25,8 +19,15 @@ interface IExchange {
         external
         view
         returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid, bool isAvailable);
+    
+    /******** Mutative Functions ********/ 
+    function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
+        external;
 
-    function getClaimable(address _user) external view returns(uint256[] memory dataIds);
+    function placeAsk(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
+        external;
+
+    function deleteDataEntry(uint256 _dataId) external;
 
     function claim(uint256 _dataId) external;
 

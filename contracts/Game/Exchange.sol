@@ -4,6 +4,7 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
@@ -13,14 +14,32 @@ import "./ExchangeEscrow.sol";
 
 // Todo: Add multiple bids/asks per user
 // Todo: Allow both bid and ask at the same time (but not for the same price)
+// Todo: Add Claim all function
 
-contract Exchange is IExchange {
+contract Exchange is IExchange, ERC165 {
     using ERC165Checker for *;
     using SafeMath for *;
     using EnumerableSet for *;
     using ExtendedEnumerableMaps for *;
 
     /******** Constants ********/
+    /*
+     *     bytes4(keccak256('placeBid(address,address,uint256,uint256,uint256)')) == 0xfcfb8f11
+     *     bytes4(keccak256('placeAsk(address,address,uint256,uint256,uint256)')) == 0xee2a36df
+     *     bytes4(keccak256('deleteDataEntry(uint256)')) == 0x28a5cb71
+     *     bytes4(keccak256('getUserOrders(address)')) == 0x63c69f08
+     *     bytes4(keccak256('getItemData(uint256)')) == 0x8bc6976e
+     *     bytes4(keccak256('getDataEntry(uint256)')) == 0xf75d8ada
+     *     bytes4(keccak256('getClaimable(address)')) == 0xa583024b
+     *     bytes4(keccak256('claim(uint256)')) == 0x379607f5
+     *     bytes4(keccak256('claimBatch(uint256[])')) == 0x62abebce
+     *     bytes4(keccak256('fullfillOrder(uint256)')) == 0xaf9ae92a
+     *
+     *     => 0xfcfb8f11 ^ 0xee2a36df ^ 0x28a5cb71 ^ 0x63c69f08
+     *      ^ 0x8bc6976e ^ 0xf75d8ada ^ 0xa583024b ^ 0x379607f5
+     *      ^ 0x62abebce ^ 0xaf9ae92a  == 0x7a0df759
+     */
+    bytes4 private constant _INTERFACE_ID_IEXCHANGE = 0x7a0df759;
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
     
     /******** Data Structures ********/
@@ -71,6 +90,7 @@ contract Exchange is IExchange {
         );
         globalItemRegistryAddr = _itemRegistryAddr;
         escrowAddr = address(new ExchangeEscrow());
+        _registerInterface(_INTERFACE_ID_IEXCHANGE);
     }
 
     function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)

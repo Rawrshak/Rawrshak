@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface IGlobalItemRegistry {
-    // view
+    /******** View Functions ********/
     function getUUID(address _gameAddr, uint256 _id) external pure returns(uint256);
     
     function getItemInfo(uint256 _uuid) external view returns(address, uint256);
@@ -11,7 +11,7 @@ interface IGlobalItemRegistry {
 
     function length() external view returns (uint256);
 
-    // Mutative
+    /******** Mutative Functions ********/
     function add(uint256 _id) external;
     
     function addBatch(uint256[] calldata _ids) external;
