@@ -37,7 +37,10 @@ contract ExchangeEscrow is Ownable, ERC1155Holder {
             ERC165Checker.supportsInterface(_gameAddress, _INTERFACE_ID_IGAME),
             "Caller does not support Interface."
         );
-        gameAddrs.add(_gameAddress);
+        
+        if (gameAddrs.add(_gameAddress)) {
+            IERC1155(_gameAddress).setApprovalForAll(owner(), true);
+        }
     }
 
     function approveToken(address _tokenAddr, uint256 _amount) external onlyOwner returns(bool) {

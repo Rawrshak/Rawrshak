@@ -73,13 +73,12 @@ contract Exchange is IExchange {
         escrowAddr = address(new ExchangeEscrow());
     }
 
-    // Todo: Register game contract
-    // Todo: check if uuid is valid
     function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
         external
         override
     {
         require(!items[_uuid].asks.contains(_user), "Existing item ask from user");
+        require(globalItemRegistry().contains(_uuid), "Item doesn't exist.");
 
         // This will throw if _token address doesn't support the necessary
         escrow().addToken(_token);
@@ -118,6 +117,7 @@ contract Exchange is IExchange {
         override
     {
         require(!items[_uuid].bids.contains(_user), "Existing item bid from user");
+        require(globalItemRegistry().contains(_uuid), "Item doesn't exist.");
 
         // This will throw if _token address doesn't support the necessary
         escrow().addToken(_token);
@@ -152,6 +152,33 @@ contract Exchange is IExchange {
 
     function deleteDataEntry(uint256 _dataId) external override {
         require(!_isClaimable(_dataId), "Can't delete claimable data entry");
+
+        Data storage dataEntry = data[_dataId];
+        require(msg.sender == dataEntry.user, "Invalid order delete");
+
+        // Return escrowed items
+        if (dataEntry.isBid) {
+            // Return user money for their bid
+            require(
+                escrow().approveToken(
+                    dataEntry.token,
+                    SafeMath.mul(dataEntry.amount, dataEntry.price)),
+                "Token is not supported."
+            );
+            IERC20(dataEntry.token).transferFrom(
+                escrowAddr,
+                msg.sender,
+                SafeMath.mul(dataEntry.amount, dataEntry.price)
+            );
+        } else {
+            // Return user item
+            // Get game information
+            (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+
+            // Will fail if escrow's balanace of the id is not enough
+            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
+        }
+
         _deleteData(_dataId);
         emit DataEntryDeleted(_dataId);
     }
@@ -227,9 +254,6 @@ contract Exchange is IExchange {
         } else {
             sellerAddr = escrowAddr;
             buyerAddr = msg.sender;
-
-            // Approve escrow to move asset to user
-            escrow().approveGame(gameAddr, true); 
         }
         
         // Will fail if user does not have enough tokens
@@ -241,14 +265,6 @@ contract Exchange is IExchange {
 
         // Will fail if escrow's balanace of the id is not enough
         IERC1155(gameAddr).safeTransferFrom(sellerAddr, buyerAddr, gameId, dataEntry.amount, "");
-
-        if (dataEntry.isBid) {
-            // Set allowance back to 0
-            escrow().approveToken(data[_dataId].token, 0);
-        } else {
-            // Set approval off
-            escrow().approveGame(gameAddr, false);
-        }
 
         // Order is now claimable
         dataEntry.isClaimable = true;
@@ -268,14 +284,20 @@ contract Exchange is IExchange {
         Data storage dataEntry = data[_dataId];
         require(msg.sender == dataEntry.user, "Invalid user claim");        
         
-        // Todo: grant approvals
         if (dataEntry.isBid) {
             // Get game information
             (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
-
+            
             // Will fail if escrow's balanace of the id is not enough
             IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
         } else {
+            require(
+                escrow().approveToken(
+                    dataEntry.token,
+                    SafeMath.mul(dataEntry.amount, dataEntry.price)),
+                "Token is not supported."
+            );
+
             IERC20(dataEntry.token).transferFrom(
                 escrowAddr,
                 msg.sender,
@@ -292,7 +314,6 @@ contract Exchange is IExchange {
 
     // Todo: this could be improved by doing batch transfers for items
     function claimBatch(uint256[] calldata _dataIds) external override {
-        // Todo: grant approvals
         for (uint256 i = 0; i < _dataIds.length; ++i) {
             Data storage dataEntry = data[_dataIds[i]];
             require(msg.sender == dataEntry.user, "Invalid user claim");
@@ -304,6 +325,12 @@ contract Exchange is IExchange {
                 // Will fail if escrow's balanace of the id is not enough
                 IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
             } else {
+                require(
+                    escrow().approveToken(
+                        dataEntry.token,
+                        SafeMath.mul(dataEntry.amount, dataEntry.price)),
+                    "Token is not supported."
+                );
                 IERC20(dataEntry.token).transferFrom(
                     escrowAddr,
                     msg.sender,
