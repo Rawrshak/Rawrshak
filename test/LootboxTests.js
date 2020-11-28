@@ -7,7 +7,6 @@ contract('Lootbox Contract', (accounts) => {
         deployerAddress,            // Address that deployed contracts
         gcManagerAddress,           // Developer Address for managing the Game Contract
         lbManagerAddress,           // Developer Address for managing the Lootbox Contract
-        smithAddress,               // Lootbox Service Address
         playerAddress,              // Player Address
         developerWalletAddress      // Developer Wallet Address
     ] = accounts;

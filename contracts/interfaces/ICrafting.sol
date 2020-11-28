@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.8.0;
 
 interface ICrafting {
-    // view 
+    /******** View Functions ********/ 
     function isRecipeActive(uint256 _recipeId) external view returns(bool);
 
     function getTokenAddressForCrafting() external view returns(address);
@@ -27,7 +27,7 @@ interface ICrafting {
 
     function getActiveRecipesCount() external view returns(uint256);
 
-    // mutative 
+    /******** Mutative Functions ********/ 
     function createRecipe(
         uint256[] calldata _materialIds,
         uint256[] calldata _materialAmounts,
