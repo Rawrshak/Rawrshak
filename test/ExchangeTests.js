@@ -194,7 +194,46 @@ contract('Exchange Contract', (accounts) => {
         const exchange = await Exchange.deployed();
         const ovcToken = await OvcTokenContract.deployed();
 
-        // Todo:
+        dataIds = await exchange.getClaimable(player1Address, {from: player1Address, gasPrice: 1});
+        assert.equal(dataIds.length, 1, "There should only be 1 claimable from player 1.");
+
+        // check player 1's existing number of items
+        assert.equal(await game.balanceOf(player1Address, inputItem2), 1, "Player 1 should have 1 item 2.");
+
+        // Claim player 1 items
+        await exchange.claim(dataIds[0], {from: player1Address, gasPrice:1});
+
+        // check if player 1 recieved the item
+        assert.equal(await game.balanceOf(player1Address, inputItem2), 3, "Player 1 should now has 3 item2s.");
+
+        // check data entry was deleted
+        data = await exchange.getDataEntry(dataIds[0]);
+        assert.equal(data[0], zero_address, "Order Entry was deleted.");
+
+        // There shouldn't be anymore things to claim
+        dataIds = await exchange.getClaimable(player1Address, {from: player1Address, gasPrice: 1});
+        assert.equal(dataIds.length, 0, "Player 1 should have already claimed their items from escrow.");
+        
+        // Claim player 2 items
+        dataIds = await exchange.getClaimable(player2Address, {from: player2Address, gasPrice: 1});
+        assert.equal(dataIds.length, 1, "There should only be 1 claimable from player 2.");
+        
+        // check player 2's existing number of tokens
+        assert.equal(await ovcToken.balanceOf(player2Address), 5100, "Player 2 should have 5100 tokens.");
+
+        // Claim player 2 items
+        await exchange.claim(dataIds[0], {from: player2Address, gasPrice:1});
+
+        // check if player 2 recieved the item
+        assert.equal(await ovcToken.balanceOf(player2Address), 5300, "Player 2 should now have 5300 tokens.");
+
+        // check data entry was deleted
+        data = await exchange.getDataEntry(dataIds[0]);
+        assert.equal(data[0], zero_address, "Order Entry was deleted.");
+
+        // There shouldn't be anymore things to claim
+        dataIds = await exchange.getClaimable(player2Address, {from: player2Address, gasPrice: 1});
+        assert.equal(dataIds.length, 0, "Player 2 should have already claimed their items from escrow.");
     });
 
     it('Delete Order', async () => {
@@ -202,6 +241,20 @@ contract('Exchange Contract', (accounts) => {
         const exchange = await Exchange.deployed();
         const ovcToken = await OvcTokenContract.deployed();
 
-        // Todo:
+        orders = await exchange.getUserOrders(player2Address);
+        assert.equal(orders.length, 1, "Not all P2 orders were counted.");
+
+        // Delete item
+        await exchange.deleteDataEntry(orders[0], {from: player2Address, gasPrice: 1});
+
+        // check data entry was deleted
+        data = await exchange.getDataEntry(orders[0]);
+        assert.equal(data[0], zero_address, "Order Entry was not deleted.");
+
+        // check if player 2 recieved the item
+        assert.equal(await ovcToken.balanceOf(player2Address), 5400, "Player 2 should now have 5400 tokens.");
+        
+        orders = await exchange.getUserOrders(player2Address);
+        assert.equal(orders.length, 0, "There should be 0 orders left.");
     });
 });
