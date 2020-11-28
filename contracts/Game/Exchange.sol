@@ -36,6 +36,7 @@ contract Exchange is IExchange {
 		uint price;
         uint amount;
         bool isBid;
+        bool isClaimable;
     }
 
     /******** Stored Variables ********/
@@ -43,6 +44,7 @@ contract Exchange is IExchange {
     mapping(uint256 => Item) items;
     mapping(address => EnumerableSet.UintSet) userData;
     mapping(uint256 => Data) data;
+    mapping(address => EnumerableSet.UintSet) claimableOrders;
     address escrowAddr;
 
     /******** Events ********/
@@ -52,6 +54,7 @@ contract Exchange is IExchange {
     event DataEntryDeleted(uint256);
     event OrderFullfilled(uint256);
     event Claimed(uint256);
+    event ClaimedBatch(uint256[]);
 
     /******** Modifiers ********/
     modifier checkItemExists(uint256 _uuid) {
@@ -89,6 +92,7 @@ contract Exchange is IExchange {
         IERC20(_token).transferFrom(_user, escrowAddr, SafeMath.mul(_amount, _price));
 
         uint256 dataId = _generateDataId(_user, _token, _uuid);
+        require(!_isClaimable(dataId), "Pending claimable assets.");
 
         // if there's already an existing bid, replace it.
         Data storage dataEntry = data[dataId];
@@ -98,6 +102,7 @@ contract Exchange is IExchange {
         dataEntry.price = _price;
         dataEntry.amount = _amount;
         dataEntry.isBid = true;
+        dataEntry.isClaimable = false;
 
         // replaces item if it already exists in the map
         items[_uuid].bids.set(_user, dataId);
@@ -125,6 +130,7 @@ contract Exchange is IExchange {
         IERC1155(gameAddr).safeTransferFrom(_user, escrowAddr, gameId, _amount, "");
         
         uint256 dataId = _generateDataId(_user, _token, _uuid);
+        require(!_isClaimable(dataId), "Pending claimable assets.");
 
         Data storage dataEntry = data[dataId];
         dataEntry.user = _user;
@@ -133,6 +139,7 @@ contract Exchange is IExchange {
         dataEntry.price = _price;
         dataEntry.amount = _amount;
         dataEntry.isBid = false;
+        dataEntry.isClaimable = false;
 
         // replaces item if it already exists in the map
         items[_uuid].asks.set(_user, dataId);
@@ -144,6 +151,7 @@ contract Exchange is IExchange {
     }
 
     function deleteDataEntry(uint256 _dataId) external override {
+        require(!_isClaimable(_dataId), "Can't delete claimable data entry");
         _deleteData(_dataId);
         emit DataEntryDeleted(_dataId);
     }
@@ -181,7 +189,7 @@ contract Exchange is IExchange {
         external
         view
         override
-        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid)
+        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid, bool isClaimable)
     {
         return (
             data[_dataId].user,
@@ -189,14 +197,16 @@ contract Exchange is IExchange {
             data[_dataId].itemUUID,
             data[_dataId].amount,
             data[_dataId].price,
-            data[_dataId].isBid
+            data[_dataId].isBid,
+            data[_dataId].isClaimable
         );
     }
 
     function fullfillOrder(uint256 _dataId) external override {
         // This will fail if _token address doesn't support the necessary
         Data storage dataEntry = data[_dataId];
-        require(data[_dataId].user != msg.sender, "Order owner cannot fullfill order.");
+        require(dataEntry.user != msg.sender, "Order owner cannot fullfill order.");
+        require(!dataEntry.isClaimable, "Order is already filled.");
         address sellerAddr;
         address buyerAddr;
 
@@ -210,7 +220,7 @@ contract Exchange is IExchange {
             // Approve escrow to move tokens to user
             require(
                 escrow().approveToken(
-                    data[_dataId].token,
+                    dataEntry.token,
                     SafeMath.mul(dataEntry.amount, dataEntry.price)),
                 "Token is not supported."
             );
@@ -240,15 +250,26 @@ contract Exchange is IExchange {
             escrow().approveGame(gameAddr, false);
         }
 
+        // Order is now claimable
+        dataEntry.isClaimable = true;
+        claimableOrders[dataEntry.user].add(_dataId);
+
         emit OrderFullfilled(_dataId);
     }
 
-    function claim(uint256 _dataId) external override {
-        require(msg.sender == data[_dataId].user, "Invalid user claim");
-        
-        Data storage dataEntry = data[_dataId];
+    function getClaimable(address _user) external view override returns(uint256[] memory dataIds) {
+        dataIds = new uint256[](claimableOrders[_user].length());
+        for (uint256 i = 0; i < claimableOrders[_user].length(); i++) {
+            dataIds[i] = claimableOrders[_user].at(i);
+        }
+    }
 
-        if (data[_dataId].isBid) {
+    function claim(uint256 _dataId) external override {
+        Data storage dataEntry = data[_dataId];
+        require(msg.sender == dataEntry.user, "Invalid user claim");        
+        
+        // Todo: grant approvals
+        if (dataEntry.isBid) {
             // Get game information
             (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
 
@@ -262,8 +283,40 @@ contract Exchange is IExchange {
             );
         }
 
+        // remove from claimable list
+        claimableOrders[dataEntry.user].remove(_dataId);
+        
         _deleteData(_dataId);
         emit Claimed(_dataId);
+    }
+
+    // Todo: this could be improved by doing batch transfers for items
+    function claimBatch(uint256[] calldata _dataIds) external override {
+        // Todo: grant approvals
+        for (uint256 i = 0; i < _dataIds.length; ++i) {
+            Data storage dataEntry = data[_dataIds[i]];
+            require(msg.sender == dataEntry.user, "Invalid user claim");
+
+            if (dataEntry.isBid) {
+                // Get game information
+                (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+
+                // Will fail if escrow's balanace of the id is not enough
+                IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
+            } else {
+                IERC20(dataEntry.token).transferFrom(
+                    escrowAddr,
+                    msg.sender,
+                    SafeMath.mul(dataEntry.amount, dataEntry.price)
+                );
+            }
+
+            // remove from claimable list
+            claimableOrders[dataEntry.user].remove(_dataIds[i]);
+
+            _deleteData(_dataIds[i]);
+        }
+        emit ClaimedBatch(_dataIds);
     }
 
     /******** Internal Functions ********/
@@ -275,7 +328,7 @@ contract Exchange is IExchange {
     function escrow() internal view returns(ExchangeEscrow) {
         return ExchangeEscrow(escrowAddr);
     }
-    
+
     function _deleteData(uint256 _dataId) internal {
         // delete from userdata->dataId map
         Data storage dataEntry = data[_dataId];
@@ -287,6 +340,10 @@ contract Exchange is IExchange {
 
         // delete stored data
         delete data[_dataId];
+    }
+
+    function _isClaimable(uint256 _dataId) internal view returns(bool) {
+        return (data[_dataId].user != address(0) && data[_dataId].isClaimable);
     }
     
     function _generateDataId(

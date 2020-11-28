@@ -168,6 +168,7 @@ contract('Exchange Contract', (accounts) => {
         const game = await Game.deployed();
         const exchange = await Exchange.deployed();
         const ovcToken = await OvcTokenContract.deployed();
+
         // Check bids and asks on a specific item
         itemData = await exchange.getItemData(uuid2);
         assert.equal(itemData[0].length, 1, "There is 1 bid on item 2");
@@ -186,5 +187,21 @@ contract('Exchange Contract', (accounts) => {
         await exchange.fullfillOrder(askDataId, {from: player1Address});
         assert.equal(await ovcToken.balanceOf(player1Address), 4600, "Player 1 tokens did not decrease correctly.");
         assert.equal(await game.balanceOf(player1Address, inputItem2), 1, "Player 1 item inventory did not increase correctly.");
+    });
+
+    it('Claim succeeded orders', async () => {
+        const game = await Game.deployed();
+        const exchange = await Exchange.deployed();
+        const ovcToken = await OvcTokenContract.deployed();
+
+        // Todo:
+    });
+
+    it('Delete Order', async () => {
+        const game = await Game.deployed();
+        const exchange = await Exchange.deployed();
+        const ovcToken = await OvcTokenContract.deployed();
+
+        // Todo:
     });
 });

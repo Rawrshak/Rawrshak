@@ -24,13 +24,13 @@ interface IExchange {
     function getDataEntry(uint256 _dataId)
         external
         view
-        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid);
+        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid, bool isAvailable);
 
-    // function getClaimable(uint256 _user) external view returns(uint256[] memory dataIds);
+    function getClaimable(address _user) external view returns(uint256[] memory dataIds);
 
     function claim(uint256 _dataId) external;
 
-    // function claimBatch(uint256[] calldata _dataIds) external;
+    function claimBatch(uint256[] calldata _dataIds) external;
 
     function fullfillOrder(uint256 _dataId) external;
 }
