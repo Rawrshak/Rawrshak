@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "../interfaces/IGameManager.sol";
 import "../interfaces/IGame.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/ILootbox.sol";
@@ -236,15 +237,16 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
                 uint256 count = SafeMath.div(_amounts[i], requiredAmount);
 
                 // Get game information
-                (address gameAddr, uint256 gameId) = registry.getItemInfo(_uuids[i]);
+                (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(_uuids[i]);
 
                 // Burn will fail if the user doesn't have enough items
-                IGame game = IGame(gameAddr);
+                // Todo: create a new interface for just getting the game manager
+                IGameManager gameManager = IGameManager(gameManagerAddr);
                 if (inputCount > count) {
-                    game.burn(msg.sender, gameId, count * requiredAmount);
+                    gameManager.burn(msg.sender, gameId, count * requiredAmount);
                     inputCount -= count;
                 } else {
-                    game.burn(msg.sender, gameId, inputCount * requiredAmount);
+                    gameManager.burn(msg.sender, gameId, inputCount * requiredAmount);
                     inputCount = 0;
                 }
             }
@@ -283,10 +285,11 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
             Reward storage reward = rewardsList[rarity][itemIndex];
 
             // Get game information
-            (address gameAddr, uint256 gameId) = registry.getItemInfo(reward.uuid);
+            (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(reward.uuid);
+            IGameManager gameManager = IGameManager(gameManagerAddr);
 
             // Mint() will fail if this contract does not have the necessary permissions 
-            IGame(gameAddr).mint(msg.sender, gameId, reward.amount);
+            gameManager.mint(msg.sender, gameId, reward.amount);
         }
         emit LootboxOpened(_count);
     }

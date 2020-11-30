@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "../interfaces/IGameManager.sol";
 import "../interfaces/IGame.sol";
 import "../interfaces/ICrafting.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
@@ -362,21 +363,23 @@ contract Crafting is ICrafting, Ownable, AccessControl, ERC165 {
         // Burns the materials in the game contract
         for (uint256 i = 0; i < recipe.materials.length; ++i) {
             // Get game information
-            (address gameAddr, uint256 gameId) = registry.getItemInfo(recipe.materials[i].uuid);
+            (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(recipe.materials[i].uuid);
+            IGameManager gameManager = IGameManager(gameManagerAddr);
 
             // Burn() will fail if this contract does not have the necessary 
             // permissions or if the account does not have enough materials
-            IGame(gameAddr).burn(_account, gameId, recipe.materials[i].count);
+            gameManager.burn(_account, gameId, recipe.materials[i].count);
         }
 
         // Mint Reward
         for (uint256 i = 0; i < recipe.rewards.length; ++i) {
             // Get game information
-            (address gameAddr, uint256 gameId) = registry.getItemInfo(recipe.rewards[i].uuid);
+            (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(recipe.rewards[i].uuid);
+            IGameManager gameManager = IGameManager(gameManagerAddr);
 
             // Mint() will fail if this contract does not have the necessary 
             // permissions 
-            IGame(gameAddr).mint(_account, gameId, recipe.rewards[i].count);
+            gameManager.mint(_account, gameId, recipe.rewards[i].count);
         }
 
         // Notify user of item getting crafted

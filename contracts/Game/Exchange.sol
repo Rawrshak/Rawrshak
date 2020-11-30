@@ -104,7 +104,7 @@ contract Exchange is IExchange, ERC165 {
         escrow().addToken(_token);
 
         // Get game address and register on escrow
-        (address gameAddr,) = globalItemRegistry().getItemInfo(_uuid);
+        (address gameAddr,,) = globalItemRegistry().getItemInfo(_uuid);
         escrow().addGame(gameAddr);
 
         // Will throw if user does not have enough tokens
@@ -143,7 +143,7 @@ contract Exchange is IExchange, ERC165 {
         escrow().addToken(_token);
 
         // Get game address and register on escrow
-        (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(_uuid);
+        (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(_uuid);
         escrow().addGame(gameAddr);
 
         // Will throw if user's balanace of the id is not enough
@@ -193,7 +193,7 @@ contract Exchange is IExchange, ERC165 {
         } else {
             // Return user item
             // Get game information
-            (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+            (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
 
             // Will fail if escrow's balanace of the id is not enough
             IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
@@ -258,7 +258,7 @@ contract Exchange is IExchange, ERC165 {
         address buyerAddr;
 
         // Get game information
-        (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+        (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
 
         if (dataEntry.isBid) {
             sellerAddr = msg.sender;
@@ -306,7 +306,7 @@ contract Exchange is IExchange, ERC165 {
         
         if (dataEntry.isBid) {
             // Get game information
-            (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+            (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
             
             // Will fail if escrow's balanace of the id is not enough
             IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
@@ -340,7 +340,7 @@ contract Exchange is IExchange, ERC165 {
 
             if (dataEntry.isBid) {
                 // Get game information
-                (address gameAddr, uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+                (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
 
                 // Will fail if escrow's balanace of the id is not enough
                 IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
