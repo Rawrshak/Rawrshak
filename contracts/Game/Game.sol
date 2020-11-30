@@ -25,7 +25,7 @@ contract Game is ERC1155, Ownable, IGame {
     }
 
     /******** Stored Variables ********/
-    address payable private gameManagerAddr;
+    address private gameManagerAddr;
     address private itemRegistryAddr;
     EnumerableSet.UintSet private idSet;
     mapping(uint256 => Item) private items;
@@ -97,7 +97,7 @@ contract Game is ERC1155, Ownable, IGame {
     }
 
     /******** Mutative Functions ********/
-    function setGameManagerAddress(address payable _newAddress) external override onlyOwner {
+    function setGameManagerAddress(address _newAddress) external override onlyOwner {
         gameManagerAddr = _newAddress;
     }
     

@@ -117,7 +117,6 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
         
         address creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : game().owner();
         game().createItemBatch(payable(creatorAddr), _ids, _maxSupplies);
-
         game().mintBatch(payable(creatorAddr), _ids, _maxSupplies);
 
         emit ItemCreatedBatch(_ids);

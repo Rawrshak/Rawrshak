@@ -18,7 +18,7 @@ interface IGame {
     function getItemInfoBatch(uint256[] calldata _ids) external view returns(address[] memory addrs, uint256[] memory supplies);
 
     /******** Mutative Functions ********/
-    function setGameManagerAddress(address payable _newAddress) external;
+    function setGameManagerAddress(address _newAddress) external;
 
     function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external;
     
