@@ -1,4 +1,5 @@
 const Game = artifacts.require("Game");
+const GameManager = artifacts.require("GameManager");
 const Lootbox = artifacts.require("Lootbox");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 
@@ -38,6 +39,7 @@ contract('Lootbox Contract', (accounts) => {
 
     it('Check Lootbox Contract Roles', async () => {
         const game = await Game.deployed();
+        const gameManager = await GameManager.deployed();
         const lootbox = await Lootbox.deployed();
         const default_admin_role = await lootbox.DEFAULT_ADMIN_ROLE();
         const manager_role = await lootbox.MANAGER_ROLE();
@@ -55,38 +57,39 @@ contract('Lootbox Contract', (accounts) => {
         // give Lootbox manager address the necessary roles
         await lootbox.grantRole(manager_role, lbManagerAddress, {from:deployerAddress});
 
-        const minter_role = await game.MINTER_ROLE();
-        const burner_role = await game.BURNER_ROLE();
+        const minter_role = await gameManager.MINTER_ROLE();
+        const burner_role = await gameManager.BURNER_ROLE();
 
         assert.equal(
-            await game.hasRole(minter_role, lootbox.address),
+            await gameManager.hasRole(minter_role, lootbox.address),
             true,
-            "Lootbox Contract does not have the burner role on Game Contract");
+            "Lootbox Contract does not have the burner role on Game Manager Contract");
 
         assert.equal(
-            await game.hasRole(burner_role, lootbox.address),
+            await gameManager.hasRole(burner_role, lootbox.address),
             true,
-            "Lootbox Contract does not have the burner role on Game Contract");
+            "Lootbox Contract does not have the burner role on Game Manager Contract");
     });
 
     it("Game Contract Data Setup", async () => {
         const game = await Game.deployed();
+        const gameManager = await GameManager.deployed();
         const lootbox = await Lootbox.deployed();
         const registry = await GlobalItemRegistry.deployed();
-        const gc_manager_role = await game.MANAGER_ROLE();
-        const minter_role = await game.MINTER_ROLE();
-        const burner_role = await game.BURNER_ROLE();
+        const gc_manager_role = await gameManager.MANAGER_ROLE();
+        const minter_role = await gameManager.MINTER_ROLE();
+        const burner_role = await gameManager.BURNER_ROLE();
 
         // transfer the lootbox contract ownership
         await lootbox.transferOwnership(developerWalletAddress);
         
-        await game.grantRole(gc_manager_role, gcManagerAddress, {from:deployerAddress});
-        await game.grantRole(minter_role, gcManagerAddress, {from:deployerAddress});
-        await game.grantRole(burner_role, gcManagerAddress, {from:deployerAddress});
+        await gameManager.grantRole(gc_manager_role, gcManagerAddress, {from:deployerAddress});
+        await gameManager.grantRole(minter_role, gcManagerAddress, {from:deployerAddress});
+        await gameManager.grantRole(burner_role, gcManagerAddress, {from:deployerAddress});
         
         // check to see if item manager address has the item manger role
         assert.equal(
-            await game.hasRole(gc_manager_role, gcManagerAddress),
+            await gameManager.hasRole(gc_manager_role, gcManagerAddress),
             true,
             "Item Manager Address didn't have the Item Manager Role"
         );
@@ -112,7 +115,7 @@ contract('Lootbox Contract', (accounts) => {
             mythicReward
         ];
         maxSupplies = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        await game.createItemBatch(zero_address, itemIds, maxSupplies, {from:gcManagerAddress});
+        await gameManager.createItemBatch(zero_address, itemIds, maxSupplies, {from:gcManagerAddress});
         
         // Check if the new items were added.
         assert.equal(await game.length(), 17, "The 17 new items were not created.");
@@ -333,13 +336,14 @@ contract('Lootbox Contract', (accounts) => {
 
     it("Generate Lootbox", async () => {
         const game = await Game.deployed();
+        const gameManager = await GameManager.deployed();
         const lootbox = await Lootbox.deployed();
         const registry = await GlobalItemRegistry.deployed();
 
         // Mint the items and send to the player address
         items = [inputItem0, inputItem1, inputItem4];
         amounts = [2, 3, 7];
-        await game.mintBatch(playerAddress, items, amounts, {from: gcManagerAddress});
+        await gameManager.mintBatch(playerAddress, items, amounts, {from: gcManagerAddress});
 
         // Generate a loot box
         uuid0 = await registry.getUUID(game.address, inputItem0);
@@ -358,7 +362,6 @@ contract('Lootbox Contract', (accounts) => {
     });
 
     it("Open Lootbox", async () => {
-        const game = await Game.deployed();
         const lootbox = await Lootbox.deployed();
 
         // open lootbox and check how many lootboxes were opened
