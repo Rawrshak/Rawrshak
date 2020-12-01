@@ -32,7 +32,7 @@ contract Game is ERC1155, Ownable, IGame {
     mapping(uint256 => uint256) public currentSupply;
 
     /******** Modifiers ********/
-    modifier onlyGameManager() {
+    modifier onlyManager() {
         require(gameManagerAddr == msg.sender, "Invalid Access");
         _;
     }
@@ -101,7 +101,7 @@ contract Game is ERC1155, Ownable, IGame {
         gameManagerAddr = _newAddress;
     }
     
-    function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override onlyGameManager {
+    function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override onlyManager {
         idSet.add(_id);
         Item storage item = items[_id];
         item.creatorAddress = _creatorAddress;
@@ -116,7 +116,7 @@ contract Game is ERC1155, Ownable, IGame {
         uint256[] calldata _ids,
         uint256[] calldata _maxSupplies
     ) 
-        external override onlyGameManager
+        external override onlyManager
     {
         require(_ids.length == _maxSupplies.length, "Parameter array size incorrect");
         for (uint i = 0; i < _ids.length; ++i) {
@@ -131,23 +131,23 @@ contract Game is ERC1155, Ownable, IGame {
     }
 
     /******** Game Manager API ********/
-    function setUri(string calldata _newUri) external override onlyGameManager {
+    function setUri(string calldata _newUri) external override onlyManager {
         _setURI(_newUri);
     }    
     
-    function mint(address _receivingAddress, uint256 _itemId, uint256 _amount) external override onlyGameManager {
+    function mint(address _receivingAddress, uint256 _itemId, uint256 _amount) external override onlyManager {
         currentSupply[_itemId] += _amount;
         _mint(_receivingAddress, _itemId, _amount, "");
     }
     
-    function mintBatch(address _receivingAddress, uint256[] calldata _itemIds, uint256[] calldata _amounts) external override onlyGameManager {
+    function mintBatch(address _receivingAddress, uint256[] calldata _itemIds, uint256[] calldata _amounts) external override onlyManager {
         for (uint i = 0; i < _itemIds.length; i++) {
             currentSupply[_itemIds[i]] += _amounts[i];
         }
         _mintBatch(_receivingAddress, _itemIds, _amounts, "");
     }
 
-    function burn(address _account, uint256 _itemId, uint256 _amount) external override onlyGameManager {
+    function burn(address _account, uint256 _itemId, uint256 _amount) external override onlyManager {
         // _burn requirements are that account is non-zero and account has 
         // enough of these items
         _burn(_account, _itemId, _amount);
@@ -156,7 +156,7 @@ contract Game is ERC1155, Ownable, IGame {
         currentSupply[_itemId] -= _amount;
     }
 
-    function burnBatch(address _account, uint256[] calldata _itemIds, uint256[] calldata _amounts) external override onlyGameManager {
+    function burnBatch(address _account, uint256[] calldata _itemIds, uint256[] calldata _amounts) external override onlyManager {
         // _burnBatch requirements are that account is non-zero and account 
         // has enough of these items
         _burnBatch(_account, _itemIds, _amounts);

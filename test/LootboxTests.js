@@ -1,6 +1,7 @@
 const Game = artifacts.require("Game");
 const GameManager = artifacts.require("GameManager");
 const Lootbox = artifacts.require("Lootbox");
+const LootboxManager = artifacts.require("LootboxManager");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 
 contract('Lootbox Contract', (accounts) => {
@@ -38,24 +39,24 @@ contract('Lootbox Contract', (accounts) => {
     const zero_address = "0x0000000000000000000000000000000000000000";
 
     it('Check Lootbox Contract Roles', async () => {
-        const game = await Game.deployed();
         const gameManager = await GameManager.deployed();
         const lootbox = await Lootbox.deployed();
-        const default_admin_role = await lootbox.DEFAULT_ADMIN_ROLE();
-        const manager_role = await lootbox.MANAGER_ROLE();
+        const lootboxManager = await LootboxManager.deployed();
+        const default_admin_role = await lootboxManager.DEFAULT_ADMIN_ROLE();
+        const manager_role = await lootboxManager.MANAGER_ROLE();
 
         assert.equal(
-            await lootbox.hasRole(default_admin_role, deployerAddress),
+            await lootboxManager.hasRole(default_admin_role, deployerAddress),
             true,
             "Deployer address does not have the default admin role");
             
         assert.equal(
-            await lootbox.hasRole(manager_role, deployerAddress),
+            await lootboxManager.hasRole(manager_role, deployerAddress),
             true,
             "Deployer address does not have the lootbox manager role");
 
         // give Lootbox manager address the necessary roles
-        await lootbox.grantRole(manager_role, lbManagerAddress, {from:deployerAddress});
+        await lootboxManager.grantRole(manager_role, lbManagerAddress, {from:deployerAddress});
 
         const minter_role = await gameManager.MINTER_ROLE();
         const burner_role = await gameManager.BURNER_ROLE();
@@ -126,19 +127,19 @@ contract('Lootbox Contract', (accounts) => {
 
     it("Register Input Items", async () => {
         const game = await Game.deployed();
-        const lootbox = await Lootbox.deployed();
+        const lootboxManager = await LootboxManager.deployed();
         const registry = await GlobalItemRegistry.deployed();
-        const manager_role = await lootbox.MANAGER_ROLE();
+        const manager_role = await lootboxManager.MANAGER_ROLE();
 
         assert.equal(
-            await lootbox.hasRole(manager_role, lbManagerAddress),
+            await lootboxManager.hasRole(manager_role, lbManagerAddress),
             true,
             "Lootbox Manager address does not have the lootbox manager role"
         );
 
         // Test Register Input Item 
         input1UUID = await registry.getUUID(game.address, inputItem0);
-        addedInputItemEvent = await lootbox.registerInputItem(input1UUID, 1, 1, {from:lbManagerAddress});
+        addedInputItemEvent = await lootboxManager.registerInputItem(input1UUID, 1, 1, {from:lbManagerAddress});
         assert.equal(
             addedInputItemEvent.logs[0].args[0].toString(),
             input1UUID,
@@ -161,7 +162,7 @@ contract('Lootbox Contract', (accounts) => {
         amounts = [2, 2, 2, 3, 3, 3, 4, 4, 4];
         multipliers = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
-        addedInputItemBatchEvent = await lootbox.registerInputItemBatch(
+        addedInputItemBatchEvent = await lootboxManager.registerInputItemBatch(
             uuids,
             amounts,
             multipliers,
@@ -178,19 +179,19 @@ contract('Lootbox Contract', (accounts) => {
 
     it("Register Reward Items", async () => {
         const game = await Game.deployed();
-        const lootbox = await Lootbox.deployed();
+        const lootboxManager = await LootboxManager.deployed();
         const registry = await GlobalItemRegistry.deployed();
-        const manager_role = await lootbox.MANAGER_ROLE();
+        const manager_role = await lootboxManager.MANAGER_ROLE();
 
         assert.equal(
-            await lootbox.hasRole(manager_role, lbManagerAddress),
+            await lootboxManager.hasRole(manager_role, lbManagerAddress),
             true,
             "Lootbox Manager address does not have the lootbox manager role"
         );
 
         // Test Register Reward Item 
         commonUuid = await registry.getUUID(game.address, commonReward),
-        addedRewardEvent = await lootbox.registerReward(commonUuid, Rarity.Common, 1, {from:lbManagerAddress});
+        addedRewardEvent = await lootboxManager.registerReward(commonUuid, Rarity.Common, 1, {from:lbManagerAddress});
 
         assert.equal(
             addedRewardEvent.logs[0].args[0].toString(),
@@ -210,7 +211,7 @@ contract('Lootbox Contract', (accounts) => {
         
         rarities = [Rarity.Uncommon, Rarity.Scarce, Rarity.Rare, Rarity.SuperRare, Rarity.Exotic, Rarity.Mythic];
         amounts = [1, 1, 1, 1, 1, 1];
-        addedRewardBatchEvent = await lootbox.registerRewardBatch(uuids, rarities, amounts, {from:lbManagerAddress});
+        addedRewardBatchEvent = await lootboxManager.registerRewardBatch(uuids, rarities, amounts, {from:lbManagerAddress});
 
         // Check if item 1 was added        
         assert.equal(
@@ -313,6 +314,7 @@ contract('Lootbox Contract', (accounts) => {
 
     it("Update Lootbox Settings", async () => {
         const lootbox = await Lootbox.deployed();
+        const lootboxManager = await LootboxManager.deployed();
 
         // Check the Required Input Items Amount
         assert.equal(
@@ -322,7 +324,7 @@ contract('Lootbox Contract', (accounts) => {
         );
 
         // Set the Required Input Items Amount
-        await lootbox.setTradeInMinimum(5);
+        await lootboxManager.setTradeInMinimum(5);
         
         // Check the Required Input Items Amount
         assert.equal(
@@ -331,7 +333,7 @@ contract('Lootbox Contract', (accounts) => {
             "Set Trade In Minimum is incorrect."
         );
         
-        await lootbox.setTradeInMinimum(DEFAULT_REQUIRED_INPUT_ITEMS_AMOUNT);
+        await lootboxManager.setTradeInMinimum(DEFAULT_REQUIRED_INPUT_ITEMS_AMOUNT);
     });
 
     it("Generate Lootbox", async () => {
