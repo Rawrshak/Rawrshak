@@ -243,10 +243,10 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
                 // Todo: create a new interface for just getting the game manager
                 IGameManager gameManager = IGameManager(gameManagerAddr);
                 if (inputCount > count) {
-                    gameManager.burn(msg.sender, gameId, count * requiredAmount);
+                    gameManager.burn(msg.sender, gameId, SafeMath.mul(count, requiredAmount));
                     inputCount -= count;
                 } else {
-                    gameManager.burn(msg.sender, gameId, inputCount * requiredAmount);
+                    gameManager.burn(msg.sender, gameId, SafeMath.mul(inputCount, requiredAmount));
                     inputCount = 0;
                 }
             }

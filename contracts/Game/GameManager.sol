@@ -90,20 +90,20 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
     }
 
     // Create New Item
-    function createItem(address _creatorAddress, uint256 _id, uint256 _maxSupply) external override {
+    function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override {
         require(!game().contains(_id), "Item already exists.");
         
         // Add item to item storage
-        address creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : game().owner();
-        game().createItem(payable(creatorAddr), _id, _maxSupply);
+        address payable creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : payable(game().owner());
+        game().createItem(creatorAddr, _id, _maxSupply);
         
         // mint max supply if there is a max supply
-        game().mint(payable(creatorAddr), _id, _maxSupply);
+        game().mint(creatorAddr, _id, _maxSupply);
         emit ItemCreated(_id);
     }
 
     function createItemBatch(
-        address _creatorAddress,
+        address payable _creatorAddress,
         uint256[] calldata _ids,
         uint256[] calldata _maxSupplies
     )
@@ -115,9 +115,9 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
             require(!game().contains(_ids[i]), "Item already exists.");
         }
         
-        address creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : game().owner();
-        game().createItemBatch(payable(creatorAddr), _ids, _maxSupplies);
-        game().mintBatch(payable(creatorAddr), _ids, _maxSupplies);
+        address payable creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : payable(game().owner());
+        game().createItemBatch(creatorAddr, _ids, _maxSupplies);
+        game().mintBatch(creatorAddr, _ids, _maxSupplies);
 
         emit ItemCreatedBatch(_ids);
     }
@@ -131,7 +131,7 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
         require(_receivingAddress != address(0), "Invalid address");
 
         (, uint256 maxSupply) = game().getItemInfo(_itemId);
-        require(maxSupply == 0 || maxSupply >= game().currentSupply(_itemId) + _amount, "Supply cannot be increased");
+        require(maxSupply == 0 || maxSupply >= SafeMath.add(game().currentSupply(_itemId), _amount), "Supply cannot be increased");
 
         game().mint(_receivingAddress, _itemId, _amount);
         emit ItemMinted(_itemId, _amount);
@@ -154,7 +154,7 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
         for (uint i = 0; i < _itemIds.length; i++) {
             (, uint256 maxSupply) = game().getItemInfo(_itemIds[i]);
             require(
-                maxSupply == 0 || maxSupply >= game().currentSupply(_itemIds[i]) + _amounts[i],
+                maxSupply == 0 || maxSupply >= SafeMath.add(game().currentSupply(_itemIds[i]), _amounts[i]),
                 "Supply cannot be increased"
             );
         }

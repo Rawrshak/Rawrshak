@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-interface IGame {
+import "./IGameInterface.sol";
+
+interface IGame is IGameInterface {
     /******** View Functions ********/ 
     function getGameManagerAddress() external view returns(address);
     
@@ -19,22 +21,4 @@ interface IGame {
 
     /******** Mutative Functions ********/
     function setGameManagerAddress(address _newAddress) external;
-
-    function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external;
-    
-    function createItemBatch(
-        address payable creatorAddress,
-        uint256[] calldata ids,
-        uint256[] calldata maxSupplies
-    ) external;
-
-    function setUri(string calldata _newUri) external;
-
-    function mint(address _receivingAddress, uint256 _itemId, uint256 _amount) external;
-
-    function mintBatch(address _receivingAddress, uint256[] calldata _itemIds, uint256[] calldata _amounts) external;
-
-    function burn(address _account, uint256 _itemId, uint256 _amount) external;
-
-    function burnBatch(address _account, uint256[] calldata _itemIds, uint256[] calldata _amounts) external;
 }
