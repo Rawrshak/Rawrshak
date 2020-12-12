@@ -14,7 +14,5 @@ interface ILootbox is ILootboxBase {
     
     function getRequiredInputItemAmount(uint256 _uuid) external view returns(uint256);
     
-    function getRarity(uint256 _uuid) external view returns(Rarity[] memory rarities);
-    
     function getTradeInMinimum() external view returns(uint8);
 }

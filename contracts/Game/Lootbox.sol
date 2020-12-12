@@ -68,7 +68,6 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
 
     /******** Stored Variables ********/
     // (uuid as key)
-    mapping(uint256 => EnumerableSet.UintSet) private itemRarity;
     mapping(uint256 => Input) private inputsList;
     // uint8(Rarity.Common)
     mapping(uint8 => Reward[]) private rewardsList;
@@ -161,10 +160,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         external
         override
         onlyManager
-    {
-        // add to item's rarity list if it doesn't already exist
-        itemRarity[_uuid].add(uint256(_rarity));
-        
+    {        
         Reward memory rewardItem;
         rewardItem.uuid = _uuid;
         rewardItem.amount = _amount;
@@ -182,12 +178,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         onlyManager
     {
 
-        for (uint256 i = 0; i < _uuids.length; ++i) {
-            // Add to items map. There can be multiple amounts per item so the reward hash should take 
-            // that into account.
-            // add to item's rarity list if it doesn't already exist
-            itemRarity[_uuids[i]].add(uint256(_rarities[i]));
-            
+        for (uint256 i = 0; i < _uuids.length; ++i) {            
             Reward memory rewardItem;
             rewardItem.uuid = _uuids[i];
             rewardItem.amount = _amounts[i];
@@ -301,18 +292,6 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
 
     function getRequiredInputItemAmount(uint256 _uuid) external view override returns(uint256) {
         return inputsList[_uuid].requiredAmount;
-    }
-
-    function getRarity(uint256 _uuid)
-        external
-        view
-        override
-        returns(Rarity[] memory rarities)
-    {
-        rarities = new Rarity[](itemRarity[_uuid].length());
-        for (uint256 i = 0; i < itemRarity[_uuid].length(); ++i) {
-            rarities[i] = Rarity(itemRarity[_uuid].at(i));
-        }
     }
 
     function getTradeInMinimum() external view override returns(uint8) {
