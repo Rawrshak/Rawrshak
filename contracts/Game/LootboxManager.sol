@@ -39,7 +39,13 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
         _;
     }
     
-    constructor() public {
+    constructor(address _addr) public {
+        require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ILOOTBOX),
+            "Caller does not support Interface."
+        );
+        lootboxAddr = _addr;
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
         _registerInterface(_INTERFACE_ID_ILOOTBOXMANAGER);
@@ -59,6 +65,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
 
     function setLootboxAddress(address _addr)
         external
+        override
         checkPermissions(MANAGER_ROLE)
     {
         require(Address.isContract(_addr), "Address not valid");

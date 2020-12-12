@@ -5,6 +5,7 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/introspection/ERC165.sol";
+import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IGameManager.sol";
@@ -19,6 +20,7 @@ import "../tokens/TokenBase.sol";
 
 contract Crafting is ICrafting, Ownable, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
+    using ERC165Checker for *;
 
     /******** Constants ********/
     /*
@@ -44,6 +46,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
      *      ^ 0xfd317879 ^ 0x142695d8 ^ 0x66b3f13e == 0x6b1f803a
      */
     bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER = 0xCCCCCCCC;
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
     bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
         
@@ -63,6 +66,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     Recipe[] private recipes;
     uint256 public activeRecipeCount = 0;
     address private globalItemRegistryAddr;
+    address private craftingManagerAddr;
 
     /******** Events ********/
     event ItemCrafted();
@@ -79,7 +83,25 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     }
 
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
+        require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            "Caller does not support Interface."
+        );
         globalItemRegistryAddr = _addr;
+    }
+
+    function setCraftingManagerAddress(address _addr) external override onlyOwner {
+        require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ICRAFTINGMANAGER),
+            "Caller does not support Interface."
+        );
+        craftingManagerAddr = _addr;
+    }
+
+    function getCraftingManagerAddress() external view override returns(address) {
+        return craftingManagerAddr;
     }
 
     function generateNextRecipeId() external override view onlyOwner returns(uint256)

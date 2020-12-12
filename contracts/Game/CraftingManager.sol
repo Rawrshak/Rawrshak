@@ -102,7 +102,23 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
-        crafting().setGlobalItemRegistryAddr(_addr);
+    }
+
+    function setCraftingAddress(address _addr)
+        external
+        override
+        checkPermissions(MANAGER_ROLE)
+    {
+        require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ICRAFTING),
+            "Caller does not support Interface."
+        );
+        craftingAddr = _addr;
+    }
+
+    function getCraftingAddress() external view override returns(address) {
+        return craftingAddr;
     }
 
     function createRecipe(

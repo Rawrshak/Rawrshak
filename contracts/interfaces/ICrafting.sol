@@ -7,6 +7,8 @@ import "./ICraftingInterface.sol";
 interface ICrafting is ICraftingInterface {
 
     /******** View Functions ********/
+    function getCraftingManagerAddress() external view returns(address);
+
     function exists(uint256 _recipeId) external view returns(bool);
     
     function generateNextRecipeId() external view returns(uint256);
@@ -31,4 +33,6 @@ interface ICrafting is ICraftingInterface {
     function createRecipe(uint256 _recipeId) external;
     
     function craftItem(uint256 _recipeId, address payable _account) external;
+    
+    function setCraftingManagerAddress(address _newAddress) external;
 }

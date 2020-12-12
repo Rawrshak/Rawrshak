@@ -2,6 +2,7 @@ const OVCTokenContract = artifacts.require("OVCToken");
 const Game = artifacts.require("Game");
 const GameManager = artifacts.require("GameManager");
 const Crafting = artifacts.require("Crafting");
+const CraftingManager = artifacts.require("CraftingManager");
 const Lootbox = artifacts.require("Lootbox");
 const LootboxManager = artifacts.require("LootboxManager");
 const Utils = artifacts.require("Utils");
@@ -35,16 +36,21 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.link(Utils, [Crafting, Lootbox]);
 
     // deploy Crafting Contract
-    await deployer.deploy(Crafting, ovcTokenContract.address, registry.address);
+    await deployer.deploy(Crafting);
+    crafting = await Crafting.deployed();
+    await deployer.deploy(CraftingManager, crafting.address);
+    craftingManager = await CraftingManager.deployed();
+    await crafting.setGlobalItemRegistryAddr(registry.address);
+    await craftingManager.setGlobalItemRegistryAddr(registry.address);
+    await crafting.setCraftingManagerAddress(craftingManager.address);
     
     // deploy Lootbox Contract
     await deployer.deploy(Lootbox, "https://testgame.com/api/lootbox/{id}.json");
-    await deployer.deploy(LootboxManager);
     lootbox = await Lootbox.deployed();
+    await deployer.deploy(LootboxManager, lootbox.address);
     lootboxManager = await LootboxManager.deployed();
     await lootbox.setGlobalItemRegistryAddr(registry.address);
     await lootboxManager.setGlobalItemRegistryAddr(registry.address);
-    await lootboxManager.setLootboxAddress(lootbox.address);
     await lootbox.setLootboxManager(lootboxManager.address);
 
     await deployer.deploy(ExtendedEnumerableMaps);
