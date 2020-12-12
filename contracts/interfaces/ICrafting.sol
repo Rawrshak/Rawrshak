@@ -1,49 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
+pragma experimental ABIEncoderV2;
 
-interface ICrafting {
-    /******** View Functions ********/ 
-    function isRecipeActive(uint256 _recipeId) external view returns(bool);
+import "./ICraftingInterface.sol";
 
-    function getTokenAddressForCrafting() external view returns(address);
+interface ICrafting is ICraftingInterface {
+    struct RecipeParam {
+        uint256[] materialUuids;
+        uint256[] materialAmounts;
+        uint256[] rewardUuids;
+        uint256[] rewardAmounts;
+        address tokenAddr;
+        uint256 cost;
+        bool isActive;
+    }
 
-    function getRecipeCost(uint256 _recipeId) external view returns(uint256);
-
-    function getCraftingMaterialsList(uint256 _recipeId)
-        external
-        view
-        returns(uint256[] memory uuids, uint256[] memory counts);
-
-    function getRewardsList(uint256 _recipeId)
-        external
-        view
-        returns(uint256[] memory uuids, uint256[] memory counts);
-
-    function getItemAsCraftingMaterialList(uint256 _uuid) external view returns(uint256[] memory recipeIds);
+    /******** View Functions ********/
+    function exists(uint256 _recipeId) external view returns(bool);
     
-    function getItemAsRewardList(uint256 _uuid) external view returns(uint256[] memory recipeIds);
+    function generateNextRecipeId() external view returns(uint256);
 
-    function getActiveRecipes() external view returns(uint256[] memory recipeIds);
-
-    function getActiveRecipesCount() external view returns(uint256);
-
-    /******** Mutative Functions ********/ 
-    function createRecipe(
-        uint256[] calldata _materialIds,
-        uint256[] calldata _materialAmounts,
-        uint256[] calldata _rewardIds,
-        uint256[] calldata _rewardAmounts,
-        uint256 _cost,
-        bool _isActive
-    ) external;
-
-    function setRecipeActive(uint256 _recipeId, bool _activate) external;
-
-    function setRecipeActiveBatch(uint256[] calldata _recipeIds, bool[] calldata _activate) external;
-
-    function updateRecipeCost(uint256 _recipeId, uint256 _cost) external;
-
-    function updateRecipeCostBatch(uint256[] calldata _recipeIds, uint256[] calldata _costs) external;
-
+    /******** Mutative Functions ********/
+    function createRecipe(uint256 _recipeId) external;
+    
     function craftItem(uint256 _recipeId, address payable _account) external;
 }

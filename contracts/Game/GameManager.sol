@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./Game.sol";
 import "../interfaces/IGameManager.sol";
-import "../interfaces/IGlobalItemRegistry.sol";
 
 contract GameManager is AccessControl, IGameManager, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -22,7 +21,6 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
     // and developer app interfaces with.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     
     // Todo: update this interface ID
     /*
@@ -47,10 +45,10 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
      *      ^ 0xf5298aca ^ 0x6b20c454 == 0x0a306cc6
      */
     bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
 
     /******** Stored Variables ********/
-    address gameAddr;
+    address public gameAddr;
 
     /******** Events ********/
     event ItemCreated(uint256);
@@ -72,6 +70,12 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
     constructor(address _gameAddr) public {
+        require(Address.isContract(_gameAddr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_gameAddr, _INTERFACE_ID_IGAME),
+            "Caller does not support Interface."
+        );
+        
         // Contract Deployer is now the owner and can set roles
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
@@ -79,10 +83,6 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
         gameAddr = _gameAddr;
 
         _registerInterface(_INTERFACE_ID_IGAMEMANAGER);
-    }
-    
-    function getGameAddress() external view override returns(address) {
-        return gameAddr;
     }
 
     function setUri(string calldata _newUri) external override {
