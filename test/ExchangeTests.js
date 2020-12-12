@@ -1,5 +1,6 @@
 const _deploy_contracts = require("../migrations/2_deploy_contracts");
 const Game = artifacts.require("Game");
+const GameManager = artifacts.require("GameManager");
 const Exchange = artifacts.require("Exchange");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 const OvcTokenContract = artifacts.require("OVCToken");
@@ -22,6 +23,7 @@ contract('Exchange Contract', (accounts) => {
 
     it('Setup', async () => {
         const game = await Game.deployed();
+        const gameManager = await GameManager.deployed();
         const ovcToken = await OvcTokenContract.deployed();
         
         // Test deployer token supply
@@ -29,12 +31,12 @@ contract('Exchange Contract', (accounts) => {
         assert.equal(balance.valueOf(), 1000000000, "1000000000 wasn't in the first account");
 
         // Grant roles
-        const gc_manager_role = await game.MANAGER_ROLE();
-        const minter_role = await game.MINTER_ROLE();
-        const burner_role = await game.BURNER_ROLE();
-        await game.grantRole(gc_manager_role, gcManagerAddress, {from:deployerAddress});
-        await game.grantRole(minter_role, gcManagerAddress, {from:deployerAddress});
-        await game.grantRole(burner_role, gcManagerAddress, {from:deployerAddress});
+        const gc_manager_role = await gameManager.MANAGER_ROLE();
+        const minter_role = await gameManager.MINTER_ROLE();
+        const burner_role = await gameManager.BURNER_ROLE();
+        await gameManager.grantRole(gc_manager_role, gcManagerAddress, {from:deployerAddress});
+        await gameManager.grantRole(minter_role, gcManagerAddress, {from:deployerAddress});
+        await gameManager.grantRole(burner_role, gcManagerAddress, {from:deployerAddress});
 
         // Give some token supply to the players
         await ovcToken.transfer(player1Address, 5000, {from:deployerAddress});
@@ -45,18 +47,18 @@ contract('Exchange Contract', (accounts) => {
         // Create items
         itemIds= [inputItem0, inputItem1, inputItem2];
         maxSupplies = [0, 0, 0];
-        await game.createItemBatch(zero_address, itemIds, maxSupplies, {from:gcManagerAddress});
+        await gameManager.createItemBatch(zero_address, itemIds, maxSupplies, {from:gcManagerAddress});
         assert.equal(await game.length(), 3, "The 3 new items were not created.");
         
         // Mint the items and send to the player 1 address
         items = [inputItem0, inputItem1];
         amounts = [5, 5];
-        await game.mintBatch(player1Address, items, amounts, {from: gcManagerAddress});
+        await gameManager.mintBatch(player1Address, items, amounts, {from: gcManagerAddress});
         assert.equal(await game.balanceOf(player1Address, inputItem0), 5, "Incorrect number of item 0.");
         assert.equal(await game.balanceOf(player1Address, inputItem1), 5, "Incorrect number of item 1.");
 
         // Mint the items and send to the player 1 address
-        await game.mint(player2Address, inputItem2, 5, {from: gcManagerAddress});
+        await gameManager.mint(player2Address, inputItem2, 5, {from: gcManagerAddress});
         assert.equal(await game.balanceOf(player2Address, inputItem2), 5, "Incorrect number of item 2.");
     });
 
@@ -96,8 +98,6 @@ contract('Exchange Contract', (accounts) => {
         assert.equal(data[4].toNumber(), 100, "item price is incorrect.");
         assert.equal(data[5], true, "data entry is not a bid");
         assert.equal(await ovcToken.balanceOf(player1Address), 4800, "Player 2 balance was not deducted");
-
-        
     });
 
     it('Place Asks', async () => {
@@ -237,7 +237,6 @@ contract('Exchange Contract', (accounts) => {
     });
 
     it('Delete Order', async () => {
-        const game = await Game.deployed();
         const exchange = await Exchange.deployed();
         const ovcToken = await OvcTokenContract.deployed();
 

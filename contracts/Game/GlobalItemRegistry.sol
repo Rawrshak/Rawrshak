@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
+import "../interfaces/IGame.sol";
 
 contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     using Address for address;
@@ -26,7 +27,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
      *      ^ 0x1003e2d2 ^ 0x56634921 == 0x18028f85
      */
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_IGAME = 0x0a306cc6;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
 
     /******** Data Structures ********/
     struct Item {
@@ -65,8 +66,11 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
         return _getId(_gameAddr, _id);
     }
     
-    function getItemInfo(uint256 _uuid) external view override returns(address, uint256) {
-        return (itemRegistry[_uuid].gameAddress, itemRegistry[_uuid].gameId);
+    function getItemInfo(uint256 _uuid) external view override returns(address, address, uint256) {
+        return (
+            itemRegistry[_uuid].gameAddress,
+            IGame(itemRegistry[_uuid].gameAddress).getGameManagerAddress(),
+            itemRegistry[_uuid].gameId);
     }
     
     function contains(uint256 _uuid) external view override returns (bool) {

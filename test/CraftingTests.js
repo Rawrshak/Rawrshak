@@ -1,5 +1,6 @@
 const _deploy_contracts = require("../migrations/2_deploy_contracts");
 const Game = artifacts.require("Game");
+const GameManager = artifacts.require("GameManager");
 const Crafting = artifacts.require("Crafting");
 const OVCToken = artifacts.require("OVCToken");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
@@ -18,7 +19,7 @@ contract('Crafting Contract', (accounts) => {
     const zero_address = "0x0000000000000000000000000000000000000000";
 
     it('Check Crafting Contract Roles', async () => {
-        const game = await Game.deployed();
+        const gameManager = await GameManager.deployed();
         const crafting = await Crafting.deployed();
         const default_admin_role = await crafting.DEFAULT_ADMIN_ROLE();
         const cc_manager_role = await crafting.MANAGER_ROLE();
@@ -39,58 +40,59 @@ contract('Crafting Contract', (accounts) => {
             "Deployer address does not have the crafting manager role"
         );
 
-        const minter_role = await game.MINTER_ROLE();
-        const burner_role = await game.BURNER_ROLE();
+        const minter_role = await gameManager.MINTER_ROLE();
+        const burner_role = await gameManager.BURNER_ROLE();
 
         assert.equal(
-            await game.hasRole(
+            await gameManager.hasRole(
                 minter_role,
                 crafting.address),
             true,
-            "Crafting Contract does not have the burner role on Game Contract"
+            "Crafting Contract does not have the burner role on Game Manager Contract"
         );
 
         assert.equal(
-            await game.hasRole(
+            await gameManager.hasRole(
                 burner_role,
                 crafting.address),
             true,
-            "Crafting Contract does not have the burner role on Game Contract"
+            "Crafting Contract does not have the burner role on Game Manager Contract"
         );
     });
 
     it("Game Contract Data Setup", async () => {
         const game = await Game.deployed();
+        const gameManager = await GameManager.deployed();
         const crafting = await Crafting.deployed();
         const registry = await GlobalItemRegistry.deployed();
-        const gc_manager_role = await game.MANAGER_ROLE();
-        const minter_role = await game.MINTER_ROLE();
-        const burner_role = await game.BURNER_ROLE();
+        const gc_manager_role = await gameManager.MANAGER_ROLE();
+        const minter_role = await gameManager.MINTER_ROLE();
+        const burner_role = await gameManager.BURNER_ROLE();
         const cc_manager_role = await crafting.MANAGER_ROLE();
 
         // transfer the crafting contract ownership
         await crafting.transferOwnership(developerWalletAddress);
         
-        await game.grantRole(gc_manager_role, gcManagerAddress,{from:deployerAddress});
-        await game.grantRole(minter_role, gcManagerAddress,{from:deployerAddress});
-        await game.grantRole(burner_role, gcManagerAddress,{from:deployerAddress});
+        await gameManager.grantRole(gc_manager_role, gcManagerAddress,{from:deployerAddress});
+        await gameManager.grantRole(minter_role, gcManagerAddress,{from:deployerAddress});
+        await gameManager.grantRole(burner_role, gcManagerAddress,{from:deployerAddress});
         
         // Set crafting manager address the crafting manager role
         await crafting.grantRole(cc_manager_role, ccManagerAddress, {from:deployerAddress});
         
         // check to see if item manager address has the item manger role
         assert.equal(
-            await game.hasRole(
+            await gameManager.hasRole(
                 gc_manager_role,
                 gcManagerAddress),
             true, "Item Manager Address didn't have the Item Manager Role");
 
         // Add 5 items
-        await game.createItem(zero_address, material1, 0, {from:gcManagerAddress});
-        await game.createItem(zero_address, material2, 0, {from:gcManagerAddress});
-        await game.createItem(zero_address, material3, 0, {from:gcManagerAddress});
-        await game.createItem(zero_address, reward1, 0, {from:gcManagerAddress});
-        await game.createItem(zero_address, reward2, 0, {from:gcManagerAddress});
+        await gameManager.createItem(zero_address, material1, 0, {from:gcManagerAddress});
+        await gameManager.createItem(zero_address, material2, 0, {from:gcManagerAddress});
+        await gameManager.createItem(zero_address, material3, 0, {from:gcManagerAddress});
+        await gameManager.createItem(zero_address, reward1, 0, {from:gcManagerAddress});
+        await gameManager.createItem(zero_address, reward2, 0, {from:gcManagerAddress});
 
         // Check if the new items were added.
         assert.equal((await game.length()).toNumber(), 5, "The 5 new items were not created");
@@ -420,6 +422,7 @@ contract('Crafting Contract', (accounts) => {
 
     it('Craft an Item', async () => {
         const game = await Game.deployed();
+        const gameManager = await GameManager.deployed();
         const crafting = await Crafting.deployed();
         const ovcToken = await OVCToken.deployed();
         const smith_role = await crafting.SMITH_ROLE();
@@ -431,7 +434,7 @@ contract('Crafting Contract', (accounts) => {
         // mint materials and give to player
         itemIds = [material1, material2, material3];
         amounts = [6, 2, 10];
-        await game.mintBatch(playerAddress, itemIds, amounts, {from:gcManagerAddress, gasPrice: 1});
+        await gameManager.mintBatch(playerAddress, itemIds, amounts, {from:gcManagerAddress, gasPrice: 1});
 
         // craft recipe 0 for player
         await crafting.craftItem(recipe0, playerAddress, {from:smithAddress});

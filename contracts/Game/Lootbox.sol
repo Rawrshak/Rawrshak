@@ -7,9 +7,10 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../interfaces/IGame.sol";
+import "../interfaces/IGameManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/ILootbox.sol";
+import "../interfaces/ILootboxManager.sol";
 import "../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
@@ -18,7 +19,7 @@ import "../utils/Utils.sol";
 // Todo: Developer can add multiple kinds of lootboxes per contract
 // Todo: Lootbox Storage
 
-contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
+contract Lootbox is ILootbox, Ownable, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using SafeMath for *;
@@ -46,6 +47,7 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
      *      ^ 0x48758697 ^ 0x14743353 ^ 0x10dfc82b == 0xe49e0289
      */
     bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111; // Todo:
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
 
     /******** Constants ********/
@@ -72,33 +74,22 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     mapping(uint8 => Reward[]) private rewardsList;
     uint8 private tradeInMinimum = 4;
     address globalItemRegistryAddr;
+    address lootboxManagerAddr;
     // uint8(Rarity.Common)
-    uint32[7] probabilities;
+    uint32[7] private probabilities;
     
     /******** Events ********/
-    event AddedInputItem(uint256);
-    event AddedInputItemBatch(uint256[]);
-    event AddedReward(uint256);
-    event AddedRewardBatch(uint256[]);
     event LootboxGenerated(uint256);
     event LootboxOpened(uint256);
 
     /******** Modifiers ********/
-    modifier checkPermissions(bytes32 _role) {
-        require(hasRole(_role, msg.sender), "Caller missing permissions");
-        _;
-    }
-
-    modifier checkItemExists(uint256 _uuid) {
-        require(globalItemRegistry().contains(_uuid), "Item does not exist.");
+    modifier onlyManager() {
+        require(lootboxManagerAddr == msg.sender, "Invalid Access");
         _;
     }
 
     /******** Public API ********/
-    constructor(string memory _url, address _itemRegistryAddr) public ERC1155(_url) {
-        globalItemRegistryAddr = _itemRegistryAddr;
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MANAGER_ROLE, msg.sender);
+    constructor(string memory _url) public ERC1155(_url) {
         _registerInterface(_INTERFACE_ID_ILOOTBOX);
         
         probabilities[uint8(Rarity.Mythic)] = 1;
@@ -111,8 +102,8 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     }
 
     function setGlobalItemRegistryAddr(address _addr)
-        public
-        checkPermissions(MANAGER_ROLE)
+        external
+        onlyOwner
     {
         require(Address.isContract(_addr), "Address not valid");
         require(
@@ -122,18 +113,31 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         globalItemRegistryAddr = _addr;
     }
 
+    function setLootboxManager(address _addr)
+        external
+        onlyOwner
+    {
+        require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ILOOTBOXMANAGER),
+            "Caller does not support Interface."
+        );
+        lootboxManagerAddr = _addr;
+    }
+
+    function getLootboxManagerAddress() external view override returns(address) {
+        return lootboxManagerAddr;
+    }
+
     function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)
         external
         override
-        checkPermissions(MANAGER_ROLE)
-        checkItemExists(_uuid)
+        onlyManager
     {
         Input storage inputItem = inputsList[_uuid];
         inputItem.requiredAmount = _amount;
         inputItem.multiplier = _multiplier;
         inputItem.active = true;
-
-        emit AddedInputItem(_uuid);
     }
 
     function registerInputItemBatch(
@@ -143,28 +147,20 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     ) 
         external
         override
-        checkPermissions(MANAGER_ROLE)
+        onlyManager
     {
-        require(_uuids.length == _amounts.length && _uuids.length == _multipliers.length, "Array length mismatch");
-
-        IGlobalItemRegistry registry = globalItemRegistry();
         for (uint256 i = 0; i < _uuids.length; ++i) {
-            require(registry.contains(_uuids[i]), "Item does not exist.");
-
             Input storage inputItem = inputsList[_uuids[i]];
             inputItem.requiredAmount = _amounts[i];
             inputItem.multiplier = _multipliers[i];
             inputItem.active = true;
         }
-
-        emit AddedInputItemBatch(_uuids);
     }
 
     function registerReward(uint256 _uuid, Rarity _rarity, uint256 _amount)
         external
         override
-        checkPermissions(MANAGER_ROLE)
-        checkItemExists(_uuid)
+        onlyManager
     {
         // add to item's rarity list if it doesn't already exist
         itemRarity[_uuid].add(uint256(_rarity));
@@ -174,8 +170,6 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         rewardItem.amount = _amount;
         rewardItem.active = true;
         rewardsList[uint8(_rarity)].push(rewardItem);
-
-        emit AddedReward(_uuid);
     }
 
     function registerRewardBatch(
@@ -185,15 +179,10 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
     ) 
         external
         override
-        checkPermissions(MANAGER_ROLE)
+        onlyManager
     {
-        require(_uuids.length == _rarities.length && _uuids.length == _amounts.length, "Input array length mismatch");
-        
-        IGlobalItemRegistry registry = globalItemRegistry();
 
         for (uint256 i = 0; i < _uuids.length; ++i) {
-            require(registry.contains(_uuids[i]), "Item does not exist.");
-
             // Add to items map. There can be multiple amounts per item so the reward hash should take 
             // that into account.
             // add to item's rarity list if it doesn't already exist
@@ -205,9 +194,12 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
             rewardItem.active = true;
             rewardsList[uint8(_rarities[i])].push(rewardItem);
         }
-
-        emit AddedRewardBatch(_uuids);
     }
+
+    function setTradeInMinimum(uint8 _count) external override onlyManager {
+        tradeInMinimum = _count;
+    }
+
 
     // Todo: instead of passing in amounts, just pass the ids, and then have the lootbox query
     //       for the data from the game. If the user doesn't have enough items, just call a revert()
@@ -236,15 +228,16 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
                 uint256 count = SafeMath.div(_amounts[i], requiredAmount);
 
                 // Get game information
-                (address gameAddr, uint256 gameId) = registry.getItemInfo(_uuids[i]);
+                (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(_uuids[i]);
 
                 // Burn will fail if the user doesn't have enough items
-                IGame game = IGame(gameAddr);
+                // Todo: create a new interface for just getting the game manager
+                IGameManager gameManager = IGameManager(gameManagerAddr);
                 if (inputCount > count) {
-                    game.burn(msg.sender, gameId, count * requiredAmount);
+                    gameManager.burn(msg.sender, gameId, SafeMath.mul(count, requiredAmount));
                     inputCount -= count;
                 } else {
-                    game.burn(msg.sender, gameId, inputCount * requiredAmount);
+                    gameManager.burn(msg.sender, gameId, SafeMath.mul(inputCount, requiredAmount));
                     inputCount = 0;
                 }
             }
@@ -283,10 +276,11 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
             Reward storage reward = rewardsList[rarity][itemIndex];
 
             // Get game information
-            (address gameAddr, uint256 gameId) = registry.getItemInfo(reward.uuid);
+            (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(reward.uuid);
+            IGameManager gameManager = IGameManager(gameManagerAddr);
 
             // Mint() will fail if this contract does not have the necessary permissions 
-            IGame(gameAddr).mint(msg.sender, gameId, reward.amount);
+            gameManager.mint(msg.sender, gameId, reward.amount);
         }
         emit LootboxOpened(_count);
     }
@@ -313,17 +307,12 @@ contract Lootbox is ILootbox, AccessControl, Ownable, ERC1155 {
         external
         view
         override
-        checkItemExists(_uuid)
         returns(Rarity[] memory rarities)
     {
         rarities = new Rarity[](itemRarity[_uuid].length());
         for (uint256 i = 0; i < itemRarity[_uuid].length(); ++i) {
             rarities[i] = Rarity(itemRarity[_uuid].at(i));
         }
-    }
-
-    function setTradeInMinimum(uint8 _count) external override checkPermissions(MANAGER_ROLE) {
-        tradeInMinimum = _count;
     }
 
     function getTradeInMinimum() external view override returns(uint8) {
