@@ -5,20 +5,27 @@ pragma experimental ABIEncoderV2;
 import "./ICraftingInterface.sol";
 
 interface ICrafting is ICraftingInterface {
-    struct RecipeParam {
-        uint256[] materialUuids;
-        uint256[] materialAmounts;
-        uint256[] rewardUuids;
-        uint256[] rewardAmounts;
-        address tokenAddr;
-        uint256 cost;
-        bool isActive;
-    }
 
     /******** View Functions ********/
     function exists(uint256 _recipeId) external view returns(bool);
     
     function generateNextRecipeId() external view returns(uint256);
+
+    function isRecipeActive(uint256 _recipeId) external view returns(bool);
+
+    function getRecipeCost(uint256 _recipeId) external view returns(address, uint256);
+    
+    function getCraftingMaterialsList(uint256 _recipeId)
+        external
+        view
+        returns(uint256[] memory uuids, uint256[] memory counts);
+
+    function getRewardsList(uint256 _recipeId)
+        external
+        view
+        returns(uint256[] memory uuids, uint256[] memory counts);
+
+    function getActiveRecipeCount() external view returns(uint256);
 
     /******** Mutative Functions ********/
     function createRecipe(uint256 _recipeId) external;

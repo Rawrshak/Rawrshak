@@ -229,6 +229,58 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         emit ItemCrafted();
     }
 
+    function isRecipeActive(uint256 _recipeId) external view override returns(bool) {
+        return recipes[_recipeId].isActive;
+    }
+
+    function getRecipeCost(uint256 _recipeId) external view override returns(address, uint256) {
+        return (recipes[_recipeId].tokenAddr, recipes[_recipeId].cost);
+    }
+    
+    // Gets materials list for the recipe
+    // Returns: (crafting item id, amount) list
+    function getCraftingMaterialsList(uint256 _recipeId)
+        external
+        view
+        override
+        returns(uint256[] memory uuids, uint256[] memory counts)
+    {
+        require(_recipeId < recipes.length, "Recipe does not exist.");
+
+        Recipe storage recipe = recipes[_recipeId];
+        uuids = new uint256[](recipe.materials.length);
+        counts = new uint256[](recipe.materials.length);
+
+        for (uint i = 0; i < recipe.materialIds.length(); ++i) {
+            uuids[i] = recipe.materialIds.at(i);
+            counts[i] = recipe.materials[recipe.materialIds.at(i)];
+        }
+    }
+    
+    // Gets rewards list for the recipe
+    // Returns: (crafting item id, amount) list
+    function getRewardsList(uint256 _recipeId)
+        external
+        view
+        override
+        returns(uint256[] memory uuids, uint256[] memory counts)
+    {
+        require(_recipeId < recipes.length, "Recipe does not exist.");
+
+        Recipe storage recipe = recipes[_recipeId];
+        uuids = new uint256[](recipe.rewards.length);
+        counts = new uint256[](recipe.rewards.length);
+        
+        for (uint i = 0; i < recipe.rewardIds.length(); ++i) {
+            uuids[i] = recipe.rewardIds.at(i);
+            counts[i] = recipe.rewards[recipe.rewardIds.at(i)];
+        }
+    }
+
+    function getActiveRecipeCount() external view override returns(uint256) {
+        return activeRecipeCount;
+    }
+
     /******** Internal Functions ********/
     
     function globalItemRegistry() internal view returns (IGlobalItemRegistry) {
