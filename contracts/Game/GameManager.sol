@@ -149,7 +149,9 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
     {
         require(_itemIds.length == _amounts.length, "item arrays don't match.");
         require(_receivingAddress != address(0), "Invalid address");
-        require(game().containsAll(_itemIds), "An item doesn't exist.");
+        for (uint256 i = 0; i < _itemIds.length; ++i) {
+            require(game().contains(_itemIds[i]), "An item doesn't exist.");
+        }
 
         for (uint i = 0; i < _itemIds.length; i++) {
             (, uint256 maxSupply) = game().getItemInfo(_itemIds[i]);

@@ -54,46 +54,12 @@ contract Game is ERC1155, Ownable, IGame {
         return idSet.contains(_id);
     }
 
-    function containsAll(uint256[] calldata _ids) external view override returns (bool) {
-        for (uint256 i = 0; i < _ids.length; ++i) {
-            if (!idSet.contains(_ids[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     function length() external view override returns(uint256) {
         return idSet.length();
     }
 
-    function listItems(uint256 offset) external view override returns(uint256[] memory idList, uint256 nextOffset) {
-        require(offset < idSet.length(), "Invalid Offset");
-
-        // Get the length of the array
-        uint256 listLength = (offset + MAX_ITEM_RETURNED < idSet.length()) ? MAX_ITEM_RETURNED : idSet.length() - offset;
-        idList = new uint[](listLength);
-        for (uint256 i = offset; i < listLength; i++) {
-            idList[i] = idSet.at(i);
-        }
-        // determine the next offset index
-        nextOffset = offset + listLength;
-    }
-
     function getItemInfo(uint256 _id) external view override returns(address, uint256)  {
         return (items[_id].creatorAddress, items[_id].maxSupply);
-    }
-
-    function getItemInfoBatch(uint256[] calldata _ids) external view override returns(address[] memory addrs, uint256[] memory supplies) {
-        require(_ids.length <= MAX_ITEM_RETURNED, "Exceeds max item returns of 10");
-        
-        addrs = new address[](_ids.length);
-        supplies = new uint256[](_ids.length);
-        for (uint256 i = 0; i < _ids.length; ++i)
-        {
-            addrs[i] = items[_ids[i]].creatorAddress;
-            supplies[i] = items[_ids[i]].maxSupply;
-        }
     }
 
     /******** Mutative Functions ********/
