@@ -8,5 +8,5 @@ interface ILootboxManager is ILootboxBase {
     function getLootboxAddress() external view returns(address);
     
     /******** Mutative Functions ********/
-    function setLootboxAddress(address _addr) external;
+    function generateLootboxContract(address _lootboxFactoryAddress, string calldata _url) external;
 }

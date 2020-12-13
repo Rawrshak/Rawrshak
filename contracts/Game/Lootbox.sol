@@ -49,6 +49,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
     bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111; // Todo:
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x44444444;
 
     /******** Constants ********/
     uint256 private LOOTBOX = 0;
@@ -88,7 +89,13 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     }
 
     /******** Public API ********/
-    constructor(string memory _url) public ERC1155(_url) {
+    constructor(address _addr, string memory _url) public ERC1155(_url) {
+        require(
+            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ILOOTBOXFACTORY),
+            "Caller does not support Interface."
+        );
+        globalItemRegistryAddr = _addr;
+
         _registerInterface(_INTERFACE_ID_ILOOTBOX);
         
         probabilities[uint8(Rarity.Mythic)] = 1;
@@ -102,13 +109,9 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
 
     function setGlobalItemRegistryAddr(address _addr)
         external
+        override
         onlyOwner
     {
-        require(Address.isContract(_addr), "Address not valid");
-        require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support Interface."
-        );
         globalItemRegistryAddr = _addr;
     }
 

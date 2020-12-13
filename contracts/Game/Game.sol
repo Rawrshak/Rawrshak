@@ -16,6 +16,7 @@ contract Game is ERC1155, Ownable, IGame {
     /******** Constants ********/
     // Todo: Replace this _IGAME interface 
     bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
+    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
     bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
     uint256 private constant MAX_ITEM_RETURNED = 10;
 
@@ -76,6 +77,10 @@ contract Game is ERC1155, Ownable, IGame {
     }
 
     function setGameManagerAddress(address _newAddress) external override onlyOwner {
+        require(
+            ERC165Checker.supportsInterface(_newAddress, _INTERFACE_ID_IGAMEMANAGER),
+            "Caller does not support Interface."
+        );
         gameManagerAddr = _newAddress;
     }
     
