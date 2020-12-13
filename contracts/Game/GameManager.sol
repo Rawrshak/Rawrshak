@@ -10,8 +10,9 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./Game.sol";
 import "../interfaces/IGameManager.sol";
+import "../factory/GameFactory.sol";
 
-contract GameManager is AccessControl, IGameManager, ERC165 {
+contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using ERC165Checker for *;
@@ -46,6 +47,7 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
      */
     bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
     bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
+    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
 
     /******** Stored Variables ********/
     address public gameAddr;
@@ -57,6 +59,7 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
     event ItemBurned(uint256,uint256);
     event ItemMintedBatch(uint256[],uint256[]);
     event ItemBurnedBatch(uint256[],uint256[]);
+    event GameContractCreated(address);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -69,28 +72,31 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
 
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
-    constructor(address _gameAddr) public {
-        require(Address.isContract(_gameAddr), "Address not valid");
-        require(
-            ERC165Checker.supportsInterface(_gameAddr, _INTERFACE_ID_IGAME),
-            "Caller does not support Interface."
-        );
-        
+    constructor() public {        
         // Contract Deployer is now the owner and can set roles
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-
-        // Create Item Info Storage
-        gameAddr = _gameAddr;
+        _setupRole(MINTER_ROLE, msg.sender);
+        _setupRole(BURNER_ROLE, msg.sender);
 
         _registerInterface(_INTERFACE_ID_IGAMEMANAGER);
     }
 
-    function setUri(string calldata _newUri) external override {
+    function setUri(string calldata _newUri) external override onlyOwner {
         game().setUri(_newUri);
     }
 
+    function generateGameContract(address _gameFactoryAddress, string calldata _url) external override onlyOwner {
+        require(
+            ERC165Checker.supportsInterface(_gameFactoryAddress, _INTERFACE_ID_IGAMEFACTORY),
+            "Caller does not support Interface."
+        );
+
+        gameAddr = address(GameFactory(_gameFactoryAddress).createGame(_url));
+        emit GameContractCreated(gameAddr);
+    }
+
     // Create New Item
-    function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override {
+    function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override onlyOwner {
         require(!game().contains(_id), "Item already exists.");
         
         // Add item to item storage
@@ -109,6 +115,7 @@ contract GameManager is AccessControl, IGameManager, ERC165 {
     )
         external
         override
+        onlyOwner
     {
         require(_ids.length == _maxSupplies.length, "IDs and Max Supply array size do not match");
         for (uint256 i = 0; i < _ids.length; ++i) {
