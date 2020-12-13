@@ -11,6 +11,7 @@ import "./Crafting.sol";
 import "../interfaces/ICraftingManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../tokens/TokenBase.sol";
+import "../factory/CraftingFactory.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
@@ -48,6 +49,7 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
      */
     bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
     bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER = 0xCCCCCCCC;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x33333333;
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
     bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
 
@@ -57,6 +59,7 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
 
     /******** Events ********/
     event RecipeCreated(uint256);
+    event CraftingContractCreated(address);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -76,14 +79,7 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
     }
 
     /******** Public API ********/
-    constructor(address _craftingAddr) public {
-        require(Address.isContract(_craftingAddr), "Address not valid");
-        require(
-            ERC165Checker.supportsInterface(_craftingAddr, _INTERFACE_ID_ICRAFTING),
-            "Caller does not support Interface."
-        );
-        craftingAddr = _craftingAddr;
-
+    constructor() public {
         // Set up Roles
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MANAGER_ROLE, msg.sender);
@@ -101,21 +97,30 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
+        require(craftingAddr != address(0), "Crafting Contract not created yet.");
         itemRegistryAddr = _addr;
+        crafting().setGlobalItemRegistryAddr(_addr);
     }
 
-    function setCraftingAddress(address _addr)
+    function generateCraftingContract(
+        address _craftingFactoryAddress
+    )
         external
         override
         checkPermissions(MANAGER_ROLE)
     {
-        require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ICRAFTING),
+            ERC165Checker.supportsInterface(_craftingFactoryAddress, _INTERFACE_ID_ICRAFTINGFACTORY),
             "Caller does not support Interface."
         );
-        craftingAddr = _addr;
+
+        Crafting crafting = CraftingFactory(_craftingFactoryAddress).createCraftingContract();
+        crafting.setCraftingManagerAddress(address(this));
+        craftingAddr = address(crafting);
+        
+        emit CraftingContractCreated(craftingAddr);
     }
+
 
     function getCraftingAddress() external view override returns(address) {
         return craftingAddr;

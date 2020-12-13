@@ -8,7 +8,6 @@ interface ICraftingManager is ICraftingInterface {
     function getCraftingAddress() external view returns(address);
     
     /******** Mutative Functions ********/
-    function setCraftingAddress(address _addr) external;
 
     function createRecipe(
         uint256[] calldata _materialIds,
@@ -23,4 +22,6 @@ interface ICraftingManager is ICraftingInterface {
     function updateRecipeActiveBatch(uint256[] calldata _recipeIds, bool[] calldata _activates) external;
 
     function updateRecipeCostBatch(uint256[] calldata _recipeIds, address[] calldata _tokenAddrs, uint256[] calldata _costs) external;
+
+    function generateCraftingContract(address _craftingFactoryAddress) external;
 }

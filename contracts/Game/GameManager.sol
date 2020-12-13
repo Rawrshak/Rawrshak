@@ -48,6 +48,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
     bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
     bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
 
     /******** Stored Variables ********/
     address public gameAddr;
@@ -91,11 +92,21 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
             "Caller does not support Interface."
         );
 
-        Game game = GameFactory(_gameFactoryAddress).createGame(_url);
+        Game game = GameFactory(_gameFactoryAddress).createGameContract(_url);
         game.setGameManagerAddress(address(this));
         gameAddr = address(game);
         
         emit GameContractCreated(gameAddr);
+    }
+
+    function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
+        require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            "Caller does not support Interface."
+        );
+        require(gameAddr != address(0), "Game Contract not created yet.");
+        game().setGlobalItemRegistryAddr(_addr);
     }
 
     // Create New Item

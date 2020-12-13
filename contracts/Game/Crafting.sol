@@ -47,6 +47,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
      */
     bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
     bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER = 0xCCCCCCCC;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x33333333;
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
     bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
         
@@ -78,16 +79,17 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     }
 
     /******** Public API ********/
-    constructor() public {
+    constructor(address _addr) public {
+        require(
+            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ICRAFTINGFACTORY),
+            "Caller does not support Interface."
+        );
+        globalItemRegistryAddr = _addr;
         _registerInterface(_INTERFACE_ID_ICRAFTING);
     }
 
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
-        require(Address.isContract(_addr), "Address not valid");
-        require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support Interface."
-        );
+        // Address is already checked in the game manager
         globalItemRegistryAddr = _addr;
     }
 

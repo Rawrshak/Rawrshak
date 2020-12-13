@@ -16,6 +16,7 @@ contract Game is ERC1155, Ownable, IGame {
     /******** Constants ********/
     // Todo: Replace this _IGAME interface 
     bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
+    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
     uint256 private constant MAX_ITEM_RETURNED = 10;
 
     /******** Data Structures ********/
@@ -40,7 +41,10 @@ contract Game is ERC1155, Ownable, IGame {
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
     constructor(string memory _url, address _itemRegistryAddr) public ERC1155(_url) {
-        require(Address.isContract(_itemRegistryAddr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_IGAMEFACTORY),
+            "Caller does not support Interface."
+        );
         itemRegistryAddr = _itemRegistryAddr;
         _registerInterface(_INTERFACE_ID_IGAME);
     }
@@ -63,6 +67,14 @@ contract Game is ERC1155, Ownable, IGame {
     }
 
     /******** Mutative Functions ********/
+    function setGlobalItemRegistryAddr(address _addr)
+        external
+        override
+        onlyOwner
+    {
+        itemRegistryAddr = _addr;
+    }
+
     function setGameManagerAddress(address _newAddress) external override onlyOwner {
         gameManagerAddr = _newAddress;
     }

@@ -3,6 +3,8 @@ pragma solidity >=0.6.0 <0.8.0;
 
 interface IGameInterface {  
     /******** Mutative Functions ********/
+    function setGlobalItemRegistryAddr(address _addr) external;
+    
     function setUri(string calldata _newUri) external;
 
     function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external;
