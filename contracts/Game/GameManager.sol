@@ -91,7 +91,10 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
             "Caller does not support Interface."
         );
 
-        gameAddr = address(GameFactory(_gameFactoryAddress).createGame(_url));
+        Game game = GameFactory(_gameFactoryAddress).createGame(_url);
+        game.setGameManagerAddress(address(this));
+        gameAddr = address(game);
+        
         emit GameContractCreated(gameAddr);
     }
 

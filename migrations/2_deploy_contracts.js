@@ -1,6 +1,7 @@
 const OVCTokenContract = artifacts.require("OVCToken");
-const Game = artifacts.require("Game");
+// const Game = artifacts.require("Game");
 const GameManager = artifacts.require("GameManager");
+const GameFactory = artifacts.require("GameFactory");
 const Crafting = artifacts.require("Crafting");
 const CraftingManager = artifacts.require("CraftingManager");
 const Lootbox = artifacts.require("Lootbox");
@@ -24,12 +25,13 @@ module.exports = async function(deployer, networks, accounts) {
     registry = await GlobalItemRegistry.deployed();
 
     // deploy Game with test URL
-    await deployer.deploy(Game, "https://testgame.com/api/item/{id}.json", registry.address);
-    game = await Game.deployed();
+    await deployer.deploy(GameFactory);
+    gameFactory = await GameFactory.deployed();
+    await gameFactory.setGlobalItemRegistryAddr(registry.address);
 
-    await deployer.deploy(GameManager, game.address);
+    await deployer.deploy(GameManager);
     gameManager = await GameManager.deployed();
-    await game.setGameManagerAddress(gameManager.address)
+    await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
     
     // Link Library
     await deployer.deploy(Utils);

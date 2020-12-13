@@ -22,7 +22,7 @@ contract GameFactory is ERC165 {
         _registerInterface(_INTERFACE_ID_IGAMEFACTORY);
     }
 
-    function setGlobalItemRegistry(address _addr) external {
+    function setGlobalItemRegistryAddr(address _addr) external {
         require(Address.isContract(_addr), "Address not valid");
         require(
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
