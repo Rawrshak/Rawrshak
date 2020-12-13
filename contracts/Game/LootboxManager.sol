@@ -23,14 +23,14 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
     
     /******** Stored Variables ********/
     address globalItemRegistryAddr;
-    address lootboxAddr;
+    address[] lootboxAddresses;
 
     /******** Events ********/
     event AddedInputItem(uint256);
     event AddedInputItemBatch(uint256[]);
     event AddedReward(uint256);
     event AddedRewardBatch(uint256[]);
-    event LootboxContractCreated(address);
+    event LootboxContractCreated(uint256, address);
     
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -40,6 +40,11 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
 
     modifier checkItemExists(uint256 _uuid) {
         require(globalItemRegistry().contains(_uuid), "Item does not exist.");
+        _;
+    }
+
+    modifier checkLootboxExists(uint256 _lootboxId) {
+        require(_lootboxId < lootboxAddresses.length, "Lootbox does not exist.");
         _;
     }
     
@@ -59,9 +64,12 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
-        require(lootboxAddr != address(0), "Crafting Contract not created yet.");
+        require(lootboxAddresses.length != 0, "Crafting Contract not created yet.");
         globalItemRegistryAddr = _addr;
-        lootbox().setGlobalItemRegistryAddr(_addr);
+
+        for (uint256 i = 0; i < lootboxAddresses.length; ++i) {
+            lootbox(i).setGlobalItemRegistryAddr(_addr);
+        }
     }
 
     function generateLootboxContract(
@@ -79,27 +87,30 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
 
         Lootbox lootbox = LootboxFactory(_lootboxFactoryAddress).createLootboxContract(_url);
         lootbox.setLootboxManager(address(this));
-        lootboxAddr = address(lootbox);
+        uint256 lootboxId = lootboxAddresses.length;
+        lootboxAddresses.push(address(lootbox));
         
-        emit LootboxContractCreated(lootboxAddr);
+        emit LootboxContractCreated(lootboxId, address(lootbox));
     }
 
-    function getLootboxAddress() external view override returns(address) {
-        return lootboxAddr;
+    function getLootboxAddress(uint256 _lootboxId) external view override checkLootboxExists(_lootboxId) returns(address) {
+        return lootboxAddresses[_lootboxId];
     }
 
-    function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)
+    function registerInputItem(uint256 _lootboxId, uint256 _uuid, uint256 _amount, uint256 _multiplier)
         external
         override
         checkPermissions(MANAGER_ROLE)
+        checkLootboxExists(_lootboxId)
         checkItemExists(_uuid)
     {
-        lootbox().registerInputItem(_uuid, _amount, _multiplier);
+        lootbox(_lootboxId).registerInputItem(_uuid, _amount, _multiplier);
 
         emit AddedInputItem(_uuid);
     }
 
     function registerInputItemBatch(
+        uint256 _lootboxId,
         uint256[] calldata _uuids,
         uint256[] calldata _amounts,
         uint256[] calldata _multipliers
@@ -107,6 +118,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
         external
         override
         checkPermissions(MANAGER_ROLE)
+        checkLootboxExists(_lootboxId)
     {
         require(_uuids.length == _amounts.length && _uuids.length == _multipliers.length, "Array length mismatch");
 
@@ -115,23 +127,25 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
             require(registry.contains(_uuids[i]), "Item does not exist.");
         }
 
-        lootbox().registerInputItemBatch(_uuids, _amounts, _multipliers);
+        lootbox(_lootboxId).registerInputItemBatch(_uuids, _amounts, _multipliers);
 
         emit AddedInputItemBatch(_uuids);
     }
 
-    function registerReward(uint256 _uuid, Rarity _rarity, uint256 _amount)
+    function registerReward(uint256 _lootboxId, uint256 _uuid, Rarity _rarity, uint256 _amount)
         external
         override
         checkPermissions(MANAGER_ROLE)
+        checkLootboxExists(_lootboxId)
         checkItemExists(_uuid)
     {
-        lootbox().registerReward(_uuid, _rarity, _amount);
+        lootbox(_lootboxId).registerReward(_uuid, _rarity, _amount);
 
         emit AddedReward(_uuid);
     }
 
     function registerRewardBatch(
+        uint256 _lootboxId,
         uint256[] calldata _uuids,
         Rarity[] calldata _rarities,
         uint256[] calldata _amounts
@@ -139,6 +153,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
         external
         override
         checkPermissions(MANAGER_ROLE)
+        checkLootboxExists(_lootboxId)
     {
         require(_uuids.length == _rarities.length && _uuids.length == _amounts.length, "Input array length mismatch");
         
@@ -148,13 +163,13 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
             require(registry.contains(_uuids[i]), "Item does not exist.");
         }
 
-        lootbox().registerRewardBatch(_uuids, _rarities, _amounts);
+        lootbox(_lootboxId).registerRewardBatch(_uuids, _rarities, _amounts);
 
         emit AddedRewardBatch(_uuids);
     }
 
-    function setTradeInMinimum(uint8 _count) external override checkPermissions(MANAGER_ROLE) {
-        lootbox().setTradeInMinimum(_count);
+    function setTradeInMinimum(uint256 _lootboxId, uint8 _count) external override checkPermissions(MANAGER_ROLE) checkLootboxExists(_lootboxId) {
+        lootbox(_lootboxId).setTradeInMinimum(_count);
     }
 
 
@@ -163,7 +178,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
         return IGlobalItemRegistry(globalItemRegistryAddr);
     }
     
-    function lootbox() internal view returns (ILootbox) {
-        return ILootbox(lootboxAddr);
+    function lootbox(uint256 _lootboxId) internal view returns (ILootbox) {
+        return ILootbox(lootboxAddresses[_lootboxId]);
     }
 }

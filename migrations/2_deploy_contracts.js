@@ -55,7 +55,8 @@ module.exports = async function(deployer, networks, accounts) {
 
     await deployer.deploy(LootboxManager);
     lootboxManager = await LootboxManager.deployed();
-    await lootboxManager.generateLootboxContract(lootboxFactory.address, "https://testgame.com/api/lootbox/{id}.json");
+    lootboxEvent = await lootboxManager.generateLootboxContract(lootboxFactory.address, "https://testgame.com/api/lootbox/{id}.json");
+    lootboxId = lootboxEvent.logs[0].args[0];
     await lootboxManager.setGlobalItemRegistryAddr(registry.address);
 
     await deployer.deploy(ExtendedEnumerableMaps);
@@ -66,7 +67,7 @@ module.exports = async function(deployer, networks, accounts) {
 
     // Assign crafting contract the minter and burner roles
     craftingAddress = await craftingManager.getCraftingAddress();
-    lootboxAddress = await lootboxManager.getLootboxAddress();
+    lootboxAddress = await lootboxManager.getLootboxAddress(lootboxId);
     minter_role = await gameManager.MINTER_ROLE();
     burner_role = await gameManager.BURNER_ROLE();
     deployerAddress = accounts[0];
