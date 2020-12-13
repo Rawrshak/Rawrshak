@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "./Lootbox.sol";
+import "../factory/LootboxFactory.sol";
 import "../interfaces/ILootbox.sol";
 import "../interfaces/ILootboxManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
@@ -15,6 +17,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
     /******** Constant ********/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111; // Todo:
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x44444444;
     bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289; // Todo:
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
     
@@ -27,6 +30,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
     event AddedInputItemBatch(uint256[]);
     event AddedReward(uint256);
     event AddedRewardBatch(uint256[]);
+    event LootboxContractCreated(address);
     
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -47,6 +51,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
 
     function setGlobalItemRegistryAddr(address _addr)
         external
+        override
         checkPermissions(MANAGER_ROLE)
     {
         require(Address.isContract(_addr), "Address not valid");
@@ -54,19 +59,29 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
+        require(lootboxAddr != address(0), "Crafting Contract not created yet.");
         globalItemRegistryAddr = _addr;
+        lootbox().setGlobalItemRegistryAddr(_addr);
     }
 
-    function setLootboxAddress(address _addr)
+    function generateLootboxContract(
+        address _lootboxFactoryAddress,
+        string calldata _url
+    )
         external
+        override
         checkPermissions(MANAGER_ROLE)
-    {
-        require(Address.isContract(_addr), "Address not valid");
+        {
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ILOOTBOX),
+            ERC165Checker.supportsInterface(_lootboxFactoryAddress, _INTERFACE_ID_ILOOTBOXFACTORY),
             "Caller does not support Interface."
         );
-        lootboxAddr = _addr;
+
+        Lootbox lootbox = LootboxFactory(_lootboxFactoryAddress).createLootboxContract(_url);
+        lootbox.setLootboxManager(address(this));
+        lootboxAddr = address(lootbox);
+        
+        emit LootboxContractCreated(lootboxAddr);
     }
 
     function getLootboxAddress() external view override returns(address) {

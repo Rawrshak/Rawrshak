@@ -16,6 +16,8 @@ contract Game is ERC1155, Ownable, IGame {
     /******** Constants ********/
     // Todo: Replace this _IGAME interface 
     bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
+    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
+    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
     uint256 private constant MAX_ITEM_RETURNED = 10;
 
     /******** Data Structures ********/
@@ -40,7 +42,10 @@ contract Game is ERC1155, Ownable, IGame {
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
     constructor(string memory _url, address _itemRegistryAddr) public ERC1155(_url) {
-        require(Address.isContract(_itemRegistryAddr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_IGAMEFACTORY),
+            "Caller does not support Interface."
+        );
         itemRegistryAddr = _itemRegistryAddr;
         _registerInterface(_INTERFACE_ID_IGAME);
     }
@@ -54,50 +59,28 @@ contract Game is ERC1155, Ownable, IGame {
         return idSet.contains(_id);
     }
 
-    function containsAll(uint256[] calldata _ids) external view override returns (bool) {
-        for (uint256 i = 0; i < _ids.length; ++i) {
-            if (!idSet.contains(_ids[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     function length() external view override returns(uint256) {
         return idSet.length();
-    }
-
-    function listItems(uint256 offset) external view override returns(uint256[] memory idList, uint256 nextOffset) {
-        require(offset < idSet.length(), "Invalid Offset");
-
-        // Get the length of the array
-        uint256 listLength = (offset + MAX_ITEM_RETURNED < idSet.length()) ? MAX_ITEM_RETURNED : idSet.length() - offset;
-        idList = new uint[](listLength);
-        for (uint256 i = offset; i < listLength; i++) {
-            idList[i] = idSet.at(i);
-        }
-        // determine the next offset index
-        nextOffset = offset + listLength;
     }
 
     function getItemInfo(uint256 _id) external view override returns(address, uint256)  {
         return (items[_id].creatorAddress, items[_id].maxSupply);
     }
 
-    function getItemInfoBatch(uint256[] calldata _ids) external view override returns(address[] memory addrs, uint256[] memory supplies) {
-        require(_ids.length <= MAX_ITEM_RETURNED, "Exceeds max item returns of 10");
-        
-        addrs = new address[](_ids.length);
-        supplies = new uint256[](_ids.length);
-        for (uint256 i = 0; i < _ids.length; ++i)
-        {
-            addrs[i] = items[_ids[i]].creatorAddress;
-            supplies[i] = items[_ids[i]].maxSupply;
-        }
+    /******** Mutative Functions ********/
+    function setGlobalItemRegistryAddr(address _addr)
+        external
+        override
+        onlyOwner
+    {
+        itemRegistryAddr = _addr;
     }
 
-    /******** Mutative Functions ********/
     function setGameManagerAddress(address _newAddress) external override onlyOwner {
+        require(
+            ERC165Checker.supportsInterface(_newAddress, _INTERFACE_ID_IGAMEMANAGER),
+            "Caller does not support Interface."
+        );
         gameManagerAddr = _newAddress;
     }
     

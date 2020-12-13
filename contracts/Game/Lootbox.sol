@@ -49,6 +49,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
     bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111; // Todo:
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x44444444;
 
     /******** Constants ********/
     uint256 private LOOTBOX = 0;
@@ -68,7 +69,6 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
 
     /******** Stored Variables ********/
     // (uuid as key)
-    mapping(uint256 => EnumerableSet.UintSet) private itemRarity;
     mapping(uint256 => Input) private inputsList;
     // uint8(Rarity.Common)
     mapping(uint8 => Reward[]) private rewardsList;
@@ -89,7 +89,13 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     }
 
     /******** Public API ********/
-    constructor(string memory _url) public ERC1155(_url) {
+    constructor(address _addr, string memory _url) public ERC1155(_url) {
+        require(
+            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ILOOTBOXFACTORY),
+            "Caller does not support Interface."
+        );
+        globalItemRegistryAddr = _addr;
+
         _registerInterface(_INTERFACE_ID_ILOOTBOX);
         
         probabilities[uint8(Rarity.Mythic)] = 1;
@@ -103,13 +109,9 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
 
     function setGlobalItemRegistryAddr(address _addr)
         external
+        override
         onlyOwner
     {
-        require(Address.isContract(_addr), "Address not valid");
-        require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support Interface."
-        );
         globalItemRegistryAddr = _addr;
     }
 
@@ -161,10 +163,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         external
         override
         onlyManager
-    {
-        // add to item's rarity list if it doesn't already exist
-        itemRarity[_uuid].add(uint256(_rarity));
-        
+    {        
         Reward memory rewardItem;
         rewardItem.uuid = _uuid;
         rewardItem.amount = _amount;
@@ -182,12 +181,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         onlyManager
     {
 
-        for (uint256 i = 0; i < _uuids.length; ++i) {
-            // Add to items map. There can be multiple amounts per item so the reward hash should take 
-            // that into account.
-            // add to item's rarity list if it doesn't already exist
-            itemRarity[_uuids[i]].add(uint256(_rarities[i]));
-            
+        for (uint256 i = 0; i < _uuids.length; ++i) {            
             Reward memory rewardItem;
             rewardItem.uuid = _uuids[i];
             rewardItem.amount = _amounts[i];
@@ -301,18 +295,6 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
 
     function getRequiredInputItemAmount(uint256 _uuid) external view override returns(uint256) {
         return inputsList[_uuid].requiredAmount;
-    }
-
-    function getRarity(uint256 _uuid)
-        external
-        view
-        override
-        returns(Rarity[] memory rarities)
-    {
-        rarities = new Rarity[](itemRarity[_uuid].length());
-        for (uint256 i = 0; i < itemRarity[_uuid].length(); ++i) {
-            rarities[i] = Rarity(itemRarity[_uuid].at(i));
-        }
     }
 
     function getTradeInMinimum() external view override returns(uint8) {

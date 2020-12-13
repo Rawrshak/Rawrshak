@@ -14,6 +14,8 @@ interface ILootboxBase {
         Common
     }
 
+    function setGlobalItemRegistryAddr(address _addr) external;
+
     function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)
         external;
 
