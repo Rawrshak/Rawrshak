@@ -46,10 +46,10 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
      *      ^ 0xcadb08fa ^ 0x7ff48190 ^ 0x586dd396 ^ 0x1354442e
      *      ^ 0x48758697 ^ 0x14743353 ^ 0x10dfc82b == 0xe49e0289
      */
-    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111; // Todo:
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x44444444;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0x00000009;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x0000000A; // Todo:
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
 
     /******** Constants ********/
     uint256 private LOOTBOX = 0;

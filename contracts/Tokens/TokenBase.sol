@@ -18,7 +18,7 @@ contract TokenBase is ERC20, ERC165, AccessControl
      *
      *     => 0x40c10f19 ^ 0x9dc29fac == 0xdd0390b5
      */
-    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
+    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0x00000008;
 
     constructor(string memory _name, string memory _symbol, uint256 _initialSupply) public ERC20(_name, _symbol)
     {

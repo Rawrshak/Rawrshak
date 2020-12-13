@@ -39,8 +39,8 @@ contract Exchange is IExchange, ERC165 {
      *      ^ 0x8bc6976e ^ 0xf75d8ada ^ 0xa583024b ^ 0x379607f5
      *      ^ 0x62abebce ^ 0xaf9ae92a  == 0x7a0df759
      */
-    bytes4 private constant _INTERFACE_ID_IEXCHANGE = 0x7a0df759;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_IEXCHANGE = 0x0000000C;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
     
     /******** Data Structures ********/
     struct Item {

@@ -45,10 +45,10 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
      *      ^ 0x57baf0fb ^ 0x00ff4688 ^ 0x156e29f6 ^ 0xd81d0a15
      *      ^ 0xf5298aca ^ 0x6b20c454 == 0x0a306cc6
      */
-    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
-    bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
-    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x00000002;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x00000001;
+    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x00000003;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
 
     /******** Stored Variables ********/
     address public gameAddr;

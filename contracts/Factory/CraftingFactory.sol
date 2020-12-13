@@ -10,9 +10,9 @@ contract CraftingFactory is ERC165 {
     using ERC165Checker for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x33333333;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER = 0xCCCCCCCC;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x00000007;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER= 0x00000006;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;

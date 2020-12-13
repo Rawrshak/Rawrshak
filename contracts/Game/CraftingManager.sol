@@ -47,11 +47,11 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
      *      ^ 0x1564aed9 ^ 0xc2592024 ^ 0x26f0021d ^ 0x5c5e19b7
      *      ^ 0xfd317879 ^ 0x142695d8 ^ 0x66b3f13e == 0x6b1f803a
      */
-    bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER = 0xCCCCCCCC;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x33333333;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
+    bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x00000005;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER= 0x00000006;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x00000007;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0x00000008;
 
     /******** Stored Variables ********/
     address public craftingAddr;

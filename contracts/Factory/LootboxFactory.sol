@@ -10,9 +10,9 @@ contract LootboxFactory is ERC165 {
     using ERC165Checker for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x44444444;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x0000000A;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;

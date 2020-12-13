@@ -26,8 +26,8 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
      *     => 0x5c26f843 ^ 0xde7fe3e7 ^ 0xc34052e0 ^ 0x1f7b6d32
      *      ^ 0x1003e2d2 ^ 0x56634921 == 0x18028f85
      */
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x00000001;
 
     /******** Data Structures ********/
     struct Item {

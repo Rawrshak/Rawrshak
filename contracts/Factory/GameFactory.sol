@@ -10,9 +10,9 @@ contract GameFactory is ERC165 {
     using ERC165Checker for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
+    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x00000003;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x00000002;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;

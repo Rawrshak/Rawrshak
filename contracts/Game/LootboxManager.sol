@@ -16,10 +16,10 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
 
     /******** Constant ********/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111; // Todo:
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x44444444;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289; // Todo:
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x0000000A; // Todo:
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0x00000009; // Todo:
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
     
     /******** Stored Variables ********/
     address globalItemRegistryAddr;

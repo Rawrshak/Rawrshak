@@ -15,9 +15,9 @@ contract Game is ERC1155, Ownable, IGame {
 
     /******** Constants ********/
     // Todo: Replace this _IGAME interface 
-    bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
-    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
-    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x00000001;
+    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x00000002;
+    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x00000003;
     uint256 private constant MAX_ITEM_RETURNED = 10;
 
     /******** Data Structures ********/
