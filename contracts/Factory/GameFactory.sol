@@ -16,6 +16,7 @@ contract GameFactory is ERC165 {
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
+    address[] public gameAddresses;
 
     /******** Public API ********/
     constructor() public {
@@ -32,7 +33,7 @@ contract GameFactory is ERC165 {
     }
 
     /******** Mutative Functions ********/
-    function createGameContract(string calldata _url) external returns(Game) {
+    function createGameContract(string calldata _url) external returns(address contractAddr, uint256 contractId) {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_IGAMEMANAGER),
             "Caller is not a Game Manager."
@@ -40,7 +41,11 @@ contract GameFactory is ERC165 {
         require(itemRegistryAddr != address(0), "Global Item registry not set.");
 
         Game game = new Game(_url, itemRegistryAddr);
+        game.setGameManagerAddress(msg.sender);
         game.transferOwnership(msg.sender);
-        return game;
+        
+        contractAddr = address(game);
+        contractId = gameAddresses.length;
+        gameAddresses[contractId] = contractAddr;
     }
 }

@@ -16,8 +16,6 @@ import "../utils/Utils.sol";
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
 // Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item.
 //       For now, just keep the probabilities flat.
-// Todo: Developer can add multiple kinds of lootboxes per contract
-// Todo: Lootbox Storage
 
 contract Lootbox is ILootbox, Ownable, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;

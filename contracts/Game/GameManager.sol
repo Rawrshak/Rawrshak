@@ -60,7 +60,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     event ItemBurned(uint256,uint256);
     event ItemMintedBatch(uint256[],uint256[]);
     event ItemBurnedBatch(uint256[],uint256[]);
-    event GameContractCreated(address);
+    event GameContractCreated(uint256, address, address);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -92,11 +92,10 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
             "Caller does not support Interface."
         );
 
-        Game game = GameFactory(_gameFactoryAddress).createGameContract(_url);
-        game.setGameManagerAddress(address(this));
-        gameAddr = address(game);
+        uint256 id;
+        (gameAddr, id)  = GameFactory(_gameFactoryAddress).createGameContract(_url);
         
-        emit GameContractCreated(gameAddr);
+        emit GameContractCreated(id, gameAddr, owner());
     }
 
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {

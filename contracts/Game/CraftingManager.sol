@@ -17,7 +17,7 @@ import "../factory/CraftingFactory.sol";
 // Todo: Multi-Game Crafting Contract
 // Todo: Recipe Storage 
 
-contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
+contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using ERC165Checker for *;
@@ -59,7 +59,7 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
 
     /******** Events ********/
     event RecipeCreated(uint256);
-    event CraftingContractCreated(address);
+    event CraftingContractCreated(uint256, address, address);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -114,11 +114,10 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
             "Caller does not support Interface."
         );
 
-        Crafting crafting = CraftingFactory(_craftingFactoryAddress).createCraftingContract();
-        crafting.setCraftingManagerAddress(address(this));
-        craftingAddr = address(crafting);
+        uint256 id;
+        (craftingAddr, id)  = CraftingFactory(_craftingFactoryAddress).createCraftingContract();
         
-        emit CraftingContractCreated(craftingAddr);
+        emit CraftingContractCreated(id, craftingAddr, owner());
     }
 
 

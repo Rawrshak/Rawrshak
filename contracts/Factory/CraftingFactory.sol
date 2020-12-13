@@ -16,6 +16,7 @@ contract CraftingFactory is ERC165 {
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
+    address[] public craftingAddresses;
 
     /******** Public API ********/
     constructor() public {
@@ -32,7 +33,7 @@ contract CraftingFactory is ERC165 {
     }
 
     /******** Mutative Functions ********/
-    function createCraftingContract() external returns(Crafting) {
+    function createCraftingContract() external returns(address contractAddr, uint256 contractId) {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ICRAFTINGMANAGER),
             "Caller is not a Crafting Manager Contract."
@@ -40,7 +41,11 @@ contract CraftingFactory is ERC165 {
         require(itemRegistryAddr != address(0), "Global Item registry not set.");
 
         Crafting crafting = new Crafting(itemRegistryAddr);
+        crafting.setCraftingManagerAddress(msg.sender);
         crafting.transferOwnership(msg.sender);
-        return crafting;
+
+        contractAddr = address(crafting);
+        contractId = craftingAddresses.length;
+        craftingAddresses[contractId] = contractAddr;
     }
 }
