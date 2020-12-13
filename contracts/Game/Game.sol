@@ -51,7 +51,7 @@ contract Game is ERC1155, Ownable, IGame {
     }
     
     /******** View Functions ********/
-    function getGameManagerAddress() external view override returns(address) {
+    function getManagerAddress() external view override returns(address) {
         return gameManagerAddr;
     }
 
@@ -76,7 +76,7 @@ contract Game is ERC1155, Ownable, IGame {
         itemRegistryAddr = _addr;
     }
 
-    function setGameManagerAddress(address _newAddress) external override onlyOwner {
+    function setManagerAddress(address _newAddress) external override onlyOwner {
         require(
             ERC165Checker.supportsInterface(_newAddress, _INTERFACE_ID_IGAMEMANAGER),
             "Caller does not support Interface."

@@ -93,7 +93,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         globalItemRegistryAddr = _addr;
     }
 
-    function setCraftingManagerAddress(address _addr) external override onlyOwner {
+    function setManagerAddress(address _addr) external override onlyOwner {
         require(Address.isContract(_addr), "Address not valid");
         require(
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ICRAFTINGMANAGER),
@@ -102,7 +102,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         craftingManagerAddr = _addr;
     }
 
-    function getCraftingManagerAddress() external view override returns(address) {
+    function getManagerAddress() external view override returns(address) {
         return craftingManagerAddr;
     }
 

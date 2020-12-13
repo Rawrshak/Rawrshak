@@ -6,8 +6,20 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Lootbox.sol";
 
+library LootboxDeployer {
+    function deployLootbox(address _itemRegistryAddr, string memory _url) public returns(address lootbox) {
+        lootbox = address(new Lootbox(_itemRegistryAddr, _url));
+    } 
+    
+    function transferOwnership(address _contractAddr, address _newOwner) public {
+        IDatabaseContract(_contractAddr).setManagerAddress(_newOwner);
+        Ownable(_contractAddr).transferOwnership(_newOwner);
+    }
+}
+
 contract LootboxFactory is ERC165 {
     using ERC165Checker for *;
+    using LootboxDeployer for *;
 
     /******** Constants ********/
     bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
@@ -16,6 +28,7 @@ contract LootboxFactory is ERC165 {
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
+    address[] public lootboxAddresses;
 
     /******** Public API ********/
     constructor() public {
@@ -32,15 +45,17 @@ contract LootboxFactory is ERC165 {
     }
 
     /******** Mutative Functions ********/
-    function createLootboxContract(string calldata _url) external returns(Lootbox) {
+    function createLootboxContract(string calldata _url) external returns(address contractAddr, uint256 contractId) {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ILOOTBOXMANAGER),
-            "Caller is not a Lootbox Manager Contract."
+            "Caller not valid Contract."
         );
-        require(itemRegistryAddr != address(0), "Global Item registry not set.");
+        require(itemRegistryAddr != address(0), "Registry not set.");
         
-        Lootbox lootbox = new Lootbox(itemRegistryAddr, _url);
-        lootbox.transferOwnership(msg.sender);
-        return lootbox;
+        contractAddr = LootboxDeployer.deployLootbox(itemRegistryAddr, _url);
+        LootboxDeployer.transferOwnership(contractAddr, msg.sender);
+
+        contractId = lootboxAddresses.length;
+        lootboxAddresses.push(contractAddr);
     }
 }

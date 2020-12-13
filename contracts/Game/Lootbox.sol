@@ -105,16 +105,10 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         probabilities[uint8(Rarity.Common)] = 100000;
     }
 
-    function setGlobalItemRegistryAddr(address _addr)
+    // IBaseContract Functions
+    function setManagerAddress(address _addr)
         external
         override
-        onlyOwner
-    {
-        globalItemRegistryAddr = _addr;
-    }
-
-    function setLootboxManager(address _addr)
-        external
         onlyOwner
     {
         require(Address.isContract(_addr), "Address not valid");
@@ -125,8 +119,17 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         lootboxManagerAddr = _addr;
     }
 
-    function getLootboxManagerAddress() external view override returns(address) {
+    function getManagerAddress() external view override returns(address) {
         return lootboxManagerAddr;
+    }
+
+    // ILootbox Functions
+    function setGlobalItemRegistryAddr(address _addr)
+        external
+        override
+        onlyOwner
+    {
+        globalItemRegistryAddr = _addr;
     }
 
     function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)

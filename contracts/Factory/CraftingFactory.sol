@@ -6,8 +6,20 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Crafting.sol";
 
+library CraftingDeployer {
+    function deployCrafting(address _itemRegistryAddr) public returns(address crafting) {
+        crafting = address(new Crafting(_itemRegistryAddr));
+    } 
+    
+    function transferOwnership(address _contractAddr, address _newOwner) public {
+        IDatabaseContract(_contractAddr).setManagerAddress(_newOwner);
+        Ownable(_contractAddr).transferOwnership(_newOwner);
+    }
+}
+
 contract CraftingFactory is ERC165 {
     using ERC165Checker for *;
+    using CraftingDeployer for *;
 
     /******** Constants ********/
     bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x00000007;
@@ -40,12 +52,10 @@ contract CraftingFactory is ERC165 {
         );
         require(itemRegistryAddr != address(0), "Global Item registry not set.");
 
-        Crafting crafting = new Crafting(itemRegistryAddr);
-        crafting.setCraftingManagerAddress(msg.sender);
-        crafting.transferOwnership(msg.sender);
+        contractAddr = CraftingDeployer.deployCrafting(itemRegistryAddr);
+        CraftingDeployer.transferOwnership(contractAddr, msg.sender);
 
-        contractAddr = address(crafting);
         contractId = craftingAddresses.length;
-        craftingAddresses[contractId] = contractAddr;
+        craftingAddresses.push(contractAddr);
     }
 }

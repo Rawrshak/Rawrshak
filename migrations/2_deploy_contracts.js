@@ -1,10 +1,13 @@
 const OVCTokenContract = artifacts.require("OVCToken");
 // const Game = artifacts.require("Game");
+const GameDeployer = artifacts.require("GameDeployer");
+const CraftingDeployer = artifacts.require("CraftingDeployer");
+const LootboxDeployer = artifacts.require("LootboxDeployer");
 const GameManager = artifacts.require("GameManager");
 const GameFactory = artifacts.require("GameFactory");
 const CraftingManager = artifacts.require("CraftingManager");
 const CraftingFactory = artifacts.require("CraftingFactory");
-const Lootbox = artifacts.require("Lootbox");
+// const Lootbox = artifacts.require("Lootbox");
 const LootboxManager = artifacts.require("LootboxManager");
 const LootboxFactory = artifacts.require("LootboxFactory");
 const Utils = artifacts.require("Utils");
@@ -18,6 +21,25 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.deploy(OVCTokenContract, 1000000000);
     ovcTokenContract = await OVCTokenContract.deployed();
 
+    // Deploy Libraries
+    await deployer.deploy(Utils);
+    
+    // Link Library
+    await deployer.link(Utils, [LootboxDeployer, LootboxFactory]);
+    
+    await deployer.deploy(GameDeployer);
+    await deployer.deploy(CraftingDeployer);
+    await deployer.deploy(LootboxDeployer);
+
+    // Deploy Factories
+    await deployer.link(GameDeployer, [GameFactory]);
+    await deployer.link(CraftingDeployer, [CraftingFactory]);
+    await deployer.link(LootboxDeployer, [LootboxFactory]);
+
+    await deployer.deploy(GameFactory);
+    await deployer.deploy(CraftingFactory);
+    await deployer.deploy(LootboxFactory);
+
     // Deploy Name Registry
     await deployer.deploy(NameRegistry);
 
@@ -26,20 +48,14 @@ module.exports = async function(deployer, networks, accounts) {
     registry = await GlobalItemRegistry.deployed();
 
     // deploy Game with test URL
-    await deployer.deploy(GameFactory);
     gameFactory = await GameFactory.deployed();
     await gameFactory.setGlobalItemRegistryAddr(registry.address);
 
     await deployer.deploy(GameManager);
     gameManager = await GameManager.deployed();
     await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
-    
-    // Link Library
-    await deployer.deploy(Utils);
-    await deployer.link(Utils, [LootboxFactory]);
 
     // deploy Crafting Contract
-    await deployer.deploy(CraftingFactory);
     craftingFactory = await CraftingFactory.deployed();
     await craftingFactory.setGlobalItemRegistryAddr(registry.address);
 
@@ -49,7 +65,6 @@ module.exports = async function(deployer, networks, accounts) {
     await craftingManager.setGlobalItemRegistryAddr(registry.address);
     
     // deploy Lootbox Contract
-    await deployer.deploy(LootboxFactory);
     lootboxFactory = await LootboxFactory.deployed();
     await lootboxFactory.setGlobalItemRegistryAddr(registry.address);
 

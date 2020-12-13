@@ -69,7 +69,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     function getItemInfo(uint256 _uuid) external view override returns(address, address, uint256) {
         return (
             itemRegistry[_uuid].gameAddress,
-            IGame(itemRegistry[_uuid].gameAddress).getGameManagerAddress(),
+            IGame(itemRegistry[_uuid].gameAddress).getManagerAddress(),
             itemRegistry[_uuid].gameId);
     }
     

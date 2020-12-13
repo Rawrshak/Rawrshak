@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.8.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/EnumerableMap.sol";
 import "./Lootbox.sol";
 import "../factory/LootboxFactory.sol";
 import "../interfaces/ILootbox.sol";
 import "../interfaces/ILootboxManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 
-contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
+contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
     using ERC165Checker for *;
+    using EnumerableMap for *;
 
     /******** Constant ********/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -23,14 +25,14 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
     
     /******** Stored Variables ********/
     address globalItemRegistryAddr;
-    address[] lootboxAddresses;
+    EnumerableMap.UintToAddressMap lootboxAddresses;
 
     /******** Events ********/
     event AddedInputItem(uint256);
     event AddedInputItemBatch(uint256[]);
     event AddedReward(uint256);
     event AddedRewardBatch(uint256[]);
-    event LootboxContractCreated(uint256, address);
+    event LootboxContractCreated(uint256, address, address);
     
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -44,7 +46,7 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
     }
 
     modifier checkLootboxExists(uint256 _lootboxId) {
-        require(_lootboxId < lootboxAddresses.length, "Lootbox does not exist.");
+        require(lootboxAddresses.contains(_lootboxId), "Lootbox does not exist.");
         _;
     }
     
@@ -64,11 +66,13 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
-        require(lootboxAddresses.length != 0, "Crafting Contract not created yet.");
+        require(lootboxAddresses.length() != 0, "Crafting Contract not created yet.");
         globalItemRegistryAddr = _addr;
 
-        for (uint256 i = 0; i < lootboxAddresses.length; ++i) {
-            lootbox(i).setGlobalItemRegistryAddr(_addr);
+        // Iterate through the map and set the global item registry for all of them
+        for (uint256 i = 0; i < lootboxAddresses.length(); ++i) {
+            (, address lootboxAddr) = lootboxAddresses.at(i);
+            ILootbox(lootboxAddr).setGlobalItemRegistryAddr(_addr);
         }
     }
 
@@ -84,17 +88,15 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
             ERC165Checker.supportsInterface(_lootboxFactoryAddress, _INTERFACE_ID_ILOOTBOXFACTORY),
             "Caller does not support Interface."
         );
-
-        Lootbox lootbox = LootboxFactory(_lootboxFactoryAddress).createLootboxContract(_url);
-        lootbox.setLootboxManager(address(this));
-        uint256 lootboxId = lootboxAddresses.length;
-        lootboxAddresses.push(address(lootbox));
         
-        emit LootboxContractCreated(lootboxId, address(lootbox));
+        (address lootboxAddr, uint256 lootboxId)  = LootboxFactory(_lootboxFactoryAddress).createLootboxContract(_url);
+        lootboxAddresses.set(lootboxId, lootboxAddr);
+        
+        emit LootboxContractCreated(lootboxId, lootboxAddr, owner());
     }
 
     function getLootboxAddress(uint256 _lootboxId) external view override checkLootboxExists(_lootboxId) returns(address) {
-        return lootboxAddresses[_lootboxId];
+        return lootboxAddresses.get(_lootboxId);
     }
 
     function registerInputItem(uint256 _lootboxId, uint256 _uuid, uint256 _amount, uint256 _multiplier)
@@ -179,6 +181,6 @@ contract LootboxManager is AccessControl, ILootboxManager, ERC165 {
     }
     
     function lootbox(uint256 _lootboxId) internal view returns (ILootbox) {
-        return ILootbox(lootboxAddresses[_lootboxId]);
+        return ILootbox(lootboxAddresses.get(_lootboxId));
     }
 }

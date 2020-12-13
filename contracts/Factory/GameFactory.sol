@@ -6,8 +6,20 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Game.sol";
 
+library GameDeployer {
+    function deployGame(address _itemRegistryAddr, string memory _url) public returns(address game) {
+        game = address(new Game(_url, _itemRegistryAddr));
+    } 
+    
+    function transferOwnership(address _contractAddr, address _newOwner) public {
+        IDatabaseContract(_contractAddr).setManagerAddress(_newOwner);
+        Ownable(_contractAddr).transferOwnership(_newOwner);
+    }
+}
+
 contract GameFactory is ERC165 {
     using ERC165Checker for *;
+    using GameDeployer for *;
 
     /******** Constants ********/
     bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x00000003;
@@ -40,12 +52,10 @@ contract GameFactory is ERC165 {
         );
         require(itemRegistryAddr != address(0), "Global Item registry not set.");
 
-        Game game = new Game(_url, itemRegistryAddr);
-        game.setGameManagerAddress(msg.sender);
-        game.transferOwnership(msg.sender);
+        contractAddr = GameDeployer.deployGame(itemRegistryAddr, _url);
+        GameDeployer.transferOwnership(contractAddr, msg.sender);
         
-        contractAddr = address(game);
         contractId = gameAddresses.length;
-        gameAddresses[contractId] = contractAddr;
+        gameAddresses.push(contractAddr);
     }
 }
