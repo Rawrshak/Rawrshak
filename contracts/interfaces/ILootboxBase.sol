@@ -15,24 +15,4 @@ interface ILootboxBase {
     }
 
     function setGlobalItemRegistryAddr(address _addr) external;
-
-    function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)
-        external;
-
-    function registerInputItemBatch(
-        uint256[] calldata _uuids,
-        uint256[] calldata _amounts,
-        uint256[] calldata _multipliers
-    ) external;
-
-    function registerReward(uint256 _id, Rarity _rarity, uint256 _amount)
-        external;
-
-    function registerRewardBatch(
-        uint256[] calldata _uuids,
-        Rarity[] calldata _rarities,
-        uint256[] calldata _amounts
-    ) external;
-    
-    function setTradeInMinimum(uint8 _count) external;
 }

@@ -6,16 +6,29 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Crafting.sol";
 
+library CraftingDeployer {
+    function deployCrafting(address _itemRegistryAddr) public returns(address crafting) {
+        crafting = address(new Crafting(_itemRegistryAddr));
+    } 
+    
+    function transferOwnership(address _contractAddr, address _newOwner) public {
+        IDatabaseContract(_contractAddr).setManagerAddress(_newOwner);
+        Ownable(_contractAddr).transferOwnership(_newOwner);
+    }
+}
+
 contract CraftingFactory is ERC165 {
     using ERC165Checker for *;
+    using CraftingDeployer for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x33333333;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER = 0xCCCCCCCC;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x00000007;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER= 0x00000006;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
+    address[] public craftingAddresses;
 
     /******** Public API ********/
     constructor() public {
@@ -32,15 +45,17 @@ contract CraftingFactory is ERC165 {
     }
 
     /******** Mutative Functions ********/
-    function createCraftingContract() external returns(Crafting) {
+    function createCraftingContract() external returns(address contractAddr, uint256 contractId) {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ICRAFTINGMANAGER),
             "Caller is not a Crafting Manager Contract."
         );
         require(itemRegistryAddr != address(0), "Global Item registry not set.");
 
-        Crafting crafting = new Crafting(itemRegistryAddr);
-        crafting.transferOwnership(msg.sender);
-        return crafting;
+        contractAddr = CraftingDeployer.deployCrafting(itemRegistryAddr);
+        CraftingDeployer.transferOwnership(contractAddr, msg.sender);
+
+        contractId = craftingAddresses.length;
+        craftingAddresses.push(contractAddr);
     }
 }

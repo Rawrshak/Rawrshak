@@ -16,8 +16,6 @@ import "../utils/Utils.sol";
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
 // Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item.
 //       For now, just keep the probabilities flat.
-// Todo: Developer can add multiple kinds of lootboxes per contract
-// Todo: Lootbox Storage
 
 contract Lootbox is ILootbox, Ownable, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -46,10 +44,10 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
      *      ^ 0xcadb08fa ^ 0x7ff48190 ^ 0x586dd396 ^ 0x1354442e
      *      ^ 0x48758697 ^ 0x14743353 ^ 0x10dfc82b == 0xe49e0289
      */
-    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0xe49e0289;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x11111111; // Todo:
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x44444444;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0x00000009;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x0000000A; // Todo:
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
 
     /******** Constants ********/
     uint256 private LOOTBOX = 0;
@@ -107,16 +105,10 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         probabilities[uint8(Rarity.Common)] = 100000;
     }
 
-    function setGlobalItemRegistryAddr(address _addr)
+    // IBaseContract Functions
+    function setManagerAddress(address _addr)
         external
         override
-        onlyOwner
-    {
-        globalItemRegistryAddr = _addr;
-    }
-
-    function setLootboxManager(address _addr)
-        external
         onlyOwner
     {
         require(Address.isContract(_addr), "Address not valid");
@@ -127,8 +119,17 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         lootboxManagerAddr = _addr;
     }
 
-    function getLootboxManagerAddress() external view override returns(address) {
+    function getManagerAddress() external view override returns(address) {
         return lootboxManagerAddr;
+    }
+
+    // ILootbox Functions
+    function setGlobalItemRegistryAddr(address _addr)
+        external
+        override
+        onlyOwner
+    {
+        globalItemRegistryAddr = _addr;
     }
 
     function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)

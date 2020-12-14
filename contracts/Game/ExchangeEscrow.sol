@@ -15,8 +15,8 @@ contract ExchangeEscrow is Ownable, ERC1155Holder {
     using ERC165Checker for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
-    bytes4 private constant _INTERFACE_ID_IGAME = 0x55555555;
+    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0x00000008;
+    bytes4 private constant _INTERFACE_ID_IGAME = 0x00000001;
     
     /******** Stored Variables ********/
     EnumerableSet.AddressSet tokenAddrs;

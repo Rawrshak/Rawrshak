@@ -17,7 +17,7 @@ import "../factory/CraftingFactory.sol";
 // Todo: Multi-Game Crafting Contract
 // Todo: Recipe Storage 
 
-contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
+contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using ERC165Checker for *;
@@ -47,11 +47,11 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
      *      ^ 0x1564aed9 ^ 0xc2592024 ^ 0x26f0021d ^ 0x5c5e19b7
      *      ^ 0xfd317879 ^ 0x142695d8 ^ 0x66b3f13e == 0x6b1f803a
      */
-    bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x6b1f803a;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER = 0xCCCCCCCC;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x33333333;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0xdd0390b5;
+    bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x00000005;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER= 0x00000006;
+    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x00000007;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0x00000008;
 
     /******** Stored Variables ********/
     address public craftingAddr;
@@ -59,7 +59,7 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
 
     /******** Events ********/
     event RecipeCreated(uint256);
-    event CraftingContractCreated(address);
+    event CraftingContractCreated(uint256, address, address);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -114,11 +114,10 @@ contract CraftingManager is ICraftingManager, AccessControl, ERC165 {
             "Caller does not support Interface."
         );
 
-        Crafting crafting = CraftingFactory(_craftingFactoryAddress).createCraftingContract();
-        crafting.setCraftingManagerAddress(address(this));
-        craftingAddr = address(crafting);
+        uint256 id;
+        (craftingAddr, id)  = CraftingFactory(_craftingFactoryAddress).createCraftingContract();
         
-        emit CraftingContractCreated(craftingAddr);
+        emit CraftingContractCreated(id, craftingAddr, owner());
     }
 
 

@@ -3,12 +3,10 @@ pragma solidity >=0.6.0 <0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./ICraftingInterface.sol";
+import "./IDatabaseContract.sol";
 
-interface ICrafting is ICraftingInterface {
-
+interface ICrafting is ICraftingInterface, IDatabaseContract {
     /******** View Functions ********/
-    function getCraftingManagerAddress() external view returns(address);
-
     function exists(uint256 _recipeId) external view returns(bool);
     
     function generateNextRecipeId() external view returns(uint256);
@@ -33,6 +31,4 @@ interface ICrafting is ICraftingInterface {
     function createRecipe(uint256 _recipeId) external;
     
     function craftItem(uint256 _recipeId, address payable _account) external;
-    
-    function setCraftingManagerAddress(address _newAddress) external;
 }

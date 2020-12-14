@@ -6,16 +6,29 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Game.sol";
 
+library GameDeployer {
+    function deployGame(address _itemRegistryAddr, string memory _url) public returns(address game) {
+        game = address(new Game(_url, _itemRegistryAddr));
+    } 
+    
+    function transferOwnership(address _contractAddr, address _newOwner) public {
+        IDatabaseContract(_contractAddr).setManagerAddress(_newOwner);
+        Ownable(_contractAddr).transferOwnership(_newOwner);
+    }
+}
+
 contract GameFactory is ERC165 {
     using ERC165Checker for *;
+    using GameDeployer for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x22222222;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x18028f85;
-    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x0a306cc6;
+    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x00000003;
+    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
+    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x00000002;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
+    address[] public gameAddresses;
 
     /******** Public API ********/
     constructor() public {
@@ -32,15 +45,17 @@ contract GameFactory is ERC165 {
     }
 
     /******** Mutative Functions ********/
-    function createGameContract(string calldata _url) external returns(Game) {
+    function createGameContract(string calldata _url) external returns(address contractAddr, uint256 contractId) {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_IGAMEMANAGER),
             "Caller is not a Game Manager."
         );
         require(itemRegistryAddr != address(0), "Global Item registry not set.");
 
-        Game game = new Game(_url, itemRegistryAddr);
-        game.transferOwnership(msg.sender);
-        return game;
+        contractAddr = GameDeployer.deployGame(itemRegistryAddr, _url);
+        GameDeployer.transferOwnership(contractAddr, msg.sender);
+        
+        contractId = gameAddresses.length;
+        gameAddresses.push(contractAddr);
     }
 }
