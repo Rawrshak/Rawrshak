@@ -29,6 +29,10 @@ contract LootboxFactory is ERC165 {
     /******** Stored Variables ********/
     address itemRegistryAddr;
     address[] public lootboxAddresses;
+    
+    /******** Events ********/
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event LootboxContractCreated(uint256, address, address);
 
     /******** Public API ********/
     constructor() public {
@@ -42,6 +46,8 @@ contract LootboxFactory is ERC165 {
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
+        
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ILOOTBOXFACTORY);
     }
 
     /******** Mutative Functions ********/
@@ -57,5 +63,7 @@ contract LootboxFactory is ERC165 {
 
         contractId = lootboxAddresses.length;
         lootboxAddresses.push(contractAddr);
+
+        emit LootboxContractCreated(contractId, contractAddr, msg.sender);
     }
 }

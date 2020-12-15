@@ -29,6 +29,10 @@ contract GameFactory is ERC165 {
     /******** Stored Variables ********/
     address itemRegistryAddr;
     address[] public gameAddresses;
+    
+    /******** Events ********/
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event GameContractCreated(uint256, address, address);
 
     /******** Public API ********/
     constructor() public {
@@ -42,6 +46,8 @@ contract GameFactory is ERC165 {
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
+        
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IGAMEFACTORY);
     }
 
     /******** Mutative Functions ********/
@@ -57,5 +63,7 @@ contract GameFactory is ERC165 {
         
         contractId = gameAddresses.length;
         gameAddresses.push(contractAddr);
+
+        emit GameContractCreated(contractId, contractAddr, msg.sender);
     }
 }

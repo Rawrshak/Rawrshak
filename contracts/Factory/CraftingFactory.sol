@@ -29,6 +29,10 @@ contract CraftingFactory is ERC165 {
     /******** Stored Variables ********/
     address itemRegistryAddr;
     address[] public craftingAddresses;
+    
+    /******** Events ********/
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event CraftingContractCreated(uint256, address, address);
 
     /******** Public API ********/
     constructor() public {
@@ -42,6 +46,8 @@ contract CraftingFactory is ERC165 {
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
+
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ICRAFTINGFACTORY);
     }
 
     /******** Mutative Functions ********/
@@ -57,5 +63,7 @@ contract CraftingFactory is ERC165 {
 
         contractId = craftingAddresses.length;
         craftingAddresses.push(contractAddr);
+
+        emit CraftingContractCreated(contractId, contractAddr, msg.sender);
     }
 }
