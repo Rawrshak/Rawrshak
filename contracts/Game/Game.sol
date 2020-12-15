@@ -32,6 +32,15 @@ contract Game is ERC1155, Ownable, IGame {
     EnumerableSet.UintSet private idSet;
     mapping(uint256 => Item) private items;
     mapping(uint256 => uint256) public currentSupply;
+    
+    /******** Events ********/
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event GameManagerSet(address, address);
+    event GameUriUpdated(address, string);
+    event ItemCreated(address, uint256, address, uint256);
+    event ItemBatchCreated(address, uint256[], address, uint256[]);
+    event ItemSupplyChanged(address, uint256, uint256);
+    event ItemBatchSupplyChanged(address, uint256[], uint256[]);
 
     /******** Modifiers ********/
     modifier onlyManager() {
@@ -74,6 +83,7 @@ contract Game is ERC1155, Ownable, IGame {
         onlyOwner
     {
         itemRegistryAddr = _addr;
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IGAME);
     }
 
     function setManagerAddress(address _newAddress) external override onlyOwner {
@@ -82,6 +92,7 @@ contract Game is ERC1155, Ownable, IGame {
             "Caller does not support Interface."
         );
         gameManagerAddr = _newAddress;
+        emit GameManagerSet(address(this), _newAddress);
     }
     
     function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override onlyManager {
@@ -92,6 +103,7 @@ contract Game is ERC1155, Ownable, IGame {
         
         // Register item with in the global item registry
         itemRegistry().add(_id);
+        emit ItemCreated(address(this), _id, _creatorAddress, _maxSupply);
     }
     
     function createItemBatch(
@@ -111,23 +123,29 @@ contract Game is ERC1155, Ownable, IGame {
         
         // Register item with in the global item registry
         itemRegistry().addBatch(_ids);
+        emit ItemBatchCreated(address(this), _ids, _creatorAddress, _maxSupplies);
     }
 
     /******** Game Manager API ********/
     function setUri(string calldata _newUri) external override onlyManager {
         _setURI(_newUri);
+        emit GameUriUpdated(address(this), _newUri);
     }    
     
     function mint(address _receivingAddress, uint256 _itemId, uint256 _amount) external override onlyManager {
         currentSupply[_itemId] += _amount;
         _mint(_receivingAddress, _itemId, _amount, "");
+        emit ItemSupplyChanged(address(this), _itemId, currentSupply[_itemId]);
     }
     
     function mintBatch(address _receivingAddress, uint256[] calldata _itemIds, uint256[] calldata _amounts) external override onlyManager {
+        uint256[] memory currentSupplies = new uint256[](_itemIds.length);
         for (uint i = 0; i < _itemIds.length; i++) {
             currentSupply[_itemIds[i]] += _amounts[i];
+            currentSupplies[i] = currentSupply[_itemIds[i]];
         }
         _mintBatch(_receivingAddress, _itemIds, _amounts, "");
+        emit ItemBatchSupplyChanged(address(this), _itemIds, currentSupplies);
     }
 
     function burn(address _account, uint256 _itemId, uint256 _amount) external override onlyManager {
@@ -137,6 +155,8 @@ contract Game is ERC1155, Ownable, IGame {
 
         // if _burn succeeds, then we know that totalSupply can be deducted.
         currentSupply[_itemId] -= _amount;
+        
+        emit ItemSupplyChanged(address(this), _itemId, currentSupply[_itemId]);
     }
 
     function burnBatch(address _account, uint256[] calldata _itemIds, uint256[] calldata _amounts) external override onlyManager {
@@ -146,9 +166,13 @@ contract Game is ERC1155, Ownable, IGame {
 
         // if _burnBatch succeeds, then we know that totalSupply can be 
         // deducted.
+        uint256[] memory currentSupplies = new uint256[](_itemIds.length);
         for (uint i = 0; i < _itemIds.length; i++) {
             currentSupply[_itemIds[i]] -= _amounts[i];
+            currentSupplies[i] = currentSupply[_itemIds[i]];
         }
+        
+        emit ItemBatchSupplyChanged(address(this), _itemIds, currentSupplies);
     }
     
     /******** Internal Functions ********/
