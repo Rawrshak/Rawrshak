@@ -9,18 +9,16 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IExchange.sol";
-import "../utils/ExtendedEnumerableMaps.sol";
 import "./ExchangeEscrow.sol";
 
 // Todo: Add multiple bids/asks per user
 // Todo: Allow both bid and ask at the same time (but not for the same price)
 // Todo: Add Claim all function
 
-contract Exchange is IExchange, ERC165 {
+contract Exchange is IExchange, Ownable, ERC165 {
     using ERC165Checker for *;
     using SafeMath for *;
     using EnumerableSet for *;
-    using ExtendedEnumerableMaps for *;
 
     /******** Constants ********/
     /*
@@ -42,38 +40,30 @@ contract Exchange is IExchange, ERC165 {
     bytes4 private constant _INTERFACE_ID_IEXCHANGE = 0x0000000C;
     bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
     
-    /******** Data Structures ********/
-    struct Item {
-        ExtendedEnumerableMaps.AddressToUintMap bids;
-        ExtendedEnumerableMaps.AddressToUintMap asks;
-    }
-
-    struct Data {
+    struct Order {
         address user;
         address token;
         uint256 itemUUID;
 		uint price;
         uint amount;
         bool isBid;
-        bool isClaimable;
+        bool claimable;
     }
 
     /******** Stored Variables ********/
     address globalItemRegistryAddr;
-    mapping(uint256 => Item) items;
-    mapping(address => EnumerableSet.UintSet) userData;
-    mapping(uint256 => Data) data;
-    mapping(address => EnumerableSet.UintSet) claimableOrders;
+    mapping(address => EnumerableSet.UintSet) userOrders;
+    mapping(uint256 => Order) orders;
+    uint256 orderIdCounter;
     address escrowAddr;
 
     /******** Events ********/
-    event BidPlaced(uint256);
-    event AskPlaced(uint256);
-    event OrderFilled(uint256);
-    event DataEntryDeleted(uint256);
-    event OrderFullfilled(uint256);
-    event Claimed(uint256);
-    event ClaimedBatch(uint256[]);
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event OrderPlaced(address, address, uint256, uint256, uint256, bool, uint256);
+    event OrderDeleted(address, uint256);
+    event OrderFullfilled(uint256, address, address, uint256, uint256, uint256);
+    event Claimed(address, uint256);
+    event ClaimedAll(address, uint256[]);
 
     /******** Modifiers ********/
     modifier checkItemExists(uint256 _uuid) {
@@ -82,65 +72,59 @@ contract Exchange is IExchange, ERC165 {
     }
 
     /******** Public API ********/
-    constructor(address _itemRegistryAddr) public {
-        require(Address.isContract(_itemRegistryAddr), "Address not valid");
-        require(
-            ERC165Checker.supportsInterface(_itemRegistryAddr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
-            "Caller does not support Interface."
-        );
-        globalItemRegistryAddr = _itemRegistryAddr;
+    constructor() public {
         escrowAddr = address(new ExchangeEscrow());
         _registerInterface(_INTERFACE_ID_IEXCHANGE);
+    }
+
+    function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
+        require(Address.isContract(_addr), "Address not valid");
+        require(
+            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            "Caller does not support Interface."
+        );
+        globalItemRegistryAddr = _addr;
+
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IEXCHANGE);
     }
 
     function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
         external
         override
     {
-        require(!items[_uuid].asks.contains(_user), "Existing item ask from user");
         require(globalItemRegistry().contains(_uuid), "Item doesn't exist.");
 
         // This will throw if _token address doesn't support the necessary
         escrow().addToken(_token);
 
+        // Will throw if user does not have enough tokens
+        IERC20(_token).transferFrom(_user, escrowAddr, SafeMath.mul(_amount, _price));
+
         // Get game address and register on escrow
         (address gameAddr,,) = globalItemRegistry().getItemInfo(_uuid);
         escrow().addGame(gameAddr);
 
-        // Will throw if user does not have enough tokens
-        IERC20(_token).transferFrom(_user, escrowAddr, SafeMath.mul(_amount, _price));
+        uint256 orderId = _generateOrderId(_user, _token, _uuid);
 
-        uint256 dataId = _generateDataId(_user, _token, _uuid);
-        require(!_isClaimable(dataId), "Pending claimable assets.");
+        Order storage order = orders[orderId];
+        order.user = _user;
+        order.token = _token;
+        order.itemUUID = _uuid;
+        order.price = _price;
+        order.amount = _amount;
+        order.isBid = true;
+        order.claimable = false;
 
-        // if there's already an existing bid, replace it.
-        Data storage dataEntry = data[dataId];
-        dataEntry.user = _user;
-        dataEntry.token = _token;
-        dataEntry.itemUUID = _uuid;
-        dataEntry.price = _price;
-        dataEntry.amount = _amount;
-        dataEntry.isBid = true;
-        dataEntry.isClaimable = false;
+        userOrders[_user].add(orderId);
 
-        // replaces item if it already exists in the map
-        items[_uuid].bids.set(_user, dataId);
-
-        // No-op if it already exists
-        userData[_user].add(dataId);
-
-        emit BidPlaced(dataId);
+        emit OrderPlaced(_user, _token, _uuid, _amount, _price, true, orderId);
     }
 
     function placeAsk(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price) 
         external
         override
     {
-        require(!items[_uuid].bids.contains(_user), "Existing item bid from user");
         require(globalItemRegistry().contains(_uuid), "Item doesn't exist.");
-
-        // This will throw if _token address doesn't support the necessary
-        escrow().addToken(_token);
 
         // Get game address and register on escrow
         (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(_uuid);
@@ -148,127 +132,96 @@ contract Exchange is IExchange, ERC165 {
 
         // Will throw if user's balanace of the id is not enough
         IERC1155(gameAddr).safeTransferFrom(_user, escrowAddr, gameId, _amount, "");
+
+        // This will throw if _token address doesn't support the necessary
+        escrow().addToken(_token);
         
-        uint256 dataId = _generateDataId(_user, _token, _uuid);
-        require(!_isClaimable(dataId), "Pending claimable assets.");
+        uint256 orderId = _generateOrderId(_user, _token, _uuid);
 
-        Data storage dataEntry = data[dataId];
-        dataEntry.user = _user;
-        dataEntry.token = _token;
-        dataEntry.itemUUID = _uuid;
-        dataEntry.price = _price;
-        dataEntry.amount = _amount;
-        dataEntry.isBid = false;
-        dataEntry.isClaimable = false;
-
-        // replaces item if it already exists in the map
-        items[_uuid].asks.set(_user, dataId);
+        Order storage order = orders[orderId];
+        order.user = _user;
+        order.token = _token;
+        order.itemUUID = _uuid;
+        order.price = _price;
+        order.amount = _amount;
+        order.isBid = false;
+        order.claimable = false;
         
-        // No-op if it already exists
-        userData[_user].add(dataId);
+        userOrders[_user].add(orderId);
 
-        emit AskPlaced(dataId);
+        emit OrderPlaced(_user, _token, _uuid, _amount, _price, false, orderId);
     }
 
-    function deleteDataEntry(uint256 _dataId) external override {
-        require(!_isClaimable(_dataId), "Can't delete claimable data entry");
+    function deleteOrder(uint256 _orderId) external override {
+        require(!_isClaimable(_orderId), "Can't delete claimable data entry");
 
-        Data storage dataEntry = data[_dataId];
-        require(msg.sender == dataEntry.user, "Invalid order delete");
+        Order storage order = orders[_orderId];
+        require(msg.sender == order.user, "Invalid order delete");
 
         // Return escrowed items
-        if (dataEntry.isBid) {
+        if (order.isBid) {
             // Return user money for their bid
             require(
                 escrow().approveToken(
-                    dataEntry.token,
-                    SafeMath.mul(dataEntry.amount, dataEntry.price)),
+                    order.token,
+                    SafeMath.mul(order.amount, order.price)),
                 "Token is not supported."
             );
-            IERC20(dataEntry.token).transferFrom(
+            IERC20(order.token).transferFrom(
                 escrowAddr,
                 msg.sender,
-                SafeMath.mul(dataEntry.amount, dataEntry.price)
+                SafeMath.mul(order.amount, order.price)
             );
         } else {
             // Return user item
             // Get game information
-            (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+            (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
 
             // Will fail if escrow's balanace of the id is not enough
-            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
+            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amount, "");
         }
 
-        _deleteData(_dataId);
-        emit DataEntryDeleted(_dataId);
+        _deleteOrder(_orderId);
+        emit OrderDeleted(msg.sender, _orderId);
     }
 
-    function getUserOrders(address _user)
+    function getOrder(uint256 _orderId)
         external
         view
         override
-        returns(uint256[] memory orders)
-    {
-        orders = new uint256[](userData[_user].length());
-        for (uint256 i = 0; i < orders.length; ++i) {
-            orders[i] = userData[_user].at(i);
-        }
-    }
-
-    function getItemData(uint256 _uuid)
-        external
-        view
-        override
-        returns(uint256[] memory bidIds, uint256[] memory askIds)
-    {
-        bidIds = new uint256[](items[_uuid].bids.length());
-        for (uint256 i = 0; i < bidIds.length; ++i) {
-            (, bidIds[i]) = items[_uuid].bids.at(i);
-        }
-
-        askIds = new uint256[](items[_uuid].asks.length());
-        for (uint256 i = 0; i < askIds.length; ++i) {
-            (, askIds[i]) = items[_uuid].asks.at(i);
-        }
-    }
-
-    function getDataEntry(uint256 _dataId)
-        external
-        view
-        override
-        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid, bool isClaimable)
+        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid, bool claimable)
     {
         return (
-            data[_dataId].user,
-            data[_dataId].token,
-            data[_dataId].itemUUID,
-            data[_dataId].amount,
-            data[_dataId].price,
-            data[_dataId].isBid,
-            data[_dataId].isClaimable
+            orders[_orderId].user,
+            orders[_orderId].token,
+            orders[_orderId].itemUUID,
+            orders[_orderId].amount,
+            orders[_orderId].price,
+            orders[_orderId].isBid,
+            orders[_orderId].claimable
         );
     }
 
-    function fullfillOrder(uint256 _dataId) external override {
+    function fullfillOrder(uint256 _orderId) external override {
         // This will fail if _token address doesn't support the necessary
-        Data storage dataEntry = data[_dataId];
-        require(dataEntry.user != msg.sender, "Order owner cannot fullfill order.");
-        require(!dataEntry.isClaimable, "Order is already filled.");
+        Order storage order = orders[_orderId];
+        require(order.user != msg.sender, "Order owner cannot fullfill order.");
+        require(!order.claimable, "Order is already filled.");
         address sellerAddr;
         address buyerAddr;
 
         // Get game information
-        (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+        (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
 
-        if (dataEntry.isBid) {
+        if (order.isBid) {
             sellerAddr = msg.sender;
             buyerAddr = escrowAddr;
 
             // Approve escrow to move tokens to user
             require(
                 escrow().approveToken(
-                    dataEntry.token,
-                    SafeMath.mul(dataEntry.amount, dataEntry.price)),
+                    order.token,
+                    SafeMath.mul(order.amount, order.price)),
                 "Token is not supported."
             );
         } else {
@@ -277,93 +230,84 @@ contract Exchange is IExchange, ERC165 {
         }
         
         // Will fail if user does not have enough tokens
-        IERC20(dataEntry.token).transferFrom(
+        IERC20(order.token).transferFrom(
             buyerAddr,
             sellerAddr,
-            SafeMath.mul(dataEntry.amount, dataEntry.price)
+            SafeMath.mul(order.amount, order.price)
         );
 
-        // Will fail if escrow's balanace of the id is not enough
-        IERC1155(gameAddr).safeTransferFrom(sellerAddr, buyerAddr, gameId, dataEntry.amount, "");
+        // Will revert if item fails to transfer
+        IERC1155(gameAddr).safeTransferFrom(sellerAddr, buyerAddr, gameId, order.amount, "");
 
         // Order is now claimable
-        dataEntry.isClaimable = true;
-        claimableOrders[dataEntry.user].add(_dataId);
+        order.claimable = true;
 
-        emit OrderFullfilled(_dataId);
+        emit OrderFullfilled(_orderId, msg.sender, order.user, order.itemUUID, order.amount, order.price);
     }
 
-    function getClaimable(address _user) external view override returns(uint256[] memory dataIds) {
-        dataIds = new uint256[](claimableOrders[_user].length());
-        for (uint256 i = 0; i < claimableOrders[_user].length(); i++) {
-            dataIds[i] = claimableOrders[_user].at(i);
-        }
-    }
-
-    function claim(uint256 _dataId) external override {
-        Data storage dataEntry = data[_dataId];
-        require(msg.sender == dataEntry.user, "Invalid user claim");        
+    function claim(uint256 _orderId) external override {
+        Order storage order = orders[_orderId];
+        require(msg.sender == order.user, "Invalid user claim");
+        require(order.claimable, "Order not fulfilled.");        
         
-        if (dataEntry.isBid) {
+        if (order.isBid) {
             // Get game information
-            (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+            (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
             
             // Will fail if escrow's balanace of the id is not enough
-            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
+            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amount, "");
         } else {
             require(
                 escrow().approveToken(
-                    dataEntry.token,
-                    SafeMath.mul(dataEntry.amount, dataEntry.price)),
+                    order.token,
+                    SafeMath.mul(order.amount, order.price)),
                 "Token is not supported."
             );
 
-            IERC20(dataEntry.token).transferFrom(
+            IERC20(order.token).transferFrom(
                 escrowAddr,
                 msg.sender,
-                SafeMath.mul(dataEntry.amount, dataEntry.price)
+                SafeMath.mul(order.amount, order.price)
             );
         }
-
-        // remove from claimable list
-        claimableOrders[dataEntry.user].remove(_dataId);
         
-        _deleteData(_dataId);
-        emit Claimed(_dataId);
+        _deleteOrder(_orderId);
+        emit Claimed(msg.sender, _orderId);
     }
 
-    // Todo: this could be improved by doing batch transfers for items
-    function claimBatch(uint256[] calldata _dataIds) external override {
-        for (uint256 i = 0; i < _dataIds.length; ++i) {
-            Data storage dataEntry = data[_dataIds[i]];
-            require(msg.sender == dataEntry.user, "Invalid user claim");
+    function claimAll() external override {
+        uint256[] memory orderIds = new uint256[](userOrders[msg.sender].length());
+        uint256 counter;
+        for (uint256 i = 0; i < userOrders[msg.sender].length(); ++i) {
+            uint256 orderId = userOrders[msg.sender].at(i);
+            Order storage order = orders[orderId];
 
-            if (dataEntry.isBid) {
-                // Get game information
-                (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(dataEntry.itemUUID);
+            if (order.claimable) {
+                if (order.isBid) {
+                    // Get game information
+                    (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
 
-                // Will fail if escrow's balanace of the id is not enough
-                IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, dataEntry.amount, "");
-            } else {
-                require(
-                    escrow().approveToken(
-                        dataEntry.token,
-                        SafeMath.mul(dataEntry.amount, dataEntry.price)),
-                    "Token is not supported."
-                );
-                IERC20(dataEntry.token).transferFrom(
-                    escrowAddr,
-                    msg.sender,
-                    SafeMath.mul(dataEntry.amount, dataEntry.price)
-                );
+                    // Will fail if escrow's balanace of the id is not enough
+                    IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amount, "");
+                } else {
+                    require(
+                        escrow().approveToken(
+                            order.token,
+                            SafeMath.mul(order.amount, order.price)),
+                        "Token is not supported."
+                    );
+                    IERC20(order.token).transferFrom(
+                        escrowAddr,
+                        msg.sender,
+                        SafeMath.mul(order.amount, order.price)
+                    );
+                }
+
+                _deleteOrder(orderId);
+                orderIds[counter++] = orderId;
             }
-
-            // remove from claimable list
-            claimableOrders[dataEntry.user].remove(_dataIds[i]);
-
-            _deleteData(_dataIds[i]);
         }
-        emit ClaimedBatch(_dataIds);
+        emit ClaimedAll(msg.sender, orderIds);
     }
 
     /******** Internal Functions ********/
@@ -376,32 +320,25 @@ contract Exchange is IExchange, ERC165 {
         return ExchangeEscrow(escrowAddr);
     }
 
-    function _deleteData(uint256 _dataId) internal {
-        // delete from userdata->dataId map
-        Data storage dataEntry = data[_dataId];
-        userData[dataEntry.user].remove(_dataId);
-
-        // delete from item ask/bids map
-        items[dataEntry.itemUUID].asks.remove(dataEntry.user);
-        items[dataEntry.itemUUID].bids.remove(dataEntry.user);
+    function _deleteOrder(uint256 _orderId) internal {
+        userOrders[orders[_orderId].user].remove(_orderId);
 
         // delete stored data
-        delete data[_dataId];
+        delete orders[_orderId];
     }
 
-    function _isClaimable(uint256 _dataId) internal view returns(bool) {
-        return (data[_dataId].user != address(0) && data[_dataId].isClaimable);
+    function _isClaimable(uint256 _orderId) internal view returns(bool) {
+        return (orders[_orderId].user != address(0) && orders[_orderId].claimable);
     }
     
-    function _generateDataId(
+    function _generateOrderId(
         address _user,
         address _token,
         uint256 _uuid
     )
         internal
-        pure
         returns(uint256)
     {
-        return uint256(keccak256(abi.encodePacked(_user, _token, _uuid)));
+        return uint256(keccak256(abi.encodePacked(_user, _token, _uuid, orderIdCounter++)));
     }
 }

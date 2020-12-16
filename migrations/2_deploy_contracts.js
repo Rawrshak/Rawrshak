@@ -74,11 +74,13 @@ module.exports = async function(deployer, networks, accounts) {
     lootboxId = lootboxEvent.logs[0].args[0];
     await lootboxManager.setGlobalItemRegistryAddr(registry.address);
 
-    await deployer.deploy(ExtendedEnumerableMaps);
-    await deployer.link(ExtendedEnumerableMaps, Exchange);
+    // await deployer.deploy(ExtendedEnumerableMaps);
+    // await deployer.link(ExtendedEnumerableMaps, Exchange);
 
     // deploy Crafting Contract
-    await deployer.deploy(Exchange, registry.address);
+    await deployer.deploy(Exchange);
+    exchange = await Exchange.deployed();
+    await exchange.setGlobalItemRegistryAddr(registry.address);
 
     // Assign crafting contract the minter and burner roles
     craftingAddress = await craftingManager.getCraftingAddress();
