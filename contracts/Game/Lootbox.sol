@@ -77,8 +77,15 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     uint32[7] private probabilities;
     
     /******** Events ********/
-    event LootboxGenerated(uint256);
-    event LootboxOpened(uint256);
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event LootboxManagerSet(address, address);
+    event InputItemRegistered(address, uint256, uint256, uint256);
+    event InputItemBatchRegistered(address, uint256[], uint256[], uint256[]);
+    event RewardItemRegistered(address, uint256, uint8, uint256);
+    event RewardItemBatchRegistered(address, uint256[], uint8[], uint256[]);
+    event TradeMinimumSet(address, uint256);
+    event LootboxGenerated(address, address, uint256);
+    event LootboxOpened(address, address, uint256, uint256[]);
 
     /******** Modifiers ********/
     modifier onlyManager() {
@@ -117,6 +124,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             "Caller does not support Interface."
         );
         lootboxManagerAddr = _addr;
+        emit LootboxManagerSet(address(this), _addr);
     }
 
     function getManagerAddress() external view override returns(address) {
@@ -130,6 +138,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         onlyOwner
     {
         globalItemRegistryAddr = _addr;
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ILOOTBOX);
     }
 
     function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)
@@ -141,6 +150,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         inputItem.requiredAmount = _amount;
         inputItem.multiplier = _multiplier;
         inputItem.active = true;
+        emit InputItemRegistered(address(this), _uuid, _amount, _multiplier);
     }
 
     function registerInputItemBatch(
@@ -158,6 +168,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             inputItem.multiplier = _multipliers[i];
             inputItem.active = true;
         }
+        emit InputItemBatchRegistered(address(this), _uuids, _amounts, _multipliers);
     }
 
     function registerReward(uint256 _uuid, Rarity _rarity, uint256 _amount)
@@ -170,6 +181,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         rewardItem.amount = _amount;
         rewardItem.active = true;
         rewardsList[uint8(_rarity)].push(rewardItem);
+        emit RewardItemRegistered(address(this), _uuid, uint8(_rarity), _amount);
     }
 
     function registerRewardBatch(
@@ -181,18 +193,21 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         override
         onlyManager
     {
-
+        uint8[] memory rarities = new uint8[](_uuids.length);
         for (uint256 i = 0; i < _uuids.length; ++i) {            
             Reward memory rewardItem;
             rewardItem.uuid = _uuids[i];
             rewardItem.amount = _amounts[i];
             rewardItem.active = true;
             rewardsList[uint8(_rarities[i])].push(rewardItem);
+            rarities[i] = uint8(_rarities[i]);
         }
+        emit RewardItemBatchRegistered(address(this), _uuids, rarities, _amounts);
     }
 
     function setTradeInMinimum(uint8 _count) external override onlyManager {
         tradeInMinimum = _count;
+        emit TradeMinimumSet(address(this), _count);
     }
 
 
@@ -241,7 +256,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         // Mint Lootbox
         _mint(msg.sender, LOOTBOX, lootboxCount, "");
         
-        emit LootboxGenerated(lootboxCount);
+        emit LootboxGenerated(address(this), msg.sender, lootboxCount);
     }
 
     function openLootbox(uint256 _count) external override {
@@ -253,6 +268,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         IGlobalItemRegistry registry = globalItemRegistry();
 
         // Generate an item
+        uint256[] memory rewards = new uint256[](_count);
         for (uint256 i = 0; i < _count; ++i) {
             // random number between 1-100000
             uint32 rng = uint32(Utils.random(100000));
@@ -269,6 +285,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             require(rewardsList[rarity].length > 0, "Rewards List is empty");
             uint256 itemIndex = Utils.random(rewardsList[rarity].length);
             Reward storage reward = rewardsList[rarity][itemIndex];
+            rewards[i] = reward.uuid;
 
             // Get game information
             (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(reward.uuid);
@@ -277,7 +294,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             // Mint() will fail if this contract does not have the necessary permissions 
             gameManager.mint(msg.sender, gameId, reward.amount);
         }
-        emit LootboxOpened(_count);
+        emit LootboxOpened(address(this), msg.sender, _count, rewards);
     }
 
     function getRewards(Rarity _rarity)
