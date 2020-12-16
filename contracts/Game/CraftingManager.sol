@@ -58,8 +58,8 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     address private itemRegistryAddr;
 
     /******** Events ********/
-    event RecipeCreated(uint256);
-    event CraftingContractCreated(uint256, address, address);
+    event CraftingManagerCreated(address, address);
+    event GlobalItemRegistryStored(address, address, bytes4);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -85,6 +85,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         _setupRole(MANAGER_ROLE, msg.sender);
 
         _registerInterface(_INTERFACE_ID_ICRAFTINGMANAGER);
+        emit CraftingManagerCreated(address(this), msg.sender);
     }
 
     function setGlobalItemRegistryAddr(address _addr)
@@ -100,6 +101,8 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         require(craftingAddr != address(0), "Crafting Contract not created yet.");
         itemRegistryAddr = _addr;
         crafting().setGlobalItemRegistryAddr(_addr);
+
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ICRAFTINGMANAGER);
     }
 
     function generateCraftingContract(
@@ -116,8 +119,6 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
 
         uint256 id;
         (craftingAddr, id)  = CraftingFactory(_craftingFactoryAddress).createCraftingContract();
-        
-        emit CraftingContractCreated(id, craftingAddr, owner());
     }
 
 
@@ -163,8 +164,6 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         crafting().updateRewardsToRecipe(recipeId, _rewardUuids, _rewardAmounts);
         crafting().updateRecipeCost(recipeId, _tokenAddr, _cost);
         crafting().updateRecipeActive(recipeId, _isActive);
-
-        emit RecipeCreated(recipeId);
     }
 
     // Can be used to add and update materials in a specific recipe

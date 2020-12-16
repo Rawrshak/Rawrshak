@@ -70,7 +70,14 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     address private craftingManagerAddr;
 
     /******** Events ********/
-    event ItemCrafted();
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event CraftingManagerSet(address, address);
+    event ItemCrafted(address, uint256, address);
+    event RecipeCreated(address, uint256);
+    event RecipeMaterialsUpdated(address, uint256, uint256[], uint256[]);
+    event RecipeRewardsUpdated(address, uint256, uint256[], uint256[]);
+    event RecipeActiveSet(address, uint256, bool);
+    event RecipeCostUpdated(address, uint256, address, uint256);
 
     /******** Modifiers ********/
     modifier checkItemExists(uint256 _uuid) {
@@ -91,6 +98,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
         // Address is already checked in the game manager
         globalItemRegistryAddr = _addr;
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ICRAFTING);
     }
 
     function setManagerAddress(address _addr) external override onlyOwner {
@@ -100,6 +108,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             "Caller does not support Interface."
         );
         craftingManagerAddr = _addr;
+        emit CraftingManagerSet(address(this), _addr);
     }
 
     function getManagerAddress() external view override returns(address) {
@@ -111,10 +120,11 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         return recipes.length;
     }
 
-    function createRecipe(uint256 recipeId) external override onlyOwner {
+    function createRecipe(uint256 _recipeId) external override onlyOwner {
         // The recipes do not get deleted so the recipe id counter is only ever incremented;
         Recipe storage recipe = recipes.push();
-        recipe.recipeId = recipeId;
+        recipe.recipeId = _recipeId;
+        emit RecipeCreated(address(this), _recipeId);
     }
 
     function updateMaterialsToRecipe(
@@ -142,6 +152,8 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             recipes[_recipeId].isActive = false;
             activeRecipeCount--;
         }
+        
+        emit RecipeMaterialsUpdated(address(this), _recipeId, _materialUuids, _materialAmounts);
     }
 
     function updateRewardsToRecipe(
@@ -169,6 +181,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             recipes[_recipeId].isActive = false;
             activeRecipeCount--;
         }
+        emit RecipeRewardsUpdated(address(this), _recipeId, _rewardUuids, _rewardAmounts);
     }
 
     function updateRecipeActive(uint256 _recipeId, bool _activate) 
@@ -187,6 +200,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         } else {
             activeRecipeCount--;
         }
+        emit RecipeActiveSet(address(this), _recipeId, _activate);
     }
 
     function updateRecipeCost(uint256 _recipeId, address _tokenAddr, uint256 _cost)
@@ -196,6 +210,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     {
         recipes[_recipeId].tokenAddr = _tokenAddr;
         recipes[_recipeId].cost = _cost;
+        emit RecipeCostUpdated(address(this), _recipeId, _tokenAddr, _cost);
     }
     
     function exists(uint256 _recipeId) external override view returns(bool)
@@ -250,7 +265,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         }
 
         // Notify user of item getting crafted
-        emit ItemCrafted();
+        emit ItemCrafted(address(this), _recipeId, _account);
     }
 
     function isRecipeActive(uint256 _recipeId) external view override returns(bool) {
