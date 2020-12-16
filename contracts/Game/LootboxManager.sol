@@ -97,16 +97,6 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         return lootboxAddresses.get(_lootboxId);
     }
 
-    function registerInputItem(uint256 _lootboxId, uint256 _uuid, uint256 _amount, uint256 _multiplier)
-        external
-        override
-        checkPermissions(MANAGER_ROLE)
-        checkLootboxExists(_lootboxId)
-        checkItemExists(_uuid)
-    {
-        lootbox(_lootboxId).registerInputItem(_uuid, _amount, _multiplier);
-    }
-
     function registerInputItemBatch(
         uint256 _lootboxId,
         uint256[] calldata _uuids,
@@ -126,16 +116,6 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         }
 
         lootbox(_lootboxId).registerInputItemBatch(_uuids, _amounts, _multipliers);
-    }
-
-    function registerReward(uint256 _lootboxId, uint256 _uuid, Rarity _rarity, uint256 _amount)
-        external
-        override
-        checkPermissions(MANAGER_ROLE)
-        checkLootboxExists(_lootboxId)
-        checkItemExists(_uuid)
-    {
-        lootbox(_lootboxId).registerReward(_uuid, _rarity, _amount);
     }
 
     function registerRewardBatch(

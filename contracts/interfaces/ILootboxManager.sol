@@ -10,18 +10,12 @@ interface ILootboxManager is ILootboxBase {
     /******** Mutative Functions ********/
     function generateLootboxContract(address _lootboxFactoryAddress, string calldata _url) external;
     
-    function registerInputItem(uint256 _lootboxId, uint256 _uuid, uint256 _amount, uint256 _multiplier)
-        external;
-
     function registerInputItemBatch(
         uint256 _lootboxId,
         uint256[] calldata _uuids,
         uint256[] calldata _amounts,
         uint256[] calldata _multipliers
     ) external;
-
-    function registerReward(uint256 _lootboxId, uint256 _id, Rarity _rarity, uint256 _amount)
-        external;
 
     function registerRewardBatch(
         uint256 _lootboxId,

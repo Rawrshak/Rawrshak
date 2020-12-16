@@ -79,9 +79,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     /******** Events ********/
     event GlobalItemRegistryStored(address, address, bytes4);
     event LootboxManagerSet(address, address);
-    event InputItemRegistered(address, uint256, uint256, uint256);
     event InputItemBatchRegistered(address, uint256[], uint256[], uint256[]);
-    event RewardItemRegistered(address, uint256, uint8, uint256);
     event RewardItemBatchRegistered(address, uint256[], uint8[], uint256[]);
     event TradeMinimumSet(address, uint256);
     event LootboxGenerated(address, address, uint256);
@@ -141,18 +139,6 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ILOOTBOX);
     }
 
-    function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)
-        external
-        override
-        onlyManager
-    {
-        Input storage inputItem = inputsList[_uuid];
-        inputItem.requiredAmount = _amount;
-        inputItem.multiplier = _multiplier;
-        inputItem.active = true;
-        emit InputItemRegistered(address(this), _uuid, _amount, _multiplier);
-    }
-
     function registerInputItemBatch(
         uint256[] calldata _uuids,
         uint256[] calldata _amounts,
@@ -169,19 +155,6 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             inputItem.active = true;
         }
         emit InputItemBatchRegistered(address(this), _uuids, _amounts, _multipliers);
-    }
-
-    function registerReward(uint256 _uuid, Rarity _rarity, uint256 _amount)
-        external
-        override
-        onlyManager
-    {        
-        Reward memory rewardItem;
-        rewardItem.uuid = _uuid;
-        rewardItem.amount = _amount;
-        rewardItem.active = true;
-        rewardsList[uint8(_rarity)].push(rewardItem);
-        emit RewardItemRegistered(address(this), _uuid, uint8(_rarity), _amount);
     }
 
     function registerRewardBatch(
