@@ -11,7 +11,6 @@ contract('Game Contract', (accounts) => {
         newOwnerAddress,    // new developer wallet address
         minterAddress,      // address with minter capabilities
         burnerAddress,      // address with burner capabilities
-        managerAddress,     // item manager address
         player1Address,     // Player 1 wallet address
         player2Address,     // Player 2 wallet address
         contentCreatorAddress // Content Creator Address
