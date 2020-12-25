@@ -1,5 +1,4 @@
 const OVCTokenContract = artifacts.require("OVCToken");
-const ManagerDeployer = artifacts.require("ManagerDeployer");
 const GameManagerDeployer = artifacts.require("GameManagerDeployer");
 const CraftingManagerDeployer = artifacts.require("CraftingManagerDeployer");
 const LootboxManagerDeployer = artifacts.require("LootboxManagerDeployer");
@@ -39,12 +38,10 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.deploy(CraftingFactory);
     await deployer.deploy(LootboxFactory);
 
-    await deployer.deploy(ManagerDeployer);
     await deployer.deploy(GameManagerDeployer);
     await deployer.deploy(CraftingManagerDeployer);
     await deployer.deploy(LootboxManagerDeployer);
 
-    await deployer.link(ManagerDeployer, [ManagerFactory]);
     await deployer.link(GameManagerDeployer, [ManagerFactory]);
     await deployer.link(CraftingManagerDeployer, [ManagerFactory]);
     await deployer.link(LootboxManagerDeployer, [ManagerFactory]);

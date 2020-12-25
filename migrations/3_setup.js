@@ -26,13 +26,13 @@ module.exports = async function(deployer, networks, accounts) {
     craftingFactory = await CraftingFactory.deployed();
     await craftingFactory.setGlobalItemRegistryAddr(registry.address);
 
-    craftingManager = await CraftingManager.deployed();
-    await craftingManager.generateCraftingContract(craftingFactory.address);
-    await craftingManager.setGlobalItemRegistryAddr(registry.address);
+    // craftingManager = await CraftingManager.deployed();
+    // await craftingManager.generateCraftingContract(craftingFactory.address);
+    // await craftingManager.setGlobalItemRegistryAddr(registry.address);
     
     // Set up Lootbox Contract
-    // lootboxFactory = await LootboxFactory.deployed();
-    // await lootboxFactory.setGlobalItemRegistryAddr(registry.address);
+    lootboxFactory = await LootboxFactory.deployed();
+    await lootboxFactory.setGlobalItemRegistryAddr(registry.address);
 
     // lootboxManager = await LootboxManager.deployed();
     // lootboxEvent = await lootboxManager.generateLootboxContract(lootboxFactory.address, "https://testgame.com/api/lootbox/{id}.json");
@@ -44,7 +44,7 @@ module.exports = async function(deployer, networks, accounts) {
     await exchange.setGlobalItemRegistryAddr(registry.address);
 
     // Assign crafting contract the minter and burner roles
-    craftingAddress = await craftingManager.getCraftingAddress();
+    // craftingAddress = await craftingManager.getCraftingAddress();
     // lootboxAddress = await lootboxManager.getLootboxAddress(lootboxId);
 
     // chrsum-todo: uncomment

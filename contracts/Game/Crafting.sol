@@ -54,8 +54,8 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     /******** Data Structures ********/
     struct Recipe {
         uint256 recipeId;
-        uint256[] materials;
-        uint256[] rewards;
+        mapping(uint256 => uint256) materials;
+        mapping(uint256 => uint256) rewards;
         EnumerableSet.UintSet materialIds;
         EnumerableSet.UintSet rewardIds;
         address tokenAddr;
@@ -64,10 +64,12 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     }
 
     /******** Stored Variables ********/
-    Recipe[] private recipes;
+    mapping(uint256 => Recipe) private recipes;
+    uint256 recipesCount;
     uint256 public activeRecipeCount = 0;
     address private globalItemRegistryAddr;
     address private craftingManagerAddr;
+    address payable private developerWallet;
 
     /******** Events ********/
     event GlobalItemRegistryStored(address, address, bytes4);
@@ -110,6 +112,10 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         craftingManagerAddr = _addr;
         emit CraftingManagerSet(address(this), _addr);
     }
+    
+    function setDeveloperWallet(address payable _wallet) external override onlyOwner {
+        developerWallet = _wallet;
+    }
 
     function getManagerAddress() external view override returns(address) {
         return craftingManagerAddr;
@@ -117,13 +123,14 @@ contract Crafting is ICrafting, Ownable, ERC165 {
 
     function generateNextRecipeId() external override view onlyOwner returns(uint256)
     {
-        return recipes.length;
+        return recipesCount;
     }
 
     function createRecipe(uint256 _recipeId) external override onlyOwner {
         // The recipes do not get deleted so the recipe id counter is only ever incremented;
-        Recipe storage recipe = recipes.push();
-        recipe.recipeId = _recipeId;
+        recipes[_recipeId].recipeId = _recipeId;
+        recipesCount++;
+
         emit RecipeCreated(address(this), _recipeId);
     }
 
@@ -215,15 +222,16 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     
     function exists(uint256 _recipeId) external override view returns(bool)
     {
-        return _recipeId < recipes.length;
+        return _recipeId < recipesCount;
     }
 
     function craftItem(uint256 _recipeId, address payable _account)
         external
         override
     {
-        require(_recipeId < recipes.length, "Recipe does not exist.");
+        require(_recipeId < recipesCount, "Recipe does not exist.");
         require(recipes[_recipeId].isActive, "Recipe is not active.");
+        require(developerWallet != address(0), "Developer wallet not set.");
         
         Recipe storage recipe = recipes[_recipeId];
 
@@ -231,7 +239,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             // This will fail if the account doesn't have enough to cover the 
             // cost of crafting this item
             // Todo: replace this with ERC20
-            TokenBase(recipe.tokenAddr).transferFrom(_account, owner(), recipe.cost);
+            TokenBase(recipe.tokenAddr).transferFrom(_account, developerWallet, recipe.cost);
         }
         
         IGlobalItemRegistry registry = globalItemRegistry();
@@ -284,11 +292,11 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         override
         returns(uint256[] memory uuids, uint256[] memory counts)
     {
-        require(_recipeId < recipes.length, "Recipe does not exist.");
+        require(_recipeId < recipesCount, "Recipe does not exist.");
 
         Recipe storage recipe = recipes[_recipeId];
-        uuids = new uint256[](recipe.materials.length);
-        counts = new uint256[](recipe.materials.length);
+        uuids = new uint256[](recipe.materialIds.length());
+        counts = new uint256[](recipe.materialIds.length());
 
         for (uint i = 0; i < recipe.materialIds.length(); ++i) {
             uuids[i] = recipe.materialIds.at(i);
@@ -304,11 +312,11 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         override
         returns(uint256[] memory uuids, uint256[] memory counts)
     {
-        require(_recipeId < recipes.length, "Recipe does not exist.");
+        require(_recipeId < recipesCount, "Recipe does not exist.");
 
         Recipe storage recipe = recipes[_recipeId];
-        uuids = new uint256[](recipe.rewards.length);
-        counts = new uint256[](recipe.rewards.length);
+        uuids = new uint256[](recipe.rewardIds.length());
+        counts = new uint256[](recipe.rewardIds.length());
         
         for (uint i = 0; i < recipe.rewardIds.length(); ++i) {
             uuids[i] = recipe.rewardIds.at(i);

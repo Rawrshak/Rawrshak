@@ -8,12 +8,6 @@ import "../Game/GameManager.sol";
 import "../Game/CraftingManager.sol";
 import "../Game/LootboxManager.sol";
 
-library ManagerDeployer {    
-    function transferOwnership(address _contractAddr, address _newOwner) public {
-        Ownable(_contractAddr).transferOwnership(_newOwner);
-    }
-}
-
 library GameManagerDeployer {
     function deployGameManager(address _sender) public returns(address manager) {
         manager = address(new GameManager(_sender));
@@ -21,8 +15,8 @@ library GameManagerDeployer {
 }
 
 library CraftingManagerDeployer {
-    function deployCraftingManager() public returns(address manager) {
-        manager = address(new CraftingManager());
+    function deployCraftingManager(address _sender) public returns(address manager) {
+        manager = address(new CraftingManager(_sender));
     } 
 }
 
@@ -34,7 +28,6 @@ library LootboxManagerDeployer {
 
 contract ManagerFactory is ERC165 {
     using ERC165Checker for *;
-    using ManagerDeployer for *;
     using GameManagerDeployer for *;
     using CraftingManagerDeployer for *;
     using LootboxManagerDeployer for *;
@@ -68,8 +61,7 @@ contract ManagerFactory is ERC165 {
     }
     
     function createCraftingManagerContract() external returns(address contractAddr, uint256 contractId) {
-        contractAddr = CraftingManagerDeployer.deployCraftingManager();
-        ManagerDeployer.transferOwnership(contractAddr, msg.sender);
+        contractAddr = CraftingManagerDeployer.deployCraftingManager(msg.sender);
         
         contractId = craftingManagerAddresses[msg.sender].length;
         craftingManagerAddresses[msg.sender].push(contractAddr);
