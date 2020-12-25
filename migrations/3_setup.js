@@ -1,18 +1,12 @@
 const OVCTokenContract = artifacts.require("OVCToken");
-const GameDeployer = artifacts.require("GameDeployer");
-const CraftingDeployer = artifacts.require("CraftingDeployer");
-const LootboxDeployer = artifacts.require("LootboxDeployer");
 const GameManager = artifacts.require("GameManager");
 const GameFactory = artifacts.require("GameFactory");
 const CraftingManager = artifacts.require("CraftingManager");
 const CraftingFactory = artifacts.require("CraftingFactory");
 const LootboxManager = artifacts.require("LootboxManager");
 const LootboxFactory = artifacts.require("LootboxFactory");
-const Utils = artifacts.require("Utils");
-const NameRegistry = artifacts.require("NameRegistry");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 const Exchange = artifacts.require("Exchange");
-const ExtendedEnumerableMaps = artifacts.require("ExtendedEnumerableMaps");
 
 module.exports = async function(deployer, networks, accounts) {
     // get OVC token with 1,000,000,000 initial supply.
@@ -25,8 +19,8 @@ module.exports = async function(deployer, networks, accounts) {
     gameFactory = await GameFactory.deployed();
     await gameFactory.setGlobalItemRegistryAddr(registry.address);
 
-    gameManager = await GameManager.deployed();
-    await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
+    // gameManager = await GameManager.deployed();
+    // await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
 
     // Set up Crafting Contract
     craftingFactory = await CraftingFactory.deployed();
@@ -52,13 +46,15 @@ module.exports = async function(deployer, networks, accounts) {
     // Assign crafting contract the minter and burner roles
     craftingAddress = await craftingManager.getCraftingAddress();
     lootboxAddress = await lootboxManager.getLootboxAddress(lootboxId);
-    minter_role = await gameManager.MINTER_ROLE();
-    burner_role = await gameManager.BURNER_ROLE();
-    deployerAddress = accounts[0];
-    await gameManager.grantRole(minter_role, craftingAddress, {from: deployerAddress});
-    await gameManager.grantRole(burner_role, craftingAddress, {from: deployerAddress});
-    await gameManager.grantRole(minter_role, lootboxAddress, {from: deployerAddress});
-    await gameManager.grantRole(burner_role, lootboxAddress, {from: deployerAddress});
+
+    // chrsum-todo: uncomment
+    // minter_role = await gameManager.MINTER_ROLE();
+    // burner_role = await gameManager.BURNER_ROLE();
+    // deployerAddress = accounts[0];
+    // await gameManager.grantRole(minter_role, craftingAddress, {from: deployerAddress});
+    // await gameManager.grantRole(burner_role, craftingAddress, {from: deployerAddress});
+    // await gameManager.grantRole(minter_role, lootboxAddress, {from: deployerAddress});
+    // await gameManager.grantRole(burner_role, lootboxAddress, {from: deployerAddress});
         
     // // Note: This is for debugging purposes
     // gc_manager_role = await game.MANAGER_ROLE();

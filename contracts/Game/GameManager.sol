@@ -54,7 +54,6 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     address public gameAddr;
 
     /******** Events ********/
-    event GameManagerCreated(address, address);
     event GlobalItemRegistryStored(address, address, bytes4);
 
     /******** Modifiers ********/
@@ -68,15 +67,14 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
 
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
-    constructor() public {        
+    constructor(address _owner) public {        
         // Contract Deployer is now the owner and can set roles
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MINTER_ROLE, msg.sender);
-        _setupRole(BURNER_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+        _setupRole(MINTER_ROLE, _owner);
+        _setupRole(BURNER_ROLE, _owner);
 
         _registerInterface(_INTERFACE_ID_IGAMEMANAGER);
-
-        emit GameManagerCreated(address(this), msg.sender);
+        transferOwnership(_owner);
     }
 
     function setUri(string calldata _newUri) external override onlyOwner {
@@ -108,13 +106,15 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     // Create New Item
     function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override onlyOwner {
         require(!game().contains(_id), "Item already exists.");
+        require(_creatorAddress != address(0), "Invalid Address");
         
         // Add item to item storage
-        address payable creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : payable(game().owner());
-        game().createItem(creatorAddr, _id, _maxSupply);
+        game().createItem(_creatorAddress, _id, _maxSupply);
         
         // mint max supply if there is a max supply
-        game().mint(creatorAddr, _id, _maxSupply);
+        if (_maxSupply > 0) {
+            game().mint(_creatorAddress, _id, _maxSupply);
+        }
     }
 
     function createItemBatch(
@@ -126,14 +126,14 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         override
         onlyOwner
     {
+        require(_creatorAddress != address(0), "Invalid Address");
         require(_ids.length == _maxSupplies.length, "IDs and Max Supply array size do not match");
         for (uint256 i = 0; i < _ids.length; ++i) {
             require(!game().contains(_ids[i]), "Item already exists.");
         }
-        
-        address payable creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : payable(game().owner());
-        game().createItemBatch(creatorAddr, _ids, _maxSupplies);
-        game().mintBatch(creatorAddr, _ids, _maxSupplies);
+
+        game().createItemBatch(_creatorAddress, _ids, _maxSupplies);
+        game().mintBatch(_creatorAddress, _ids, _maxSupplies);
     }
 
     function mint(address _receivingAddress, uint256 _itemId, uint256 _amount)

@@ -10,14 +10,13 @@ import "../Game/LootboxManager.sol";
 
 library ManagerDeployer {    
     function transferOwnership(address _contractAddr, address _newOwner) public {
-        IDatabaseContract(_contractAddr).setManagerAddress(_newOwner);
         Ownable(_contractAddr).transferOwnership(_newOwner);
     }
 }
 
 library GameManagerDeployer {
-    function deployGameManager() public returns(address manager) {
-        manager = address(new GameManager());
+    function deployGameManager(address _sender) public returns(address manager) {
+        manager = address(new GameManager(_sender));
     }
 }
 
@@ -60,8 +59,7 @@ contract ManagerFactory is ERC165 {
 
     /******** Mutative Functions ********/
     function createGameManagerContract() external returns(address contractAddr, uint256 contractId) {
-        contractAddr = GameManagerDeployer.deployGameManager();
-        ManagerDeployer.transferOwnership(contractAddr, msg.sender);
+        contractAddr = GameManagerDeployer.deployGameManager(msg.sender);
         
         contractId = gameManagerAddresses[msg.sender].length;
         gameManagerAddresses[msg.sender].push(contractAddr);

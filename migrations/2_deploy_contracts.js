@@ -4,16 +4,11 @@ const GameManagerDeployer = artifacts.require("GameManagerDeployer");
 const CraftingManagerDeployer = artifacts.require("CraftingManagerDeployer");
 const LootboxManagerDeployer = artifacts.require("LootboxManagerDeployer");
 const ManagerFactory = artifacts.require("ManagerFactory");
-// const Game = artifacts.require("Game");
 const GameDeployer = artifacts.require("GameDeployer");
 const CraftingDeployer = artifacts.require("CraftingDeployer");
 const LootboxDeployer = artifacts.require("LootboxDeployer");
-const GameManager = artifacts.require("GameManager");
 const GameFactory = artifacts.require("GameFactory");
-const CraftingManager = artifacts.require("CraftingManager");
 const CraftingFactory = artifacts.require("CraftingFactory");
-// const Lootbox = artifacts.require("Lootbox");
-const LootboxManager = artifacts.require("LootboxManager");
 const LootboxFactory = artifacts.require("LootboxFactory");
 const Utils = artifacts.require("Utils");
 const NameRegistry = artifacts.require("NameRegistry");
@@ -61,15 +56,6 @@ module.exports = async function(deployer, networks, accounts) {
 
     // deploy GlobalItemRegistry Contract
     await deployer.deploy(GlobalItemRegistry);
-
-    // deploy Game 
-    await deployer.deploy(GameManager);
-
-    // deploy Crafting Contract
-    await deployer.deploy(CraftingManager);
-    
-    // deploy Lootbox Contract
-    await deployer.deploy(LootboxManager);
 
     // await deployer.deploy(ExtendedEnumerableMaps);
     // await deployer.link(ExtendedEnumerableMaps, Exchange);
