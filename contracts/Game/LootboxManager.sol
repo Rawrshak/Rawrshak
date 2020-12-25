@@ -28,7 +28,6 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
     EnumerableMap.UintToAddressMap lootboxAddresses;
 
     /******** Events ********/
-    event LootboxContractCreated(address, address, uint256);
     event GlobalItemRegistryStored(address, address, bytes4);
 
     /******** Modifiers ********/
@@ -47,10 +46,11 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         _;
     }
     
-    constructor() public {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MANAGER_ROLE, msg.sender);
+    constructor(address _owner) public {
+        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+        _setupRole(MANAGER_ROLE, _owner);
         _registerInterface(_INTERFACE_ID_ILOOTBOXMANAGER);
+        transferOwnership(_owner);
     }
 
     function setGlobalItemRegistryAddr(address _addr)
@@ -89,8 +89,6 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         
         (address lootboxAddr, uint256 lootboxId)  = LootboxFactory(_lootboxFactoryAddress).createLootboxContract(_url);
         lootboxAddresses.set(lootboxId, lootboxAddr);
-        
-        emit LootboxContractCreated(address(this), lootboxAddr, lootboxId);
     }
 
     function getLootboxAddress(uint256 _lootboxId) external view override checkLootboxExists(_lootboxId) returns(address) {

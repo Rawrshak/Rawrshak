@@ -27,8 +27,8 @@ library CraftingManagerDeployer {
 }
 
 library LootboxManagerDeployer {
-    function deployLootboxManager() public returns(address manager) {
-        manager = address(new LootboxManager());
+    function deployLootboxManager(address _sender) public returns(address manager) {
+        manager = address(new LootboxManager(_sender));
     } 
 }
 
@@ -78,8 +78,7 @@ contract ManagerFactory is ERC165 {
     }
     
     function createLootboxManagerContract() external returns(address contractAddr, uint256 contractId) {
-        contractAddr = LootboxManagerDeployer.deployLootboxManager();
-        ManagerDeployer.transferOwnership(contractAddr, msg.sender);
+        contractAddr = LootboxManagerDeployer.deployLootboxManager(msg.sender);
         
         contractId = lootboxManagerAddresses[msg.sender].length;
         lootboxManagerAddresses[msg.sender].push(contractAddr);

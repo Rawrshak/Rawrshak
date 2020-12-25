@@ -22,7 +22,7 @@ contract('Exchange Contract', (accounts) => {
     ] = [0,1,2];
     const zero_address = "0x0000000000000000000000000000000000000000";
     const maxAllowance = "500";
-    var ovcToken, gameManager, game, exchange;
+    var ovcToken, gameManager, game, exchange, itemRegistry;
     var minter_role, burner_role;
     var player1Orders = new Array(), player2Orders = new Array();
 
