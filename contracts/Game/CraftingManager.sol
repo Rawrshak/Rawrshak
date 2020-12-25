@@ -15,7 +15,6 @@ import "../factory/CraftingFactory.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
-// Todo: Recipe Storage 
 
 contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
