@@ -14,14 +14,13 @@ contract('Crafting Contract', (accounts) => {
         deployerAddress,            // Address that deployed contracts
         gcManagerAddress,           // Developer Address for managing the Game Contract
         ccManagerAddress,           // Developer Address for managing the Crafting Contract
-        smithAddress,               // Crafting Service Address
         playerAddress,              // Player Address
         developerWalletAddress      // Developer Wallet Address
     ] = accounts;
     const [material1, material2, material3, reward1, reward2] = [0,1,2,3,4];
     const [recipe0, recipe1, recipe2] = [0,1,2];
     const zero_address = "0x0000000000000000000000000000000000000000";
-    var game, gameManager, itemRegistry;
+    var game, gameManager, ovcToken, itemRegistry;
     var crafting, craftingManager;
     var default_admin_role, manager_role, minter_role, burner_role;
     var material1UUID, material2UUID, material3UUID, reward1UUID, reward2UUID;
