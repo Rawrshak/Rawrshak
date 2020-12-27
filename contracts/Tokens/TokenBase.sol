@@ -19,6 +19,12 @@ contract TokenBase is ERC20, ERC165, AccessControl
      *     => 0x40c10f19 ^ 0x9dc29fac == 0xdd0390b5
      */
     bytes4 private constant _INTERFACE_ID_TOKENBASE = 0x00000008;
+    
+    /******** Stored Variables ********/
+    bytes32 public tokenId;
+
+    /******** Events ********/
+    event TokenCreated(address addr, bytes32 id, string name, string symbol, uint256 supply);
 
     constructor(string memory _name, string memory _symbol, uint256 _initialSupply) public ERC20(_name, _symbol)
     {
@@ -29,6 +35,8 @@ contract TokenBase is ERC20, ERC165, AccessControl
         _mint(msg.sender, _initialSupply);
 
         _registerInterface(_INTERFACE_ID_TOKENBASE);
+        tokenId = keccak256(abi.encodePacked(_name, _symbol));
+        emit TokenCreated(address(this), tokenId, _name, _symbol, _initialSupply);
     }
 
     function mint(address _to, uint256 _amount) public 

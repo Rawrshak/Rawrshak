@@ -1,0 +1,22 @@
+type Token @entity {
+    id: ID!
+    contractAddress: Bytes!
+    name: String!
+    symbol: String!
+    balances: [TokenBalance!] @derivedFrom(field: "token")
+    createdAt: BigInt!
+    supply: BigInt
+}
+
+type TokenBalance @entity {
+  id: ID!
+  amount: BigInt!
+  token: Token!
+  owner: Account!
+}
+
+type Account @entity {
+    id: ID!
+    address: Bytes!
+    tokenBalances: [TokenBalance!] @derivedFrom(field: "owner")
+}

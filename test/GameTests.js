@@ -15,14 +15,11 @@ contract('Game Contract', (accounts) => {
         player2Address,     // Player 2 wallet address
         contentCreatorAddress // Content Creator Address
     ] = accounts;
-    const [material1, material2, material3, reward1, reward2] = [0,1,2,3,4];
-    const [recipe0, recipe1, recipe2] = [0,1,2];
-    const zero_address = "0x0000000000000000000000000000000000000000";
+    const [material1, material2, material3] = [0,1,2];
     var gameManager, gameManagerId, managerFactory;
     var itemRegistry, gameFactory;
     var gameId, gameAddress, game;
     var default_admin_role, minter_role, burner_role;
-    // const gameManagerId;
 
     it('Setup', async () => {
         itemRegistry = await GlobalItemRegistry.deployed();

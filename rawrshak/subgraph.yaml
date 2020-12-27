@@ -1,0 +1,29 @@
+specVersion: 0.0.2
+description: Rawrshak Network
+repository: https://github.com/gcbsumid/B44
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: OVCToken
+    network: mainnet
+    source:
+      address: "0x49F99a88338EB19F3e67DBFd6487625453232CB2"
+      abi: OVCToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+      entities:
+        - Token
+        - TokenEntity
+        - Account
+      abis:
+        - name: OVCToken
+          file: ./abis/OVCToken.json
+      eventHandlers:
+        - event: TokenCreated(address,bytes32,string,string,uint256)
+          handler: handleTokenCreated
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer

@@ -1,6 +1,7 @@
 # folders
 node_modules
 build
+generated
 
 #openzeppelin
 .openzeppelin/dev-*.json
