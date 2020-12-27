@@ -23,8 +23,27 @@ export function handleTokenCreated(event: TokenCreated): void {
   token.symbol = event.params.symbol;
   token.createdAt = event.block.timestamp;
   token.supply = event.params.supply;
-  token.balances = []; 
   token.save();
+  
+  // create deployer account
+  let deployerId = event.transaction.from.toHex();
+  let deployer = Account.load(deployerId);
+  if (deployer == null) {
+    deployer = new Account(deployerId);
+    deployer.address = event.transaction.from;
+  }
+  deployer.save();
+
+  // create initial token balance
+  let tokenBalanceId = crypto.keccak256(concat(event.params.addr, event.transaction.from)).toHexString();
+  let tokenBalance = TokenBalance.load(tokenBalanceId);
+  if (tokenBalance == null) {
+    let tokenContract = OVCToken.bind(event.params.addr);
+    tokenBalance = new TokenBalance(tokenBalanceId);
+    tokenBalance.amount = BigInt.fromI32(0);
+    tokenBalance.token = tokenContract.tokenId().toHex();
+    tokenBalance.owner = event.transaction.from.toHex();
+  }
 }
 
 export function handleTransfer(event: Transfer): void {
@@ -35,7 +54,6 @@ export function handleTransfer(event: Transfer): void {
   if (userTo == null) {
     userTo = new Account(userToId);
     userTo.address = event.params.to;
-    userTo.tokenBalances = [];
   }
   userTo.save();
   
@@ -54,6 +72,12 @@ export function handleTransfer(event: Transfer): void {
   // Subract the amount tothe User from's token balance
   tokenBalanceId = crypto.keccak256(concat(event.address, event.params.from)).toHexString();
   tokenBalance = TokenBalance.load(tokenBalanceId);
+  if (tokenBalance == null) {
+    tokenBalance = new TokenBalance(tokenBalanceId);
+    tokenBalance.amount = BigInt.fromI32(0);
+    tokenBalance.token = event.address.toHex();
+    tokenBalance.owner = event.params.from.toHex();
+  }
   tokenBalance.amount = tokenBalance.amount.minus(event.params.value);
   tokenBalance.save()
 }

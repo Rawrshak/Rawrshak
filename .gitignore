@@ -1,8 +1,13 @@
 # folders
 node_modules
 build
+
+# graph-node generated data
 generated
 
-#openzeppelin
+# docker data
+data
+
+# openzeppelin
 .openzeppelin/dev-*.json
 .openzeppelin/.session
