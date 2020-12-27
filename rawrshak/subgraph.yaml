@@ -8,7 +8,7 @@ dataSources:
     name: OVCToken
     network: mainnet
     source:
-      address: "0xcE595C0BdCF67953E068176389B0c96d57dE5457"
+      address: "0x84c4708d2A9e33D7299C547382fe44884Cd48A7d"
       abi: OVCToken
     mapping:
       kind: ethereum/events

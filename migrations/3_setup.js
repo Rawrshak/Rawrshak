@@ -25,10 +25,10 @@ module.exports = async function(deployer, networks, accounts) {
 
     // get OVC token with 1,000,000,000 initial supply and send some
     ovcTokenContract = await OVCTokenContract.deployed();
-    // await ovcTokenContract.approve(deployerAddress, 1000000, {from:deployerAddress});
-    // await ovcTokenContract.transfer(player1Address, 10000, {from:deployerAddress});
-    // await ovcTokenContract.transfer(player2Address, 5000, {from:deployerAddress});
-    // await ovcTokenContract.transfer(player3Address, 15000, {from:deployerAddress});
+    await ovcTokenContract.approve(deployerAddress, 1000000, {from:deployerAddress});
+    await ovcTokenContract.transfer(player1Address, 10000, {from:deployerAddress});
+    await ovcTokenContract.transfer(player2Address, 5000, {from:deployerAddress});
+    await ovcTokenContract.transfer(player3Address, 15000, {from:deployerAddress});
 
     // set up GlobalItemRegistry Contract
     registry = await GlobalItemRegistry.deployed();
