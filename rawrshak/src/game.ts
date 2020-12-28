@@ -1,6 +1,4 @@
 import { ByteArray, BigInt, crypto } from "@graphprotocol/graph-ts"
-
-
 import { GameContractCreated } from "../generated/GameFactory/GameFactory"
 import { GameManager } from "../generated/templates/GameManager/GameManager"
 
@@ -19,7 +17,6 @@ import {
   Item,
   ItemBalance,
   Account,
-  TokenBalance
  } from "../generated/schema"
  import {Address} from "@graphprotocol/graph-ts/index";
 

@@ -45,4 +45,22 @@ type Item @entity {
   maxSupply: BigInt
   creatorAddress: Bytes!
   balances: [ItemBalance!] @derivedFrom(field: "item")
+  recipes: [RecipeEntry!] @derivedFrom(field: "item")
+}
+
+type RecipeEntry @entity {
+  id: ID!
+  recipe: Recipe!
+  item: Item!
+  amount: BigInt
+  isMaterial: Boolean
+}
+
+type Recipe @entity {
+  id: ID!
+  items: [RecipeEntry!] @derivedFrom(field: "recipe")
+  isActive: Boolean
+  token: Token!
+  cost: BigInt
+  craftedCount: BigInt
 }
