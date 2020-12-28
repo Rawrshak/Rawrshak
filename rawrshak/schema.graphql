@@ -20,7 +20,9 @@ type Account @entity {
   address: Bytes!
   tokenBalances: [TokenBalance!] @derivedFrom(field: "owner")
   games: [Game!] @derivedFrom(field: "owner")
+  lootboxes: [Lootbox!] @derivedFrom(field: "owner")
   items: [ItemBalance!] @derivedFrom(field: "owner")
+  unopenedLootboxes: [LootboxEntry!] @derivedFrom(field: "owner")
 }
 
 type Game @entity {
@@ -65,4 +67,43 @@ type Recipe @entity {
   token: Token
   cost: BigInt
   craftedCount: BigInt
+}
+
+type LootboxReward @entity {
+  id: ID!
+  lootbox: Lootbox!
+  item: Item!
+  amount: BigInt
+  rarity: Int
+  active: Boolean
+}
+
+type LootboxMaterial @entity {
+  id: ID!
+  lootbox: Lootbox!
+  item: Item!
+  requiredAmount: BigInt
+  multiplier: BigInt
+  active: Boolean
+}
+
+type LootboxEntry @entity {
+  id: ID!
+  owner: Account!
+  lootbox: Lootbox!
+  amount: BigInt
+  multiplier: BigInt
+  active: Boolean
+}
+
+type Lootbox @entity {
+  id: ID!
+  owner: Account!
+  contractId: BigInt!
+  tradeInMinimum: BigInt
+  materials: [LootboxMaterial!]
+  rewards: [LootboxReward!]
+  minted: BigInt
+  opened: BigInt
+  lootboxEntries: [LootboxEntry!] @derivedFrom(field: "lootbox")
 }

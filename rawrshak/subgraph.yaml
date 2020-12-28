@@ -68,26 +68,26 @@ dataSources:
       # eventHandlers:
       #   - event: CraftingContractCreated(uint256,address,address)
       #     handler: handleCraftingContractCreated
-  # - name: LootboxFactory
-  #   kind: ethereum/contract
-  #   network: mainnet
-  #   source:
-  #     address: "0xDD67288079bFc421e695D3313b1505309dFBe9e1"
-  #     abi: LootboxFactory
-  #   mapping:
-  #     kind: ethereum/events
-  #     apiVersion: 0.0.4
-  #     language: wasm/assemblyscript
-  #     file: ./src/lootbox.ts
-  #     entities:
-  #       - Lootbox
-  #       - Account
-  #     abis:
-  #       - name: LootboxFactory
-  #         file: ./abis/LootboxFactory.json
-  #     eventHandlers:
-  #       - event: LootboxContractCreated(uint256,address,address)
-  #         handler: handleLootboxContractCreated
+  - name: LootboxFactory
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      address: "0xDD67288079bFc421e695D3313b1505309dFBe9e1"
+      abi: LootboxFactory
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/lootbox.ts
+      entities:
+        - Lootbox
+        - Account
+      abis:
+        - name: LootboxFactory
+          file: ./abis/LootboxFactory.json
+      eventHandlers:
+        - event: LootboxContractCreated(uint256,address,address)
+          handler: handleLootboxContractCreated
 templates:
   - name: Game
     kind: ethereum/contract
@@ -166,7 +166,39 @@ templates:
         - event: RecipeActiveSet(uint256,uint256,bool)
           handler: handleRecipeActiveSet
         - event: RecipeCostUpdated(uint256,uint256,address,uint256)
-          handler: handleRecipeCostUpdated
+          handler: handleRecipeCostUpdated   
+  - name: Lootbox
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: Lootbox
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/lootbox.ts
+      entities:
+        - Lootbox
+        - Item
+        - Token
+        - LootboxMaterial
+        - LootboxReward
+        - LootboxEntry
+        - Account
+      abis:
+        - name: Lootbox
+          file: ./abis/Lootbox.json
+      eventHandlers:
+        - event: InputItemBatchRegistered(uint256,uint256[],uint256[],uint256[])
+          handler: handleInputItemBatchRegistered
+        - event: RewardItemBatchRegistered(uint256,uint256[],uint8[],uint256[])
+          handler: handleRewardItemBatchRegistered
+        - event: TradeMinimumSet(uint256,uint256)
+          handler: handleTradeMinimumSet
+        - event: LootboxGenerated(uint256,address,uint256)
+          handler: handleLootboxGenerated
+        - event: LootboxOpened(uint256,address,uint256,uint256[])
+          handler: handleLootboxOpened
   # Todo: remove when finished. Not completely sure if this is needed yet
   # - name: CraftingManager
   #   kind: ethereum/contract

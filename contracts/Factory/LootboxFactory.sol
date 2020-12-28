@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Lootbox.sol";
 
 library LootboxDeployer {
-    function deployLootbox(address _itemRegistryAddr, string memory _url) public returns(address lootbox) {
-        lootbox = address(new Lootbox(_itemRegistryAddr, _url));
+    function deployLootbox(uint256 _id, address _itemRegistryAddr, string memory _url) public returns(address lootbox) {
+        lootbox = address(new Lootbox(_id, _itemRegistryAddr, _url));
     } 
     
     function transferOwnership(address _contractAddr, address _newOwner) public {
@@ -32,7 +32,7 @@ contract LootboxFactory is ERC165 {
     
     /******** Events ********/
     event GlobalItemRegistryStored(address, address, bytes4);
-    event LootboxContractCreated(uint256, address, address);
+    event LootboxContractCreated(uint256 id, address contractAddr, address owner);
 
     /******** Public API ********/
     constructor() public {
@@ -58,10 +58,10 @@ contract LootboxFactory is ERC165 {
         );
         require(itemRegistryAddr != address(0), "Registry not set.");
         
-        contractAddr = LootboxDeployer.deployLootbox(itemRegistryAddr, _url);
+        contractId = lootboxAddresses.length;
+        contractAddr = LootboxDeployer.deployLootbox(contractId, itemRegistryAddr, _url);
         LootboxDeployer.transferOwnership(contractAddr, msg.sender);
 
-        contractId = lootboxAddresses.length;
         lootboxAddresses.push(contractAddr);
 
         emit LootboxContractCreated(contractId, contractAddr, msg.sender);
