@@ -8,7 +8,7 @@ dataSources:
     name: OVCToken
     network: mainnet
     source:
-      address: "0x84c4708d2A9e33D7299C547382fe44884Cd48A7d"
+      address: "0x49724343b090C1B00E067f43D282dA821DA04D08"
       abi: OVCToken
     mapping:
       kind: ethereum/events
@@ -27,3 +27,56 @@ dataSources:
           handler: handleTokenCreated
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
+  - kind: ethereum/contract
+    name: GameFactory
+    network: mainnet
+    source:
+      address: "0xDD67288079bFc421e695D3313b1505309dFBe9e1"
+      abi: GameFactory
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/game.ts
+      entities:
+        - Game
+        - Account
+      abis:
+        - name: GameFactory
+          file: ./abis/GameFactory.json
+      eventHandlers:
+        - event: GameContractCreated(uint256,address,address)
+          handler: handleGameContractCreated
+templates:
+  - name: Game
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: Game
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/game.ts
+      entities:
+        - Game
+        - Item
+        - ItemBalance
+      abis:
+        - name: Game
+          file: ./abis/Game.json
+      eventHandlers:
+        - event: GlobalItemRegistryStored(address,address,bytes4)
+          handler: handleGlobalItemRegistryStored
+        - event: GameManagerSet(address,address)
+          handler: handleGameManagerSet
+        - event: GameUriUpdated(address,string)
+          handler: handleGameUriUpdated
+        - event: ItemCreated(address,uint256,address,uint256)
+          handler: handleItemCreated
+        - event: ItemBatchCreated(address,uint256[],address,uint256[])
+          handler: handleItemBatchCreated
+        - event: ItemSupplyChanged(address,uint256,uint256)
+          handler: handleItemSupplyChanged
+        - event: ItemBatchSupplyChanged(address,uint256[],uint256[])
+          handler: handleItemBatchSupplyChanged

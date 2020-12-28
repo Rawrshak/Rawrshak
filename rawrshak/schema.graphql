@@ -1,11 +1,11 @@
 type Token @entity {
-    id: ID!
-    contractAddress: Bytes!
-    name: String!
-    symbol: String!
-    balances: [TokenBalance!] @derivedFrom(field: "token")
-    createdAt: BigInt!
-    supply: BigInt
+  id: ID!
+  contractAddress: Bytes!
+  name: String!
+  symbol: String!
+  balances: [TokenBalance!] @derivedFrom(field: "token")
+  createdAt: BigInt!
+  supply: BigInt
 }
 
 type TokenBalance @entity {
@@ -16,7 +16,34 @@ type TokenBalance @entity {
 }
 
 type Account @entity {
-    id: ID!
-    address: Bytes!
-    tokenBalances: [TokenBalance!] @derivedFrom(field: "owner")
+  id: ID!
+  address: Bytes!
+  tokenBalances: [TokenBalance!] @derivedFrom(field: "owner")
+  games: [Game!] @derivedFrom(field: "owner")
+  items: [ItemBalance!] @derivedFrom(field: "owner")
+}
+
+type Game @entity {
+  id: ID!
+  contractAddress: Bytes!
+  owner: Account!
+  gameManagerContractAddress: Bytes!
+  items: [Item!] @derivedFrom(field: "game")
+}
+
+type ItemBalance @entity {
+  id: ID!
+  item: Item!
+  owner: Account!
+  amount: BigInt
+}
+
+type Item @entity {
+  id: ID!
+  game: Game!
+  gameId: BigInt!
+  currentSupply: BigInt
+  maxSupply: BigInt
+  creatorAddress: Bytes!
+  balances: [ItemBalance!] @derivedFrom(field: "item")
 }
