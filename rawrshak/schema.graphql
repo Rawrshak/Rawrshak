@@ -92,18 +92,16 @@ type LootboxEntry @entity {
   owner: Account!
   lootbox: Lootbox!
   amount: BigInt
-  multiplier: BigInt
-  active: Boolean
 }
 
 type Lootbox @entity {
   id: ID!
   owner: Account!
-  contractId: BigInt!
+  contractAddress: Bytes!
   tradeInMinimum: BigInt
-  materials: [LootboxMaterial!]
-  rewards: [LootboxReward!]
   minted: BigInt
   opened: BigInt
+  materials: [LootboxMaterial!] @derivedFrom(field: "lootbox")
+  rewards: [LootboxReward!] @derivedFrom(field: "lootbox")
   lootboxEntries: [LootboxEntry!] @derivedFrom(field: "lootbox")
 }

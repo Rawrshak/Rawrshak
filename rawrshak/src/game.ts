@@ -18,7 +18,7 @@ import {
   ItemBalance,
   Account,
  } from "../generated/schema"
- import {Address} from "@graphprotocol/graph-ts/index";
+import {Address} from "@graphprotocol/graph-ts/index";
 
 export function handleGameContractCreated(event: GameContractCreated): void {
   let id = event.params.id.toHex();
