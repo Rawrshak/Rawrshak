@@ -47,26 +47,27 @@ dataSources:
       eventHandlers:
         - event: GameContractCreated(uint256,address,address)
           handler: handleGameContractCreated
-  - name: CraftingFactory
-    kind: ethereum/contract
-    network: mainnet
-    source:
-      address: "0xDD67288079bFc421e695D3313b1505309dFBe9e1"
-      abi: CraftingFactory
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      file: ./src/crafting.ts
-      entities:
-        - Crafting
-        - Account
-      abis:
-        - name: CraftingFactory
-          file: ./abis/CraftingFactory.json
-      eventHandlers:
-        - event: CraftingContractCreated(uint256,address,address)
-          handler: handleCraftingContractCreated
+  # Todo: remove when finished. Not completely sure if this is needed yet
+  # - name: CraftingFactory
+  #   kind: ethereum/contract
+  #   network: mainnet
+  #   source:
+  #     address: "0xDD67288079bFc421e695D3313b1505309dFBe9e1"
+  #     abi: CraftingFactory
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.4
+  #     language: wasm/assemblyscript
+  #     file: ./src/crafting.ts
+  #     entities:
+  #       - Crafting
+  #       - Account
+  #     abis:
+  #       - name: CraftingFactory
+  #         file: ./abis/CraftingFactory.json
+      # eventHandlers:
+      #   - event: CraftingContractCreated(uint256,address,address)
+      #     handler: handleCraftingContractCreated
   # - name: LootboxFactory
   #   kind: ethereum/contract
   #   network: mainnet
@@ -154,8 +155,6 @@ templates:
         - name: Crafting
           file: ./abis/Crafting.json
       eventHandlers:
-        - event: CraftingManagerSet(uint256,address)
-          handler: handleCraftingManagerSet
         - event: ItemCrafted(uint256,uint256,address)
           handler: handleItemCrafted
         - event: RecipeCreated(uint256,uint256)
@@ -168,18 +167,19 @@ templates:
           handler: handleRecipeActiveSet
         - event: RecipeCostUpdated(uint256,uint256,address,uint256)
           handler: handleRecipeCostUpdated
-  - name: CraftingManager
-    kind: ethereum/contract
-    network: mainnet
-    source:
-      abi: CraftingManager
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      file: ./src/crafting.ts
-      entities:
-        - Recipe
-      abis:
-        - name: CraftingManager
-          file: ./abis/CraftingManager.json
+  # Todo: remove when finished. Not completely sure if this is needed yet
+  # - name: CraftingManager
+  #   kind: ethereum/contract
+  #   network: mainnet
+  #   source:
+  #     abi: CraftingManager
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.4
+  #     language: wasm/assemblyscript
+  #     file: ./src/crafting.ts
+  #     entities:
+  #       - Recipe
+  #     abis:
+  #       - name: CraftingManager
+  #         file: ./abis/CraftingManager.json

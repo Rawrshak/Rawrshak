@@ -58,9 +58,11 @@ type RecipeEntry @entity {
 
 type Recipe @entity {
   id: ID!
+  contractId: BigInt!
+  recipeId: BigInt!
   items: [RecipeEntry!] @derivedFrom(field: "recipe")
   isActive: Boolean
-  token: Token!
+  token: Token
   cost: BigInt
   craftedCount: BigInt
 }
