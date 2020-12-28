@@ -66,17 +66,32 @@ templates:
         - name: Game
           file: ./abis/Game.json
       eventHandlers:
-        - event: GlobalItemRegistryStored(address,address,bytes4)
-          handler: handleGlobalItemRegistryStored
-        - event: GameManagerSet(address,address)
+        - event: GameManagerSet(uint256,address)
           handler: handleGameManagerSet
-        - event: GameUriUpdated(address,string)
-          handler: handleGameUriUpdated
-        - event: ItemCreated(address,uint256,address,uint256)
+        - event: ItemCreated(uint256,uint256,address,uint256)
           handler: handleItemCreated
-        - event: ItemBatchCreated(address,uint256[],address,uint256[])
+        - event: ItemBatchCreated(uint256,uint256[],address,uint256[])
           handler: handleItemBatchCreated
-        - event: ItemSupplyChanged(address,uint256,uint256)
+        - event: ItemSupplyChanged(uint256,uint256,uint256)
           handler: handleItemSupplyChanged
-        - event: ItemBatchSupplyChanged(address,uint256[],uint256[])
+        - event: ItemBatchSupplyChanged(uint256,uint256[],uint256[])
           handler: handleItemBatchSupplyChanged
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleTransferSingle
+        - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+          handler: handleTransferBatch
+  - name: GameManager
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      abi: GameManager
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/game.ts
+      entities:
+        - Game
+      abis:
+        - name: GameManager
+          file: ./abis/GameManager.json
