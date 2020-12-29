@@ -50,14 +50,16 @@ export function handleItemCreated(event: ItemCreated): void {
 }
 
 export function handleItemBatchCreated(event: ItemBatchCreated): void {
-  for (let index = 0, length = event.params.ids.length; index < length; ++index) {
-    let id = event.params.ids[index].toHex();
+  let ids = event.params.ids;
+  let maxSupplies = event.params.maxSupplies;
+  for (let index = 0, length = ids.length; index < length; ++index) {
+    let id = ids[index].toHex();
     let item = Item.load(id);
     if (item == null) {
       item = new Item(id);
     }
     item.game = event.params.gameId.toHex();
-    item.maxSupply = event.params.maxSupplies[index];
+    item.maxSupply = maxSupplies[index];
     item.currentSupply = BigInt.fromI32(0);
     item.creatorAddress = event.params.creatorAddr;
     item.save();
@@ -74,19 +76,20 @@ export function handleItemSupplyChanged(event: ItemSupplyChanged): void {
 }
 
 export function handleItemBatchSupplyChanged(event: ItemBatchSupplyChanged): void {
+  let ids = event.params.ids;
+  let currentSupplies = event.params.currentSupplies;
   for (let index = 0, length = event.params.ids.length; index < length; ++index) {
-    let id = event.params.ids[index].toHex();
+    let id = ids[index].toHex();
     let item = Item.load(id);
     if (item != null) {
-      item.currentSupply = event.params.currentSupplies[index];
+      item.currentSupply = currentSupplies[index];
       item.save();
     }
   }
 }
 
 export function handleTransferSingle(event: TransferSingle): void {
-  let gameContract = Game.bind(event.address);
-  let id = crypto.keccak256(concat(gameContract.gameId(), event.params.to)).toHexString();
+  let id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.to)).toHex();
   let itemBalance = ItemBalance.load(id);
   if (itemBalance == null) {
     itemBalance = new ItemBalance(id);
@@ -98,7 +101,7 @@ export function handleTransferSingle(event: TransferSingle): void {
   itemBalance.save();
 
   // remove item from the previous owner
-  id = crypto.keccak256(concat(gameContract.gameId(), event.params.from)).toHexString();
+  id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.from)).toHex();
   itemBalance = ItemBalance.load(id);
   if (itemBalance != null) {
     itemBalance.amount = itemBalance.amount.minus(event.params.value);
@@ -107,24 +110,25 @@ export function handleTransferSingle(event: TransferSingle): void {
 }
 
 export function handleTransferBatch(event: TransferBatch): void {
-  for (let index = 0, length = event.params.ids.length; index < length; ++index) {
+  let values = event.params.values;
+  let ids = event.params.ids;
+  for (let index = 0, length = ids.length; index < length; ++index) {
     // operator, from, to, id, value
-    let gameContract = Game.bind(event.address);
-    let id = crypto.keccak256(concat(gameContract.gameId(), event.params.to)).toHexString();
+    let id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.to)).toHex();
     let itemBalance = ItemBalance.load(id);
     if (itemBalance == null) {
       itemBalance = new ItemBalance(id);
     }
     itemBalance.owner = event.params.to.toHex();
-    itemBalance.item = event.params.ids[index].toHex();
-    itemBalance.amount = event.params.values[index];
+    itemBalance.item = ids[index].toHex();
+    itemBalance.amount = values[index];
     itemBalance.save();
 
     // remove item from the previous owner
-    id = crypto.keccak256(concat(gameContract.gameId(), event.params.from)).toHexString();
+    id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.from)).toHex();
     itemBalance = ItemBalance.load(id);
     if (itemBalance != null) {
-      itemBalance.amount = itemBalance.amount.minus(event.params.values[index]);
+      itemBalance.amount = itemBalance.amount.minus(values[index]);
     }
     itemBalance.save();
   }

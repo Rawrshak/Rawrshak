@@ -18,8 +18,10 @@ import {Address} from "@graphprotocol/graph-ts/index";
 
 export function handleRecipeCreated(event: RecipeCreated): void {
   // uint256 id, uint256 recipeId
-  let id =  crypto.keccak256(concat(event.params.id.toI32(), event.params.recipeId.toI32())).toHexString();
-  let recipe = new Recipe(id);
+  let id = ByteArray.fromI32(event.params.id.toI32());
+  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
+  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
+  let recipe = new Recipe(hashId);
   recipe.contractId = event.params.id;
   recipe.recipeId = event.params.recipeId;
   recipe.isActive = false;
@@ -30,15 +32,21 @@ export function handleRecipeCreated(event: RecipeCreated): void {
 
 export function handleRecipeMaterialsUpdated(event: RecipeMaterialsUpdated): void {
   // (uint256 id, uint256 recipeId, uint256[] materialIds, uint256[] amounts);
-  for (let index = 0, length = event.params.materialIds.length; index < length; ++index) {
+  let materialIds = event.params.materialIds;
+  let amounts = event.params.amounts;
+  let id = ByteArray.fromI32(event.params.id.toI32());
+  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
+  let recipeIdByteArray = crypto.keccak256(concat(id, recipeId));
+  for (let index = 0, length = materialIds.length; index < length; ++index) {
     // operator, from, to, id, value
-    let recipeIdByteArray = crypto.keccak256(concat(event.params.id.toI32(), event.params.recipeId.toI32()));
-    let recipeIdString = recipeIdByteArray.toHexString();
-    let materialId = crypto.keccak256(concat(recipeIdByteArray, event.params.materialIds[index].toI32())).toHexString();
-    let materialItem = new RecipeEntry(materialId);
-    materialItem.recipe = recipeIdString;
-    materialItem.item = event.params.materialIds[index].toHex();
-    materialItem.amount = event.params.amounts[index];
+    let materialId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromI32(materialIds[index].toI32()))).toHex();
+    let materialItem = RecipeEntry.load(materialId);
+    if (materialItem == null) {
+      materialItem = new RecipeEntry(materialId);
+    }
+    materialItem.recipe = recipeIdByteArray.toHex();
+    materialItem.item = materialIds[index].toHex();
+    materialItem.amount = amounts[index];
     materialItem.isMaterial = true;
     materialItem.save();
   }
@@ -46,15 +54,21 @@ export function handleRecipeMaterialsUpdated(event: RecipeMaterialsUpdated): voi
 
 export function handleRecipeRewardsUpdated(event: RecipeRewardsUpdated): void {
   // (uint256 id, uint256 recipeId, uint256[] materialIds, uint256[] amounts);
-  for (let index = 0, length = event.params.rewardsId.length; index < length; ++index) {
+  let rewardsId = event.params.rewardsId;
+  let amounts = event.params.amounts;
+  let id = ByteArray.fromI32(event.params.id.toI32());
+  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
+  let recipeIdByteArray = crypto.keccak256(concat(id, recipeId));
+  for (let index = 0, length = rewardsId.length; index < length; ++index) {
     // operator, from, to, id, value
-    let recipeIdByteArray = crypto.keccak256(concat(event.params.id.toI32(), event.params.recipeId.toI32()));
-    let recipeIdString = recipeIdByteArray.toHexString();
-    let rewardId = crypto.keccak256(concat(recipeIdByteArray, event.params.rewardsId[index].toI32())).toHexString();
+    let rewardId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromI32(rewardsId[index].toI32()))).toHex();
     let rewardItem = new RecipeEntry(rewardId);
-    rewardItem.recipe = recipeIdString;
-    rewardItem.item = event.params.rewardsId[index].toHex();
-    rewardItem.amount = event.params.amounts[index];
+    if (rewardItem == null) {
+      rewardItem = new RecipeEntry(rewardId);
+    }
+    rewardItem.recipe = recipeIdByteArray.toHex();
+    rewardItem.item = rewardsId[index].toHex();
+    rewardItem.amount = amounts[index];
     rewardItem.isMaterial = false;
     rewardItem.save();
   }
@@ -62,8 +76,10 @@ export function handleRecipeRewardsUpdated(event: RecipeRewardsUpdated): void {
 
 export function handleRecipeActiveSet(event: RecipeActiveSet): void {
   // uint256 id, uint256 recipeId, bool isActive
-  let id =  crypto.keccak256(concat(event.params.id.toI32(), event.params.recipeId.toI32())).toHexString();
-  let recipe = Recipe.load(id);
+  let id = ByteArray.fromI32(event.params.id.toI32());
+  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
+  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
+  let recipe = Recipe.load(hashId);
   if (recipe != null) {
     recipe.isActive = event.params.isActive;
     recipe.save();
@@ -72,8 +88,10 @@ export function handleRecipeActiveSet(event: RecipeActiveSet): void {
 
 export function handleRecipeCostUpdated(event: RecipeCostUpdated): void {
   // uint256 id, uint256 recipeId, address tokenAddress, uint256 cost
-  let id =  crypto.keccak256(concat(event.params.id.toI32(), event.params.recipeId.toI32())).toHexString();
-  let recipe = Recipe.load(id);
+  let id = ByteArray.fromI32(event.params.id.toI32());
+  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
+  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
+  let recipe = Recipe.load(hashId);
   if (recipe != null) {
     let tokenContract = OVCToken.bind(event.address);
     recipe.token = tokenContract.tokenId().toHex();
@@ -84,8 +102,10 @@ export function handleRecipeCostUpdated(event: RecipeCostUpdated): void {
 
 export function handleItemCrafted(event: ItemCrafted): void {
   // uint256 id, uint256 recipeId, address owner
-  let id =  crypto.keccak256(concat(event.params.id.toI32(), event.params.recipeId.toI32())).toHexString();
-  let recipe = Recipe.load(id);
+  let id = ByteArray.fromI32(event.params.id.toI32());
+  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
+  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
+  let recipe = Recipe.load(hashId);
   if (recipe != null) {
     recipe.craftedCount = recipe.craftedCount.plus(BigInt.fromI32(1));
     recipe.save();

@@ -58,8 +58,9 @@ export function handleClaimed(event: Claimed): void {
 }
 
 export function handleClaimedAll(event: ClaimedAll): void {
-    for (let index = 0, length = event.params.orderIds.length; index < length; ++index) {
-        let order = Order.load(event.params.orderIds[index].toHex());
+    let orderIds = event.params.orderIds;
+    for (let index = 0, length = orderIds.length; index < length; ++index) {
+        let order = Order.load(orderIds[index].toHex());
         if (order != null && order.isClaimable == true) {
             order.isClaimable = false;
             order.claimedAt = event.block.timestamp;
