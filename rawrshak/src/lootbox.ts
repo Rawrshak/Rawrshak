@@ -5,17 +5,17 @@ import {
     RewardItemBatchRegistered,
     TradeMinimumSet,
     LootboxGenerated,
-    LootboxOpened
+    LootboxOpened, 
+    TransferSingle,
+    TransferBatch
 } from "../generated/templates/Lootbox/Lootbox"
 
 import { 
     Lootbox,
-    Item,
     LootboxEntry,
     LootboxMaterial,
-    LootboxReward,
-    Account
-   } from "../generated/schema"
+    LootboxReward
+} from "../generated/schema"
    
 export function handleLootboxContractCreated(event: LootboxContractCreated): void {
   let id = event.params.id.toHex();
@@ -84,6 +84,52 @@ export function handleLootboxOpened(event: LootboxOpened): void {
   if (lootboxEntry != null) {
     lootboxEntry.amount = lootboxEntry.amount.minus(event.params.amount);
     lootboxEntry.save();
+  }
+}
+
+export function handleTransferSingle(event: TransferSingle): void {
+  let lootboxContract = Lootbox.bind(event.address);
+  let lootboxEntryId = crypto.keccak256(concat(event.params.id.toI32(), event.params.to)).toHexString();
+  let lootboxEntry = LootboxEntry.load(lootboxEntryId);
+  if (lootboxEntry == null) {
+    lootboxEntry = new LootboxEntry(lootboxEntryId);
+    lootboxEntry.amount = BigInt.fromI32(0);
+  }
+  lootboxEntry.owner = event.params.to.toHex();
+  lootboxEntry.lootbox = lootboxContract.lootboxId().toHex();
+  lootboxEntry.amount = lootboxEntry.amount.plus(event.params.value);
+  lootboxEntry.save();
+
+  // remove lootbox from the previous owner
+  lootboxEntryId = crypto.keccak256(concat(lootboxContract.gameId(), event.params.from)).toHexString();
+  lootboxEntry = LootboxEntry.load(lootboxEntryId);
+  if (lootboxEntry != null) {
+    lootboxEntry.amount = lootboxEntry.amount.minus(event.params.value);
+    lootboxEntry.save();
+  }
+}
+
+export function handleTransferBatch(event: TransferBatch): void {
+  let lootboxContract = Lootbox.bind(event.address);
+  for (let index = 0, length = event.params.ids.length; index < length; ++index) {
+    let lootboxEntryId = crypto.keccak256(concat(event.params.ids[index].toI32(), event.params.to)).toHexString();
+    let lootboxEntry = LootboxEntry.load(lootboxEntryId);
+    if (lootboxEntry == null) {
+      lootboxEntry = new LootboxEntry(lootboxEntryId);
+      lootboxEntry.amount = BigInt.fromI32(0);
+    }
+    lootboxEntry.owner = event.params.to.toHex();
+    lootboxEntry.lootbox = lootboxContract.lootboxId().toHex();
+    lootboxEntry.amount = lootboxEntry.amount.plus(event.params.values[index]);
+    lootboxEntry.save();
+  
+    // remove lootbox from the previous owner
+    lootboxEntryId = crypto.keccak256(concat(lootboxContract.gameId(), event.params.from)).toHexString();
+    lootboxEntry = LootboxEntry.load(lootboxEntryId);
+    if (lootboxEntry != null) {
+      lootboxEntry.amount = lootboxEntry.amount.minus(event.params.values[index]);
+      lootboxEntry.save();
+    }
   }
 }
 

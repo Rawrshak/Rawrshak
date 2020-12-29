@@ -90,10 +90,11 @@ export function handleTransferSingle(event: TransferSingle): void {
   let itemBalance = ItemBalance.load(id);
   if (itemBalance == null) {
     itemBalance = new ItemBalance(id);
+    itemBalance.amount = BigInt.fromI32(0);
   }
   itemBalance.owner = event.params.to.toHex();
   itemBalance.item = event.params.id.toHex();
-  itemBalance.amount = event.params.value;
+  itemBalance.amount = itemBalance.amount.plus(event.params.value);
   itemBalance.save();
 
   // remove item from the previous owner

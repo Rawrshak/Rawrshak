@@ -11,9 +11,7 @@ import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IExchange.sol";
 import "./ExchangeEscrow.sol";
 
-// Todo: Add multiple bids/asks per user
-// Todo: Allow both bid and ask at the same time (but not for the same price)
-// Todo: Add Claim all function
+// Todo: change Order price from uint256 to big decimal. currently at uint256 for simplicity and testing
 
 contract Exchange is IExchange, Ownable, ERC165 {
     using ERC165Checker for *;
@@ -44,8 +42,8 @@ contract Exchange is IExchange, Ownable, ERC165 {
         address user;
         address token;
         uint256 itemUUID;
-		uint price;
-        uint amount;
+		uint256 price;
+        uint256 amount;
         bool isBid;
         bool claimable;
     }
