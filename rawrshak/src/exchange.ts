@@ -1,5 +1,5 @@
 import { ByteArray, BigInt, crypto } from "@graphprotocol/graph-ts"
-import { OVCToken } from "../generated/OVCToken/OVCToken"
+import { OVCToken } from "../generated/Exchange/OVCToken"
 import {
     OrderPlaced,
     OrderDeleted,

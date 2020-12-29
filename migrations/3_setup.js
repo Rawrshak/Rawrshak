@@ -93,6 +93,7 @@ module.exports = async function(deployer, networks, accounts) {
     await gameManager.grantRole(minter_role, lootboxAddr, {from: deployerAddress, gasPrice: 1});
     await gameManager.grantRole(burner_role, lootboxAddr, {from: deployerAddress, gasPrice: 1});
     
+    // Game Data
     // Add some test items
     [material1, material2, material3] = [0,1,2];
     await gameManager.createItem(player1Address, material1, 0, {from:deployerAddress, gasPrice: 1});
@@ -110,7 +111,46 @@ module.exports = async function(deployer, networks, accounts) {
 
     // burn
     await gameManager.burn(player3Address, material1, 7, {from:deployerAddress, gasPrice: 1});
+
+    // Exchange Data
+    // Create 2 Bids and 2 Asks
+    await ovcTokenContract.approve(exchange.address, 500, {from: player2Address, gasPrice: 1});
+    await game.setApprovalForAll(exchange.address, true, {from: player2Address, gasPrice: 1});
+    await game.setApprovalForAll(exchange.address, true, {from: player3Address, gasPrice: 1});
+    
+    uuid1 = await registry.getUUID(game.address, material1);
+    uuid2 = await registry.getUUID(game.address, material2);
+    uuid3 = await registry.getUUID(game.address, material3);
+
+    // Player 2 wants to buy Mat1 and Mat2
+    bidPlacedEvent = await exchange.placeBid(player2Address, ovcTokenContract.address, uuid1, 1, 100);
+    await exchange.placeBid(player2Address, ovcTokenContract.address, uuid2, 2, 100);
+
+    // Player 2 is selling Mat3
+    // Player 3 is selling Mat1
+    askPlacedEvent = await exchange.placeAsk(player2Address, ovcTokenContract.address, uuid3, 1, 200);
+    askPlacedEvent2 = await exchange.placeAsk(player3Address, ovcTokenContract.address, uuid1, 1, 300);
+
+    // Delete 1 Bid
+    orderId = bidPlacedEvent.logs[0].args[6];
+    await exchange.deleteOrder(orderId, {from: player2Address, gasPrice: 1});
+
+    // Fullfill asks
+    orderId = askPlacedEvent.logs[0].args[6];
+    await ovcTokenContract.approve(exchange.address, 500, {from: player1Address, gasPrice: 1});
+    await exchange.fullfillOrder(orderId, {from: player1Address, gasPrice: 1});
+    
+    orderId = askPlacedEvent2.logs[0].args[6];
+    await exchange.fullfillOrder(orderId, {from: player1Address, gasPrice: 1});
+
+    // Claim Player 2 sold material
+    await exchange.claim(orderId, {from: player2Address, gasPrice: 1});
         
+
+
+
+
+    
     // // Note: This is for debugging purposes
     // gc_manager_role = await game.MANAGER_ROLE();
     // await game.grantRole(gc_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});

@@ -44,6 +44,7 @@ type ItemBalance @entity {
 type Item @entity {
   id: ID!
   game: Game!
+  gameItemId: BigInt
   currentSupply: BigInt
   maxSupply: BigInt
   creatorAddress: Bytes!

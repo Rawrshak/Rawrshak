@@ -26,7 +26,7 @@ import {
   Game as GameContract
 } from "../generated/templates"
 
-let registryAddress = '0x490C35C0f92C9F32e22268fD5629cAFcB0405DAd';
+let registryAddress = '0x7739EF2b860096E7D5B4ef6fb30FCf5eAc0e70C1';
 let registry = GlobalItemRegistry.bind(Address.fromHexString(registryAddress) as Address);
 let zeroAddress = '0x0000000000000000000000000000000000000000';
 
@@ -56,6 +56,7 @@ export function handleItemCreated(event: ItemCreated): void {
   let id = registry.getUUID(event.address, event.params.id).toHex();
   let item = new Item(id);
   item.game = event.params.gameId.toHex();
+  item.gameItemId = event.params.id;
   item.maxSupply = event.params.maxSupply;
   item.currentSupply = BigInt.fromI32(0);
   item.creatorAddress = event.params.creatorAddr;
@@ -72,6 +73,7 @@ export function handleItemBatchCreated(event: ItemBatchCreated): void {
       item = new Item(id);
     }
     item.game = event.params.gameId.toHex();
+    item.gameItemId = ids[index];
     item.maxSupply = maxSupplies[index];
     item.currentSupply = BigInt.fromI32(0);
     item.creatorAddress = event.params.creatorAddr;

@@ -8,7 +8,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x1E249B1056Aa22D1c667D33F56A8DB4a869c366F"
+      address: "0xDf53B69B8C3419A28A246CF2f96F2BF9bCa4827d"
       abi: OVCToken
     mapping:
       kind: ethereum/events
@@ -31,7 +31,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x4f05c3432F9e51f1d0194472263D044B7039c31C"
+      address: "0x5DAA9b97b27E8e45d621097C4838664438972ea3"
       abi: GameFactory
     mapping:
       kind: ethereum/events
@@ -53,7 +53,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x52098d171f8843AecA208aE3107b4395B59A1BF8"
+      address: "0x2288fA9Fc3dE9b19AB7e511a252750c4356fba2d"
       abi: LootboxFactory
     mapping:
       kind: ethereum/events
@@ -73,7 +73,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x1Bfa57A38F55C9C03a377276eadE4415df217eEb"
+      address: "0xDf184756c999b4d92CAcEc453daEd164193239F3"
       abi: Exchange
     mapping:
       kind: ethereum/events
@@ -88,6 +88,8 @@ dataSources:
       abis:
         - name: Exchange
           file: ./abis/Exchange.json
+        - name: OVCToken
+          file: ./abis/OVCToken.json
       eventHandlers:
         - event: OrderPlaced(address,address,uint256,uint256,uint256,bool,uint256)
           handler: handleOrderPlaced
