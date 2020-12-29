@@ -23,6 +23,7 @@ type Account @entity {
   lootboxes: [Lootbox!] @derivedFrom(field: "owner")
   items: [ItemBalance!] @derivedFrom(field: "owner")
   unopenedLootboxes: [LootboxEntry!] @derivedFrom(field: "owner")
+  orders: [Order!] @derivedFrom(field: "owner")
 }
 
 type Game @entity {
@@ -48,6 +49,7 @@ type Item @entity {
   creatorAddress: Bytes!
   balances: [ItemBalance!] @derivedFrom(field: "item")
   recipes: [RecipeEntry!] @derivedFrom(field: "item")
+  orders: [Order!] @derivedFrom(field: "item")
 }
 
 type RecipeEntry @entity {
@@ -104,4 +106,21 @@ type Lootbox @entity {
   materials: [LootboxMaterial!] @derivedFrom(field: "lootbox")
   rewards: [LootboxReward!] @derivedFrom(field: "lootbox")
   lootboxEntries: [LootboxEntry!] @derivedFrom(field: "lootbox")
+}
+
+type Order @entity {
+  id: ID!
+  owner: Account!
+  item: Item!
+  amount: BigInt
+  token: Token!
+  price: BigInt
+  isBid: Boolean
+  isClaimable: Boolean
+  isCancelled: Boolean
+  isFullfilled: Boolean
+  createdAt: BigInt
+  fullfilledAt: BigInt
+  claimedAt: BigInt
+  cancelledAt: BigInt
 }

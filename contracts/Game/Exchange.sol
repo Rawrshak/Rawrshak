@@ -59,11 +59,11 @@ contract Exchange is IExchange, Ownable, ERC165 {
 
     /******** Events ********/
     event GlobalItemRegistryStored(address, address, bytes4);
-    event OrderPlaced(address, address, uint256, uint256, uint256, bool, uint256);
-    event OrderDeleted(address, uint256);
-    event OrderFullfilled(uint256, address, address, uint256, uint256, uint256);
-    event Claimed(address, uint256);
-    event ClaimedAll(address, uint256[]);
+    event OrderPlaced(address user, address token, uint256 itemId, uint256 amount, uint256 price, bool isBid, uint256 orderId);
+    event OrderDeleted(address owner, uint256 orderId);
+    event OrderFullfilled(uint256 orderId, address user, address orderOwner, uint256 itemId, uint256 amount, uint256 price);
+    event Claimed(address owner, uint256 orderId);
+    event ClaimedAll(address owner, uint256[] orderIds);
 
     /******** Modifiers ********/
     modifier checkItemExists(uint256 _uuid) {

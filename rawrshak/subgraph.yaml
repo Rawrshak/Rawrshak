@@ -88,6 +88,36 @@ dataSources:
       eventHandlers:
         - event: LootboxContractCreated(uint256,address,address)
           handler: handleLootboxContractCreated
+  - name: Exchange
+    kind: ethereum/contract
+    network: mainnet
+    source:
+      address: "0xDD67288079bFc421e695D3313b1505309dFBe9e1"
+      abi: Exchange
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/exchange.ts
+      entities:
+        - Order
+        - Account
+        - Token
+        - Item
+      abis:
+        - name: Exchange
+          file: ./abis/Exchange.json
+      eventHandlers:
+        - event: OrderPlaced(address,address,uint256,uint256,uint256,bool,uint256)
+          handler: handleOrderPlaced
+        - event: OrderDeleted(address,uint256)
+          handler: handleOrderDeleted
+        - event: OrderFullfilled(uint256,address,address,uint256,uint256,uint256)
+          handler: handleOrderFullfilled
+        - event: Claimed(address,uint256)
+          handler: handleClaimed
+        - event: ClaimedAll(address,uint256[])
+          handler: handleClaimedAll
 templates:
   - name: Game
     kind: ethereum/contract
@@ -199,6 +229,11 @@ templates:
           handler: handleLootboxGenerated
         - event: LootboxOpened(uint256,address,uint256,uint256[])
           handler: handleLootboxOpened
+        # Todo: Add TransferSingle and TransferBatch
+        # - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+        #   handler: handleTransferSingle
+        # - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+        #   handler: handleTransferBatch
   # Todo: remove when finished. Not completely sure if this is needed yet
   # - name: CraftingManager
   #   kind: ethereum/contract
