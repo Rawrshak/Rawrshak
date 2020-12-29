@@ -12,17 +12,29 @@ import {
   TransferBatch,
 } from "../generated/templates/Game/Game"
 
+import { GlobalItemRegistry } from "../generated/templates/Game/GlobalItemRegistry"
+
 import { 
-  Game,
+  Game as GameData,
   Item,
   ItemBalance,
   Account,
  } from "../generated/schema"
 import {Address} from "@graphprotocol/graph-ts/index";
 
+import {
+  Game as GameContract
+} from "../generated/templates"
+
+let registryAddress = '0x490C35C0f92C9F32e22268fD5629cAFcB0405DAd';
+let registry = GlobalItemRegistry.bind(Address.fromHexString(registryAddress) as Address);
+let zeroAddress = '0x0000000000000000000000000000000000000000';
+
 export function handleGameContractCreated(event: GameContractCreated): void {
+  // Start indexing events from GameContract address 
+  GameContract.create(event.params.addr);
   let id = event.params.id.toHex();
-  let game = new Game(id);
+  let game = new GameData(id);
   game.contractAddress = event.params.addr;
   let managerContract = GameManager.bind(event.params.owner);
   game.owner = managerContract.owner().toHex();
@@ -32,7 +44,7 @@ export function handleGameContractCreated(event: GameContractCreated): void {
 
 export function handleGameManagerSet(event: GameManagerSet): void {
   let id = event.params.gameId.toHex();
-  let game = Game.load(id);
+  let game = GameData.load(id);
   if (game != null) {
     game.gameManagerContractAddress = event.params.managerAddr;
     game.save();
@@ -40,7 +52,8 @@ export function handleGameManagerSet(event: GameManagerSet): void {
 }
 
 export function handleItemCreated(event: ItemCreated): void {
-  let id = event.params.id.toHex();
+  // Note: Hardcoding latest registry address
+  let id = registry.getUUID(event.address, event.params.id).toHex();
   let item = new Item(id);
   item.game = event.params.gameId.toHex();
   item.maxSupply = event.params.maxSupply;
@@ -53,7 +66,7 @@ export function handleItemBatchCreated(event: ItemBatchCreated): void {
   let ids = event.params.ids;
   let maxSupplies = event.params.maxSupplies;
   for (let index = 0, length = ids.length; index < length; ++index) {
-    let id = ids[index].toHex();
+    let id = registry.getUUID(event.address, ids[index]).toHex();
     let item = Item.load(id);
     if (item == null) {
       item = new Item(id);
@@ -67,7 +80,7 @@ export function handleItemBatchCreated(event: ItemBatchCreated): void {
 }
 
 export function handleItemSupplyChanged(event: ItemSupplyChanged): void {
-  let id = event.params.id.toHex();
+  let id = registry.getUUID(event.address, event.params.id).toHex();
   let item = Item.load(id);
   if (item != null) {
     item.currentSupply = event.params.currentSupply;
@@ -79,7 +92,7 @@ export function handleItemBatchSupplyChanged(event: ItemBatchSupplyChanged): voi
   let ids = event.params.ids;
   let currentSupplies = event.params.currentSupplies;
   for (let index = 0, length = event.params.ids.length; index < length; ++index) {
-    let id = ids[index].toHex();
+    let id = registry.getUUID(event.address, ids[index]).toHex();
     let item = Item.load(id);
     if (item != null) {
       item.currentSupply = currentSupplies[index];
@@ -89,24 +102,26 @@ export function handleItemBatchSupplyChanged(event: ItemBatchSupplyChanged): voi
 }
 
 export function handleTransferSingle(event: TransferSingle): void {
-  let id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.to)).toHex();
-  let itemBalance = ItemBalance.load(id);
-  if (itemBalance == null) {
-    itemBalance = new ItemBalance(id);
-    itemBalance.amount = BigInt.fromI32(0);
+  if (event.params.to.toHex() != zeroAddress) {
+    let id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.to)).toHex();
+    let itemBalance = ItemBalance.load(id);
+    if (itemBalance == null) {
+      itemBalance = new ItemBalance(id);
+      itemBalance.amount = BigInt.fromI32(0);
+      itemBalance.owner = event.params.to.toHex();
+      itemBalance.item = registry.getUUID(event.address, event.params.id).toHex();
+    }
+    itemBalance.amount = itemBalance.amount.plus(event.params.value);
+    itemBalance.save();
   }
-  itemBalance.owner = event.params.to.toHex();
-  itemBalance.item = event.params.id.toHex();
-  itemBalance.amount = itemBalance.amount.plus(event.params.value);
-  itemBalance.save();
 
   // remove item from the previous owner
-  id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.from)).toHex();
-  itemBalance = ItemBalance.load(id);
+  let id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.from)).toHex();
+  let itemBalance = ItemBalance.load(id);
   if (itemBalance != null) {
     itemBalance.amount = itemBalance.amount.minus(event.params.value);
+    itemBalance.save();
   }
-  itemBalance.save();
 }
 
 export function handleTransferBatch(event: TransferBatch): void {
@@ -114,23 +129,26 @@ export function handleTransferBatch(event: TransferBatch): void {
   let ids = event.params.ids;
   for (let index = 0, length = ids.length; index < length; ++index) {
     // operator, from, to, id, value
-    let id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.to)).toHex();
-    let itemBalance = ItemBalance.load(id);
-    if (itemBalance == null) {
-      itemBalance = new ItemBalance(id);
+    if (event.params.to.toHex() != zeroAddress) {
+      let id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.to)).toHex();
+      let itemBalance = ItemBalance.load(id);
+      if (itemBalance == null) {
+        itemBalance = new ItemBalance(id);
+      }
+      itemBalance.owner = event.params.to.toHex();
+      
+      itemBalance.item = registry.getUUID(event.address, ids[index]).toHex();
+      itemBalance.amount = values[index];
+      itemBalance.save();
     }
-    itemBalance.owner = event.params.to.toHex();
-    itemBalance.item = ids[index].toHex();
-    itemBalance.amount = values[index];
-    itemBalance.save();
 
     // remove item from the previous owner
-    id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.from)).toHex();
-    itemBalance = ItemBalance.load(id);
+    let id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.from)).toHex();
+    let itemBalance = ItemBalance.load(id);
     if (itemBalance != null) {
       itemBalance.amount = itemBalance.amount.minus(values[index]);
+      itemBalance.save();
     }
-    itemBalance.save();
   }
 }
 

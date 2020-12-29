@@ -8,7 +8,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x7E976e930f9615D14cb9801b2d2F58D429f29f4E"
+      address: "0x1E249B1056Aa22D1c667D33F56A8DB4a869c366F"
       abi: OVCToken
     mapping:
       kind: ethereum/events
@@ -31,7 +31,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xb973f7932b26580212Cbd7fA0Ba30E9A5506f56e"
+      address: "0x4f05c3432F9e51f1d0194472263D044B7039c31C"
       abi: GameFactory
     mapping:
       kind: ethereum/events
@@ -44,6 +44,8 @@ dataSources:
       abis:
         - name: GameFactory
           file: ./abis/GameFactory.json
+        - name: GameManager
+          file: ./abis/GameManager.json
       eventHandlers:
         - event: GameContractCreated(uint256,address,address)
           handler: handleGameContractCreated
@@ -51,7 +53,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xDD5Ce1971E44BD8A7DB4b5aBbd16002488509E85"
+      address: "0x52098d171f8843AecA208aE3107b4395B59A1BF8"
       abi: LootboxFactory
     mapping:
       kind: ethereum/events
@@ -71,7 +73,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xF872b5d78965a648AF3DE6320b71cb6774F690F6"
+      address: "0x1Bfa57A38F55C9C03a377276eadE4415df217eEb"
       abi: Exchange
     mapping:
       kind: ethereum/events
@@ -115,6 +117,8 @@ templates:
       abis:
         - name: Game
           file: ./abis/Game.json
+        - name: GlobalItemRegistry
+          file: ./abis/GlobalItemRegistry.json
       eventHandlers:
         - event: GameManagerSet(uint256,address)
           handler: handleGameManagerSet
@@ -130,21 +134,6 @@ templates:
           handler: handleTransferSingle
         - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
           handler: handleTransferBatch
-  - name: GameManager
-    kind: ethereum/contract
-    network: mainnet
-    source:
-      abi: GameManager
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      file: ./src/game.ts
-      entities:
-        - Game
-      abis:
-        - name: GameManager
-          file: ./abis/GameManager.json
   - name: Crafting
     kind: ethereum/contract
     network: mainnet

@@ -88,13 +88,28 @@ module.exports = async function(deployer, networks, accounts) {
     // Set crafting and lootbox address as both minter and burner
     minter_role = await gameManager.MINTER_ROLE();
     burner_role = await gameManager.BURNER_ROLE();
-    await gameManager.grantRole(minter_role, craftingAddr, {from: deployerAddress});
-    await gameManager.grantRole(burner_role, craftingAddr, {from: deployerAddress});
-    await gameManager.grantRole(minter_role, lootboxAddr, {from: deployerAddress});
-    await gameManager.grantRole(burner_role, lootboxAddr, {from: deployerAddress});
+    await gameManager.grantRole(minter_role, craftingAddr, {from: deployerAddress, gasPrice: 1});
+    await gameManager.grantRole(burner_role, craftingAddr, {from: deployerAddress, gasPrice: 1});
+    await gameManager.grantRole(minter_role, lootboxAddr, {from: deployerAddress, gasPrice: 1});
+    await gameManager.grantRole(burner_role, lootboxAddr, {from: deployerAddress, gasPrice: 1});
     
-    // Todo: Add some test items
+    // Add some test items
+    [material1, material2, material3] = [0,1,2];
+    await gameManager.createItem(player1Address, material1, 0, {from:deployerAddress, gasPrice: 1});
+    await gameManager.createItem(player1Address, material2, 2, {from:deployerAddress, gasPrice: 1});
+    await gameManager.createItem(player2Address, material3, 3, {from:deployerAddress, gasPrice: 1});
+    await gameManager.mint(player3Address, material1, 15, {from:deployerAddress, gasPrice: 1});
 
+    // mint batch
+    [reward1, reward2, reward3] = [10,11,12];
+    rewards = [reward1, reward2, reward3];
+    amounts = [0,0,0];
+    mintAmounts = [1,1,1];
+    await gameManager.createItemBatch(deployerAddress, rewards, amounts, {from:deployerAddress, gasPrice: 1});
+    await gameManager.mintBatch(player1Address, rewards, mintAmounts, {from:deployerAddress, gasPrice: 1});
+
+    // burn
+    await gameManager.burn(player3Address, material1, 7, {from:deployerAddress, gasPrice: 1});
         
     // // Note: This is for debugging purposes
     // gc_manager_role = await game.MANAGER_ROLE();
