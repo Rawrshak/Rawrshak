@@ -1,5 +1,6 @@
 import { ByteArray, BigInt, crypto } from "@graphprotocol/graph-ts"
-import { OVCToken } from "../generated/OVCToken/OVCToken"
+import { CraftingContractCreated } from "../generated/CraftingFactory/CraftingFactory"
+import { OVCToken } from "../generated/templates/Crafting/OVCToken"
 import {
   ItemCrafted,
   RecipeCreated,
@@ -9,15 +10,19 @@ import {
   RecipeCostUpdated,
 } from "../generated/templates/Crafting/Crafting"
 
+import { Crafting as CraftingContract } from "../generated/templates"
 import { Recipe, RecipeEntry } from "../generated/schema"
-import {Address} from "@graphprotocol/graph-ts/index";
+import { Address } from "@graphprotocol/graph-ts/index";
 
-// Todo: remove when finished. Not completely sure if this is needed yet
-// import { CraftingContractCreated } from "../generated/CraftingFactory/CraftingFactory"
-// import { CraftingManager } from "../generated/templates/CraftingManager/CraftingManager"
+export function handleCraftingContractCreated(event: CraftingContractCreated): void {
+  // Start indexing events from CraftingContract address 
+  CraftingContract.create(event.params.addr);
+}
 
-export function handleRecipeCreated(event: RecipeCreated): void {
-  // uint256 id, uint256 recipeId
+export function handleRecipeCreated(event: RecipeCreated): void {  
+  // let id = ByteArray.fromHexString(event.params.id.toHexString());
+  // let recipeId = ByteArray.fromHexString(event.params.recipeId.toHexString());
+
   let id = ByteArray.fromI32(event.params.id.toI32());
   let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
   let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
@@ -39,7 +44,7 @@ export function handleRecipeMaterialsUpdated(event: RecipeMaterialsUpdated): voi
   let recipeIdByteArray = crypto.keccak256(concat(id, recipeId));
   for (let index = 0, length = materialIds.length; index < length; ++index) {
     // operator, from, to, id, value
-    let materialId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromI32(materialIds[index].toI32()))).toHex();
+    let materialId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromHexString(materialIds[index].toHexString()))).toHex();
     let materialItem = RecipeEntry.load(materialId);
     if (materialItem == null) {
       materialItem = new RecipeEntry(materialId);
@@ -61,7 +66,7 @@ export function handleRecipeRewardsUpdated(event: RecipeRewardsUpdated): void {
   let recipeIdByteArray = crypto.keccak256(concat(id, recipeId));
   for (let index = 0, length = rewardsId.length; index < length; ++index) {
     // operator, from, to, id, value
-    let rewardId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromI32(rewardsId[index].toI32()))).toHex();
+    let rewardId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromHexString(rewardsId[index].toHexString()))).toHex();
     let rewardItem = new RecipeEntry(rewardId);
     if (rewardItem == null) {
       rewardItem = new RecipeEntry(rewardId);
@@ -93,7 +98,7 @@ export function handleRecipeCostUpdated(event: RecipeCostUpdated): void {
   let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
   let recipe = Recipe.load(hashId);
   if (recipe != null) {
-    let tokenContract = OVCToken.bind(event.address);
+    let tokenContract = OVCToken.bind(event.params.tokenAddress);
     recipe.token = tokenContract.tokenId().toHex();
     recipe.cost = event.params.cost;
     recipe.save();

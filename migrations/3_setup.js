@@ -93,13 +93,17 @@ module.exports = async function(deployer, networks, accounts) {
     await gameManager.grantRole(minter_role, lootboxAddr, {from: deployerAddress, gasPrice: 1});
     await gameManager.grantRole(burner_role, lootboxAddr, {from: deployerAddress, gasPrice: 1});
     
-    // Game Data
+    /*****************************************/
+    /*****       Game Data               *****/
+    /*****************************************/
     // Add some test items
     [material1, material2, material3] = [0,1,2];
     await gameManager.createItem(player1Address, material1, 0, {from:deployerAddress, gasPrice: 1});
-    await gameManager.createItem(player1Address, material2, 2, {from:deployerAddress, gasPrice: 1});
-    await gameManager.createItem(player2Address, material3, 3, {from:deployerAddress, gasPrice: 1});
+    await gameManager.createItem(player1Address, material2, 0, {from:deployerAddress, gasPrice: 1});
+    await gameManager.createItem(player2Address, material3, 0, {from:deployerAddress, gasPrice: 1});
     await gameManager.mint(player3Address, material1, 15, {from:deployerAddress, gasPrice: 1});
+    await gameManager.mint(player1Address, material2, 2, {from:deployerAddress, gasPrice: 1});
+    await gameManager.mint(player2Address, material3, 3, {from:deployerAddress, gasPrice: 1});
 
     // mint batch
     [reward1, reward2, reward3] = [10,11,12];
@@ -112,7 +116,9 @@ module.exports = async function(deployer, networks, accounts) {
     // burn
     await gameManager.burn(player3Address, material1, 7, {from:deployerAddress, gasPrice: 1});
 
-    // Exchange Data
+    /*****************************************/
+    /*****       Exchange Data           *****/
+    /*****************************************/
     // Create 2 Bids and 2 Asks
     await ovcTokenContract.approve(exchange.address, 500, {from: player2Address, gasPrice: 1});
     await game.setApprovalForAll(exchange.address, true, {from: player2Address, gasPrice: 1});
@@ -136,19 +142,43 @@ module.exports = async function(deployer, networks, accounts) {
     await exchange.deleteOrder(orderId, {from: player2Address, gasPrice: 1});
 
     // Fullfill asks
-    orderId = askPlacedEvent.logs[0].args[6];
+    askId1 = askPlacedEvent.logs[0].args[6];
     await ovcTokenContract.approve(exchange.address, 500, {from: player1Address, gasPrice: 1});
-    await exchange.fullfillOrder(orderId, {from: player1Address, gasPrice: 1});
+    await exchange.fullfillOrder(askId1, {from: player1Address, gasPrice: 1});
     
-    orderId = askPlacedEvent2.logs[0].args[6];
-    await exchange.fullfillOrder(orderId, {from: player1Address, gasPrice: 1});
+    askId2 = askPlacedEvent2.logs[0].args[6];
+    await exchange.fullfillOrder(askId2, {from: player1Address, gasPrice: 1});
 
     // Claim Player 2 sold material
-    await exchange.claim(orderId, {from: player2Address, gasPrice: 1});
+    await exchange.claim(askId1, {from: player2Address, gasPrice: 1});
         
+    /*****************************************/
+    /*****       Crafting Data           *****/
+    /*****************************************/
+    rewarduuid1 = await registry.getUUID(game.address, reward1);
+    materialIds = [uuid1, uuid2, uuid3];
+    materialAmounts = [2, 1, 1];
+    rewardIds = [rewarduuid1];
+    rewardAmounts = [1];
+    await craftingManager.createRecipe(
+        materialIds,
+        materialAmounts,
+        rewardIds,
+        rewardAmounts,
+        ovcTokenContract.address,
+        100,
+        true,
+        {from:deployerAddress}
+    );
 
+    // Craft the recipe
+    // make sure player 1 has the materials
+    materialIds = [material1, material2, material3];
+    await gameManager.mintBatch(player1Address, materialIds, materialAmounts, {from:deployerAddress, gasPrice: 1});
+    await ovcTokenContract.approve(crafting.address, 100, {from: player1Address, gasPrice: 1});
 
-
+    // Craft recipe 0, as created above.
+    await crafting.craftItem(0, player1Address, {from:player1Address, gasPrice:1});
 
     
     // // Note: This is for debugging purposes
