@@ -17,8 +17,13 @@ import {
     LootboxMaterial,
     LootboxReward
 } from "../generated/schema"
+import { Lootbox as LootboxTemplateContract } from "../generated/templates"
+import { Address } from "@graphprotocol/graph-ts/index";
    
+let zeroAddress = '0x0000000000000000000000000000000000000000';
+
 export function handleLootboxContractCreated(event: LootboxContractCreated): void {
+  LootboxTemplateContract.create(event.params.contractAddr);
   let id = event.params.id.toHex();
   let lootbox = new Lootbox(id);
   lootbox.owner = event.params.owner.toHex();
@@ -34,9 +39,8 @@ export function handleInputItemBatchRegistered(event: InputItemBatchRegistered):
   let itemIds = event.params.itemIds;
   let amounts = event.params.amounts;
   let multipliers = event.params.multipliers;
-  let id = ByteArray.fromI32(event.params.id.toI32());
   for (let index = 0, length = event.params.itemIds.length; index < length; ++index) {
-    let materialId = crypto.keccak256(concat(id, ByteArray.fromI32(itemIds[index].toI32()))).toHex();
+    let materialId = createLootboxItemId(event.params.id, itemIds[index]);
     let material = new LootboxMaterial(materialId);
     material.lootbox = event.params.id.toHex();
     material.item = itemIds[index].toHex();
@@ -52,9 +56,8 @@ export function handleRewardItemBatchRegistered(event: RewardItemBatchRegistered
   let itemIds = event.params.itemIds;
   let amounts = event.params.amounts;
   let rarities = event.params.rarities;
-  let id = ByteArray.fromI32(event.params.id.toI32());
   for (let index = 0, length = event.params.itemIds.length; index < length; ++index) {
-    let rewardId = crypto.keccak256(concat(id, ByteArray.fromI32(itemIds[index].toI32()))).toHex();
+    let rewardId = createLootboxItemId(event.params.id, itemIds[index]);
     let reward = new LootboxReward(rewardId);
     reward.lootbox = event.params.id.toHex();
     reward.item = itemIds[index].toHex();
@@ -73,48 +76,40 @@ export function handleTradeMinimumSet(event: TradeMinimumSet): void {
 }
 
 export function handleLootboxGenerated(event: LootboxGenerated): void {
-  // lootboxId, msg.sender, lootboxCount
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let lootboxEntryId = crypto.keccak256(concat(id, event.params.owner)).toHex();
-  let lootboxEntry = LootboxEntry.load(lootboxEntryId);
-  if (lootboxEntry == null) {
-    lootboxEntry = new LootboxEntry(lootboxEntryId);
-    lootboxEntry.owner = event.params.owner.toHex();
-    lootboxEntry.lootbox = event.params.id.toHex();
-    lootboxEntry.amount = BigInt.fromI32(0);
+  let id = event.params.id.toHex();
+  let lootbox = Lootbox.load(event.params.id.toHex());
+  if (lootbox != null) {
+    lootbox.minted = lootbox.minted.plus(event.params.amount);
+    lootbox.save();
   }
-  lootboxEntry.amount = lootboxEntry.amount.plus(event.params.amount);
-  lootboxEntry.save();
 }
 
 export function handleLootboxOpened(event: LootboxOpened): void {
-  // lootboxId, msg.sender, _count, rewards
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let lootboxEntryId = crypto.keccak256(concat(id, event.params.owner)).toHex();
-  let lootboxEntry = LootboxEntry.load(lootboxEntryId);
-  if (lootboxEntry != null) {
-    lootboxEntry.amount = lootboxEntry.amount.minus(event.params.amount);
-    lootboxEntry.save();
+  let lootbox = Lootbox.load(event.params.id.toHex());
+  if (lootbox != null) {
+    lootbox.opened = lootbox.opened.plus(event.params.amount);
+    lootbox.save();
   }
 }
 
 export function handleTransferSingle(event: TransferSingle): void {
-  let lootboxContract = LootboxContract.bind(event.address);
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let lootboxEntryId = crypto.keccak256(concat(id, event.params.to)).toHex();
-  let lootboxEntry = LootboxEntry.load(lootboxEntryId);
-  if (lootboxEntry == null) {
-    lootboxEntry = new LootboxEntry(lootboxEntryId);
-    lootboxEntry.amount = BigInt.fromI32(0);
+  if (event.params.to.toHex() != zeroAddress) {
+    let lootboxContract = LootboxContract.bind(event.address);
+    let lootboxEntryId = createLootboxEntryId(event.params.id, event.params.to.toHexString());
+    let lootboxEntry = LootboxEntry.load(lootboxEntryId);
+    if (lootboxEntry == null) {
+        lootboxEntry = new LootboxEntry(lootboxEntryId);
+        lootboxEntry.amount = BigInt.fromI32(0);
+        lootboxEntry.owner = event.params.to.toHex();
+        lootboxEntry.lootbox = lootboxContract.lootboxId().toHex();
+    }
+    lootboxEntry.amount = lootboxEntry.amount.plus(event.params.value);
+    lootboxEntry.save();
   }
-  lootboxEntry.owner = event.params.to.toHex();
-  lootboxEntry.lootbox = lootboxContract.lootboxId().toHex();
-  lootboxEntry.amount = lootboxEntry.amount.plus(event.params.value);
-  lootboxEntry.save();
 
   // remove lootbox from the previous owner
-  lootboxEntryId = crypto.keccak256(concat(id, event.params.from)).toHex();
-  lootboxEntry = LootboxEntry.load(lootboxEntryId);
+  let lootboxEntryId = createLootboxEntryId(event.params.id, event.params.from.toHexString());
+  let lootboxEntry = LootboxEntry.load(lootboxEntryId);
   if (lootboxEntry != null) {
     lootboxEntry.amount = lootboxEntry.amount.minus(event.params.value);
     lootboxEntry.save();
@@ -126,21 +121,21 @@ export function handleTransferBatch(event: TransferBatch): void {
   let ids = event.params.ids;
   let values = event.params.values;
   for (let index = 0, length = event.params.ids.length; index < length; ++index) {
-    let id = ByteArray.fromI32(ids[index].toI32());
-    let lootboxEntryId = crypto.keccak256(concat(id, event.params.to)).toHex();
-    let lootboxEntry = LootboxEntry.load(lootboxEntryId);
-    if (lootboxEntry == null) {
-      lootboxEntry = new LootboxEntry(lootboxEntryId);
-      lootboxEntry.amount = BigInt.fromI32(0);
+    if (event.params.to.toHex() != zeroAddress) {
+      let lootboxEntryId = createLootboxEntryId(ids[index], event.params.to.toHexString());
+      let lootboxEntry = LootboxEntry.load(lootboxEntryId);
+      if (lootboxEntry == null) {
+        lootboxEntry = new LootboxEntry(lootboxEntryId);
+        lootboxEntry.amount = BigInt.fromI32(0);
+        lootboxEntry.owner = event.params.to.toHex();
+        lootboxEntry.lootbox = lootboxContract.lootboxId().toHex();
+      }
+      lootboxEntry.amount = lootboxEntry.amount.plus(values[index]);
+      lootboxEntry.save();
     }
-    lootboxEntry.owner = event.params.to.toHex();
-    lootboxEntry.lootbox = lootboxContract.lootboxId().toHex();
-    lootboxEntry.amount = lootboxEntry.amount.plus(values[index]);
-    lootboxEntry.save();
-  
-    // remove lootbox from the previous owner
-    lootboxEntryId = crypto.keccak256(concat(id, event.params.from)).toHex();
-    lootboxEntry = LootboxEntry.load(lootboxEntryId);
+
+    let lootboxEntryId = createLootboxEntryId(ids[index], event.params.from.toHexString());
+    let lootboxEntry = LootboxEntry.load(lootboxEntryId);
     if (lootboxEntry != null) {
       lootboxEntry.amount = lootboxEntry.amount.minus(values[index]);
       lootboxEntry.save();
@@ -148,14 +143,11 @@ export function handleTransferBatch(event: TransferBatch): void {
   }
 }
 
-// Helper for concatenating two byte arrays
-function concat(a: ByteArray, b: ByteArray): ByteArray {
-  let out = new Uint8Array(a.length + b.length)
-  for (let i = 0; i < a.length; i++) {
-    out[i] = a[i]
-  }
-  for (let j = 0; j < b.length; j++) {
-    out[a.length + j] = b[j]
-  }
-  return out as ByteArray
+function createLootboxItemId(lootboxId: BigInt, itemId: BigInt): string {
+    return lootboxId.toString().concat('-').concat(itemId.toString());
+}
+
+// Todo: change owner from 'string' to 'Address'. Keep it for now for readability though
+function createLootboxEntryId(lootboxId: BigInt, owner: string): string {
+    return lootboxId.toString().concat('-').concat(owner.toString());
 }

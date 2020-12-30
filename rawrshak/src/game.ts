@@ -20,11 +20,11 @@ import {
   ItemBalance,
   Account,
  } from "../generated/schema"
-import {Address} from "@graphprotocol/graph-ts/index";
+import { Address } from "@graphprotocol/graph-ts/index";
 
 import { Game as GameContract } from "../generated/templates"
 
-let registryAddress = '0x526Cb9dB0fa24cd59bd73C597131734962091667';
+let registryAddress = '0x89F549c205ccD68da50393Ebf1fA9C2b008Badf8';
 let registry = GlobalItemRegistry.bind(Address.fromHexString(registryAddress) as Address);
 let zeroAddress = '0x0000000000000000000000000000000000000000';
 

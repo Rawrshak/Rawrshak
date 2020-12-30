@@ -180,7 +180,70 @@ module.exports = async function(deployer, networks, accounts) {
     // Craft recipe 0, as created above.
     await crafting.craftItem(0, player1Address, {from:player1Address, gasPrice:1});
 
+    /*****************************************/
+    /*****       Lootbox Data            *****/
+    /*****************************************/
+    // Add rewards
+    [commonReward, uncommonReward, scarceReward, rareReward, superRareReward, exoticReward, mythicReward] = [3,4,5,6,7,8,9];
+    itemIds = [
+        commonReward,
+        uncommonReward,
+        scarceReward,
+        rareReward,
+        superRareReward,
+        exoticReward,
+        mythicReward
+    ];
+    maxSupplies = [0, 0, 0, 0, 0, 0, 0];
+    await gameManager.createItemBatch(deployerAddress, itemIds, maxSupplies, {from:deployerAddress});
+
+    // Set up input items
+    uuids = [uuid1, uuid2, uuid3];
+    amounts = [1, 1, 1];
+    multipliers = [1, 1, 1];
+    await lootboxManager.registerInputItemBatch(
+        0,
+        uuids,
+        amounts,
+        multipliers,
+        {from:deployerAddress}
+    );
+
+    // Mint materials for player 3
+    amounts = [3, 3, 3];
+    await gameManager.mintBatch(player3Address, materialIds, amounts, {from:deployerAddress, gasPrice: 1});
+
+    // Set up reward items
+    commonUuid = await registry.getUUID(game.address, commonReward);
+    uncommonUuid = await registry.getUUID(game.address, uncommonReward);
+    scarceUuid = await registry.getUUID(game.address, scarceReward);
+    rareUuid = await registry.getUUID(game.address, rareReward);
+    superRareUuid = await registry.getUUID(game.address, superRareReward);
+    exoticUuid = await registry.getUUID(game.address, exoticReward);
+    mythicUuid = await registry.getUUID(game.address, mythicReward);
     
+    rewardUuids = [commonUuid, uncommonUuid, scarceUuid, rareUuid, superRareUuid, exoticUuid, mythicUuid];
+    amounts = [1, 1, 1, 1, 1, 1, 1];
+    rarities = [6, 5, 4, 3, 2, 1, 0];
+    await lootboxManager.registerRewardBatch(
+        0,
+        rewardUuids,
+        rarities,
+        amounts,
+        {from:deployerAddress}
+    );
+    
+    // Generate 2 lootboxes for Player 3
+    uuids = [uuid1, uuid2, uuid3];
+    amounts = [3, 3, 3];
+    await lootbox.generateLootbox(uuids, amounts, {from: player3Address});
+
+    // Open 1 lootbox for Player 3
+    await lootbox.openLootbox(2, {from: player3Address});
+    
+
+
+
     // // Note: This is for debugging purposes
     // gc_manager_role = await game.MANAGER_ROLE();
     // await game.grantRole(gc_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});
