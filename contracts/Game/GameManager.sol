@@ -54,13 +54,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     address public gameAddr;
 
     /******** Events ********/
-    event ItemCreated(uint256);
-    event ItemCreatedBatch(uint256[]);
-    event ItemMinted(uint256,uint256);
-    event ItemBurned(uint256,uint256);
-    event ItemMintedBatch(uint256[],uint256[]);
-    event ItemBurnedBatch(uint256[],uint256[]);
-    event GameContractCreated(uint256, address, address);
+    event GlobalItemRegistryStored(address, address, bytes4);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -73,13 +67,14 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
 
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
-    constructor() public {        
+    constructor(address _owner) public {        
         // Contract Deployer is now the owner and can set roles
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MINTER_ROLE, msg.sender);
-        _setupRole(BURNER_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+        _setupRole(MINTER_ROLE, _owner);
+        _setupRole(BURNER_ROLE, _owner);
 
         _registerInterface(_INTERFACE_ID_IGAMEMANAGER);
+        transferOwnership(_owner);
     }
 
     function setUri(string calldata _newUri) external override onlyOwner {
@@ -94,8 +89,6 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
 
         uint256 id;
         (gameAddr, id)  = GameFactory(_gameFactoryAddress).createGameContract(_url);
-        
-        emit GameContractCreated(id, gameAddr, owner());
     }
 
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
@@ -106,19 +99,22 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         );
         require(gameAddr != address(0), "Game Contract not created yet.");
         game().setGlobalItemRegistryAddr(_addr);
+
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IGAMEMANAGER);
     }
 
     // Create New Item
     function createItem(address payable _creatorAddress, uint256 _id, uint256 _maxSupply) external override onlyOwner {
         require(!game().contains(_id), "Item already exists.");
+        require(_creatorAddress != address(0), "Invalid Address");
         
         // Add item to item storage
-        address payable creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : payable(game().owner());
-        game().createItem(creatorAddr, _id, _maxSupply);
+        game().createItem(_creatorAddress, _id, _maxSupply);
         
         // mint max supply if there is a max supply
-        game().mint(creatorAddr, _id, _maxSupply);
-        emit ItemCreated(_id);
+        if (_maxSupply > 0) {
+            game().mint(_creatorAddress, _id, _maxSupply);
+        }
     }
 
     function createItemBatch(
@@ -130,16 +126,14 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         override
         onlyOwner
     {
+        require(_creatorAddress != address(0), "Invalid Address");
         require(_ids.length == _maxSupplies.length, "IDs and Max Supply array size do not match");
         for (uint256 i = 0; i < _ids.length; ++i) {
             require(!game().contains(_ids[i]), "Item already exists.");
         }
-        
-        address payable creatorAddr = (_creatorAddress != address(0)) ? _creatorAddress : payable(game().owner());
-        game().createItemBatch(creatorAddr, _ids, _maxSupplies);
-        game().mintBatch(creatorAddr, _ids, _maxSupplies);
 
-        emit ItemCreatedBatch(_ids);
+        game().createItemBatch(_creatorAddress, _ids, _maxSupplies);
+        game().mintBatch(_creatorAddress, _ids, _maxSupplies);
     }
 
     function mint(address _receivingAddress, uint256 _itemId, uint256 _amount)
@@ -154,7 +148,6 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         require(maxSupply == 0 || maxSupply >= SafeMath.add(game().currentSupply(_itemId), _amount), "Supply cannot be increased");
 
         game().mint(_receivingAddress, _itemId, _amount);
-        emit ItemMinted(_itemId, _amount);
     }
 
     // mint several items to a single addreess
@@ -181,7 +174,6 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
             );
         }
         game().mintBatch(_receivingAddress, _itemIds, _amounts);
-        emit ItemMintedBatch(_itemIds, _amounts);
     }
 
     function burn(address _account, uint256 _itemId, uint256 _amount)
@@ -193,7 +185,6 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         require(_account != address(0), "Invalid address");
 
         game().burn(_account, _itemId, _amount);
-        emit ItemBurned(_itemId, _amount);
     }
 
     function burnBatch(
@@ -209,7 +200,6 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         require(_account != address(0), "Invalid address");
 
         game().burnBatch(_account, _itemIds, _amounts);
-        emit ItemBurnedBatch(_itemIds, _amounts);
     }
 
     // internal 

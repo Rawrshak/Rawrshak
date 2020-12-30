@@ -1,14 +1,18 @@
-# B44
-This project will contain the implementation of the Block44 Smart Contracts
+# Rawrshak
+This project will contain the implementation of the Rawrshak Smart Contracts
 
 # Token: Omniverse Credits [OVC]
 Omniverse Credits are the platform currency that will be used for transactions.
 
 ## Todo:
-- Set up instructions
+- Set up "Get Started" instructions
+- Create a simple front-end Dapp
+- Integrate Game
 
-## Infrastructure Todo:
-    1. Game Contract and Assets
-    2. Forge Contract and Crafting Recipes
-    3. Lootbox Contract
-    4. Market Exchange Escrow Contracts
+## Done Todo:
+- Infrastructure Smart Contracts
+    - Game Contract, Lootbox Contract, Crafting Contract, Exchange Contract
+- Graph Node
+    - Docker for local graph node
+    - Graph Node API which can be accessible via GraphQL api
+    - Set up demo data for testing

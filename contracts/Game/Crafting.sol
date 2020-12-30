@@ -54,8 +54,8 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     /******** Data Structures ********/
     struct Recipe {
         uint256 recipeId;
-        uint256[] materials;
-        uint256[] rewards;
+        mapping(uint256 => uint256) materials;
+        mapping(uint256 => uint256) rewards;
         EnumerableSet.UintSet materialIds;
         EnumerableSet.UintSet rewardIds;
         address tokenAddr;
@@ -64,13 +64,23 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     }
 
     /******** Stored Variables ********/
-    Recipe[] private recipes;
+    mapping(uint256 => Recipe) private recipes;
+    uint256 recipesCount;
     uint256 public activeRecipeCount = 0;
     address private globalItemRegistryAddr;
     address private craftingManagerAddr;
+    address payable private developerWallet;
+    uint256 public craftingId;
 
     /******** Events ********/
-    event ItemCrafted();
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event CraftingManagerSet(uint256 id, address addr);
+    event ItemCrafted(uint256 id, uint256 recipeId, address owner);
+    event RecipeCreated(uint256 id, uint256 recipeId);
+    event RecipeMaterialsUpdated(uint256 id, uint256 recipeId, uint256[] materialIds, uint256[] amounts);
+    event RecipeRewardsUpdated(uint256 id, uint256 recipeId, uint256[] rewardsId, uint256[] amounts);
+    event RecipeActiveSet(uint256 id, uint256 recipeId, bool isActive);
+    event RecipeCostUpdated(uint256 id, uint256 recipeId, address tokenAddress, uint256 cost);
 
     /******** Modifiers ********/
     modifier checkItemExists(uint256 _uuid) {
@@ -79,11 +89,12 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     }
 
     /******** Public API ********/
-    constructor(address _addr) public {
+    constructor(uint256 _id, address _addr) public {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ICRAFTINGFACTORY),
             "Caller does not support Interface."
         );
+        craftingId = _id;
         globalItemRegistryAddr = _addr;
         _registerInterface(_INTERFACE_ID_ICRAFTING);
     }
@@ -91,6 +102,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
         // Address is already checked in the game manager
         globalItemRegistryAddr = _addr;
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ICRAFTING);
     }
 
     function setManagerAddress(address _addr) external override onlyOwner {
@@ -100,6 +112,11 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             "Caller does not support Interface."
         );
         craftingManagerAddr = _addr;
+        emit CraftingManagerSet(craftingId, _addr);
+    }
+    
+    function setDeveloperWallet(address payable _wallet) external override onlyOwner {
+        developerWallet = _wallet;
     }
 
     function getManagerAddress() external view override returns(address) {
@@ -108,13 +125,15 @@ contract Crafting is ICrafting, Ownable, ERC165 {
 
     function generateNextRecipeId() external override view onlyOwner returns(uint256)
     {
-        return recipes.length;
+        return recipesCount;
     }
 
-    function createRecipe(uint256 recipeId) external override onlyOwner {
+    function createRecipe(uint256 _recipeId) external override onlyOwner {
         // The recipes do not get deleted so the recipe id counter is only ever incremented;
-        Recipe storage recipe = recipes.push();
-        recipe.recipeId = recipeId;
+        recipes[_recipeId].recipeId = _recipeId;
+        recipesCount++;
+
+        emit RecipeCreated(craftingId, _recipeId);
     }
 
     function updateMaterialsToRecipe(
@@ -142,6 +161,8 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             recipes[_recipeId].isActive = false;
             activeRecipeCount--;
         }
+        
+        emit RecipeMaterialsUpdated(craftingId, _recipeId, _materialUuids, _materialAmounts);
     }
 
     function updateRewardsToRecipe(
@@ -169,6 +190,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             recipes[_recipeId].isActive = false;
             activeRecipeCount--;
         }
+        emit RecipeRewardsUpdated(craftingId, _recipeId, _rewardUuids, _rewardAmounts);
     }
 
     function updateRecipeActive(uint256 _recipeId, bool _activate) 
@@ -187,6 +209,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         } else {
             activeRecipeCount--;
         }
+        emit RecipeActiveSet(craftingId, _recipeId, _activate);
     }
 
     function updateRecipeCost(uint256 _recipeId, address _tokenAddr, uint256 _cost)
@@ -196,19 +219,21 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     {
         recipes[_recipeId].tokenAddr = _tokenAddr;
         recipes[_recipeId].cost = _cost;
+        emit RecipeCostUpdated(craftingId, _recipeId, _tokenAddr, _cost);
     }
     
     function exists(uint256 _recipeId) external override view returns(bool)
     {
-        return _recipeId < recipes.length;
+        return _recipeId < recipesCount;
     }
 
     function craftItem(uint256 _recipeId, address payable _account)
         external
         override
     {
-        require(_recipeId < recipes.length, "Recipe does not exist.");
+        require(_recipeId < recipesCount, "Recipe does not exist.");
         require(recipes[_recipeId].isActive, "Recipe is not active.");
+        require(developerWallet != address(0), "Developer wallet not set.");
         
         Recipe storage recipe = recipes[_recipeId];
 
@@ -216,7 +241,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
             // This will fail if the account doesn't have enough to cover the 
             // cost of crafting this item
             // Todo: replace this with ERC20
-            TokenBase(recipe.tokenAddr).transferFrom(_account, owner(), recipe.cost);
+            TokenBase(recipe.tokenAddr).transferFrom(_account, developerWallet, recipe.cost);
         }
         
         IGlobalItemRegistry registry = globalItemRegistry();
@@ -250,7 +275,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         }
 
         // Notify user of item getting crafted
-        emit ItemCrafted();
+        emit ItemCrafted(craftingId, _recipeId, _account);
     }
 
     function isRecipeActive(uint256 _recipeId) external view override returns(bool) {
@@ -269,11 +294,11 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         override
         returns(uint256[] memory uuids, uint256[] memory counts)
     {
-        require(_recipeId < recipes.length, "Recipe does not exist.");
+        require(_recipeId < recipesCount, "Recipe does not exist.");
 
         Recipe storage recipe = recipes[_recipeId];
-        uuids = new uint256[](recipe.materials.length);
-        counts = new uint256[](recipe.materials.length);
+        uuids = new uint256[](recipe.materialIds.length());
+        counts = new uint256[](recipe.materialIds.length());
 
         for (uint i = 0; i < recipe.materialIds.length(); ++i) {
             uuids[i] = recipe.materialIds.at(i);
@@ -289,11 +314,11 @@ contract Crafting is ICrafting, Ownable, ERC165 {
         override
         returns(uint256[] memory uuids, uint256[] memory counts)
     {
-        require(_recipeId < recipes.length, "Recipe does not exist.");
+        require(_recipeId < recipesCount, "Recipe does not exist.");
 
         Recipe storage recipe = recipes[_recipeId];
-        uuids = new uint256[](recipe.rewards.length);
-        counts = new uint256[](recipe.rewards.length);
+        uuids = new uint256[](recipe.rewardIds.length());
+        counts = new uint256[](recipe.rewardIds.length());
         
         for (uint i = 0; i < recipe.rewardIds.length(); ++i) {
             uuids[i] = recipe.rewardIds.at(i);

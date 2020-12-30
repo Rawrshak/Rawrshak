@@ -2,6 +2,12 @@
 node_modules
 build
 
-#openzeppelin
+# graph-node generated data
+generated
+
+# docker data
+data
+
+# openzeppelin
 .openzeppelin/dev-*.json
 .openzeppelin/.session

@@ -16,6 +16,7 @@ import "../utils/Utils.sol";
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
 // Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item.
 //       For now, just keep the probabilities flat.
+// Todo: add function to deactivate material/reward
 
 contract Lootbox is ILootbox, Ownable, ERC1155 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -75,10 +76,16 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     address lootboxManagerAddr;
     // uint8(Rarity.Common)
     uint32[7] private probabilities;
+    uint256 public lootboxId;
     
     /******** Events ********/
-    event LootboxGenerated(uint256);
-    event LootboxOpened(uint256);
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event LootboxManagerSet(address contractAddr, address owner);
+    event InputItemBatchRegistered(uint256 id, uint256[] itemIds, uint256[] amounts, uint256[] multipliers);
+    event RewardItemBatchRegistered(uint256 id, uint256[] itemIds, uint8[] rarities, uint256[] amounts);
+    event TradeMinimumSet(uint256 id, uint256 tradeInMinimum);
+    event LootboxGenerated(uint256 id, address owner, uint256 amount);
+    event LootboxOpened(uint256 id, address owner, uint256 amount, uint256[] rewards);
 
     /******** Modifiers ********/
     modifier onlyManager() {
@@ -87,7 +94,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     }
 
     /******** Public API ********/
-    constructor(address _addr, string memory _url) public ERC1155(_url) {
+    constructor(uint256 _id, address _addr, string memory _url) public ERC1155(_url) {
         require(
             ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ILOOTBOXFACTORY),
             "Caller does not support Interface."
@@ -95,6 +102,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         globalItemRegistryAddr = _addr;
 
         _registerInterface(_INTERFACE_ID_ILOOTBOX);
+        lootboxId = _id;
         
         probabilities[uint8(Rarity.Mythic)] = 1;
         probabilities[uint8(Rarity.Exotic)] = 25;
@@ -117,6 +125,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             "Caller does not support Interface."
         );
         lootboxManagerAddr = _addr;
+        emit LootboxManagerSet(address(this), _addr);
     }
 
     function getManagerAddress() external view override returns(address) {
@@ -130,17 +139,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         onlyOwner
     {
         globalItemRegistryAddr = _addr;
-    }
-
-    function registerInputItem(uint256 _uuid, uint256 _amount, uint256 _multiplier)
-        external
-        override
-        onlyManager
-    {
-        Input storage inputItem = inputsList[_uuid];
-        inputItem.requiredAmount = _amount;
-        inputItem.multiplier = _multiplier;
-        inputItem.active = true;
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ILOOTBOX);
     }
 
     function registerInputItemBatch(
@@ -158,18 +157,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             inputItem.multiplier = _multipliers[i];
             inputItem.active = true;
         }
-    }
-
-    function registerReward(uint256 _uuid, Rarity _rarity, uint256 _amount)
-        external
-        override
-        onlyManager
-    {        
-        Reward memory rewardItem;
-        rewardItem.uuid = _uuid;
-        rewardItem.amount = _amount;
-        rewardItem.active = true;
-        rewardsList[uint8(_rarity)].push(rewardItem);
+        emit InputItemBatchRegistered(lootboxId, _uuids, _amounts, _multipliers);
     }
 
     function registerRewardBatch(
@@ -181,18 +169,21 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         override
         onlyManager
     {
-
+        uint8[] memory rarities = new uint8[](_uuids.length);
         for (uint256 i = 0; i < _uuids.length; ++i) {            
             Reward memory rewardItem;
             rewardItem.uuid = _uuids[i];
             rewardItem.amount = _amounts[i];
             rewardItem.active = true;
             rewardsList[uint8(_rarities[i])].push(rewardItem);
+            rarities[i] = uint8(_rarities[i]);
         }
+        emit RewardItemBatchRegistered(lootboxId, _uuids, rarities, _amounts);
     }
 
     function setTradeInMinimum(uint8 _count) external override onlyManager {
         tradeInMinimum = _count;
+        emit TradeMinimumSet(lootboxId, _count);
     }
 
 
@@ -241,7 +232,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         // Mint Lootbox
         _mint(msg.sender, LOOTBOX, lootboxCount, "");
         
-        emit LootboxGenerated(lootboxCount);
+        emit LootboxGenerated(lootboxId, msg.sender, lootboxCount);
     }
 
     function openLootbox(uint256 _count) external override {
@@ -253,6 +244,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         IGlobalItemRegistry registry = globalItemRegistry();
 
         // Generate an item
+        uint256[] memory rewards = new uint256[](_count);
         for (uint256 i = 0; i < _count; ++i) {
             // random number between 1-100000
             uint32 rng = uint32(Utils.random(100000));
@@ -269,6 +261,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             require(rewardsList[rarity].length > 0, "Rewards List is empty");
             uint256 itemIndex = Utils.random(rewardsList[rarity].length);
             Reward storage reward = rewardsList[rarity][itemIndex];
+            rewards[i] = reward.uuid;
 
             // Get game information
             (, address gameManagerAddr, uint256 gameId) = registry.getItemInfo(reward.uuid);
@@ -277,7 +270,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
             // Mint() will fail if this contract does not have the necessary permissions 
             gameManager.mint(msg.sender, gameId, reward.amount);
         }
-        emit LootboxOpened(_count);
+        emit LootboxOpened(lootboxId, msg.sender, _count, rewards);
     }
 
     function getRewards(Rarity _rarity)

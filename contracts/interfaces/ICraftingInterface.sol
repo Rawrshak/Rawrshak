@@ -6,6 +6,8 @@ interface ICraftingInterface {
     /******** Mutative Functions ********/ 
     function setGlobalItemRegistryAddr(address _addr) external;
 
+    function setDeveloperWallet(address payable wallet) external;
+
     function updateMaterialsToRecipe(
         uint256 _recipeId,
         uint256[] calldata _materialUuids,

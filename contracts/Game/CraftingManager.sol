@@ -15,7 +15,6 @@ import "../factory/CraftingFactory.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
-// Todo: Recipe Storage 
 
 contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -58,8 +57,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     address private itemRegistryAddr;
 
     /******** Events ********/
-    event RecipeCreated(uint256);
-    event CraftingContractCreated(uint256, address, address);
+    event GlobalItemRegistryStored(address, address, bytes4);
 
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
@@ -67,6 +65,11 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
             hasRole(_role, msg.sender),
             "Caller does not have the necessary permissions."
         );
+        _;
+    }
+    
+    modifier checkCraftingContract() {
+        require(craftingAddr != address(0), "Crafting Contract not created yet.");
         _;
     }
 
@@ -79,17 +82,19 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     }
 
     /******** Public API ********/
-    constructor() public {
+    constructor(address _owner) public {
         // Set up Roles
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MANAGER_ROLE, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+        _setupRole(MANAGER_ROLE, _owner);
 
         _registerInterface(_INTERFACE_ID_ICRAFTINGMANAGER);
+        transferOwnership(_owner);
     }
 
     function setGlobalItemRegistryAddr(address _addr)
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
     {
         require(Address.isContract(_addr), "Address not valid");
@@ -97,9 +102,14 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
             ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
-        require(craftingAddr != address(0), "Crafting Contract not created yet.");
         itemRegistryAddr = _addr;
         crafting().setGlobalItemRegistryAddr(_addr);
+
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ICRAFTINGMANAGER);
+    }
+
+    function setDeveloperWallet(address payable _wallet) external override checkCraftingContract checkPermissions(MANAGER_ROLE) {
+        crafting().setDeveloperWallet(_wallet);
     }
 
     function generateCraftingContract(
@@ -116,8 +126,6 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
 
         uint256 id;
         (craftingAddr, id)  = CraftingFactory(_craftingFactoryAddress).createCraftingContract();
-        
-        emit CraftingContractCreated(id, craftingAddr, owner());
     }
 
 
@@ -136,6 +144,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     )
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
     {
         require(
@@ -159,12 +168,10 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         uint256 recipeId = crafting().generateNextRecipeId();
 
         crafting().createRecipe(recipeId);
+        crafting().updateRecipeActive(recipeId, _isActive);
         crafting().updateMaterialsToRecipe(recipeId, _materialUuids, _materialAmounts);
         crafting().updateRewardsToRecipe(recipeId, _rewardUuids, _rewardAmounts);
         crafting().updateRecipeCost(recipeId, _tokenAddr, _cost);
-        crafting().updateRecipeActive(recipeId, _isActive);
-
-        emit RecipeCreated(recipeId);
     }
 
     // Can be used to add and update materials in a specific recipe
@@ -175,6 +182,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     )
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
         checkRecipeExists(_recipeId)
     {
@@ -194,6 +202,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     )
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
         checkRecipeExists(_recipeId)
     {
@@ -208,6 +217,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     function updateRecipeActive(uint256 _recipeId, bool _activate) 
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
         checkRecipeExists(_recipeId)
     {
@@ -217,6 +227,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     function updateRecipeActiveBatch(uint256[] calldata _recipeIds, bool[] calldata _activates)
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
     {
         require(_recipeIds.length == _activates.length, "Input array lengths do not match");
@@ -234,6 +245,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     function updateRecipeCost(uint256 _recipeId, address _tokenAddr, uint256 _cost)
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
         checkRecipeExists(_recipeId)
     {
@@ -248,6 +260,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     function updateRecipeCostBatch(uint256[] calldata _recipeIds, address[] calldata _tokenAddrs, uint256[] calldata _costs)
         external
         override
+        checkCraftingContract
         checkPermissions(MANAGER_ROLE)
     {
         require(_recipeIds.length == _costs.length, "Input array lengths do not match");

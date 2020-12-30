@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IGame.sol";
 
+// Todo: Restrict item add permissions
+
 contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     using Address for address;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -40,8 +42,8 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     mapping(uint256 => Item) itemRegistry;
     
     /******** Events ********/
-    event AddedItem(address gameAddress, uint256 gameId, uint256 uuid);
-    event AddedItemBatch(address gameAddress, uint256[] gameIds, uint256[] uuids);
+    event ItemRegistered(address gameAddress, uint256 gameId, uint256 uuid);
+    event ItemBatchRegistered(address gameAddress, uint256[] gameIds, uint256[] uuids);
 
     /******** Modifiers ********/
     modifier isCallerGame() {
@@ -90,7 +92,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
 
         itemRegistry[uuid].gameAddress = msg.sender;
         itemRegistry[uuid].gameId = _id;
-        emit AddedItem(msg.sender, _id, uuid);
+        emit ItemRegistered(msg.sender, _id, uuid);
     }
     
     function addBatch(uint256[] calldata _ids) external override isCallerGame() {
@@ -104,7 +106,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
             itemRegistry[uuids[i]].gameAddress = msg.sender;
             itemRegistry[uuids[i]].gameId = _ids[i];
         }
-        emit AddedItemBatch(msg.sender, _ids, uuids);
+        emit ItemBatchRegistered(msg.sender, _ids, uuids);
     }
 
     // internal

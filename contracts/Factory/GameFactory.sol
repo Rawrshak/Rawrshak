@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Game.sol";
 
 library GameDeployer {
-    function deployGame(address _itemRegistryAddr, string memory _url) public returns(address game) {
-        game = address(new Game(_url, _itemRegistryAddr));
+    function deployGame(uint256 contractId, address _itemRegistryAddr, string memory _url) public returns(address game) {
+        game = address(new Game(contractId, _url, _itemRegistryAddr));
     } 
     
     function transferOwnership(address _contractAddr, address _newOwner) public {
@@ -29,6 +29,10 @@ contract GameFactory is ERC165 {
     /******** Stored Variables ********/
     address itemRegistryAddr;
     address[] public gameAddresses;
+    
+    /******** Events ********/
+    event GlobalItemRegistryStored(address, address, bytes4);
+    event GameContractCreated(uint256 id, address addr, address owner);
 
     /******** Public API ********/
     constructor() public {
@@ -42,6 +46,8 @@ contract GameFactory is ERC165 {
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
+        
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IGAMEFACTORY);
     }
 
     /******** Mutative Functions ********/
@@ -52,10 +58,12 @@ contract GameFactory is ERC165 {
         );
         require(itemRegistryAddr != address(0), "Global Item registry not set.");
 
-        contractAddr = GameDeployer.deployGame(itemRegistryAddr, _url);
+        contractId = gameAddresses.length;
+        contractAddr = GameDeployer.deployGame(contractId, itemRegistryAddr, _url);
         GameDeployer.transferOwnership(contractAddr, msg.sender);
         
-        contractId = gameAddresses.length;
         gameAddresses.push(contractAddr);
+
+        emit GameContractCreated(contractId, contractAddr, msg.sender);
     }
 }

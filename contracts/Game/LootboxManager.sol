@@ -28,12 +28,8 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
     EnumerableMap.UintToAddressMap lootboxAddresses;
 
     /******** Events ********/
-    event AddedInputItem(uint256);
-    event AddedInputItemBatch(uint256[]);
-    event AddedReward(uint256);
-    event AddedRewardBatch(uint256[]);
-    event LootboxContractCreated(uint256, address, address);
-    
+    event GlobalItemRegistryStored(address, address, bytes4);
+
     /******** Modifiers ********/
     modifier checkPermissions(bytes32 _role) {
         require(hasRole(_role, msg.sender), "Caller missing permissions");
@@ -50,10 +46,11 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         _;
     }
     
-    constructor() public {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MANAGER_ROLE, msg.sender);
+    constructor(address _owner) public {
+        _setupRole(DEFAULT_ADMIN_ROLE, _owner);
+        _setupRole(MANAGER_ROLE, _owner);
         _registerInterface(_INTERFACE_ID_ILOOTBOXMANAGER);
+        transferOwnership(_owner);
     }
 
     function setGlobalItemRegistryAddr(address _addr)
@@ -74,6 +71,7 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
             (, address lootboxAddr) = lootboxAddresses.at(i);
             ILootbox(lootboxAddr).setGlobalItemRegistryAddr(_addr);
         }
+        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ILOOTBOXMANAGER);
     }
 
     function generateLootboxContract(
@@ -91,24 +89,10 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         
         (address lootboxAddr, uint256 lootboxId)  = LootboxFactory(_lootboxFactoryAddress).createLootboxContract(_url);
         lootboxAddresses.set(lootboxId, lootboxAddr);
-        
-        emit LootboxContractCreated(lootboxId, lootboxAddr, owner());
     }
 
     function getLootboxAddress(uint256 _lootboxId) external view override checkLootboxExists(_lootboxId) returns(address) {
         return lootboxAddresses.get(_lootboxId);
-    }
-
-    function registerInputItem(uint256 _lootboxId, uint256 _uuid, uint256 _amount, uint256 _multiplier)
-        external
-        override
-        checkPermissions(MANAGER_ROLE)
-        checkLootboxExists(_lootboxId)
-        checkItemExists(_uuid)
-    {
-        lootbox(_lootboxId).registerInputItem(_uuid, _amount, _multiplier);
-
-        emit AddedInputItem(_uuid);
     }
 
     function registerInputItemBatch(
@@ -130,20 +114,6 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         }
 
         lootbox(_lootboxId).registerInputItemBatch(_uuids, _amounts, _multipliers);
-
-        emit AddedInputItemBatch(_uuids);
-    }
-
-    function registerReward(uint256 _lootboxId, uint256 _uuid, Rarity _rarity, uint256 _amount)
-        external
-        override
-        checkPermissions(MANAGER_ROLE)
-        checkLootboxExists(_lootboxId)
-        checkItemExists(_uuid)
-    {
-        lootbox(_lootboxId).registerReward(_uuid, _rarity, _amount);
-
-        emit AddedReward(_uuid);
     }
 
     function registerRewardBatch(
@@ -166,8 +136,6 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         }
 
         lootbox(_lootboxId).registerRewardBatch(_uuids, _rarities, _amounts);
-
-        emit AddedRewardBatch(_uuids);
     }
 
     function setTradeInMinimum(uint256 _lootboxId, uint8 _count) external override checkPermissions(MANAGER_ROLE) checkLootboxExists(_lootboxId) {
