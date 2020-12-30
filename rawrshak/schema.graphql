@@ -117,7 +117,7 @@ type Order @entity {
   token: Token!
   price: BigInt
   isBid: Boolean
-  isClaimable: Boolean
+  isClaimed: Boolean
   isCancelled: Boolean
   isFullfilled: Boolean
   createdAt: BigInt

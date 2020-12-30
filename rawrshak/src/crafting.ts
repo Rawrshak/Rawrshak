@@ -19,14 +19,9 @@ export function handleCraftingContractCreated(event: CraftingContractCreated): v
   CraftingContract.create(event.params.addr);
 }
 
-export function handleRecipeCreated(event: RecipeCreated): void {  
-  // let id = ByteArray.fromHexString(event.params.id.toHexString());
-  // let recipeId = ByteArray.fromHexString(event.params.recipeId.toHexString());
-
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
-  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
-  let recipe = new Recipe(hashId);
+export function handleRecipeCreated(event: RecipeCreated): void {
+  let id = createRecipeId(event.params.id, event.params.recipeId);
+  let recipe = new Recipe(id);
   recipe.contractId = event.params.id;
   recipe.recipeId = event.params.recipeId;
   recipe.isActive = false;
@@ -39,17 +34,15 @@ export function handleRecipeMaterialsUpdated(event: RecipeMaterialsUpdated): voi
   // (uint256 id, uint256 recipeId, uint256[] materialIds, uint256[] amounts);
   let materialIds = event.params.materialIds;
   let amounts = event.params.amounts;
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
-  let recipeIdByteArray = crypto.keccak256(concat(id, recipeId));
+  let recipeId = createRecipeId(event.params.id, event.params.recipeId);
   for (let index = 0, length = materialIds.length; index < length; ++index) {
     // operator, from, to, id, value
-    let materialId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromHexString(materialIds[index].toHexString()))).toHex();
+    let materialId = createItemId(recipeId, materialIds[index]);
     let materialItem = RecipeEntry.load(materialId);
     if (materialItem == null) {
       materialItem = new RecipeEntry(materialId);
     }
-    materialItem.recipe = recipeIdByteArray.toHex();
+    materialItem.recipe = recipeId;
     materialItem.item = materialIds[index].toHex();
     materialItem.amount = amounts[index];
     materialItem.isMaterial = true;
@@ -61,17 +54,15 @@ export function handleRecipeRewardsUpdated(event: RecipeRewardsUpdated): void {
   // (uint256 id, uint256 recipeId, uint256[] materialIds, uint256[] amounts);
   let rewardsId = event.params.rewardsId;
   let amounts = event.params.amounts;
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
-  let recipeIdByteArray = crypto.keccak256(concat(id, recipeId));
+  let recipeId = createRecipeId(event.params.id, event.params.recipeId);
   for (let index = 0, length = rewardsId.length; index < length; ++index) {
     // operator, from, to, id, value
-    let rewardId = crypto.keccak256(concat(recipeIdByteArray, ByteArray.fromHexString(rewardsId[index].toHexString()))).toHex();
+    let rewardId = createItemId(recipeId, rewardsId[index]);
     let rewardItem = new RecipeEntry(rewardId);
     if (rewardItem == null) {
       rewardItem = new RecipeEntry(rewardId);
     }
-    rewardItem.recipe = recipeIdByteArray.toHex();
+    rewardItem.recipe = recipeId;
     rewardItem.item = rewardsId[index].toHex();
     rewardItem.amount = amounts[index];
     rewardItem.isMaterial = false;
@@ -81,10 +72,8 @@ export function handleRecipeRewardsUpdated(event: RecipeRewardsUpdated): void {
 
 export function handleRecipeActiveSet(event: RecipeActiveSet): void {
   // uint256 id, uint256 recipeId, bool isActive
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
-  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
-  let recipe = Recipe.load(hashId);
+  let recipeId = createRecipeId(event.params.id, event.params.recipeId);
+  let recipe = Recipe.load(recipeId);
   if (recipe != null) {
     recipe.isActive = event.params.isActive;
     recipe.save();
@@ -93,10 +82,8 @@ export function handleRecipeActiveSet(event: RecipeActiveSet): void {
 
 export function handleRecipeCostUpdated(event: RecipeCostUpdated): void {
   // uint256 id, uint256 recipeId, address tokenAddress, uint256 cost
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
-  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
-  let recipe = Recipe.load(hashId);
+  let recipeId = createRecipeId(event.params.id, event.params.recipeId);
+  let recipe = Recipe.load(recipeId);
   if (recipe != null) {
     let tokenContract = OVCToken.bind(event.params.tokenAddress);
     recipe.token = tokenContract.tokenId().toHex();
@@ -107,24 +94,18 @@ export function handleRecipeCostUpdated(event: RecipeCostUpdated): void {
 
 export function handleItemCrafted(event: ItemCrafted): void {
   // uint256 id, uint256 recipeId, address owner
-  let id = ByteArray.fromI32(event.params.id.toI32());
-  let recipeId = ByteArray.fromI32(event.params.recipeId.toI32());
-  let hashId =  crypto.keccak256(concat(id, recipeId)).toHex();
-  let recipe = Recipe.load(hashId);
+  let recipeId = createRecipeId(event.params.id, event.params.recipeId);
+  let recipe = Recipe.load(recipeId);
   if (recipe != null) {
     recipe.craftedCount = recipe.craftedCount.plus(BigInt.fromI32(1));
     recipe.save();
   }
 }
 
-// Helper for concatenating two byte arrays
-function concat(a: ByteArray, b: ByteArray): ByteArray {
-  let out = new Uint8Array(a.length + b.length)
-  for (let i = 0; i < a.length; i++) {
-    out[i] = a[i]
-  }
-  for (let j = 0; j < b.length; j++) {
-    out[a.length + j] = b[j]
-  }
-  return out as ByteArray
+function createRecipeId(gameId: BigInt, recipeId: BigInt): string {
+  return gameId.toString().concat('-').concat(recipeId.toString());
+}
+
+function createItemId(recipeId: string, itemId: BigInt): string {
+  return recipeId.concat('-').concat(itemId.toString());
 }

@@ -240,27 +240,4 @@ module.exports = async function(deployer, networks, accounts) {
 
     // Open 1 lootbox for Player 3
     await lootbox.openLootbox(2, {from: player3Address});
-    
-
-
-
-    // // Note: This is for debugging purposes
-    // gc_manager_role = await game.MANAGER_ROLE();
-    // await game.grantRole(gc_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});
-
-    // await game.methods['createItem(uint256)'](1, {from:deployerAddress, gasPrice: 1});
-    // await game.methods['createItem(uint256)'](2, {from:deployerAddress, gasPrice: 1});
-    // await game.methods['createItem(uint256)'](3, {from:deployerAddress, gasPrice: 1});
-    // await game.methods['createItem(uint256)'](4, {from:deployerAddress, gasPrice: 1});
-    // await game.methods['createItem(uint256)'](5, {from:deployerAddress, gasPrice: 1});
-
-    // cc_manager_role = await crafting.MANAGER_ROLE();
-    // await crafting.grantRole(cc_manager_role, deployerAddress, {from:deployerAddress, gasPrice: 1});
-
-    // // await crafting.registerCraftingMaterial.call(game.address,1,{from:deployerAddress, gasPrice: 1})
-    // await crafting.registerCraftingMaterial(game.address,1,{from:deployerAddress, gasPrice: 1});
-    // await crafting.registerCraftingMaterial(game.address,2,{from:deployerAddress, gasPrice: 1});
-    // await crafting.registerCraftingMaterial(game.address,3,{from:deployerAddress, gasPrice: 1});
-    // await crafting.registerCraftingReward(game.address,4,{from:deployerAddress, gasPrice: 1});
-    // await crafting.registerCraftingReward(game.address,5,{from:deployerAddress, gasPrice: 1});
 };

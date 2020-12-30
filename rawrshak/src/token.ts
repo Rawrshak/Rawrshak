@@ -11,6 +11,8 @@ import {
  } from "../generated/schema"
  import {Address} from "@graphprotocol/graph-ts/index";
 
+let zeroAddress = '0x0000000000000000000000000000000000000000';
+
 export function handleTokenCreated(event: TokenCreated): void {
   // let tokenId = crypto.keccak256(event.params.name.).toHexString();
   let tokenId = event.params.id.toHex();
@@ -26,33 +28,34 @@ export function handleTokenCreated(event: TokenCreated): void {
   token.save();
 }
 
-export function handleTransfer(event: Transfer): void {
-  // let id = crypto.keccak256(name).toHexString()
-  // Get User To and add if it doesn't exist
-  let userToId = event.params.to.toHex();
-  let userTo = Account.load(userToId);
-  if (userTo == null) {
-    userTo = new Account(userToId);
-    userTo.address = event.params.to;
-  }
-  userTo.save();
-  
+export function handleTransfer(event: Transfer): void {  
   // Add the amount to that user's TokenBalance
   let tokenContract = OVCToken.bind(event.address);
-  let tokenBalanceId = crypto.keccak256(concat(event.address, event.params.to)).toHexString();
-  let tokenBalance = TokenBalance.load(tokenBalanceId);
-  if (tokenBalance == null) {
-    tokenBalance = new TokenBalance(tokenBalanceId);
-    tokenBalance.amount = BigInt.fromI32(0);
-    tokenBalance.token = tokenContract.tokenId().toHex();
-    tokenBalance.owner = event.params.to.toHex();
+  if (event.params.to.toHex() != zeroAddress) {
+    // Get User To and add if it doesn't exist
+    let userToId = event.params.to.toHex();
+    let userTo = Account.load(userToId);
+    if (userTo == null) {
+      userTo = new Account(userToId);
+      userTo.address = event.params.to;
+    }
+    userTo.save();
+
+    let tokenBalanceId = createTokenBalanceId(event.address.toHexString(), event.params.to.toHexString());
+    let tokenBalance = TokenBalance.load(tokenBalanceId);
+    if (tokenBalance == null) {
+      tokenBalance = new TokenBalance(tokenBalanceId);
+      tokenBalance.amount = BigInt.fromI32(0);
+      tokenBalance.token = tokenContract.tokenId().toHex();
+      tokenBalance.owner = event.params.to.toHex();
+    }
+    tokenBalance.amount = tokenBalance.amount.plus(event.params.value);
+    tokenBalance.save()
   }
-  tokenBalance.amount = tokenBalance.amount.plus(event.params.value);
-  tokenBalance.save()
 
   // Subract the amount to the User from's token balance (if address is not null)
-  tokenBalanceId = crypto.keccak256(concat(event.address, event.params.from)).toHexString();
-  tokenBalance = TokenBalance.load(tokenBalanceId);
+  let tokenBalanceId = createTokenBalanceId(event.address.toHexString(), event.params.from.toHexString());
+  let tokenBalance = TokenBalance.load(tokenBalanceId);
   if (tokenBalance != null) {
     tokenBalance.amount = tokenBalance.amount.minus(event.params.value);
     tokenBalance.save()
@@ -69,4 +72,9 @@ function concat(a: ByteArray, b: ByteArray): ByteArray {
     out[a.length + j] = b[j]
   }
   return out as ByteArray
+}
+
+// Todo: change owner from 'string' to 'Address'. Keep it for now for readability though
+function createTokenBalanceId(tokenAddress: string, owner: string): string {
+  return tokenAddress.concat('-').concat(owner);
 }

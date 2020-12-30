@@ -149,5 +149,5 @@ function createLootboxItemId(lootboxId: BigInt, itemId: BigInt): string {
 
 // Todo: change owner from 'string' to 'Address'. Keep it for now for readability though
 function createLootboxEntryId(lootboxId: BigInt, owner: string): string {
-    return lootboxId.toString().concat('-').concat(owner.toString());
+    return lootboxId.toString().concat('-').concat(owner);
 }

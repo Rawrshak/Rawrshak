@@ -19,7 +19,7 @@ export function handleOrderPlaced(event: OrderPlaced): void {
     order.amount = event.params.amount;
     order.price = event.params.price;
     order.isBid = event.params.isBid;
-    order.isClaimable = false;
+    order.isClaimed = false;
     order.isCancelled = false;
     order.isFullfilled = false;
     order.createdAt = event.block.timestamp;
@@ -42,7 +42,6 @@ export function handleOrderFullfilled(event: OrderFullfilled): void {
     let order = Order.load(event.params.orderId.toHex());
     if (order != null && order.isFullfilled == false) {
         order.isFullfilled = true;
-        order.isClaimable = true;
         order.fullfilledAt = event.block.timestamp;
         order.save();
     }
@@ -50,8 +49,8 @@ export function handleOrderFullfilled(event: OrderFullfilled): void {
 
 export function handleClaimed(event: Claimed): void {
     let order = Order.load(event.params.orderId.toHex());
-    if (order != null && order.isClaimable == true) {
-        order.isClaimable = false;
+    if (order != null && order.isClaimed == false) {
+        order.isClaimed = true;
         order.claimedAt = event.block.timestamp;
         order.save();
     }
@@ -61,8 +60,8 @@ export function handleClaimedAll(event: ClaimedAll): void {
     let orderIds = event.params.orderIds;
     for (let index = 0, length = orderIds.length; index < length; ++index) {
         let order = Order.load(orderIds[index].toHex());
-        if (order != null && order.isClaimable == true) {
-            order.isClaimable = false;
+        if (order != null && order.isClaimed == false) {
+            order.isClaimed = true;
             order.claimedAt = event.block.timestamp;
             order.save();
         }

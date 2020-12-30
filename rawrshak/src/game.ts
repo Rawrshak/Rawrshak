@@ -103,7 +103,7 @@ export function handleItemBatchSupplyChanged(event: ItemBatchSupplyChanged): voi
 
 export function handleTransferSingle(event: TransferSingle): void {
   if (event.params.to.toHex() != zeroAddress) {
-    let id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.to)).toHex();
+    let id = createItemEntryId(event.params.id, event.params.to.toHexString());
     let itemBalance = ItemBalance.load(id);
     if (itemBalance == null) {
       itemBalance = new ItemBalance(id);
@@ -116,7 +116,7 @@ export function handleTransferSingle(event: TransferSingle): void {
   }
 
   // remove item from the previous owner
-  let id = crypto.keccak256(concat(ByteArray.fromI32(event.params.id.toI32()), event.params.from)).toHex();
+  let id = createItemEntryId(event.params.id, event.params.from.toHexString());
   let itemBalance = ItemBalance.load(id);
   if (itemBalance != null) {
     itemBalance.amount = itemBalance.amount.minus(event.params.value);
@@ -130,7 +130,7 @@ export function handleTransferBatch(event: TransferBatch): void {
   for (let index = 0, length = ids.length; index < length; ++index) {
     // operator, from, to, id, value
     if (event.params.to.toHex() != zeroAddress) {
-      let id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.to)).toHex();
+      let id = createItemEntryId(ids[index], event.params.to.toHexString());
       let itemBalance = ItemBalance.load(id);
       if (itemBalance == null) {
         itemBalance = new ItemBalance(id);
@@ -143,7 +143,7 @@ export function handleTransferBatch(event: TransferBatch): void {
     }
 
     // remove item from the previous owner
-    let id = crypto.keccak256(concat(ByteArray.fromI32(ids[index].toI32()), event.params.from)).toHex();
+    let id = createItemEntryId(ids[index], event.params.from.toHexString());
     let itemBalance = ItemBalance.load(id);
     if (itemBalance != null) {
       itemBalance.amount = itemBalance.amount.minus(values[index]);
@@ -152,7 +152,8 @@ export function handleTransferBatch(event: TransferBatch): void {
   }
 }
 
-// Helper for concatenating two byte arrays
+// Todo: delete later. keep for now, in case I might need it
+// Helper for concatenating two byte arrays 
 function concat(a: ByteArray, b: ByteArray): ByteArray {
   let out = new Uint8Array(a.length + b.length)
   for (let i = 0; i < a.length; i++) {
@@ -162,4 +163,9 @@ function concat(a: ByteArray, b: ByteArray): ByteArray {
     out[a.length + j] = b[j]
   }
   return out as ByteArray
+}
+
+// Todo: change owner from 'string' to 'Address'. Keep it for now for readability though
+function createItemEntryId(itemId: BigInt, owner: string): string {
+  return itemId.toString().concat('-').concat(owner);
 }
