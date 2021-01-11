@@ -17,7 +17,7 @@ const ExtendedEnumerableMaps = artifacts.require("ExtendedEnumerableMaps");
 
 module.exports = async function(deployer, networks, accounts) {
     // deploy OVC token with 1,000,000,000 initial supply.
-    await deployer.deploy(OVCTokenContract, 1000000000);
+    await deployer.deploy(OVCTokenContract, web3.utils.toWei('1000000000', 'gwei'));
 
     // Deploy Libraries
     await deployer.deploy(Utils);
