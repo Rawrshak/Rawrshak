@@ -1,4 +1,6 @@
+const OVCTokenContract = artifacts.require("OVCToken");
 const ManagerFactory = artifacts.require("ManagerFactory");
+const Game = artifacts.require("Game");
 const GameManager = artifacts.require("GameManager");
 const GameFactory = artifacts.require("GameFactory");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
@@ -18,8 +20,14 @@ module.exports = async function(deployer, networks, accounts) {
         player6Address              // Player 6 test address
     ] = accounts;
 
+    ovcToken = await OVCTokenContract.deployed();
+
     // set up GlobalItemRegistry Contract
     registry = await GlobalItemRegistry.deployed();
+
+    // Set up Exchange Contract
+    exchange = await Exchange.deployed();
+    await exchange.setGlobalItemRegistryAddr(registry.address);
 
     // Set up Game with test URL
     gameFactory = await GameFactory.deployed();
@@ -40,6 +48,8 @@ module.exports = async function(deployer, networks, accounts) {
 
     // Create Game Contract
     await worldOfWarcraftManager.generateGameContract(gameFactory.address, "http://localhost:4000/games/3/items?id={id}", {from: blizzardAddress});
+    gameAddr = await worldOfWarcraftManager.gameAddr();
+    game = await Game.at(gameAddr);
 
     itemIds = [37,38,39,40,41,42,43,44,45,46];
     maxAmounts = [0,0,0,0,0,0,0,0,0,0];
@@ -56,4 +66,23 @@ module.exports = async function(deployer, networks, accounts) {
     itemIds = [40,50,51,52,49];
     mintAmounts=[25,25,25,25,25];
     await worldOfWarcraftManager.mintBatch(blizzardAddress, itemIds, mintAmounts, {from:blizzardAddress, gasPrice: 1});
+
+    // Approve developer address for sales
+    await game.setApprovalForAll(exchange.address, true, {from: blizzardAddress, gasPrice: 1});
+
+    // Place Items on sale
+    itemUUID = await registry.getUUID(game.address, 40);
+    await exchange.placeAsk(blizzardAddress, ovcToken.address, itemUUID, 25, web3.utils.toWei('1750000', 'gwei'), {from:blizzardAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 50);
+    await exchange.placeAsk(blizzardAddress, ovcToken.address, itemUUID, 25, web3.utils.toWei('750', 'gwei'), {from:blizzardAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 51);
+    await exchange.placeAsk(blizzardAddress, ovcToken.address, itemUUID, 25, web3.utils.toWei('750', 'gwei'), {from:blizzardAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 52);
+    await exchange.placeAsk(blizzardAddress, ovcToken.address, itemUUID, 25, web3.utils.toWei('750', 'gwei'), {from:blizzardAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 49);
+    await exchange.placeAsk(blizzardAddress, ovcToken.address, itemUUID, 25, web3.utils.toWei('750', 'gwei'), {from:blizzardAddress, gasPrice: 1});
 };
