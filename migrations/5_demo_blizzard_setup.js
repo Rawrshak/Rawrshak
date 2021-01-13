@@ -85,4 +85,26 @@ module.exports = async function(deployer, networks, accounts) {
     
     itemUUID = await registry.getUUID(game.address, 49);
     await exchange.placeAsk(blizzardAddress, ovcToken.address, itemUUID, 25, web3.utils.toWei('750', 'gwei'), {from:blizzardAddress, gasPrice: 1});
+    
+    // Mint Default assets for players
+    // Player 2
+    itemIds = [37, 40, 41];
+    mintAmounts = [5, 2, 3];
+    await worldOfWarcraftManager.mintBatch(player2Address, itemIds, mintAmounts, {from:blizzardAddress, gasPrice: 1});
+    
+    // Player 4
+    itemIds = [46, 48, 50];
+    mintAmounts = [5, 2, 3];
+    await worldOfWarcraftManager.mintBatch(player4Address, itemIds, mintAmounts, {from:blizzardAddress, gasPrice: 1});
+    
+    // Player 5
+    itemIds = [48, 51, 53];
+    mintAmounts = [5, 2, 3];
+    await worldOfWarcraftManager.mintBatch(player5Address, itemIds, mintAmounts, {from:blizzardAddress, gasPrice: 1});
+    
+    // Player 6
+    itemIds = [55, 38, 56];
+    mintAmounts = [5, 2, 3];
+    await worldOfWarcraftManager.mintBatch(player6Address, itemIds, mintAmounts, {from:blizzardAddress, gasPrice: 1});
+
 };

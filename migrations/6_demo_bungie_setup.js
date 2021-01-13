@@ -90,6 +90,22 @@ module.exports = async function(deployer, networks, accounts) {
     
     itemUUID = await registry.getUUID(game.address, 76);
     await exchange.placeAsk(bungieAddress, ovcToken.address, itemUUID, 30, web3.utils.toWei('1500', 'gwei'), {from:bungieAddress, gasPrice: 1});
+
+    // Mint Default assets for players
+    // Player 2
+    itemIds = [60, 62, 64, 66, 63];
+    mintAmounts = [5, 2, 3, 5, 7];
+    await destinyManager.mintBatch(player2Address, itemIds, mintAmounts, {from:bungieAddress, gasPrice: 1});
+    
+    // Player 3
+    itemIds = [60, 66, 68, 70, 73];
+    mintAmounts = [5, 2, 3, 5, 7];
+    await destinyManager.mintBatch(player3Address, itemIds, mintAmounts, {from:bungieAddress, gasPrice: 1});
+    
+    // Player 4
+    itemIds = [60, 66, 68, 74, 75];
+    mintAmounts = [5, 2, 3, 5, 7];
+    await destinyManager.mintBatch(player4Address, itemIds, mintAmounts, {from:bungieAddress, gasPrice: 1});
     
     /*****************************************/
     /*****    Destiny 2 Game Data        *****/
@@ -145,5 +161,23 @@ module.exports = async function(deployer, networks, accounts) {
     await exchange.placeAsk(bungieAddress, ovcToken.address, itemUUID, 45, web3.utils.toWei('2000', 'gwei'), {from:bungieAddress, gasPrice: 1}); 
     
     itemUUID = await registry.getUUID(game.address, 89);
-    await exchange.placeAsk(bungieAddress, ovcToken.address, itemUUID, 45, web3.utils.toWei('2000', 'gwei'), {from:bungieAddress, gasPrice: 1}); 
+    await exchange.placeAsk(bungieAddress, ovcToken.address, itemUUID, 45, web3.utils.toWei('2000', 'gwei'), {from:bungieAddress, gasPrice: 1});
+    
+    itemIds = [77,78,79,80,81,82,83,84,85,86];
+    itemIds = [87,88,89,90,91,92,93,94,95,96,97];
+    // Mint Default assets for players
+    // Player 1
+    itemIds = [86, 78, 90, 92, 94];
+    mintAmounts = [5, 2, 3, 5, 7];
+    await destiny2Manager.mintBatch(player2Address, itemIds, mintAmounts, {from:bungieAddress, gasPrice: 1});
+    
+    // Player 3
+    itemIds = [92, 94, 77, 79, 80];
+    mintAmounts = [5, 2, 3, 5, 7];
+    await destiny2Manager.mintBatch(player3Address, itemIds, mintAmounts, {from:bungieAddress, gasPrice: 1});
+    
+    // Player 4
+    itemIds = [79, 80, 82, 97, 94];
+    mintAmounts = [5, 2, 3, 5, 7];
+    await destiny2Manager.mintBatch(player4Address, itemIds, mintAmounts, {from:bungieAddress, gasPrice: 1});
 };

@@ -76,6 +76,27 @@ module.exports = async function(deployer, networks, accounts) {
     itemUUID = await registry.getUUID(game.address, 14);
     await exchange.placeAsk(arenaNetAddress, ovcToken.address, itemUUID, 50, web3.utils.toWei('1000', 'gwei'), {from:arenaNetAddress, gasPrice: 1});
 
+    // Mint Default assets for players
+    // Player 1
+    itemIds = [0, 10, 12];
+    mintAmounts = [5, 2, 3];
+    await guildWarsManager.mintBatch(player1Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+    
+    // Player 3
+    itemIds = [2, 13, 11];
+    mintAmounts = [5, 2, 3];
+    await guildWarsManager.mintBatch(player3Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+    
+    // Player 4
+    itemIds = [4, 13, 14];
+    mintAmounts = [5, 2, 3];
+    await guildWarsManager.mintBatch(player4Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+    
+    // Player 5
+    itemIds = [3, 12, 1];
+    mintAmounts = [5, 2, 3];
+    await guildWarsManager.mintBatch(player5Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+
     /*****************************************/
     /*****    Guild Wars 2 Game Data     *****/
     /*****************************************/
@@ -123,4 +144,26 @@ module.exports = async function(deployer, networks, accounts) {
     
     itemUUID = await registry.getUUID(game.address, 16);
     await exchange.placeAsk(arenaNetAddress, ovcToken.address, itemUUID, 30, web3.utils.toWei('900', 'gwei'));
+
+    // Mint Default assets for players
+    // Player 1
+    itemIds = [22, 16, 15];
+    mintAmounts = [5, 2, 3];
+    await guildWars2Manager.mintBatch(player1Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+    
+    // Player 2
+    itemIds = [29, 33, 35];
+    mintAmounts = [5, 2, 3];
+    await guildWars2Manager.mintBatch(player2Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+    
+    // Player 3
+    itemIds = [24, 31, 21];
+    mintAmounts = [5, 2, 3];
+    await guildWars2Manager.mintBatch(player3Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+    
+    // Player 6
+    itemIds = [18, 26, 19];
+    mintAmounts = [5, 2, 3];
+    await guildWars2Manager.mintBatch(player6Address, itemIds, mintAmounts, {from:arenaNetAddress, gasPrice: 1});
+
 };
