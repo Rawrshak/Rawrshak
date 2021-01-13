@@ -17,10 +17,10 @@ module.exports = async function(deployer, networks, accounts) {
     // get OVC token with 1,000,000,000 initial supply and distribute them
     ovcTokenContract = await OVCTokenContract.deployed();
     await ovcTokenContract.approve(deployerAddress, web3.utils.toWei('1000000000', 'gwei'), {from:deployerAddress}); // in wei
-    await ovcTokenContract.transfer(player1Address, web3.utils.toWei('50000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player2Address, web3.utils.toWei('50000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player3Address, web3.utils.toWei('50000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player4Address, web3.utils.toWei('50000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player5Address, web3.utils.toWei('50000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player6Address, web3.utils.toWei('50000', 'gwei'), {from:deployerAddress});  
+    await ovcTokenContract.transfer(player1Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await ovcTokenContract.transfer(player2Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await ovcTokenContract.transfer(player3Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await ovcTokenContract.transfer(player4Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await ovcTokenContract.transfer(player5Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await ovcTokenContract.transfer(player6Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});  
 };
