@@ -3,6 +3,7 @@ import { GameContractCreated } from "../generated/GameFactory/GameFactory"
 import { GameManager } from "../generated/templates/GameManager/GameManager"
 
 import {
+  Game,
   GameManagerSet,
   ItemCreated,
   ItemBatchCreated,
@@ -47,6 +48,10 @@ export function handleGameContractCreated(event: GameContractCreated): void {
 
   game.owner = gameOwnerId;
   game.gameManagerContractAddress = event.params.owner;
+
+  let gameContractObject = Game.bind(event.params.addr);
+  game.uri = gameContractObject.uri(BigInt.fromI32(0));
+
   game.save();
 }
 
