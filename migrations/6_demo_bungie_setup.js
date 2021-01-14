@@ -54,7 +54,7 @@ module.exports = async function(deployer, networks, accounts) {
     destinyManager = await GameManager.at(destinyManagerAddr, {from: bungieAddress});
 
     // Create Game Contract
-    await destinyManager.generateGameContract(gameFactory.address, "http://localhost:4000/games/4/items?id={id}", {from: bungieAddress});
+    await destinyManager.generateGameContract(gameFactory.address, "http://localhost:4000/games/3", {from: bungieAddress});
     gameAddr = await destinyManager.gameAddr();
     game = await Game.at(gameAddr);
 
@@ -179,7 +179,7 @@ module.exports = async function(deployer, networks, accounts) {
     destiny2Manager = await GameManager.at(destiny2ManagerAddr, {from: bungieAddress});
 
     // Create Game Contract
-    await destiny2Manager.generateGameContract(gameFactory.address, "http://localhost:4000/games/5/items?id={id}", {from: bungieAddress});
+    await destiny2Manager.generateGameContract(gameFactory.address, "http://localhost:4000/games/4", {from: bungieAddress});
     gameAddr = await destiny2Manager.gameAddr();
     game = await Game.at(gameAddr);
 

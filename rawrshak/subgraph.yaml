@@ -8,7 +8,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xC062d518cdd6c46FEfA659a406831F83ad9d9855"
+      address: "0x7621B39d7C0a462200a02838b83B0E3fA21a52Fc"
       abi: OVCToken
     mapping:
       kind: ethereum/events
@@ -31,7 +31,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x3e469ED2265194232c25DbB6f2E93605f3648995"
+      address: "0x908104FE6EE4337216da46740fa8ffC3bD0F11F5"
       abi: GameFactory
     mapping:
       kind: ethereum/events
@@ -55,7 +55,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x8d1C5DffB88E34983B18CAcB636F61E96874c945"
+      address: "0x01c2Ca18c83ACF9666f6fEC6A263E91fc149971a"
       abi: CraftingFactory
     mapping:
       kind: ethereum/events
@@ -74,7 +74,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xbc90256b78D722eCC853eDdc779Ad43095d62A68"
+      address: "0x28A6778A059E818e98244b09E3966eF9A4262384"
       abi: LootboxFactory
     mapping:
       kind: ethereum/events
@@ -94,7 +94,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xeE98ddDC95006EE5E96f376Ec13aa77f9676c9E4"
+      address: "0x369a5e93866acAEff6486F55e9e048dE29cBe5C5"
       abi: Exchange
     mapping:
       kind: ethereum/events

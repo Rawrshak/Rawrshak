@@ -32,6 +32,7 @@ type Game @entity {
   owner: Account!
   gameManagerContractAddress: Bytes!
   items: [Item!] @derivedFrom(field: "game")
+  itemsCount: BigInt
   uri: String!
 }
 

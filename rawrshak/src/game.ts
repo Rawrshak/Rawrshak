@@ -25,7 +25,7 @@ import { Address } from "@graphprotocol/graph-ts/index";
 
 import { Game as GameContract } from "../generated/templates"
 
-let registryAddress = '0x8D31Bef88E00e30D0cD0A6DC888B1c7779CcE510';
+let registryAddress = '0x2361185CAECa3E67EB258c1c2CeFe118F23C1D63';
 let registry = GlobalItemRegistry.bind(Address.fromHexString(registryAddress) as Address);
 let zeroAddress = '0x0000000000000000000000000000000000000000';
 
@@ -51,6 +51,7 @@ export function handleGameContractCreated(event: GameContractCreated): void {
 
   let gameContractObject = Game.bind(event.params.addr);
   game.uri = gameContractObject.uri(BigInt.fromI32(0));
+  game.itemsCount = BigInt.fromI32(0); 
 
   game.save();
 }
@@ -74,11 +75,19 @@ export function handleItemCreated(event: ItemCreated): void {
   item.currentSupply = BigInt.fromI32(0);
   item.creatorAddress = event.params.creatorAddr;
   item.save();
+
+  // increase item count
+  let game = new GameData(event.params.gameId.toHex());
+  if (game != null) {
+    // Todo: Somehow, items count isn't actually counting properly. Fix this eventually
+    game.itemsCount = game.itemsCount.plus(BigInt.fromI32(1));
+    game.save()
+  }
 }
 
 export function handleItemBatchCreated(event: ItemBatchCreated): void {
   let ids = event.params.ids;
-  let maxSupplies = event.params.maxSupplies;
+  let maxSupplies = event.params.maxSupplies;  
   for (let index = 0, length = ids.length; index < length; ++index) {
     let id = registry.getUUID(event.address, ids[index]).toHex();
     let item = Item.load(id);
@@ -91,6 +100,14 @@ export function handleItemBatchCreated(event: ItemBatchCreated): void {
     item.currentSupply = BigInt.fromI32(0);
     item.creatorAddress = event.params.creatorAddr;
     item.save();
+  }
+  
+  // increase item count
+  let game = new GameData(event.params.gameId.toHex());
+  if (game != null) {
+    // Todo: Somehow, items count isn't actually counting properly. Fix this eventually
+    game.itemsCount = game.itemsCount.plus(BigInt.fromI32(ids.length));
+    game.save()
   }
 }
 
