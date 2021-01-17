@@ -77,7 +77,7 @@ export function handleItemCreated(event: ItemCreated): void {
   item.save();
 
   // increase item count
-  let game = new GameData(event.params.gameId.toHex());
+  let game = GameData.load(event.params.gameId.toHex());
   if (game != null) {
     // Todo: Somehow, items count isn't actually counting properly. Fix this eventually
     game.itemsCount = game.itemsCount.plus(BigInt.fromI32(1));
@@ -103,7 +103,7 @@ export function handleItemBatchCreated(event: ItemBatchCreated): void {
   }
   
   // increase item count
-  let game = new GameData(event.params.gameId.toHex());
+  let game = GameData.load(event.params.gameId.toHex());
   if (game != null) {
     // Todo: Somehow, items count isn't actually counting properly. Fix this eventually
     game.itemsCount = game.itemsCount.plus(BigInt.fromI32(ids.length));
