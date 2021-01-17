@@ -115,15 +115,17 @@ type Order @entity {
   id: ID!
   owner: Account!
   item: Item!
-  amount: BigInt
+  amountForSale: BigInt
+  amountEscrowed: BigInt
+  amountSold: BigInt
   token: Token!
   price: BigInt
   isBid: Boolean
-  isClaimed: Boolean
+  isClaimable: Boolean
   isCancelled: Boolean
-  isFullfilled: Boolean
+  isFilled: Boolean
   createdAt: BigInt
-  fullfilledAt: BigInt
-  claimedAt: BigInt
+  orderFilledAt: BigInt
+  lastClaimedAt: BigInt
   cancelledAt: BigInt
 }

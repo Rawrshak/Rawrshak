@@ -11,8 +11,6 @@ import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IExchange.sol";
 import "./ExchangeEscrow.sol";
 
-// Todo: change Order price from uint256 to big decimal. currently at uint256 for simplicity and testing
-
 contract Exchange is IExchange, Ownable, ERC165 {
     using ERC165Checker for *;
     using SafeMath for *;
@@ -43,7 +41,8 @@ contract Exchange is IExchange, Ownable, ERC165 {
         address token;
         uint256 itemUUID;
 		uint256 price;
-        uint256 amount;
+        uint256 amountForSale;
+        uint256 amountEscrowed;
         bool isBid;
         bool claimable;
     }
@@ -59,7 +58,7 @@ contract Exchange is IExchange, Ownable, ERC165 {
     event GlobalItemRegistryStored(address, address, bytes4);
     event OrderPlaced(address user, address token, uint256 itemId, uint256 amount, uint256 price, bool isBid, uint256 orderId);
     event OrderDeleted(address owner, uint256 orderId);
-    event OrderFullfilled(uint256 orderId, address user, address orderOwner, uint256 itemId, uint256 amount, uint256 price);
+    event OrderFilled(uint256 orderId, address user, address orderOwner, uint256 itemId, uint256 amount, uint256 price);
     event Claimed(address owner, uint256 orderId);
     event ClaimedAll(address owner, uint256[] orderIds);
 
@@ -109,7 +108,8 @@ contract Exchange is IExchange, Ownable, ERC165 {
         order.token = _token;
         order.itemUUID = _uuid;
         order.price = _price;
-        order.amount = _amount;
+        order.amountForSale = _amount;
+        order.amountEscrowed = 0;
         order.isBid = true;
         order.claimable = false;
 
@@ -141,7 +141,8 @@ contract Exchange is IExchange, Ownable, ERC165 {
         order.token = _token;
         order.itemUUID = _uuid;
         order.price = _price;
-        order.amount = _amount;
+        order.amountForSale = _amount;
+        order.amountEscrowed = 0;
         order.isBid = false;
         order.claimable = false;
         
@@ -162,13 +163,13 @@ contract Exchange is IExchange, Ownable, ERC165 {
             require(
                 escrow().approveToken(
                     order.token,
-                    SafeMath.mul(order.amount, order.price)),
+                    SafeMath.mul(order.amountForSale, order.price)),
                 "Token is not supported."
             );
             IERC20(order.token).transferFrom(
                 escrowAddr,
                 msg.sender,
-                SafeMath.mul(order.amount, order.price)
+                SafeMath.mul(order.amountForSale, order.price)
             );
         } else {
             // Return user item
@@ -176,7 +177,7 @@ contract Exchange is IExchange, Ownable, ERC165 {
             (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
 
             // Will fail if escrow's balanace of the id is not enough
-            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amount, "");
+            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amountForSale, "");
         }
 
         _deleteOrder(_orderId);
@@ -187,26 +188,29 @@ contract Exchange is IExchange, Ownable, ERC165 {
         external
         view
         override
-        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid, bool claimable)
+        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid)
     {
         return (
             orders[_orderId].user,
             orders[_orderId].token,
             orders[_orderId].itemUUID,
-            orders[_orderId].amount,
+            orders[_orderId].amountForSale,
             orders[_orderId].price,
-            orders[_orderId].isBid,
-            orders[_orderId].claimable
+            orders[_orderId].isBid
         );
     }
 
-    function fullfillOrder(uint256 _orderId) external override {
+    function fullfillOrder(uint256 _orderId, uint256 _amount) external override {
         // This will fail if _token address doesn't support the necessary
         Order storage order = orders[_orderId];
         require(order.user != msg.sender, "Order owner cannot fullfill order.");
         require(!order.claimable, "Order is already filled.");
         address sellerAddr;
         address buyerAddr;
+
+        if (_amount > order.amountForSale) {
+            _amount = order.amountForSale;
+        }
 
         // Get game information
         (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
@@ -219,7 +223,7 @@ contract Exchange is IExchange, Ownable, ERC165 {
             require(
                 escrow().approveToken(
                     order.token,
-                    SafeMath.mul(order.amount, order.price)),
+                    SafeMath.mul(_amount, order.price)),
                 "Token is not supported."
             );
         } else {
@@ -231,16 +235,18 @@ contract Exchange is IExchange, Ownable, ERC165 {
         IERC20(order.token).transferFrom(
             buyerAddr,
             sellerAddr,
-            SafeMath.mul(order.amount, order.price)
+            SafeMath.mul(_amount, order.price)
         );
 
         // Will revert if item fails to transfer
-        IERC1155(gameAddr).safeTransferFrom(sellerAddr, buyerAddr, gameId, order.amount, "");
+        IERC1155(gameAddr).safeTransferFrom(sellerAddr, buyerAddr, gameId, _amount, "");
 
         // Order is now claimable
         order.claimable = true;
+        order.amountForSale = SafeMath.sub(order.amountForSale, _amount);
+        order.amountEscrowed = SafeMath.sub(order.amountEscrowed, _amount);
 
-        emit OrderFullfilled(_orderId, msg.sender, order.user, order.itemUUID, order.amount, order.price);
+        emit OrderFilled(_orderId, msg.sender, order.user, order.itemUUID, _amount, order.price);
     }
 
     function claim(uint256 _orderId) external override {
@@ -253,23 +259,27 @@ contract Exchange is IExchange, Ownable, ERC165 {
             (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
             
             // Will fail if escrow's balanace of the id is not enough
-            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amount, "");
+            IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amountEscrowed, "");
         } else {
             require(
                 escrow().approveToken(
                     order.token,
-                    SafeMath.mul(order.amount, order.price)),
+                    SafeMath.mul(order.amountEscrowed, order.price)),
                 "Token is not supported."
             );
 
             IERC20(order.token).transferFrom(
                 escrowAddr,
                 msg.sender,
-                SafeMath.mul(order.amount, order.price)
+                SafeMath.mul(order.amountEscrowed, order.price)
             );
         }
         
-        _deleteOrder(_orderId);
+        order.amountEscrowed = 0;
+        order.claimable = false;
+        if (order.amountForSale == 0) {
+            _deleteOrder(_orderId);
+        }
         emit Claimed(msg.sender, _orderId);
     }
 
@@ -286,22 +296,26 @@ contract Exchange is IExchange, Ownable, ERC165 {
                     (address gameAddr, , uint256 gameId) = globalItemRegistry().getItemInfo(order.itemUUID);
 
                     // Will fail if escrow's balanace of the id is not enough
-                    IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amount, "");
+                    IERC1155(gameAddr).safeTransferFrom(escrowAddr, msg.sender, gameId, order.amountEscrowed, "");
                 } else {
                     require(
                         escrow().approveToken(
                             order.token,
-                            SafeMath.mul(order.amount, order.price)),
+                            SafeMath.mul(order.amountEscrowed, order.price)),
                         "Token is not supported."
                     );
                     IERC20(order.token).transferFrom(
                         escrowAddr,
                         msg.sender,
-                        SafeMath.mul(order.amount, order.price)
+                        SafeMath.mul(order.amountEscrowed, order.price)
                     );
                 }
 
-                _deleteOrder(orderId);
+                order.amountEscrowed = 0;
+                order.claimable = false;
+                if (order.amountForSale == 0) {
+                    _deleteOrder(orderId);
+                }
                 orderIds[counter++] = orderId;
             }
         }

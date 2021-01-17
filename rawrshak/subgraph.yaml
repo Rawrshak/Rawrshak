@@ -116,8 +116,8 @@ dataSources:
           handler: handleOrderPlaced
         - event: OrderDeleted(address,uint256)
           handler: handleOrderDeleted
-        - event: OrderFullfilled(uint256,address,address,uint256,uint256,uint256)
-          handler: handleOrderFullfilled
+        - event: OrderFilled(uint256,address,address,uint256,uint256,uint256)
+          handler: handleOrderFilled
         - event: Claimed(address,uint256)
           handler: handleClaimed
         - event: ClaimedAll(address,uint256[])

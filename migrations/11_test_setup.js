@@ -137,15 +137,18 @@ module.exports = async function(deployer, networks, accounts) {
 
     // // Delete 1 Bid
     // orderId = bidPlacedEvent.logs[0].args[6];
+    // orderAmount = bidPlacedEvent.logs[0].args[3];
     // await exchange.deleteOrder(orderId, {from: player2Address, gasPrice: 1});
 
     // // Fullfill asks
     // askId1 = askPlacedEvent.logs[0].args[6];
+    // askAmount = askPlacedEvent.logs[0].args[3];
     // await ovcTokenContract.approve(exchange.address, 500, {from: player1Address, gasPrice: 1});
-    // await exchange.fullfillOrder(askId1, {from: player1Address, gasPrice: 1});
+    // await exchange.fullfillOrder(askId1, askAmount, {from: player1Address, gasPrice: 1});
     
     // askId2 = askPlacedEvent2.logs[0].args[6];
-    // await exchange.fullfillOrder(askId2, {from: player1Address, gasPrice: 1});
+    // askAmount = askPlacedEvent2.logs[0].args[3];
+    // await exchange.fullfillOrder(askId2, askAmount, {from: player1Address, gasPrice: 1});
 
     // // Claim Player 2 sold material
     // await exchange.claim(askId1, {from: player2Address, gasPrice: 1});

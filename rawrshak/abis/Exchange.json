@@ -126,7 +126,7 @@
         "type": "uint256"
       }
     ],
-    "name": "OrderFullfilled",
+    "name": "OrderFilled",
     "type": "event"
   },
   {
@@ -208,8 +208,7 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -235,8 +234,7 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -382,22 +380,21 @@
         "internalType": "bool",
         "name": "isBid",
         "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "claimable",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "uint256",
         "name": "_orderId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
