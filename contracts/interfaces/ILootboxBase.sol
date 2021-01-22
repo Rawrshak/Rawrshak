@@ -5,13 +5,13 @@ interface ILootboxBase {
     
     /******** Enums ********/
     enum Rarity {
-        Mythic,
-        Exotic,
-        SuperRare,
-        Rare,
-        Scarce,
+        Common,
         Uncommon,
-        Common
+        Scarce,
+        Rare,
+        SuperRare,
+        Exotic,
+        Mythic        
     }
 
     function setGlobalItemRegistryAddr(address _addr) external;

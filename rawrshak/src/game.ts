@@ -3,6 +3,7 @@ import { GameContractCreated } from "../generated/GameFactory/GameFactory"
 import { GameManager } from "../generated/templates/GameManager/GameManager"
 
 import {
+  Game,
   GameManagerSet,
   ItemCreated,
   ItemBatchCreated,
@@ -24,7 +25,7 @@ import { Address } from "@graphprotocol/graph-ts/index";
 
 import { Game as GameContract } from "../generated/templates"
 
-let registryAddress = '0x89F549c205ccD68da50393Ebf1fA9C2b008Badf8';
+let registryAddress = '0xb4cD37f92879f0381dC5f0CCa34533dE96711314';
 let registry = GlobalItemRegistry.bind(Address.fromHexString(registryAddress) as Address);
 let zeroAddress = '0x0000000000000000000000000000000000000000';
 
@@ -35,8 +36,23 @@ export function handleGameContractCreated(event: GameContractCreated): void {
   let game = new GameData(id);
   game.contractAddress = event.params.addr;
   let managerContract = GameManager.bind(event.params.owner);
-  game.owner = managerContract.owner().toHex();
+
+  // Add Game Developer Account if it doesn't exist
+  let gameOwnerId = managerContract.owner().toHex();
+  let gameOwner = Account.load(gameOwnerId);
+  if (gameOwner == null) {
+    gameOwner = new Account(gameOwnerId);
+    gameOwner.address = managerContract.owner();
+    gameOwner.save();
+  }
+
+  game.owner = gameOwnerId;
   game.gameManagerContractAddress = event.params.owner;
+
+  let gameContractObject = Game.bind(event.params.addr);
+  game.uri = gameContractObject.uri(BigInt.fromI32(0));
+  game.itemsCount = BigInt.fromI32(0); 
+
   game.save();
 }
 
@@ -59,11 +75,19 @@ export function handleItemCreated(event: ItemCreated): void {
   item.currentSupply = BigInt.fromI32(0);
   item.creatorAddress = event.params.creatorAddr;
   item.save();
+
+  // increase item count
+  let game = GameData.load(event.params.gameId.toHex());
+  if (game != null) {
+    // Todo: Somehow, items count isn't actually counting properly. Fix this eventually
+    game.itemsCount = game.itemsCount.plus(BigInt.fromI32(1));
+    game.save()
+  }
 }
 
 export function handleItemBatchCreated(event: ItemBatchCreated): void {
   let ids = event.params.ids;
-  let maxSupplies = event.params.maxSupplies;
+  let maxSupplies = event.params.maxSupplies;  
   for (let index = 0, length = ids.length; index < length; ++index) {
     let id = registry.getUUID(event.address, ids[index]).toHex();
     let item = Item.load(id);
@@ -76,6 +100,14 @@ export function handleItemBatchCreated(event: ItemBatchCreated): void {
     item.currentSupply = BigInt.fromI32(0);
     item.creatorAddress = event.params.creatorAddr;
     item.save();
+  }
+  
+  // increase item count
+  let game = GameData.load(event.params.gameId.toHex());
+  if (game != null) {
+    // Todo: Somehow, items count isn't actually counting properly. Fix this eventually
+    game.itemsCount = game.itemsCount.plus(BigInt.fromI32(ids.length));
+    game.save()
   }
 }
 
@@ -103,12 +135,21 @@ export function handleItemBatchSupplyChanged(event: ItemBatchSupplyChanged): voi
 
 export function handleTransferSingle(event: TransferSingle): void {
   if (event.params.to.toHex() != zeroAddress) {
+    // Add user account if it doesn't exist
+    let userToId = event.params.to.toHex();
+    let userTo = Account.load(userToId);
+    if (userTo == null) {
+      userTo = new Account(userToId);
+      userTo.address = event.params.to;
+      userTo.save();
+    }
+
     let id = createItemEntryId(event.params.id, event.params.to.toHexString());
     let itemBalance = ItemBalance.load(id);
     if (itemBalance == null) {
       itemBalance = new ItemBalance(id);
       itemBalance.amount = BigInt.fromI32(0);
-      itemBalance.owner = event.params.to.toHex();
+      itemBalance.owner = userToId;
       itemBalance.item = registry.getUUID(event.address, event.params.id).toHex();
     }
     itemBalance.amount = itemBalance.amount.plus(event.params.value);
@@ -127,15 +168,30 @@ export function handleTransferSingle(event: TransferSingle): void {
 export function handleTransferBatch(event: TransferBatch): void {
   let values = event.params.values;
   let ids = event.params.ids;
+  let userToId = event.params.to.toHex();
+  
+  // Add user account if it doesn't exist
+  if (userToId != zeroAddress) {
+    let userTo = Account.load(userToId);
+    if (userTo == null) {
+      userTo = new Account(userToId);
+      userTo.address = event.params.to;
+      userTo.save();
+    }
+  }
+  
+  let userToIdString = event.params.to.toHexString();
+  let userFromIdString = event.params.from.toHexString();
+
   for (let index = 0, length = ids.length; index < length; ++index) {
     // operator, from, to, id, value
-    if (event.params.to.toHex() != zeroAddress) {
-      let id = createItemEntryId(ids[index], event.params.to.toHexString());
+    if (userToId != zeroAddress) {
+      let id = createItemEntryId(ids[index], userToIdString);
       let itemBalance = ItemBalance.load(id);
       if (itemBalance == null) {
         itemBalance = new ItemBalance(id);
       }
-      itemBalance.owner = event.params.to.toHex();
+      itemBalance.owner = userToId;
       
       itemBalance.item = registry.getUUID(event.address, ids[index]).toHex();
       itemBalance.amount = values[index];
@@ -143,7 +199,7 @@ export function handleTransferBatch(event: TransferBatch): void {
     }
 
     // remove item from the previous owner
-    let id = createItemEntryId(ids[index], event.params.from.toHexString());
+    let id = createItemEntryId(ids[index], userFromIdString);
     let itemBalance = ItemBalance.load(id);
     if (itemBalance != null) {
       itemBalance.amount = itemBalance.amount.minus(values[index]);

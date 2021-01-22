@@ -3,10 +3,10 @@ pragma solidity >=0.6.0 <0.8.0;
 
 interface IExchange {
     /******** View Functions ********/ 
-    function getOrder(uint256 _dataId)
+    function getOrder(uint256 _orderId)
         external
         view
-        returns(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price, bool isBid, bool isAvailable);
+        returns(address user, address token, uint256 uuid, uint256 amount, uint256 price, bool isBid);
     
     /******** Mutative Functions ********/ 
     function setGlobalItemRegistryAddr(address _addr) external;
@@ -17,11 +17,11 @@ interface IExchange {
     function placeAsk(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)
         external;
 
-    function deleteOrder(uint256 _dataId) external;
+    function deleteOrder(uint256 _orderId) external;
 
-    function claim(uint256 _dataId) external;
+    function claim(uint256 _orderId) external;
 
     function claimAll() external;
 
-    function fullfillOrder(uint256 _dataId) external;
+    function fullfillOrder(uint256 _orderId, uint256 _amount) external;
 }

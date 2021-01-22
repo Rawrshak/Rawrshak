@@ -8,7 +8,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x029a0C09D650D29A115CF982BB9670FF65BF19A9"
+      address: "0x4B54E6B4dA9720De788DfE71Bae9Aa08b663e1f3"
       abi: OVCToken
     mapping:
       kind: ethereum/events
@@ -31,7 +31,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xe20c20d03751C3dbD439df292626FaBE5F9296B3"
+      address: "0x7b6f1260226D76cEa1510b28E2522737D1755C57"
       abi: GameFactory
     mapping:
       kind: ethereum/events
@@ -44,6 +44,8 @@ dataSources:
       abis:
         - name: GameFactory
           file: ./abis/GameFactory.json
+        - name: Game
+          file: ./abis/Game.json
         - name: GameManager
           file: ./abis/GameManager.json
       eventHandlers:
@@ -53,7 +55,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x83fD588d08308F2461bcF32521c702Ef11CFF712"
+      address: "0x3c22C1d2009cb0296c730b2d40dcBC18D8a2F694"
       abi: CraftingFactory
     mapping:
       kind: ethereum/events
@@ -72,7 +74,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0xABB0005784972E173da1617Df224fD0Ed518e80E"
+      address: "0xf2Bed569F5A0aE82F548B9A58B9Dae604366F23b"
       abi: LootboxFactory
     mapping:
       kind: ethereum/events
@@ -92,7 +94,7 @@ dataSources:
     kind: ethereum/contract
     network: mainnet
     source:
-      address: "0x8Bbb7AbF4351fa72944c4E0591aCc14E27401225"
+      address: "0x7e822e0389a63Cd3c8F47A1F206b73273B5967fF"
       abi: Exchange
     mapping:
       kind: ethereum/events
@@ -114,8 +116,8 @@ dataSources:
           handler: handleOrderPlaced
         - event: OrderDeleted(address,uint256)
           handler: handleOrderDeleted
-        - event: OrderFullfilled(uint256,address,address,uint256,uint256,uint256)
-          handler: handleOrderFullfilled
+        - event: OrderFilled(uint256,address,address,uint256,uint256,uint256)
+          handler: handleOrderFilled
         - event: Claimed(address,uint256)
           handler: handleClaimed
         - event: ClaimedAll(address,uint256[])

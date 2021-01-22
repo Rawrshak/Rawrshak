@@ -37,7 +37,7 @@ contract('Lootbox Contract', (accounts) => {
         mythicReward
     ] = [10,11,12,13,14,15,16];
 
-    const Rarity = {Mythic:0, Exotic:1, SuperRare:2, Rare:3, Scarce:4, Uncommon:5, Common:6};
+    const Rarity = {Common:0, Uncommon:1, Scarce:2, Rare:3, SuperRare:4, Exotic:5, Mythic:6};
     const DEFAULT_REQUIRED_INPUT_ITEMS_AMOUNT = 4;
     const zero_address = "0x0000000000000000000000000000000000000000";
     var game, gameManager, itemRegistry;
