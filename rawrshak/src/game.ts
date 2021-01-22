@@ -25,7 +25,7 @@ import { Address } from "@graphprotocol/graph-ts/index";
 
 import { Game as GameContract } from "../generated/templates"
 
-let registryAddress = '0x2361185CAECa3E67EB258c1c2CeFe118F23C1D63';
+let registryAddress = '0xb4cD37f92879f0381dC5f0CCa34533dE96711314';
 let registry = GlobalItemRegistry.bind(Address.fromHexString(registryAddress) as Address);
 let zeroAddress = '0x0000000000000000000000000000000000000000';
 

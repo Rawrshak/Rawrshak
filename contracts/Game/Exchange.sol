@@ -244,7 +244,7 @@ contract Exchange is IExchange, Ownable, ERC165 {
         // Order is now claimable
         order.claimable = true;
         order.amountForSale = SafeMath.sub(order.amountForSale, _amount);
-        order.amountEscrowed = SafeMath.sub(order.amountEscrowed, _amount);
+        order.amountEscrowed = SafeMath.add(order.amountEscrowed, _amount);
 
         emit OrderFilled(_orderId, msg.sender, order.user, order.itemUUID, _amount, order.price);
     }
