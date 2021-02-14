@@ -4,11 +4,20 @@ This project will contain the implementation of the Rawrshak Smart Contracts
 # Token: Omniverse Credits [OVC]
 Omniverse Credits are the platform currency that will be used for transactions.
 
-## Todo:
+## Christian's Tasks:
 - Set up "Get Started" instructions
 - Replace OVC with RAWR tokens
 - Fix 11_test_setup.js to correctly run tests
 - After committing the proof of concept, need to start properly writing the Unity Plugins
+
+## Independent Tasks
+- Implement [Secondary Sales Fees](https://docs.opensea.io/docs/10-setting-fees-on-secondary-sales) - OpenSea has an interface for this. 
+    - Determine the best architecture for this (push vs pull models, immediately send tokens or accumulate and send weekly, etc)
+- Investigate [Gasless transactions](https://docs.openzeppelin.com/learn/sending-gasless-transactions)
+- Refactor Exchange, Lootbox, and Crafting Contracts. Separate out functionality and data into their own sub contracts
+- Investigate [Chainlink's VRF](https://docs.chain.link/docs/chainlink-vrf) for proper randomization for the Lootbox Contract
+- Investigate Matic (now Polygon) Network vs xDai Protocol for Layer 2 solution
+- Investigate how to make smart contracts upgradable without having to migrate data from older smart contracts. 
 
 ## Done Todo:
 - Infrastructure Smart Contracts
