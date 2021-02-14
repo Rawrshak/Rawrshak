@@ -11,3 +11,9 @@ data
 # openzeppelin
 .openzeppelin/dev-*.json
 .openzeppelin/.session
+
+# Unity C# generated files
+*.csproj
+/bin
+/obj/
+/Game
