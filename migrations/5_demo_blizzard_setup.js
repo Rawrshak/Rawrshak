@@ -55,7 +55,7 @@ module.exports = async function(deployer, networks, accounts) {
     // worldOfWarcraftManager = await GameManager.at(worldOfWarcraftManagerAddr, {from: blizzardAddress});
 
     // // Create Game Contract
-    // await worldOfWarcraftManager.generateGameContract(gameFactory.address, "http://localhost:4000/games/2", {from: blizzardAddress});
+    // await worldOfWarcraftManager.generateGameContract(gameFactory.address, "http://localhost:4000/", {from: blizzardAddress});
     // gameAddr = await worldOfWarcraftManager.gameAddr();
     // game = await Game.at(gameAddr);
 

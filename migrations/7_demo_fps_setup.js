@@ -55,7 +55,7 @@ module.exports = async function(deployer, networks, accounts) {
     battlefield3Manager = await GameManager.at(battlefield3ManagerAddr, {from: electronicArtsAddress});
 
     // Create Game Contract
-    await battlefield3Manager.generateGameContract(gameFactory.address, "http://localhost:4000/games/0", {from: electronicArtsAddress});
+    await battlefield3Manager.generateGameContract(gameFactory.address, "http://localhost:4000/", {from: electronicArtsAddress});
     gameAddr = await battlefield3Manager.gameAddr();
     game = await Game.at(gameAddr);
 

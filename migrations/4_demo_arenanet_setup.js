@@ -55,7 +55,7 @@ module.exports = async function(deployer, networks, accounts) {
     // guildWarsManager = await GameManager.at(guildWarsManagerAddr, {from: arenaNetAddress});
 
     // // Create Game Contract
-    // await guildWarsManager.generateGameContract(gameFactory.address, "http://localhost:4000/games/0", {from: arenaNetAddress});
+    // await guildWarsManager.generateGameContract(gameFactory.address, "http://localhost:4000/", {from: arenaNetAddress});
     // gameAddr = await guildWarsManager.gameAddr();
     // game = await Game.at(gameAddr);
 
@@ -162,7 +162,7 @@ module.exports = async function(deployer, networks, accounts) {
     // guildWars2Manager = await GameManager.at(guildWars2ManagerAddr, {from: arenaNetAddress});
 
     // // Create Game Contract
-    // await guildWars2Manager.generateGameContract(gameFactory.address, "http://localhost:4000/games/1", {from: arenaNetAddress});
+    // await guildWars2Manager.generateGameContract(gameFactory.address, "http://localhost:4000/", {from: arenaNetAddress});
     // gameAddr = await guildWars2Manager.gameAddr();
     // game = await Game.at(gameAddr);
 
