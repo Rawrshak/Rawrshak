@@ -6,8 +6,9 @@ Omniverse Credits are the platform currency that will be used for transactions.
 
 ## Todo:
 - Set up "Get Started" instructions
-- Create a simple front-end Dapp
-- Integrate Game
+- Replace OVC with RAWR tokens
+- Fix 11_test_setup.js to correctly run tests
+- After committing the proof of concept, need to start properly writing the Unity Plugins
 
 ## Done Todo:
 - Infrastructure Smart Contracts
@@ -16,3 +17,6 @@ Omniverse Credits are the platform currency that will be used for transactions.
     - Docker for local graph node
     - Graph Node API which can be accessible via GraphQL api
     - Set up demo data for testing
+- Set up a JSON server for querying game and asset data
+- Implement Unity Project that allows for Viewing Asset Information
+- Proof of concept for serving standardized cloud assets and loading them in a game during runtime
