@@ -1,12 +1,11 @@
 # Rawrshak
 This project will contain the implementation of the Rawrshak Smart Contracts
 
-# Token: Omniverse Credits [OVC]
-Omniverse Credits are the platform currency that will be used for transactions.
+# Token: Rawrshak Token [RAWR]
+Rawrshak Token are the platform currency that will be used for Governance and transactions.
 
 # Tasks
 ## Christian's Tasks:
-- Replace OVC with RAWR tokens
 - Fix 11_test_setup.js to correctly run tests
 - After committing the proof of concept, need to start properly writing the Unity Plugins
 

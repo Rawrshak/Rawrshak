@@ -5,7 +5,7 @@ const GameFactory = artifacts.require("GameFactory");
 const ManagerFactory = artifacts.require("ManagerFactory");
 const Exchange = artifacts.require("Exchange");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
-const OvcTokenContract = artifacts.require("OVCToken");
+const RawrshakTokenContract = artifacts.require("RawrToken");
 
 contract('Exchange Contract', (accounts) => {
     // Constants
@@ -22,7 +22,7 @@ contract('Exchange Contract', (accounts) => {
     ] = [0,1,2];
     const zero_address = "0x0000000000000000000000000000000000000000";
     const maxAllowance = "500";
-    var ovcToken, gameManager, game, exchange, itemRegistry;
+    var rawrToken, gameManager, game, exchange, itemRegistry;
     var minter_role, burner_role;
     var player1Orders = new Array(), player2Orders = new Array();
 
@@ -46,19 +46,19 @@ contract('Exchange Contract', (accounts) => {
         game = await Game.at(gameAddress);
 
         // set token
-        ovcToken = await OvcTokenContract.deployed();
+        rawrToken = await RawrshakTokenContract.deployed();
     });
     
     it('Setup Tokens', async () => {
         // Test deployer token supply
-        balance = await ovcToken.balanceOf(deployerAddress);
+        balance = await rawrToken.balanceOf(deployerAddress);
         assert.equal(balance.valueOf(), 1000000000, "1000000000 wasn't in the first account");
 
         // Give some token supply to the players
-        await ovcToken.transfer(player1Address, 5000, {from:deployerAddress});
-        await ovcToken.transfer(player2Address, 5000, {from:deployerAddress});
-        assert.equal(await ovcToken.balanceOf(player1Address), 5000, "Player 1 was not sent 5000 OVC Tokens.");
-        assert.equal(await ovcToken.balanceOf(player2Address), 5000, "Player 2 was not sent 5000 OVC Tokens.");
+        await rawrToken.transfer(player1Address, 5000, {from:deployerAddress});
+        await rawrToken.transfer(player2Address, 5000, {from:deployerAddress});
+        assert.equal(await rawrToken.balanceOf(player1Address), 5000, "Player 1 was not sent 5000 RAWR Tokens.");
+        assert.equal(await rawrToken.balanceOf(player2Address), 5000, "Player 2 was not sent 5000 RAWR Tokens.");
     });
 
     it('Setup Game', async () => {
@@ -92,31 +92,31 @@ contract('Exchange Contract', (accounts) => {
         uuid1 = await itemRegistry.getUUID(game.address, inputItem1);
         uuid2 = await itemRegistry.getUUID(game.address, inputItem2);
         
-        assert.equal(await ovcToken.balanceOf(player1Address), 5000, "Player 1 does not have 5000 OVC Tokens.");
-        assert.equal(await ovcToken.balanceOf(player2Address), 5000, "Player 2 does not have 5000 OVC Tokens.");
+        assert.equal(await rawrToken.balanceOf(player1Address), 5000, "Player 1 does not have 5000 RAWR Tokens.");
+        assert.equal(await rawrToken.balanceOf(player2Address), 5000, "Player 2 does not have 5000 RAWR Tokens.");
 
-        await ovcToken.approve(exchange.address, maxAllowance, {from: player1Address, gasPrice: 1}); 
-        await ovcToken.approve(exchange.address, maxAllowance, {from: player2Address, gasPrice: 1}); 
+        await rawrToken.approve(exchange.address, maxAllowance, {from: player1Address, gasPrice: 1}); 
+        await rawrToken.approve(exchange.address, maxAllowance, {from: player2Address, gasPrice: 1}); 
 
-        bidPlacedEvent = await exchange.placeBid(player2Address, ovcToken.address, uuid0, 1, 100);
+        bidPlacedEvent = await exchange.placeBid(player2Address, rawrToken.address, uuid0, 1, 100);
         assert.equal(bidPlacedEvent.logs[0].args[0], player2Address, "user address is incorrect.");
-        assert.equal(bidPlacedEvent.logs[0].args[1], ovcToken.address, "token address is incorrect.");
+        assert.equal(bidPlacedEvent.logs[0].args[1], rawrToken.address, "token address is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[2].toString(), uuid0.toString(), "item uuid is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[3].toNumber(), 1, "item amount is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[4].toNumber(), 100, "item price is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[5], true, "data entry is not a bid");
         player2Orders.push([bidPlacedEvent.logs[0].args[6], bidPlacedEvent.logs[0].args[3].toNumber()]);
-        assert.equal(await ovcToken.balanceOf(player2Address), 4900, "Player 2 balance was not deducted");
+        assert.equal(await rawrToken.balanceOf(player2Address), 4900, "Player 2 balance was not deducted");
 
-        bidPlacedEvent = await exchange.placeBid(player1Address, ovcToken.address, uuid2, 2, 100);
+        bidPlacedEvent = await exchange.placeBid(player1Address, rawrToken.address, uuid2, 2, 100);
         assert.equal(bidPlacedEvent.logs[0].args[0], player1Address, "user address is incorrect.");
-        assert.equal(bidPlacedEvent.logs[0].args[1], ovcToken.address, "token address is incorrect.");
+        assert.equal(bidPlacedEvent.logs[0].args[1], rawrToken.address, "token address is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[2].toString(), uuid2.toString(), "item uuid is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[3].toNumber(), 2, "item amount is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[4].toNumber(), 100, "item price is incorrect.");
         assert.equal(bidPlacedEvent.logs[0].args[5], true, "data entry is not a bid");
         player1Orders.push([bidPlacedEvent.logs[0].args[6], bidPlacedEvent.logs[0].args[3].toNumber()]);
-        assert.equal(await ovcToken.balanceOf(player1Address), 4800, "Player 2 balance was not deducted");
+        assert.equal(await rawrToken.balanceOf(player1Address), 4800, "Player 2 balance was not deducted");
     });
 
     it('Place Asks', async () => {
@@ -132,9 +132,9 @@ contract('Exchange Contract', (accounts) => {
         await game.setApprovalForAll(exchange.address, true, {from: player1Address, gasPrice: 1}); 
         await game.setApprovalForAll(exchange.address, true, {from: player2Address, gasPrice: 1}); 
 
-        askPlacedEvent = await exchange.placeAsk(player2Address, ovcToken.address, uuid2, 1, 200);
+        askPlacedEvent = await exchange.placeAsk(player2Address, rawrToken.address, uuid2, 1, 200);
         assert.equal(askPlacedEvent.logs[0].args[0], player2Address, "user address is incorrect.");
-        assert.equal(askPlacedEvent.logs[0].args[1], ovcToken.address, "token address is incorrect.");
+        assert.equal(askPlacedEvent.logs[0].args[1], rawrToken.address, "token address is incorrect.");
         assert.equal(askPlacedEvent.logs[0].args[2].toString(), uuid2.toString(), "item uuid is incorrect.");
         assert.equal(askPlacedEvent.logs[0].args[3].toNumber(), 1, "item amount is incorrect.");
         assert.equal(askPlacedEvent.logs[0].args[4].toNumber(), 200, "item price is incorrect.");
@@ -151,7 +151,7 @@ contract('Exchange Contract', (accounts) => {
         uuid2 = await itemRegistry.getUUID(game.address, inputItem2);
         data = await exchange.getOrder(player1Orders[0][0]);
         assert.equal(data[0], player1Address, "user address is incorrect.");
-        assert.equal(data[1], ovcToken.address, "token address is incorrect.");
+        assert.equal(data[1], rawrToken.address, "token address is incorrect.");
         assert.equal(data[2].toString(), uuid2.toString(), "item uuid is incorrect.");
         assert.equal(data[5], true, "data entry is not a bid");
 
@@ -159,13 +159,13 @@ contract('Exchange Contract', (accounts) => {
         uuid0 = await itemRegistry.getUUID(game.address, inputItem0);
         data = await exchange.getOrder(player2Orders[0][0]);
         assert.equal(data[0], player2Address, "user address is incorrect.");
-        assert.equal(data[1], ovcToken.address, "token address is incorrect.");
+        assert.equal(data[1], rawrToken.address, "token address is incorrect.");
         assert.equal(data[2].toString(), uuid0.toString(), "item uuid is incorrect.");
         assert.equal(data[5], true, "data entry is not a bid");
         
         data = await exchange.getOrder(player2Orders[1][0]);
         assert.equal(data[0], player2Address, "user address is incorrect.");
-        assert.equal(data[1], ovcToken.address, "token address is incorrect.");
+        assert.equal(data[1], rawrToken.address, "token address is incorrect.");
         assert.equal(data[2].toString(), uuid2.toString(), "item uuid is incorrect.");
         assert.equal(data[5], false, "data entry is not an ask");
     });
@@ -177,15 +177,15 @@ contract('Exchange Contract', (accounts) => {
         bidAmount = player1Orders[0][1];
         await game.setApprovalForAll(exchange.address, true, {from: player2Address, gasPrice: 1}); 
         await exchange.fullfillOrder(bidDataId, bidAmount, {from: player2Address});
-        assert.equal(await ovcToken.balanceOf(player2Address), 5100, "Player 2 tokens did not increase correctly.");
+        assert.equal(await rawrToken.balanceOf(player2Address), 5100, "Player 2 tokens did not increase correctly.");
         assert.equal(await game.balanceOf(player2Address, inputItem2), 2, "Player 2 item inventory did not decrease correctly.");
 
         // Player 1 fills Player 2's ask for item 2
         askDataId = player2Orders[1][0];
         askAmount = player2Orders[1][1];
-        await ovcToken.approve(exchange.address, maxAllowance, {from: player1Address, gasPrice: 1}); 
+        await rawrToken.approve(exchange.address, maxAllowance, {from: player1Address, gasPrice: 1}); 
         await exchange.fullfillOrder(askDataId, askAmount, {from: player1Address});
-        assert.equal(await ovcToken.balanceOf(player1Address), 4600, "Player 1 tokens did not decrease correctly.");
+        assert.equal(await rawrToken.balanceOf(player1Address), 4600, "Player 1 tokens did not decrease correctly.");
         assert.equal(await game.balanceOf(player1Address, inputItem2), 1, "Player 1 item inventory did not increase correctly.");
     });
 
@@ -206,13 +206,13 @@ contract('Exchange Contract', (accounts) => {
         
         // Claim player 2 items        
         // check player 2's existing number of tokens
-        assert.equal(await ovcToken.balanceOf(player2Address), 5100, "Player 2 should have 5100 tokens.");
+        assert.equal(await rawrToken.balanceOf(player2Address), 5100, "Player 2 should have 5100 tokens.");
 
         // Claim player 2 items
         await exchange.claim(player2Orders[1][0], {from: player2Address, gasPrice:1});
 
         // check if player 2 recieved the item
-        assert.equal(await ovcToken.balanceOf(player2Address), 5300, "Player 2 should now have 5300 tokens.");
+        assert.equal(await rawrToken.balanceOf(player2Address), 5300, "Player 2 should now have 5300 tokens.");
 
         // check data entry was deleted
         data = await exchange.getOrder(player2Orders[1][0]);
@@ -228,6 +228,6 @@ contract('Exchange Contract', (accounts) => {
         assert.equal(data[0], zero_address, "Order Entry was not deleted.");
 
         // check if player 2 recieved the item
-        assert.equal(await ovcToken.balanceOf(player2Address), 5400, "Player 2 should now have 5400 tokens.");
+        assert.equal(await rawrToken.balanceOf(player2Address), 5400, "Player 2 should now have 5400 tokens.");
     });
 });

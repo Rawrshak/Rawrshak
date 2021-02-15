@@ -1,4 +1,4 @@
-const OVCTokenContract = artifacts.require("OVCToken");
+const RawrshakTokenContract = artifacts.require("RawrToken");
 const ManagerFactory = artifacts.require("ManagerFactory");
 const Game = artifacts.require("Game");
 const GameManager = artifacts.require("GameManager");
@@ -21,12 +21,12 @@ module.exports = async function(deployer, networks, accounts) {
     //     player3Address              // Player 3 test address
     // ] = accounts;
 
-    // // get OVC token with 1,000,000,000 initial supply and send some
-    // ovcTokenContract = await OVCTokenContract.deployed();
-    // await ovcTokenContract.approve(deployerAddress, 1000000, {from:deployerAddress});
-    // await ovcTokenContract.transfer(player1Address, 10000, {from:deployerAddress});
-    // await ovcTokenContract.transfer(player2Address, 5000, {from:deployerAddress});
-    // await ovcTokenContract.transfer(player3Address, 15000, {from:deployerAddress});
+    // // get RAWR token with 1,000,000,000 initial supply and send some
+    // rawrshakTokenContract = await RawrshakTokenContract.deployed();
+    // await rawrshakTokenContract.approve(deployerAddress, 1000000, {from:deployerAddress});
+    // await rawrshakTokenContract.transfer(player1Address, 10000, {from:deployerAddress});
+    // await rawrshakTokenContract.transfer(player2Address, 5000, {from:deployerAddress});
+    // await rawrshakTokenContract.transfer(player3Address, 15000, {from:deployerAddress});
 
     // // set up GlobalItemRegistry Contract
     // registry = await GlobalItemRegistry.deployed();
@@ -118,7 +118,7 @@ module.exports = async function(deployer, networks, accounts) {
     // /*****       Exchange Data           *****/
     // /*****************************************/
     // // Create 2 Bids and 2 Asks
-    // await ovcTokenContract.approve(exchange.address, 500, {from: player2Address, gasPrice: 1});
+    // await rawrshakTokenContract.approve(exchange.address, 500, {from: player2Address, gasPrice: 1});
     // await game.setApprovalForAll(exchange.address, true, {from: player2Address, gasPrice: 1});
     // await game.setApprovalForAll(exchange.address, true, {from: player3Address, gasPrice: 1});
     
@@ -127,13 +127,13 @@ module.exports = async function(deployer, networks, accounts) {
     // uuid3 = await registry.getUUID(game.address, material3);
 
     // // Player 2 wants to buy Mat1 and Mat2
-    // bidPlacedEvent = await exchange.placeBid(player2Address, ovcTokenContract.address, uuid1, 1, 100);
-    // await exchange.placeBid(player2Address, ovcTokenContract.address, uuid2, 2, 100);
+    // bidPlacedEvent = await exchange.placeBid(player2Address, rawrshakTokenContract.address, uuid1, 1, 100);
+    // await exchange.placeBid(player2Address, rawrshakTokenContract.address, uuid2, 2, 100);
 
     // // Player 2 is selling Mat3
     // // Player 3 is selling Mat1
-    // askPlacedEvent = await exchange.placeAsk(player2Address, ovcTokenContract.address, uuid3, 1, 200);
-    // askPlacedEvent2 = await exchange.placeAsk(player3Address, ovcTokenContract.address, uuid1, 1, 300);
+    // askPlacedEvent = await exchange.placeAsk(player2Address, rawrshakTokenContract.address, uuid3, 1, 200);
+    // askPlacedEvent2 = await exchange.placeAsk(player3Address, rawrshakTokenContract.address, uuid1, 1, 300);
 
     // // Delete 1 Bid
     // orderId = bidPlacedEvent.logs[0].args[6];
@@ -143,7 +143,7 @@ module.exports = async function(deployer, networks, accounts) {
     // // Fullfill asks
     // askId1 = askPlacedEvent.logs[0].args[6];
     // askAmount = askPlacedEvent.logs[0].args[3];
-    // await ovcTokenContract.approve(exchange.address, 500, {from: player1Address, gasPrice: 1});
+    // await rawrshakTokenContract.approve(exchange.address, 500, {from: player1Address, gasPrice: 1});
     // await exchange.fullfillOrder(askId1, askAmount, {from: player1Address, gasPrice: 1});
     
     // askId2 = askPlacedEvent2.logs[0].args[6];
@@ -166,7 +166,7 @@ module.exports = async function(deployer, networks, accounts) {
     //     materialAmounts,
     //     rewardIds,
     //     rewardAmounts,
-    //     ovcTokenContract.address,
+    //     rawrshakTokenContract.address,
     //     100,
     //     true,
     //     {from:deployerAddress}
@@ -176,7 +176,7 @@ module.exports = async function(deployer, networks, accounts) {
     // // make sure player 1 has the materials
     // materialIds = [material1, material2, material3];
     // await gameManager.mintBatch(player1Address, materialIds, materialAmounts, {from:deployerAddress, gasPrice: 1});
-    // await ovcTokenContract.approve(crafting.address, 100, {from: player1Address, gasPrice: 1});
+    // await rawrshakTokenContract.approve(crafting.address, 100, {from: player1Address, gasPrice: 1});
 
     // // Craft recipe 0, as created above.
     // await crafting.craftItem(0, player1Address, {from:player1Address, gasPrice:1});

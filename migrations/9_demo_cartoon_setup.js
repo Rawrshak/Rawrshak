@@ -1,4 +1,4 @@
-const OVCTokenContract = artifacts.require("OVCToken");
+const RawrshakTokenContract = artifacts.require("RawrToken");
 const ManagerFactory = artifacts.require("ManagerFactory");
 const Game = artifacts.require("Game");
 const GameManager = artifacts.require("GameManager");
@@ -20,7 +20,7 @@ module.exports = async function(deployer, networks, accounts) {
         player6Address              // Player 6 test address
     ] = accounts;
 
-    ovcToken = await OVCTokenContract.deployed();
+    rawrToken = await RawrshakTokenContract.deployed();
 
     // set up GlobalItemRegistry Contract
     registry = await GlobalItemRegistry.deployed();
@@ -30,12 +30,12 @@ module.exports = async function(deployer, networks, accounts) {
     await exchange.setGlobalItemRegistryAddr(registry.address);
     
     // Set Approvals
-    await ovcToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player1Address, gasPrice: 1});
-    await ovcToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player2Address, gasPrice: 1});
-    await ovcToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player3Address, gasPrice: 1});
-    await ovcToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player4Address, gasPrice: 1});
-    await ovcToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player5Address, gasPrice: 1});
-    await ovcToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player6Address, gasPrice: 1});
+    await rawrToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player1Address, gasPrice: 1});
+    await rawrToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player2Address, gasPrice: 1});
+    await rawrToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player3Address, gasPrice: 1});
+    await rawrToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player4Address, gasPrice: 1});
+    await rawrToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player5Address, gasPrice: 1});
+    await rawrToken.approve(exchange.address, web3.utils.toWei('100000', 'gwei'), {from: player6Address, gasPrice: 1});
 
     // Set up Game with test URL
     gameFactory = await GameFactory.deployed();
@@ -70,10 +70,10 @@ module.exports = async function(deployer, networks, accounts) {
 
     // Place Items on sale
     itemUUID = await registry.getUUID(game.address, 14);
-    await exchange.placeAsk(nintendoAddress, ovcToken.address, itemUUID, 5, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 5, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
     
     itemUUID = await registry.getUUID(game.address, 15);
-    await exchange.placeAsk(nintendoAddress, ovcToken.address, itemUUID, 5, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 5, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
 
     // Mint Default assets for players
     // Player 2
@@ -97,23 +97,23 @@ module.exports = async function(deployer, networks, accounts) {
     // Place Player Buy/Sell orders
     // Player 2
     itemUUID = await registry.getUUID(game.address, 17);
-    await exchange.placeBid(player2Address, ovcToken.address, itemUUID, 1, web3.utils.toWei('950', 'gwei'), {from:player2Address, gasPrice: 1});
+    await exchange.placeBid(player2Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('950', 'gwei'), {from:player2Address, gasPrice: 1});
     
     itemUUID = await registry.getUUID(game.address, 15);
-    await exchange.placeAsk(player2Address, ovcToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player2Address, gasPrice: 1});
+    await exchange.placeAsk(player2Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player2Address, gasPrice: 1});
     
     // Player 3
     itemUUID = await registry.getUUID(game.address, 15);
-    await exchange.placeBid(player3Address, ovcToken.address, itemUUID, 1, web3.utils.toWei('975', 'gwei'), {from:player3Address, gasPrice: 1});
+    await exchange.placeBid(player3Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('975', 'gwei'), {from:player3Address, gasPrice: 1});
     
     itemUUID = await registry.getUUID(game.address, 16);
-    await exchange.placeAsk(player3Address, ovcToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player3Address, gasPrice: 1});
+    await exchange.placeAsk(player3Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player3Address, gasPrice: 1});
     
     // Player 6 
     itemUUID = await registry.getUUID(game.address, 14);
-    await exchange.placeBid(player6Address, ovcToken.address, itemUUID, 1, web3.utils.toWei('980', 'gwei'), {from:player6Address, gasPrice: 1});
+    await exchange.placeBid(player6Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('980', 'gwei'), {from:player6Address, gasPrice: 1});
     
     itemUUID = await registry.getUUID(game.address, 16);
-    await exchange.placeAsk(player6Address, ovcToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player6Address, gasPrice: 1});
+    await exchange.placeAsk(player6Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player6Address, gasPrice: 1});
 
 };

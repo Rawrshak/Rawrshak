@@ -1,9 +1,9 @@
 import { ByteArray, BigInt, crypto } from "@graphprotocol/graph-ts"
 import {
-  OVCToken,
+  RawrToken,
   TokenCreated,
   Transfer
-} from "../generated/OVCToken/OVCToken"
+} from "../generated/RawrToken/RawrToken"
 import { 
   Token,
   TokenBalance,
@@ -30,7 +30,7 @@ export function handleTokenCreated(event: TokenCreated): void {
 
 export function handleTransfer(event: Transfer): void {  
   // Add the amount to that user's TokenBalance
-  let tokenContract = OVCToken.bind(event.address);
+  let tokenContract = RawrToken.bind(event.address);
   if (event.params.to.toHex() != zeroAddress) {
     // Get User To and add if it doesn't exist
     let userToId = event.params.to.toHex();

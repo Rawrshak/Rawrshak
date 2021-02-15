@@ -1,4 +1,4 @@
-const OVCTokenContract = artifacts.require("OVCToken");
+const RawrshakTokenContract = artifacts.require("RawrToken");
 
 module.exports = async function(deployer, networks, accounts) {
     [
@@ -14,13 +14,13 @@ module.exports = async function(deployer, networks, accounts) {
         player6Address              // Player 6 test address
     ] = accounts;
 
-    // get OVC token with 1,000,000,000 initial supply and distribute them
-    ovcTokenContract = await OVCTokenContract.deployed();
-    await ovcTokenContract.approve(deployerAddress, web3.utils.toWei('1000000000', 'gwei'), {from:deployerAddress}); // in wei
-    await ovcTokenContract.transfer(player1Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player2Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player3Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player4Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player5Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
-    await ovcTokenContract.transfer(player6Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});  
+    // get RAWR token with 1,000,000,000 initial supply and distribute them
+    rawrshakTokenContract = await RawrshakTokenContract.deployed();
+    await rawrshakTokenContract.approve(deployerAddress, web3.utils.toWei('1000000000', 'gwei'), {from:deployerAddress}); // in wei
+    await rawrshakTokenContract.transfer(player1Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await rawrshakTokenContract.transfer(player2Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await rawrshakTokenContract.transfer(player3Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await rawrshakTokenContract.transfer(player4Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await rawrshakTokenContract.transfer(player5Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});
+    await rawrshakTokenContract.transfer(player6Address, web3.utils.toWei('100000', 'gwei'), {from:deployerAddress});  
 };
