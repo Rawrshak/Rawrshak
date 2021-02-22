@@ -6,7 +6,7 @@ const Crafting = artifacts.require("Crafting");
 const CraftingManager = artifacts.require("CraftingManager");
 const CraftingFactory = artifacts.require("CraftingFactory");
 const ManagerFactory = artifacts.require("ManagerFactory");
-const OVCToken = artifacts.require("OVCToken");
+const RawrToken = artifacts.require("RawrToken");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
 
 contract('Crafting Contract', (accounts) => {
@@ -20,7 +20,7 @@ contract('Crafting Contract', (accounts) => {
     const [material1, material2, material3, reward1, reward2] = [0,1,2,3,4];
     const [recipe0, recipe1, recipe2] = [0,1,2];
     const zero_address = "0x0000000000000000000000000000000000000000";
-    var game, gameManager, ovcToken, itemRegistry;
+    var game, gameManager, rawrToken, itemRegistry;
     var crafting, craftingManager;
     var default_admin_role, manager_role, minter_role, burner_role;
     var material1UUID, material2UUID, material3UUID, reward1UUID, reward2UUID;
@@ -56,10 +56,10 @@ contract('Crafting Contract', (accounts) => {
         await craftingManager.setDeveloperWallet(developerWalletAddress);
         
         // set token
-        ovcToken = await OVCToken.deployed();
+        rawrToken = await RawrToken.deployed();
         
-        await ovcToken.transfer(playerAddress, 300, {from:deployerAddress});
-        assert.equal(await ovcToken.balanceOf(playerAddress), 300, "Player was not sent 300 OVC Tokens.");
+        await rawrToken.transfer(playerAddress, 300, {from:deployerAddress});
+        assert.equal(await rawrToken.balanceOf(playerAddress), 300, "Player was not sent 300 RAWR Tokens.");
     });
 
     
@@ -157,7 +157,7 @@ contract('Crafting Contract', (accounts) => {
             materialAmounts,
             rewardIds,
             rewardAmounts,
-            ovcToken.address,
+            rawrToken.address,
             0,
             true,
             {from:ccManagerAddress}
@@ -176,7 +176,7 @@ contract('Crafting Contract', (accounts) => {
             materialAmounts,
             rewardIds,
             rewardAmounts,
-            ovcToken.address,
+            rawrToken.address,
             0,
             true,
             {from:ccManagerAddress}
@@ -195,7 +195,7 @@ contract('Crafting Contract', (accounts) => {
             materialAmounts,
             rewardIds,
             rewardAmounts,
-            ovcToken.address,
+            rawrToken.address,
             100,
             false,
             {from:ccManagerAddress}
@@ -232,7 +232,7 @@ contract('Crafting Contract', (accounts) => {
         );
 
         // Test the Recipe Cost functions
-        await craftingManager.updateRecipeCost(recipe1, ovcToken.address, 300, {from:ccManagerAddress});
+        await craftingManager.updateRecipeCost(recipe1, rawrToken.address, 300, {from:ccManagerAddress});
         result = await crafting.getRecipeCost(recipe1);
         assert.equal(
             result[1],
@@ -240,8 +240,8 @@ contract('Crafting Contract', (accounts) => {
             "Recipe 1's cost was net set properly."
         );
 
-        await craftingManager.updateRecipeCost(recipe1, ovcToken.address, 0, {from:ccManagerAddress});
-        await craftingManager.updateRecipeCost(recipe2, ovcToken.address, 200, {from:ccManagerAddress});
+        await craftingManager.updateRecipeCost(recipe1, rawrToken.address, 0, {from:ccManagerAddress});
+        await craftingManager.updateRecipeCost(recipe2, rawrToken.address, 200, {from:ccManagerAddress});
         result = await crafting.getRecipeCost(recipe1);
         assert.equal(
             result[1],
@@ -315,19 +315,19 @@ contract('Crafting Contract', (accounts) => {
         result = await crafting.getRecipeCost(recipe2);
         tokenAddress = result[0];
         cost = result[1];
-        assert.equal(tokenAddress.toString(), ovcToken.address, "Token Addresses are not the same.");
-        assert.equal(await ovcToken.balanceOf(playerAddress), 300, "balance is 300.");
+        assert.equal(tokenAddress.toString(), rawrToken.address, "Token Addresses are not the same.");
+        assert.equal(await rawrToken.balanceOf(playerAddress), 300, "balance is 300.");
         assert.equal(cost, 200, "Cost is 200.");
-        await ovcToken.approve(crafting.address, cost, {from: playerAddress, gasPrice: 1}); 
+        await rawrToken.approve(crafting.address, cost, {from: playerAddress, gasPrice: 1}); 
 
         // craft recipe 2 for player
         await crafting.craftItem(recipe2, playerAddress, {from:playerAddress});
         assert.equal(await game.balanceOf(playerAddress, reward2), 1, "Reward Item was not created.");
         assert.equal(await game.balanceOf(playerAddress, material1), 0, "Material 1 was not burned.");
-        assert.equal(await ovcToken.balanceOf(playerAddress), 100, "Recipe did not consume 200 OVC Tokens.");
+        assert.equal(await rawrToken.balanceOf(playerAddress), 100, "Recipe did not consume 200 RAWR Tokens.");
         assert.equal(
-            await ovcToken.balanceOf(developerWalletAddress),
+            await rawrToken.balanceOf(developerWalletAddress),
             200,
-            "200 OVC tokens were not sent to the developer wallet as crafting payment.");
+            "200 RAWR tokens were not sent to the developer wallet as crafting payment.");
     });
 });

@@ -45,7 +45,7 @@ module.exports = async function(deployer, networks, accounts) {
     managerFactory = await ManagerFactory.deployed();
 
     /*****************************************/
-    /*****    Battlefield 3 Game Data    *****/
+    /*****    Legend of Zelda Game Data    *****/
     /*****************************************/
 
     // The following will be sent by the developer addresses
@@ -59,9 +59,9 @@ module.exports = async function(deployer, networks, accounts) {
     gameAddr = await battlefield3Manager.gameAddr();
     game = await Game.at(gameAddr);
 
-    itemIds = [14,15,16,17];
-    maxAmounts = [0,0,0,0];
-    mintAmounts = [10,10,0,0];
+    itemIds = [18,19,20,21,22,23,24,25,26];
+    maxAmounts = [0,0,0,0,0,0,0,0,0];
+    mintAmounts = [0,0,20,20,20,20,20,20,20];
     await battlefield3Manager.createItemBatch(nintendoAddress, itemIds, maxAmounts, {from:nintendoAddress, gasPrice: 1});
     await battlefield3Manager.mintBatch(nintendoAddress, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
     
@@ -69,51 +69,36 @@ module.exports = async function(deployer, networks, accounts) {
     await game.setApprovalForAll(exchange.address, true, {from: nintendoAddress, gasPrice: 1});
 
     // Place Items on sale
-    itemUUID = await registry.getUUID(game.address, 14);
-    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 5, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    itemUUID = await registry.getUUID(game.address, 20);
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 10, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
     
-    itemUUID = await registry.getUUID(game.address, 15);
-    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 5, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    itemUUID = await registry.getUUID(game.address, 21);
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 10, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 22);
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 10, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 23);
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 10, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 24);
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 10, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 25);
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 10, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
+    
+    itemUUID = await registry.getUUID(game.address, 26);
+    await exchange.placeAsk(nintendoAddress, rawrToken.address, itemUUID, 10, web3.utils.toWei('3000', 'gwei'), {from:nintendoAddress, gasPrice: 1});
 
     // Mint Default assets for players
-    // Player 2
-    itemIds = [14,15,16];
-    mintAmounts = [1, 3, 1];
-    await battlefield3Manager.mintBatch(player2Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
-    
-    // Player 3
-    itemIds = [14,16,17];
-    await battlefield3Manager.mintBatch(player3Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
+    // Player 5
+    itemIds = [20,21,22,23,24,25,26];
+    mintAmounts = [1, 1, 1, 1, 1, 1, 1];
+    await battlefield3Manager.mintBatch(player5Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
     
     // Player 6
-    itemIds = [15,16,17];
+    itemIds = [18,19];
+    mintAmounts = [1, 1];
     await battlefield3Manager.mintBatch(player6Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
-
-    // Approve player for Sell Orders
-    await game.setApprovalForAll(exchange.address, true, {from: player2Address, gasPrice: 1});
-    await game.setApprovalForAll(exchange.address, true, {from: player3Address, gasPrice: 1});
-    await game.setApprovalForAll(exchange.address, true, {from: player6Address, gasPrice: 1});
-
-    // Place Player Buy/Sell orders
-    // Player 2
-    itemUUID = await registry.getUUID(game.address, 17);
-    await exchange.placeBid(player2Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('950', 'gwei'), {from:player2Address, gasPrice: 1});
-    
-    itemUUID = await registry.getUUID(game.address, 15);
-    await exchange.placeAsk(player2Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player2Address, gasPrice: 1});
-    
-    // Player 3
-    itemUUID = await registry.getUUID(game.address, 15);
-    await exchange.placeBid(player3Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('975', 'gwei'), {from:player3Address, gasPrice: 1});
-    
-    itemUUID = await registry.getUUID(game.address, 16);
-    await exchange.placeAsk(player3Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player3Address, gasPrice: 1});
-    
-    // Player 6 
-    itemUUID = await registry.getUUID(game.address, 14);
-    await exchange.placeBid(player6Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('980', 'gwei'), {from:player6Address, gasPrice: 1});
-    
-    itemUUID = await registry.getUUID(game.address, 16);
-    await exchange.placeAsk(player6Address, rawrToken.address, itemUUID, 1, web3.utils.toWei('1100', 'gwei'), {from:player6Address, gasPrice: 1});
 
 };

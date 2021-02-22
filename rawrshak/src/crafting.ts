@@ -1,6 +1,6 @@
 import { ByteArray, BigInt, crypto } from "@graphprotocol/graph-ts"
 import { CraftingContractCreated } from "../generated/CraftingFactory/CraftingFactory"
-import { OVCToken } from "../generated/templates/Crafting/OVCToken"
+import { RawrToken } from "../generated/templates/Crafting/RawrToken"
 import {
   ItemCrafted,
   RecipeCreated,
@@ -85,7 +85,7 @@ export function handleRecipeCostUpdated(event: RecipeCostUpdated): void {
   let recipeId = createRecipeId(event.params.id, event.params.recipeId);
   let recipe = Recipe.load(recipeId);
   if (recipe != null) {
-    let tokenContract = OVCToken.bind(event.params.tokenAddress);
+    let tokenContract = RawrToken.bind(event.params.tokenAddress);
     recipe.token = tokenContract.tokenId().toHex();
     recipe.cost = event.params.cost;
     recipe.save();

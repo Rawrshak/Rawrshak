@@ -1,5 +1,5 @@
 import { ByteArray, BigInt, crypto } from "@graphprotocol/graph-ts"
-import { OVCToken } from "../generated/Exchange/OVCToken"
+import { RawrToken } from "../generated/Exchange/RawrToken"
 import {
     OrderPlaced,
     OrderDeleted,
@@ -14,7 +14,7 @@ export function handleOrderPlaced(event: OrderPlaced): void {
     let order = new Order(event.params.orderId.toHex());
     order.owner = event.params.user.toHex();
     order.item = event.params.itemId.toHex();
-    let tokenContract = OVCToken.bind(event.params.token);
+    let tokenContract = RawrToken.bind(event.params.token);
     order.token = tokenContract.tokenId().toHex();
     order.amountForSale = event.params.amount;
     order.amountEscrowed = BigInt.fromI32(0);

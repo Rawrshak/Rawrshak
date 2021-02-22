@@ -4,12 +4,12 @@ repository: https://github.com/gcbsumid/B44
 schema:
   file: ./schema.graphql
 dataSources:
-  - name: OVCToken
+  - name: RawrToken
     kind: ethereum/contract
     network: mainnet
     source:
       address: "0x4B54E6B4dA9720De788DfE71Bae9Aa08b663e1f3"
-      abi: OVCToken
+      abi: RawrToken
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -20,8 +20,8 @@ dataSources:
         - TokenEntity
         - Account
       abis:
-        - name: OVCToken
-          file: ./abis/OVCToken.json
+        - name: RawrToken
+          file: ./abis/RawrToken.json
       eventHandlers:
         - event: TokenCreated(address,bytes32,string,string,uint256)
           handler: handleTokenCreated
@@ -109,8 +109,8 @@ dataSources:
       abis:
         - name: Exchange
           file: ./abis/Exchange.json
-        - name: OVCToken
-          file: ./abis/OVCToken.json
+        - name: RawrToken
+          file: ./abis/RawrToken.json
       eventHandlers:
         - event: OrderPlaced(address,address,uint256,uint256,uint256,bool,uint256)
           handler: handleOrderPlaced
@@ -175,8 +175,8 @@ templates:
       abis:
         - name: Crafting
           file: ./abis/Crafting.json
-        - name: OVCToken
-          file: ./abis/OVCToken.json
+        - name: RawrToken
+          file: ./abis/RawrToken.json
       eventHandlers:
         - event: ItemCrafted(uint256,uint256,address)
           handler: handleItemCrafted
