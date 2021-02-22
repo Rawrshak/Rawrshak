@@ -17,6 +17,27 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
 - Investigate [Chainlink's VRF](https://docs.chain.link/docs/chainlink-vrf) for proper randomization for the Lootbox Contract
 - Investigate Matic (now Polygon) Network vs xDai Protocol for Layer 2 solution
 - Investigate how to make smart contracts upgradable without having to migrate data from older smart contracts. 
+- Add a smart contract to lock RAWR tokens in on a Game Contract and add the Game Contract to a Public Access List. Game Contracts
+    caught violating the rules for the Public Access List will have their locked tokens slashed and redistributed. The Game Contract
+    is removed from the list. Make sure it's reflected in the Graph Node for easy query.
+- Add a Staking Contract that distributes from the locked Rawr staking pool and transaction fees accumulated.
+- Investigate how ERC721 assets can be wrapped into a Game Contract so that NFT art can be used onto our Ecosystem.
+
+### Game Contract
+    - Replace "Item" with "Asset"
+    - Make the Asset ID automatically generated on CreateItem() function.
+    - Implement Asset Types for the AssetStandards so they are easily queryable.
+    - Add ability for assets to be market Explicit. Make sure it's reflected in the Graph Node for easy query.
+
+### Lootbox Contract
+    - Make Lootbox Credits per Developer. Developers can create many lootboxes and dictate how many LC tokens are needed to 
+        generate a Lootbox. These lootboxes can be sent to anyone and can be opened for a chance for new NFTs.
+    
+### Exchange Contract
+    - Once Staking Contract is created, implement transaction fees to each transaction and sending the fees to the 
+        staking contract for distribution.
+    - Implement royalty fees to the asset creator for each transcation
+    - Modularize this contract into a BidModule, SellModule, and FulfillModule subcontracts.
 
 ## Done Todo:
 - Infrastructure Smart Contracts
