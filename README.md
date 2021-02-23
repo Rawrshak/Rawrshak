@@ -70,6 +70,12 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     Install:
         npm install truffle -g 
         npm install -g truffle ganache-cli
+        
+## OpenZeppelin
+    Helpful standard solidity library
+    
+    Install:
+        npm install @openzeppelin/contracts
 
 ## Visual Studio Code
     This is lightweight IDE that I use.
@@ -124,7 +130,7 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
 
 ## Building the Smart Contracts
     1. Clone the repo 
-    2. Download and install Node JS, NPM, yarn, Truffle, Ganache, and Visual Studio Code
+    2. Download and install Node JS, NPM, yarn, Truffle, Ganache, OpenZeppelin, and Visual Studio Code
     3. Install Solidity extension in Visual Studio Code
 
     Everything should be configured properly. If you have any issues, contact [Christian](gcbsumid@gmail.com)
