@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IExchange.sol";
 import "./ExchangeEscrow.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 contract Exchange is IExchange, Ownable, ERC165 {
     using ERC165Checker for *;
