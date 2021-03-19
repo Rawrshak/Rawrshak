@@ -70,18 +70,18 @@ contract Exchange is IExchange, Ownable, ERC165 {
     /******** Public API ********/
     constructor() public {
         escrowAddr = address(new ExchangeEscrow());
-        _registerInterface(Utils._INTERFACE_ID_IEXCHANGE);
+        _registerInterface(Constants._INTERFACE_ID_IEXCHANGE);
     }
 
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         globalItemRegistryAddr = _addr;
 
-        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_IEXCHANGE);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_IEXCHANGE);
     }
 
     function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)

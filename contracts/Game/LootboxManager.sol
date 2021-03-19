@@ -11,7 +11,7 @@ import "../factory/LootboxFactory.sol";
 import "../interfaces/ILootbox.sol";
 import "../interfaces/ILootboxManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
     using ERC165Checker for *;
@@ -46,7 +46,7 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
     constructor(address _owner) public {
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(MANAGER_ROLE, _owner);
-        _registerInterface(Utils._INTERFACE_ID_ILOOTBOXMANAGER);
+        _registerInterface(Constants._INTERFACE_ID_ILOOTBOXMANAGER);
         transferOwnership(_owner);
     }
 
@@ -57,7 +57,7 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
     {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         require(lootboxAddresses.length() != 0, "Crafting Contract not created yet.");
@@ -68,7 +68,7 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
             (, address lootboxAddr) = lootboxAddresses.at(i);
             ILootbox(lootboxAddr).setGlobalItemRegistryAddr(_addr);
         }
-        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_ILOOTBOXMANAGER);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_ILOOTBOXMANAGER);
     }
 
     function generateLootboxContract(
@@ -80,7 +80,7 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         checkPermissions(MANAGER_ROLE)
         {
         require(
-            ERC165Checker.supportsInterface(_lootboxFactoryAddress, Utils._INTERFACE_ID_ILOOTBOXFACTORY),
+            ERC165Checker.supportsInterface(_lootboxFactoryAddress, Constants._INTERFACE_ID_ILOOTBOXFACTORY),
             "Caller does not support Interface."
         );
         

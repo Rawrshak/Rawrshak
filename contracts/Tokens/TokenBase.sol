@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 contract TokenBase is ERC20, ERC165, AccessControl
 {
@@ -34,7 +34,7 @@ contract TokenBase is ERC20, ERC165, AccessControl
         // mint initial supply of tokens
         _mint(msg.sender, _initialSupply);
 
-        _registerInterface(Utils._INTERFACE_ID_TOKENBASE);
+        _registerInterface(Constants._INTERFACE_ID_TOKENBASE);
         tokenId = keccak256(abi.encodePacked(_name, _symbol));
         emit TokenCreated(address(this), tokenId, _name, _symbol, _initialSupply);
     }

@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGame.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 contract Game is ERC1155, Ownable, IGame {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -50,12 +50,12 @@ contract Game is ERC1155, Ownable, IGame {
     // url: "https://game.example/api/item/{id}.json"
     constructor(uint256 _gameId, string memory _url, address _itemRegistryAddr) public ERC1155(_url) {
         require(
-            ERC165Checker.supportsInterface(msg.sender, Utils._INTERFACE_ID_IGAMEFACTORY),
+            ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_IGAMEFACTORY),
             "Caller does not support Interface."
         );
         itemRegistryAddr = _itemRegistryAddr;
         gameId = _gameId;
-        _registerInterface(Utils._INTERFACE_ID_IGAME);
+        _registerInterface(Constants._INTERFACE_ID_IGAME);
     }
     
     /******** View Functions ********/
@@ -82,12 +82,12 @@ contract Game is ERC1155, Ownable, IGame {
         onlyOwner
     {
         itemRegistryAddr = _addr;
-        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_IGAME);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_IGAME);
     }
 
     function setManagerAddress(address _newAddress) external override onlyOwner {
         require(
-            ERC165Checker.supportsInterface(_newAddress, Utils._INTERFACE_ID_IGAMEMANAGER),
+            ERC165Checker.supportsInterface(_newAddress, Constants._INTERFACE_ID_IGAMEMANAGER),
             "Caller does not support Interface."
         );
         gameManagerAddr = _newAddress;

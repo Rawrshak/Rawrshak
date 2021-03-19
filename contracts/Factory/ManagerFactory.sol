@@ -46,7 +46,7 @@ contract ManagerFactory is ERC165 {
 
     /******** Public API ********/
     constructor() public {
-        _registerInterface(Utils._INTERFACE_ID_IMANAGERFACTORY);
+        _registerInterface(Constants._INTERFACE_ID_IMANAGERFACTORY);
     }
 
     /******** Mutative Functions ********/

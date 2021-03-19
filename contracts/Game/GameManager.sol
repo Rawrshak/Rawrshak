@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./Game.sol";
 import "../interfaces/IGameManager.sol";
 import "../factory/GameFactory.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -70,7 +70,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         _setupRole(MINTER_ROLE, _owner);
         _setupRole(BURNER_ROLE, _owner);
 
-        _registerInterface(Utils._INTERFACE_ID_IGAMEMANAGER);
+        _registerInterface(Constants._INTERFACE_ID_IGAMEMANAGER);
         transferOwnership(_owner);
     }
 
@@ -80,7 +80,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
 
     function generateGameContract(address _gameFactoryAddress, string calldata _url) external override onlyOwner {
         require(
-            ERC165Checker.supportsInterface(_gameFactoryAddress, Utils._INTERFACE_ID_IGAMEFACTORY),
+            ERC165Checker.supportsInterface(_gameFactoryAddress, Constants._INTERFACE_ID_IGAMEFACTORY),
             "Caller does not support Interface."
         );
 
@@ -91,13 +91,13 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         require(gameAddr != address(0), "Game Contract not created yet.");
         game().setGlobalItemRegistryAddr(_addr);
 
-        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_IGAMEMANAGER);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_IGAMEMANAGER);
     }
 
     // Create New Item

@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 contract ExchangeEscrow is Ownable, ERC1155Holder {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -24,7 +24,7 @@ contract ExchangeEscrow is Ownable, ERC1155Holder {
     function addToken(address _tokenAddress) external onlyOwner {
         require(Address.isContract(_tokenAddress), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_tokenAddress, Utils._INTERFACE_ID_TOKENBASE),
+            ERC165Checker.supportsInterface(_tokenAddress, Constants._INTERFACE_ID_TOKENBASE),
             "Caller does not support Interface."
         );
         tokenAddrs.add(_tokenAddress);
@@ -33,7 +33,7 @@ contract ExchangeEscrow is Ownable, ERC1155Holder {
     function addGame(address _gameAddress) external onlyOwner {
         require(Address.isContract(_gameAddress), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_gameAddress, Utils._INTERFACE_ID_IGAME),
+            ERC165Checker.supportsInterface(_gameAddress, Constants._INTERFACE_ID_IGAME),
             "Caller does not support Interface."
         );
         

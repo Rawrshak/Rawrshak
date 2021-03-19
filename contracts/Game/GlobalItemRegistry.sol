@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IGame.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 // Todo: Restrict item add permissions
 
@@ -47,7 +47,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     /******** Modifiers ********/
     modifier isCallerGame() {
         require(
-            ERC165Checker.supportsInterface(msg.sender, Utils._INTERFACE_ID_IGAME),
+            ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_IGAME),
             "Caller does not support Interface."
         );
         _;
@@ -55,7 +55,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
 
     /******** Public API ********/
     constructor() public {
-        _registerInterface(Utils._INTERFACE_ID_IGLOBALITEMREGISTRY);
+        _registerInterface(Constants._INTERFACE_ID_IGLOBALITEMREGISTRY);
     }
 
     function getUUID(address _gameAddr, uint256 _id)

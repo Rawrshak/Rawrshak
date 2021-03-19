@@ -12,7 +12,7 @@ import "../interfaces/ICraftingManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../tokens/TokenBase.sol";
 import "../factory/CraftingFactory.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
@@ -83,7 +83,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(MANAGER_ROLE, _owner);
 
-        _registerInterface(Utils._INTERFACE_ID_ICRAFTINGMANAGER);
+        _registerInterface(Constants._INTERFACE_ID_ICRAFTINGMANAGER);
         transferOwnership(_owner);
     }
 
@@ -95,13 +95,13 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
         crafting().setGlobalItemRegistryAddr(_addr);
 
-        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_ICRAFTINGMANAGER);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_ICRAFTINGMANAGER);
     }
 
     function setDeveloperWallet(address payable _wallet) external override checkCraftingContract checkPermissions(MANAGER_ROLE) {
@@ -116,7 +116,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         checkPermissions(MANAGER_ROLE)
     {
         require(
-            ERC165Checker.supportsInterface(_craftingFactoryAddress, Utils._INTERFACE_ID_ICRAFTINGFACTORY),
+            ERC165Checker.supportsInterface(_craftingFactoryAddress, Constants._INTERFACE_ID_ICRAFTINGFACTORY),
             "Caller does not support Interface."
         );
 
@@ -153,7 +153,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         );
         require(Address.isContract(_tokenAddr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_tokenAddr, Utils._INTERFACE_ID_TOKENBASE),
+            ERC165Checker.supportsInterface(_tokenAddr, Constants._INTERFACE_ID_TOKENBASE),
             "Caller does not support Interface."
         );
 
@@ -247,7 +247,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     {
         require(Address.isContract(_tokenAddr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_tokenAddr, Utils._INTERFACE_ID_TOKENBASE),
+            ERC165Checker.supportsInterface(_tokenAddr, Constants._INTERFACE_ID_TOKENBASE),
             "Caller does not support Interface."
         );
         crafting().updateRecipeCost(_recipeId, _tokenAddr, _cost);
@@ -267,7 +267,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
             require(crafting().exists(_recipeIds[i]), "Recipe doesn't exist.");
             require(Address.isContract(_tokenAddrs[i]), "Address not valid");
             require(
-                ERC165Checker.supportsInterface(_tokenAddrs[i], Utils._INTERFACE_ID_TOKENBASE),
+                ERC165Checker.supportsInterface(_tokenAddrs[i], Constants._INTERFACE_ID_TOKENBASE),
                 "Caller does not support Interface."
             );
         }

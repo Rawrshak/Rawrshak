@@ -11,6 +11,7 @@ import "../interfaces/IGameManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/ILootbox.sol";
 import "../interfaces/ILootboxManager.sol";
+import "../utils/Constants.sol";
 import "../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
@@ -92,12 +93,12 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     /******** Public API ********/
     constructor(uint256 _id, address _addr, string memory _url) public ERC1155(_url) {
         require(
-            ERC165Checker.supportsInterface(msg.sender, Utils._INTERFACE_ID_ILOOTBOXFACTORY),
+            ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_ILOOTBOXFACTORY),
             "Caller does not support Interface."
         );
         globalItemRegistryAddr = _addr;
 
-        _registerInterface(Utils._INTERFACE_ID_ILOOTBOX);
+        _registerInterface(Constants._INTERFACE_ID_ILOOTBOX);
         lootboxId = _id;
         
         probabilities[uint8(Rarity.Mythic)] = 1;
@@ -117,7 +118,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_ILOOTBOXMANAGER),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_ILOOTBOXMANAGER),
             "Caller does not support Interface."
         );
         lootboxManagerAddr = _addr;
@@ -135,7 +136,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         onlyOwner
     {
         globalItemRegistryAddr = _addr;
-        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_ILOOTBOX);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_ILOOTBOX);
     }
 
     function registerInputItemBatch(

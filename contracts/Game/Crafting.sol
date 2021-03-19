@@ -12,7 +12,7 @@ import "../interfaces/IGameManager.sol";
 import "../interfaces/ICrafting.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../tokens/TokenBase.sol";
-import "../utils/Utils.sol";
+import "../utils/Constants.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
@@ -87,24 +87,24 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     /******** Public API ********/
     constructor(uint256 _id, address _addr) public {
         require(
-            ERC165Checker.supportsInterface(msg.sender, Utils._INTERFACE_ID_ICRAFTINGFACTORY),
+            ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_ICRAFTINGFACTORY),
             "Caller does not support Interface."
         );
         craftingId = _id;
         globalItemRegistryAddr = _addr;
-        _registerInterface(Utils._INTERFACE_ID_ICRAFTING);
+        _registerInterface(Constants._INTERFACE_ID_ICRAFTING);
     }
 
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
         // Address is already checked in the game manager
         globalItemRegistryAddr = _addr;
-        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_ICRAFTING);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_ICRAFTING);
     }
 
     function setManagerAddress(address _addr) external override onlyOwner {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_ICRAFTINGMANAGER),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_ICRAFTINGMANAGER),
             "Caller does not support Interface."
         );
         craftingManagerAddr = _addr;
