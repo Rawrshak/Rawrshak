@@ -4,6 +4,7 @@ const ManagerFactory = artifacts.require("ManagerFactory");
 const GameManager = artifacts.require("GameManager");
 const GameFactory = artifacts.require("GameFactory");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
+const TruffleAssert = require("truffle-assertions");
 
 contract('Game Contract', (accounts) => {
     const [
@@ -15,7 +16,7 @@ contract('Game Contract', (accounts) => {
         player2Address,     // Player 2 wallet address
         contentCreatorAddress // Content Creator Address
     ] = accounts;
-    const [material1, material2, material3] = [0,1,2];
+    const [material1, material2, material3, material4] = [0,1,2,3];
     var gameManager, gameManagerId, managerFactory;
     var itemRegistry, gameFactory;
     var gameId, gameAddress, game;
@@ -202,5 +203,20 @@ contract('Game Contract', (accounts) => {
             0,
             "The current supply of Item 1 is not correct."
         );
+    });
+
+    it('Create Item with Defined Max Supply', async () => {
+        // Create the new item with Max Supply of 20 and mint all 20 tokens (done automatically and internally to createItem()).
+        await gameManager.createItem(deployerAddress, material4, 20, {from:deployerAddress, gasPrice: 1});
+
+        // Check if the new item was added.
+        assert.equal((await game.length()).toNumber(), 4, "The new item w/ max supply was not created.");
+        assert.equal(await game.contains(material4), true, "Material 4 wasn't created.");
+    });
+
+    it('Should not allow new tokens to be minted on items with defined max supply', async () => {
+        // The following function SHOULD revert due to us not allowing the minting of items with a max supply.
+        // We will actually PASS this test if this occurs because TruffleAssert.fails() only asserts if the passed in function DOESN'T fail.
+        await TruffleAssert.fails(gameManager.mint(deployerAddress, material4, 5));
     });
 });

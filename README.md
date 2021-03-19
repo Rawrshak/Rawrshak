@@ -125,6 +125,10 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     contract size. 
     Install: npm install truffle-contract-size
 
+### [truffle-assertions](https://www.npmjs.com/package/truffle-assertions)
+    Helper functions for unit testing w/ truffle. One great thing this library allows you to do is setup your test functions to pass on a failure (like function revert due to require statement failing).
+    Install: npm install truffle-assertions
+
 
 # Quick-start Guide
 
