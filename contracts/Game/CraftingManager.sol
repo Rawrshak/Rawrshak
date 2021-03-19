@@ -12,6 +12,7 @@ import "../interfaces/ICraftingManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../tokens/TokenBase.sol";
 import "../factory/CraftingFactory.sol";
+import "../utils/Utils.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
@@ -46,11 +47,6 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
      *      ^ 0x1564aed9 ^ 0xc2592024 ^ 0x26f0021d ^ 0x5c5e19b7
      *      ^ 0xfd317879 ^ 0x142695d8 ^ 0x66b3f13e == 0x6b1f803a
      */
-    bytes4 private constant _INTERFACE_ID_ICRAFTING = 0x00000005;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER= 0x00000006;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x00000007;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
-    bytes4 private constant _INTERFACE_ID_TOKENBASE = 0x00000008;
 
     /******** Stored Variables ********/
     address public craftingAddr;
@@ -87,7 +83,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(MANAGER_ROLE, _owner);
 
-        _registerInterface(_INTERFACE_ID_ICRAFTINGMANAGER);
+        _registerInterface(Utils._INTERFACE_ID_ICRAFTINGMANAGER);
         transferOwnership(_owner);
     }
 
@@ -99,13 +95,13 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
         crafting().setGlobalItemRegistryAddr(_addr);
 
-        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ICRAFTINGMANAGER);
+        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_ICRAFTINGMANAGER);
     }
 
     function setDeveloperWallet(address payable _wallet) external override checkCraftingContract checkPermissions(MANAGER_ROLE) {
@@ -120,7 +116,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         checkPermissions(MANAGER_ROLE)
     {
         require(
-            ERC165Checker.supportsInterface(_craftingFactoryAddress, _INTERFACE_ID_ICRAFTINGFACTORY),
+            ERC165Checker.supportsInterface(_craftingFactoryAddress, Utils._INTERFACE_ID_ICRAFTINGFACTORY),
             "Caller does not support Interface."
         );
 
@@ -157,7 +153,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
         );
         require(Address.isContract(_tokenAddr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_tokenAddr, _INTERFACE_ID_TOKENBASE),
+            ERC165Checker.supportsInterface(_tokenAddr, Utils._INTERFACE_ID_TOKENBASE),
             "Caller does not support Interface."
         );
 
@@ -251,7 +247,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     {
         require(Address.isContract(_tokenAddr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_tokenAddr, _INTERFACE_ID_TOKENBASE),
+            ERC165Checker.supportsInterface(_tokenAddr, Utils._INTERFACE_ID_TOKENBASE),
             "Caller does not support Interface."
         );
         crafting().updateRecipeCost(_recipeId, _tokenAddr, _cost);
@@ -271,7 +267,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
             require(crafting().exists(_recipeIds[i]), "Recipe doesn't exist.");
             require(Address.isContract(_tokenAddrs[i]), "Address not valid");
             require(
-                ERC165Checker.supportsInterface(_tokenAddrs[i], _INTERFACE_ID_TOKENBASE),
+                ERC165Checker.supportsInterface(_tokenAddrs[i], Utils._INTERFACE_ID_TOKENBASE),
                 "Caller does not support Interface."
             );
         }

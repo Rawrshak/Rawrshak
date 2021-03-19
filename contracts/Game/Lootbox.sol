@@ -45,10 +45,6 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
      *      ^ 0xcadb08fa ^ 0x7ff48190 ^ 0x586dd396 ^ 0x1354442e
      *      ^ 0x48758697 ^ 0x14743353 ^ 0x10dfc82b == 0xe49e0289
      */
-    bytes4 private constant _INTERFACE_ID_ILOOTBOX = 0x00000009;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x0000000A; // Todo:
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
 
     /******** Constants ********/
     uint256 private LOOTBOX = 0;
@@ -96,12 +92,12 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     /******** Public API ********/
     constructor(uint256 _id, address _addr, string memory _url) public ERC1155(_url) {
         require(
-            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ILOOTBOXFACTORY),
+            ERC165Checker.supportsInterface(msg.sender, Utils._INTERFACE_ID_ILOOTBOXFACTORY),
             "Caller does not support Interface."
         );
         globalItemRegistryAddr = _addr;
 
-        _registerInterface(_INTERFACE_ID_ILOOTBOX);
+        _registerInterface(Utils._INTERFACE_ID_ILOOTBOX);
         lootboxId = _id;
         
         probabilities[uint8(Rarity.Mythic)] = 1;
@@ -121,7 +117,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_ILOOTBOXMANAGER),
+            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_ILOOTBOXMANAGER),
             "Caller does not support Interface."
         );
         lootboxManagerAddr = _addr;
@@ -139,7 +135,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
         onlyOwner
     {
         globalItemRegistryAddr = _addr;
-        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ILOOTBOX);
+        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_ILOOTBOX);
     }
 
     function registerInputItemBatch(
