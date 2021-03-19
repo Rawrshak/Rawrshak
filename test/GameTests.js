@@ -36,7 +36,11 @@ contract('Game Contract', (accounts) => {
         gameManagerId = gameManagerCreatedEvent.logs[0].args[0];
         gameManagerAddress = gameManagerCreatedEvent.logs[0].args[1];
         owner = gameManagerCreatedEvent.logs[0].args[2];
-        assert.equal(gameManagerId, 0, "Incorrect Contract Id");
+        assert.notEqual(gameManagerId, 0, "Incorrect Manager Contract Id"); // asserts only when gameManagerId is equal to 0
+        //assert.equal(0, 0, ""); // expects that 0 is equal to 0. If true, will not assert.
+        //assert.equal(1, 0, ""); // WILL assert because 1 doesn't equal 0
+        //assert.notEqual(0, 0, ""); // expects that 0 is not equal to 0. WILL assert because 0 is equal to 0
+        //assert.notEqual(1, 0, ""); // will NOT assert because 1 is not equal to 0
         assert.equal(owner, deployerAddress, "Incorrect owner");
 
         // Create Game Contract
@@ -46,7 +50,7 @@ contract('Game Contract', (accounts) => {
         gameId = gameCreatedEvents.logs[2].args[0];
         gameAddress = gameCreatedEvents.logs[2].args[1];
         owner = gameCreatedEvents.logs[2].args[2];
-        assert.equal(gameId, 0, "Incorrect Contract Id");
+        assert.notEqual(gameId, 0, "Incorrect Game Contract Id");
         assert.equal(owner, gameManagerAddress, "Incorrect owner");
         game = await Game.at(gameAddress);
     });
@@ -99,7 +103,7 @@ contract('Game Contract', (accounts) => {
             true, "burner address didn't have the burner role");
     });
 
-    it('Create 2 Item', async () => {
+    it('Create 2 Items', async () => {
         // Create 2 New Items
         // 0 is the solidity equivalent of address(0)        
         await gameManager.createItem(deployerAddress, material1, 0, {from:deployerAddress, gasPrice: 1});
