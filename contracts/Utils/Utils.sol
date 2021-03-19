@@ -27,4 +27,5 @@ library Utils {
     bytes4 constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x0000000A;
     bytes4 constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
     bytes4 constant _INTERFACE_ID_IEXCHANGE = 0x0000000C;
+    bytes4 constant _INTERFACE_ID_IMANAGERFACTORY = 0x0000000D;
 }

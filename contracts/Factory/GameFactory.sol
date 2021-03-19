@@ -22,9 +22,6 @@ contract GameFactory is ERC165 {
     using GameDeployer for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x00000003;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
-    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x00000002;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
@@ -36,24 +33,24 @@ contract GameFactory is ERC165 {
 
     /******** Public API ********/
     constructor() public {
-        _registerInterface(_INTERFACE_ID_IGAMEFACTORY);
+        _registerInterface(Utils._INTERFACE_ID_IGAMEFACTORY);
     }
 
     function setGlobalItemRegistryAddr(address _addr) external {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
         
-        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IGAMEFACTORY);
+        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_IGAMEFACTORY);
     }
 
     /******** Mutative Functions ********/
     function createGameContract(string calldata _url) external returns(address contractAddr, uint256 contractId) {
         require(
-            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_IGAMEMANAGER),
+            ERC165Checker.supportsInterface(msg.sender, Utils._INTERFACE_ID_IGAMEMANAGER),
             "Caller is not a Game Manager."
         );
         require(itemRegistryAddr != address(0), "Global Item registry not set.");

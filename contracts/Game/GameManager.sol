@@ -147,7 +147,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         game().mint(_receivingAddress, _itemId, _amount);
     }
 
-    // mint several items to a single addreess
+    // mint several items to a single address
     function mintBatch(
         address _receivingAddress,
         uint256[] calldata _itemIds,

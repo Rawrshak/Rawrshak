@@ -22,9 +22,6 @@ contract LootboxFactory is ERC165 {
     using LootboxDeployer for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXFACTORY = 0x0000000B;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
-    bytes4 private constant _INTERFACE_ID_ILOOTBOXMANAGER = 0x0000000A;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
@@ -36,24 +33,24 @@ contract LootboxFactory is ERC165 {
 
     /******** Public API ********/
     constructor() public {
-        _registerInterface(_INTERFACE_ID_ILOOTBOXFACTORY);
+        _registerInterface(Utils._INTERFACE_ID_ILOOTBOXFACTORY);
     }
 
     function setGlobalItemRegistryAddr(address _addr) external {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Utils._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
         
-        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ILOOTBOXFACTORY);
+        emit GlobalItemRegistryStored(address(this), _addr, Utils._INTERFACE_ID_ILOOTBOXFACTORY);
     }
 
     /******** Mutative Functions ********/
     function createLootboxContract(string calldata _url) external returns(address contractAddr, uint256 contractId) {
         require(
-            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ILOOTBOXMANAGER),
+            ERC165Checker.supportsInterface(msg.sender, Utils._INTERFACE_ID_ILOOTBOXMANAGER),
             "Caller not valid Contract."
         );
         require(itemRegistryAddr != address(0), "Registry not set.");
