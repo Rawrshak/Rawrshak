@@ -17,7 +17,7 @@ contract('RAWR Token Contract', (accounts) => {
         rawrToken = await RawrshakTokenContract.deployed();
         balance = await rawrToken.balanceOf(deployerAddress);
 
-        assert.equal(balance.valueOf(), 1000000000, "1000000000 wasn't in the first account");
+        assert.equal(balance.valueOf().toString(), web3.utils.toWei('1000000000', 'gwei').toString(), "1000000000 wasn't in the first account");
     });
 
     it('first account must have default admin role', async () => {
@@ -34,11 +34,11 @@ contract('RAWR Token Contract', (accounts) => {
   
     it('transfer balance from account 0 to account 1', async () => {
         // transfer tokens
-        await rawrToken.transfer(playerAddress, 5000, {from: deployerAddress});
+        await rawrToken.transfer(playerAddress, web3.utils.toWei('5000', 'gwei'), {from: deployerAddress});
 
         // check balances
-        assert.equal((await rawrToken.balanceOf(deployerAddress)).toNumber(), 999995000, "999995000 wasn't in account 0");
-        assert.equal((await rawrToken.balanceOf(playerAddress)).toNumber(), 5000, "5000 wasn't in account 1");
+        assert.equal((await rawrToken.balanceOf(deployerAddress)).toString(), web3.utils.toWei('999995000', 'gwei').toString(), "999995000 wasn't in account 0");
+        assert.equal((await rawrToken.balanceOf(playerAddress)).toString(), web3.utils.toWei('5000', 'gwei').toString(), "5000 wasn't in account 1");
     });
     
     it('admin grants account 1 and 2 minter and burner roles', async () => {
@@ -64,29 +64,30 @@ contract('RAWR Token Contract', (accounts) => {
     });
     
     it('mint and burn tokens', async () => {
-        const totalSupply = (await rawrToken.totalSupply()).toNumber();
-        const newSupply = 10000;
+        const currentTotalSupply = web3.utils.toBN(await rawrToken.totalSupply());
+        const newSupply = web3.utils.toWei('10000', 'gwei');
+        const newTotalSupply = web3.utils.toWei('1000010000', 'gwei');
 
         // mint new tokens by account 1
         await rawrToken.mint(player2Address, newSupply, {from:minterAddress});
         assert.equal(
-            (await rawrToken.balanceOf(player2Address)).toNumber(),
-            newSupply, 
+            (await rawrToken.balanceOf(player2Address)).toString(),
+            newSupply.toString(), 
             "Account 3 was not given the new tokens.");
         assert.equal(
-            (await rawrToken.totalSupply()).toNumber(), 
-            totalSupply + newSupply, 
+            (await rawrToken.totalSupply()).toString(), 
+            newTotalSupply.toString(),
             "Total Supply has not increased.");
 
         // burn new tokens by account 2
         await rawrToken.burn(player2Address, newSupply, {from:burnerAddress});
         assert.equal(
-            (await rawrToken.balanceOf(player2Address)).toNumber(),
+            (await rawrToken.balanceOf(player2Address)).toString(),
             0, 
             "Account 3 was not given the new tokens.");
         assert.equal(
-            (await rawrToken.totalSupply()).toNumber(), 
-            totalSupply, 
+            (await rawrToken.totalSupply()).toString(), 
+            currentTotalSupply.toString(), 
             "Total Supply has not increased.");
     });
 });
