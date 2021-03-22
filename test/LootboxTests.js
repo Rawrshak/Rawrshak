@@ -59,7 +59,7 @@ contract('Lootbox Contract', (accounts) => {
         gameManagerAddress = gameManagerCreatedEvent.logs[0].args[1];
         gameManager = await GameManager.at(gameManagerAddress);
         gameCreatedEvents = await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
-        game = await Game.at(gameCreatedEvents.logs[2].args[1]);
+        game = await Game.at(await gameManager.gameAddr());
 
         // Setup Lootbox Manager
         lootboxManagerCreatedEvent = await managerFactory.createLootboxManagerContract();

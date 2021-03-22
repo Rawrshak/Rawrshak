@@ -42,7 +42,7 @@ contract('Exchange Contract', (accounts) => {
         gameManagerAddress = gameManagerCreatedEvent.logs[0].args[1];
         gameManager = await GameManager.at(gameManagerAddress);
         gameCreatedEvents = await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
-        gameAddress = gameCreatedEvents.logs[2].args[1];
+        gameAddress = await gameManager.gameAddr();
         game = await Game.at(gameAddress);
 
         // set token
@@ -52,7 +52,7 @@ contract('Exchange Contract', (accounts) => {
     it('Setup Tokens', async () => {
         // Test deployer token supply
         balance = await rawrToken.balanceOf(deployerAddress);
-        assert.equal(balance.valueOf(), 1000000000, "1000000000 wasn't in the first account");
+        assert.equal(balance.valueOf().toString(), web3.utils.toWei('1000000000', 'gwei').toString(), "1000000000 wasn't in the first account");
 
         // Give some token supply to the players
         await rawrToken.transfer(player1Address, 5000, {from:deployerAddress});
