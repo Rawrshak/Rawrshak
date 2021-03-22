@@ -48,12 +48,11 @@ contract('Game Contract', (accounts) => {
         gameManager = await GameManager.at(gameManagerAddress);
         gameCreatedEvents = await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
 
-        gameId = gameCreatedEvents.logs[2].args[0];
-        gameAddress = gameCreatedEvents.logs[2].args[1];
-        owner = gameCreatedEvents.logs[2].args[2];
+        game = await Game.at(await gameManager.gameAddr());
+        owner = await game.getManagerAddress();
+        gameId = await game.gameId();
         assert.equal(gameId.toString(), 0, "Incorrect Game Contract Id");
         assert.equal(owner, gameManagerAddress, "Incorrect owner");
-        game = await Game.at(gameAddress);
     });
 
     it('Check Game Payable Address', async () => {

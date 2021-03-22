@@ -70,6 +70,12 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     Install:
         npm install truffle -g 
         npm install -g truffle ganache-cli
+
+## Truffle Assertions (https://www.npmjs.com/package/truffle-assertions)
+    Helper functions for unit testing w/ truffle. Allows you to do is setup your test functions to pass on a failure (like function revert due to require statement failing).
+
+    Install: 
+        npm install truffle-assertions
         
 ## OpenZeppelin
     Helpful standard solidity library
@@ -124,10 +130,6 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     contract is roughly 24.5 kb, so this is a good tool to use to figure out if we need to cut down on the smart 
     contract size. 
     Install: npm install truffle-contract-size
-
-### [truffle-assertions](https://www.npmjs.com/package/truffle-assertions)
-    Helper functions for unit testing w/ truffle. One great thing this library allows you to do is setup your test functions to pass on a failure (like function revert due to require statement failing).
-    Install: npm install truffle-assertions
 
 
 # Quick-start Guide
