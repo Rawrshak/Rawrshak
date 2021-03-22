@@ -77,7 +77,7 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     Install: 
         npm install truffle-assertions
         
-## OpenZeppelin
+## OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts)
     Helpful standard solidity library
     
     Install:
