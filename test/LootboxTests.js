@@ -316,6 +316,7 @@ contract('Lootbox Contract', (accounts) => {
         uuid4 = await itemRegistry.getUUID(game.address, inputItem4);
         uuids = [uuid0, uuid1, uuid4];
         lootboxGeneratedEvent = await lootbox.generateLootbox(uuids, amounts, {from: playerAddress});
+        assert.equal(lootboxGeneratedEvent.logs[4].args[0], 0, "Incorrect lootbox id");
         assert.equal(lootboxGeneratedEvent.logs[4].args[1], playerAddress, "Incorrect player address");
         assert.equal(lootboxGeneratedEvent.logs[4].args[2], 1, "Incorrect number of lootboxes generated");
         
@@ -331,6 +332,7 @@ contract('Lootbox Contract', (accounts) => {
     it("Open Lootbox", async () => {
         // open lootbox and check how many lootboxes were opened
         lootboxOpenedEvent = await lootbox.openLootbox(1, {from: playerAddress});
+        assert.equal(lootboxOpenedEvent.logs[2].args[0], 0, "Incorrect lootbox id");
         assert.equal(lootboxOpenedEvent.logs[2].args[1], playerAddress, "Incorrect player address");
         assert.equal(lootboxOpenedEvent.logs[2].args[2], 1, "Incorrect number of lootboxes opened");
 
