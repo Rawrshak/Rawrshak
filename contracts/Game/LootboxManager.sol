@@ -60,7 +60,7 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
             ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
-        require(lootboxAddresses.length() != 0, "Crafting Contract not created yet.");
+        require(lootboxAddresses.length() != 0, "Lootbox Contract not created yet.");
         globalItemRegistryAddr = _addr;
 
         // Iterate through the map and set the global item registry for all of them
