@@ -4,6 +4,7 @@ const ManagerFactory = artifacts.require("ManagerFactory");
 const GameManager = artifacts.require("GameManager");
 const GameFactory = artifacts.require("GameFactory");
 const GlobalItemRegistry = artifacts.require("GlobalItemRegistry");
+const TruffleAssert = require("truffle-assertions");
 
 contract('Game Contract', (accounts) => {
     const [
@@ -15,7 +16,7 @@ contract('Game Contract', (accounts) => {
         player2Address,     // Player 2 wallet address
         contentCreatorAddress // Content Creator Address
     ] = accounts;
-    const [material1, material2, material3] = [0,1,2];
+    const [material1, material2, material3, material4] = [0,1,2,3];
     var gameManager, gameManagerId, managerFactory;
     var itemRegistry, gameFactory;
     var gameId, gameAddress, game;
@@ -36,19 +37,22 @@ contract('Game Contract', (accounts) => {
         gameManagerId = gameManagerCreatedEvent.logs[0].args[0];
         gameManagerAddress = gameManagerCreatedEvent.logs[0].args[1];
         owner = gameManagerCreatedEvent.logs[0].args[2];
-        assert.equal(gameManagerId, 0, "Incorrect Contract Id");
+        assert.equal(gameManagerId.toString(), 0, "Incorrect Manager Contract Id"); // asserts only when gameManagerId is equal to 0
+        //assert.equal(0, 0, ""); // expects that 0 is equal to 0. If true, will not assert.
+        //assert.equal(1, 0, ""); // WILL assert because 1 doesn't equal 0
+        //assert.notEqual(0, 0, ""); // expects that 0 is not equal to 0. WILL assert because 0 is equal to 0
+        //assert.notEqual(1, 0, ""); // will NOT assert because 1 is not equal to 0
         assert.equal(owner, deployerAddress, "Incorrect owner");
 
         // Create Game Contract
         gameManager = await GameManager.at(gameManagerAddress);
         gameCreatedEvents = await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
 
-        gameId = gameCreatedEvents.logs[2].args[0];
-        gameAddress = gameCreatedEvents.logs[2].args[1];
-        owner = gameCreatedEvents.logs[2].args[2];
-        assert.equal(gameId, 0, "Incorrect Contract Id");
+        game = await Game.at(await gameManager.gameAddr());
+        owner = await game.getManagerAddress();
+        gameId = await game.gameId();
+        assert.equal(gameId.toString(), 0, "Incorrect Game Contract Id");
         assert.equal(owner, gameManagerAddress, "Incorrect owner");
-        game = await Game.at(gameAddress);
     });
 
     it('Check Game Payable Address', async () => {
@@ -99,14 +103,14 @@ contract('Game Contract', (accounts) => {
             true, "burner address didn't have the burner role");
     });
 
-    it('Create 2 Item', async () => {
+    it('Create 2 Items', async () => {
         // Create 2 New Items
         // 0 is the solidity equivalent of address(0)        
         await gameManager.createItem(deployerAddress, material1, 0, {from:deployerAddress, gasPrice: 1});
         await gameManager.createItem(deployerAddress, material2, 0, {from:deployerAddress, gasPrice: 1});
 
         // Check if the new items were added.
-        assert.equal((await game.length()).toNumber(), 2, "The 2 new items were not created.");
+        assert.equal((await game.length()).toString(), 2, "The 2 new items were not created.");
         assert.equal(await game.contains(material1), true, "Material 1 wasn't created.");
         assert.equal(await game.contains(material2), true, "Material 2 wasn't created.");
     });
@@ -116,7 +120,7 @@ contract('Game Contract', (accounts) => {
         await gameManager.createItem(contentCreatorAddress, material3, 0, {from:deployerAddress, gasPrice: 1});
 
         // Check if the new items were added.
-        assert.equal((await game.length()).toNumber(), 3, "The community content creator's new item was not created.");
+        assert.equal((await game.length()).toString(), 3, "The community content creator's new item was not created.");
 
         // check to see if address payable is the same
         result = await game.getItemInfo(material3, {gasPrice: 1});
@@ -130,13 +134,13 @@ contract('Game Contract', (accounts) => {
 
         // check if the item was minted
         assert.equal(
-            (await game.balanceOf(player1Address, material1)).toNumber(),
+            (await game.balanceOf(player1Address, material1)).toString(),
             10,
             "10 supply of Material 1 was not minted properly."
         );
 
         assert.equal(
-            (await game.currentSupply(material1)).toNumber(),
+            (await game.currentSupply(material1)).toString(),
             10,
             "10 supply of Material 1 was not minted properly."
         );
@@ -144,19 +148,19 @@ contract('Game Contract', (accounts) => {
         // mint 10 items of item id 1 and 2
         await gameManager.mintBatch(player2Address, [material1,material2], [10,10], {from:minterAddress, gasPrice: 1});
         assert.equal(
-            (await game.balanceOf(player2Address, material1)).toNumber(),
+            (await game.balanceOf(player2Address, material1)).toString(),
             10,
             "10 supply of Material 1 was not minted properly."
         );
 
         assert.equal(
-            (await game.balanceOf(player2Address, material2)).toNumber(),
+            (await game.balanceOf(player2Address, material2)).toString(),
             10,
             "10 supply of Material 2 was not minted properly."
         );
 
         assert.equal(
-            (await game.currentSupply(material1)).toNumber(),
+            (await game.currentSupply(material1)).toString(),
             20,
             "The current supply of Material 1 is not correct."
         );
@@ -168,13 +172,13 @@ contract('Game Contract', (accounts) => {
 
         // check if the item was burned
         assert.equal(
-            (await game.balanceOf(player1Address,material1)).toNumber(),
+            (await game.balanceOf(player1Address,material1)).toString(),
             0,
             "10 supply of Item 1 was not burned properly."
         );
 
         assert.equal(
-            (await game.currentSupply(material1)).toNumber(),
+            (await game.currentSupply(material1)).toString(),
             10,
             "10 supply of Item 1 was not burned properly."
         );
@@ -182,21 +186,36 @@ contract('Game Contract', (accounts) => {
         // burn 10 items of item id 1 and 2
         await gameManager.burnBatch(player2Address, [material1,material2], [10,10], {from:burnerAddress, gasPrice: 1});
         assert.equal(
-            (await game.balanceOf(player2Address, material1)).toNumber(),
+            (await game.balanceOf(player2Address, material1)).toString(),
             0,
             "20 supply of Item 1 was not burned properly."
         );
 
         assert.equal(
-            (await game.balanceOf(player2Address, material2)).toNumber(),
+            (await game.balanceOf(player2Address, material2)).toString(),
             0,
             "10 supply of Item 2 was not burned properly."
         );
 
         assert.equal(
-            (await game.currentSupply(material1)).toNumber(),
+            (await game.currentSupply(material1)).toString(),
             0,
             "The current supply of Item 1 is not correct."
         );
+    });
+
+    it('Create Item with Defined Max Supply', async () => {
+        // Create the new item with Max Supply of 20 and mint all 20 tokens (done automatically and internally to createItem()).
+        await gameManager.createItem(deployerAddress, material4, 20, {from:deployerAddress, gasPrice: 1});
+
+        // Check if the new item was added.
+        assert.equal((await game.length()).toString(), 4, "The new item w/ max supply was not created.");
+        assert.equal(await game.contains(material4), true, "Material 4 wasn't created.");
+    });
+
+    it('Should not allow new tokens to be minted on items with defined max supply', async () => {
+        // The following function SHOULD revert due to us not allowing the minting of items with a max supply.
+        // We will actually PASS this test if this occurs because TruffleAssert.fails() only asserts if the passed in function DOESN'T fail.
+        await TruffleAssert.fails(gameManager.mint(deployerAddress, material4, 5));
     });
 });

@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/Crafting.sol";
+import "../utils/Utils.sol";
 
 library CraftingDeployer {
     function deployCrafting(uint256 id, address _itemRegistryAddr) public returns(address crafting) {
@@ -22,9 +23,6 @@ contract CraftingFactory is ERC165 {
     using CraftingDeployer for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGFACTORY = 0x00000007;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
-    bytes4 private constant _INTERFACE_ID_ICRAFTINGMANAGER= 0x00000006;
 
     /******** Stored Variables ********/
     address itemRegistryAddr;
@@ -36,24 +34,24 @@ contract CraftingFactory is ERC165 {
 
     /******** Public API ********/
     constructor() public {
-        _registerInterface(_INTERFACE_ID_ICRAFTINGFACTORY);
+        _registerInterface(Constants._INTERFACE_ID_ICRAFTINGFACTORY);
     }
 
     function setGlobalItemRegistryAddr(address _addr) external {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         itemRegistryAddr = _addr;
 
-        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_ICRAFTINGFACTORY);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_ICRAFTINGFACTORY);
     }
 
     /******** Mutative Functions ********/
     function createCraftingContract() external returns(address contractAddr, uint256 contractId) {
         require(
-            ERC165Checker.supportsInterface(msg.sender, _INTERFACE_ID_ICRAFTINGMANAGER),
+            ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_ICRAFTINGMANAGER),
             "Caller is not a Crafting Manager Contract."
         );
         require(itemRegistryAddr != address(0), "Global Item registry not set.");

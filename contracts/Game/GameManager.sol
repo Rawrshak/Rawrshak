@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./Game.sol";
 import "../interfaces/IGameManager.sol";
 import "../factory/GameFactory.sol";
+import "../utils/Constants.sol";
 
 contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -45,10 +46,6 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
      *      ^ 0x57baf0fb ^ 0x00ff4688 ^ 0x156e29f6 ^ 0xd81d0a15
      *      ^ 0xf5298aca ^ 0x6b20c454 == 0x0a306cc6
      */
-    bytes4 private constant _INTERFACE_ID_IGAMEMANAGER = 0x00000002;
-    bytes4 private constant _INTERFACE_ID_IGAME = 0x00000001;
-    bytes4 private constant _INTERFACE_ID_IGAMEFACTORY = 0x00000003;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
 
     /******** Stored Variables ********/
     address public gameAddr;
@@ -73,7 +70,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         _setupRole(MINTER_ROLE, _owner);
         _setupRole(BURNER_ROLE, _owner);
 
-        _registerInterface(_INTERFACE_ID_IGAMEMANAGER);
+        _registerInterface(Constants._INTERFACE_ID_IGAMEMANAGER);
         transferOwnership(_owner);
     }
 
@@ -83,7 +80,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
 
     function generateGameContract(address _gameFactoryAddress, string calldata _url) external override onlyOwner {
         require(
-            ERC165Checker.supportsInterface(_gameFactoryAddress, _INTERFACE_ID_IGAMEFACTORY),
+            ERC165Checker.supportsInterface(_gameFactoryAddress, Constants._INTERFACE_ID_IGAMEFACTORY),
             "Caller does not support Interface."
         );
 
@@ -94,13 +91,13 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         require(gameAddr != address(0), "Game Contract not created yet.");
         game().setGlobalItemRegistryAddr(_addr);
 
-        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IGAMEMANAGER);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_IGAMEMANAGER);
     }
 
     // Create New Item
@@ -150,7 +147,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
         game().mint(_receivingAddress, _itemId, _amount);
     }
 
-    // mint several items to a single addreess
+    // mint several items to a single address
     function mintBatch(
         address _receivingAddress,
         uint256[] calldata _itemIds,

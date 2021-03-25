@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IExchange.sol";
 import "./ExchangeEscrow.sol";
+import "../utils/Constants.sol";
 
 contract Exchange is IExchange, Ownable, ERC165 {
     using ERC165Checker for *;
@@ -33,8 +34,6 @@ contract Exchange is IExchange, Ownable, ERC165 {
      *      ^ 0x8bc6976e ^ 0xf75d8ada ^ 0xa583024b ^ 0x379607f5
      *      ^ 0x62abebce ^ 0xaf9ae92a  == 0x7a0df759
      */
-    bytes4 private constant _INTERFACE_ID_IEXCHANGE = 0x0000000C;
-    bytes4 private constant _INTERFACE_ID_IGLOBALITEMREGISTRY = 0x00000004;
     
     struct Order {
         address user;
@@ -71,18 +70,18 @@ contract Exchange is IExchange, Ownable, ERC165 {
     /******** Public API ********/
     constructor() public {
         escrowAddr = address(new ExchangeEscrow());
-        _registerInterface(_INTERFACE_ID_IEXCHANGE);
+        _registerInterface(Constants._INTERFACE_ID_IEXCHANGE);
     }
 
     function setGlobalItemRegistryAddr(address _addr) external override onlyOwner {
         require(Address.isContract(_addr), "Address not valid");
         require(
-            ERC165Checker.supportsInterface(_addr, _INTERFACE_ID_IGLOBALITEMREGISTRY),
+            ERC165Checker.supportsInterface(_addr, Constants._INTERFACE_ID_IGLOBALITEMREGISTRY),
             "Caller does not support Interface."
         );
         globalItemRegistryAddr = _addr;
 
-        emit GlobalItemRegistryStored(address(this), _addr, _INTERFACE_ID_IEXCHANGE);
+        emit GlobalItemRegistryStored(address(this), _addr, Constants._INTERFACE_ID_IEXCHANGE);
     }
 
     function placeBid(address _user, address _token, uint256 _uuid, uint256 _amount, uint256 _price)

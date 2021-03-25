@@ -40,7 +40,7 @@ contract('Crafting Contract', (accounts) => {
         gameManagerAddress = gameManagerCreatedEvent.logs[0].args[1];
         gameManager = await GameManager.at(gameManagerAddress);
         gameCreatedEvents = await gameManager.generateGameContract(gameFactory.address, "https://testgame.com/api/item/{id}.json");
-        game = await Game.at(gameCreatedEvents.logs[2].args[1]);
+        game = await Game.at(await gameManager.gameAddr());
 
         // Setup Crafting Factory
         craftingFactory = await CraftingFactory.deployed();
@@ -51,7 +51,7 @@ contract('Crafting Contract', (accounts) => {
         craftingManagerAddress = craftingManagerCreatedEvent.logs[0].args[1];
         craftingManager = await CraftingManager.at(craftingManagerAddress);
         craftingCreatedEvents = await craftingManager.generateCraftingContract(craftingFactory.address);
-        crafting = await Crafting.at(craftingCreatedEvents.logs[2].args[1]);
+        crafting = await Crafting.at(await craftingManager.getCraftingAddress());
         await craftingManager.setGlobalItemRegistryAddr(itemRegistry.address);
         await craftingManager.setDeveloperWallet(developerWalletAddress);
         

@@ -33,7 +33,6 @@ contract ManagerFactory is ERC165 {
     using LootboxManagerDeployer for *;
 
     /******** Constants ********/
-    bytes4 private constant _INTERFACE_ID_IMANAGERFACTORY = 0x0000000D;
 
     /******** Stored Variables ********/
     mapping(address => address[]) public gameManagerAddresses;
@@ -47,7 +46,7 @@ contract ManagerFactory is ERC165 {
 
     /******** Public API ********/
     constructor() public {
-        _registerInterface(_INTERFACE_ID_IMANAGERFACTORY);
+        _registerInterface(Constants._INTERFACE_ID_IMANAGERFACTORY);
     }
 
     /******** Mutative Functions ********/
