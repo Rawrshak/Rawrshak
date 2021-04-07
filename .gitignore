@@ -2,9 +2,6 @@
 node_modules
 build
 
-# graph-node generated data
-generated
-
 # docker data
 data
 
