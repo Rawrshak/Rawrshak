@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts/introspection/ERC165.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../Game/GameManager.sol";
 import "../Game/CraftingManager.sol";
@@ -26,7 +26,7 @@ library LootboxManagerDeployer {
     } 
 }
 
-contract ManagerFactory is ERC165 {
+contract ManagerFactory is ERC165Storage {
     using ERC165Checker for *;
     using GameManagerDeployer for *;
     using CraftingManagerDeployer for *;
@@ -45,7 +45,7 @@ contract ManagerFactory is ERC165 {
     event LootboxManagerCreated(uint256, address, address);
 
     /******** Public API ********/
-    constructor() public {
+    constructor() {
         _registerInterface(Constants._INTERFACE_ID_IMANAGERFACTORY);
     }
 

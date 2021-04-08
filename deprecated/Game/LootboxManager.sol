@@ -3,17 +3,17 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/introspection/ERC165.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/utils/EnumerableMap.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "./Lootbox.sol";
 import "../factory/LootboxFactory.sol";
 import "../interfaces/ILootbox.sol";
 import "../interfaces/ILootboxManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
-import "../utils/Constants.sol";
+import "../../utils/Constants.sol";
 
-contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
+contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165Storage {
     using ERC165Checker for *;
     using EnumerableMap for *;
 
@@ -43,7 +43,7 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
         _;
     }
     
-    constructor(address _owner) public {
+    constructor(address _owner) {
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(MANAGER_ROLE, _owner);
         _registerInterface(Constants._INTERFACE_ID_ILOOTBOXMANAGER);
@@ -90,6 +90,10 @@ contract LootboxManager is AccessControl, Ownable, ILootboxManager, ERC165 {
 
     function getLootboxAddress(uint256 _lootboxId) external view override checkLootboxExists(_lootboxId) returns(address) {
         return lootboxAddresses.get(_lootboxId);
+    }
+    
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, ERC165Storage) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     function registerInputItemBatch(

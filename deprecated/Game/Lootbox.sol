@@ -3,23 +3,24 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../interfaces/IGameManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/ILootbox.sol";
 import "../interfaces/ILootboxManager.sol";
-import "../utils/Constants.sol";
-import "../utils/Utils.sol";
+import "../../utils/Constants.sol";
+import "../../utils/Utils.sol";
 
 // Todo: the key is actually Rarity, but enum as a map key has not been implemented yet
 // Todo: Figure out what exactly to do for increasing the probabilities/multiplier per item.
 //       For now, just keep the probabilities flat.
 // Todo: add function to deactivate material/reward
 
-contract Lootbox is ILootbox, Ownable, ERC1155 {
+contract Lootbox is ILootbox, Ownable, ERC1155, ERC165Storage {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using SafeMath for *;
@@ -91,7 +92,7 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     }
 
     /******** Public API ********/
-    constructor(uint256 _id, address _addr, string memory _url) public ERC1155(_url) {
+    constructor(uint256 _id, address _addr, string memory _url) ERC1155(_url) {
         require(
             ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_ILOOTBOXFACTORY),
             "Caller does not support Interface."
@@ -128,6 +129,11 @@ contract Lootbox is ILootbox, Ownable, ERC1155 {
     function getManagerAddress() external view override returns(address) {
         return lootboxManagerAddr;
     }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC165Storage) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
 
     // ILootbox Functions
     function setGlobalItemRegistryAddr(address _addr)

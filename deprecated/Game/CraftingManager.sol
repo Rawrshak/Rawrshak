@@ -2,22 +2,22 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/introspection/ERC165.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/ICrafting.sol";
 import "./Crafting.sol";
 import "../interfaces/ICraftingManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
-import "../tokens/TokenBase.sol";
+import "../../tokens/TokenBase.sol";
 import "../factory/CraftingFactory.sol";
-import "../utils/Constants.sol";
+import "../../utils/Constants.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
 
-contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
+contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165Storage {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     using ERC165Checker for *;
@@ -78,7 +78,7 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
     }
 
     /******** Public API ********/
-    constructor(address _owner) public {
+    constructor(address _owner) {
         // Set up Roles
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(MANAGER_ROLE, _owner);
@@ -127,6 +127,10 @@ contract CraftingManager is ICraftingManager, Ownable, AccessControl, ERC165 {
 
     function getCraftingAddress() external view override returns(address) {
         return craftingAddr;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, ERC165Storage) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     function createRecipe(

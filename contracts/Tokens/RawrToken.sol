@@ -5,7 +5,7 @@ import "./TokenBase.sol";
 
 contract RawrToken is TokenBase
 {
-    constructor(uint256 _initialSupply) public TokenBase("Rawrshak Token", "RAWR", _initialSupply)
+    constructor(uint256 _initialSupply) TokenBase("Rawrshak Token", "RAWR", _initialSupply)
     {
     }
 }

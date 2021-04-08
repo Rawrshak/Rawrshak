@@ -3,16 +3,16 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/introspection/ERC165.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IExchange.sol";
 import "./ExchangeEscrow.sol";
-import "../utils/Constants.sol";
+import "../../utils/Constants.sol";
 
-contract Exchange is IExchange, Ownable, ERC165 {
+contract Exchange is IExchange, Ownable, ERC165Storage {
     using ERC165Checker for *;
     using SafeMath for *;
     using EnumerableSet for *;
@@ -68,7 +68,7 @@ contract Exchange is IExchange, Ownable, ERC165 {
     }
 
     /******** Public API ********/
-    constructor() public {
+    constructor() {
         escrowAddr = address(new ExchangeEscrow());
         _registerInterface(Constants._INTERFACE_ID_IEXCHANGE);
     }

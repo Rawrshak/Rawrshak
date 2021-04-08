@@ -4,22 +4,22 @@ pragma solidity >=0.6.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/introspection/ERC165.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IGameManager.sol";
 import "../interfaces/ICrafting.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
-import "../tokens/TokenBase.sol";
-import "../utils/Constants.sol";
+import "../../tokens/TokenBase.sol";
+import "../../utils/Constants.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
 // Todo: Multi-Game Crafting Contract
 // Todo: Update all INTERFACE IDs
 // Todo: Update All events in preparation for The Graph Indexing
 
-contract Crafting is ICrafting, Ownable, ERC165 {
+contract Crafting is ICrafting, Ownable, ERC165Storage {
     using EnumerableSet for EnumerableSet.UintSet;
     using ERC165Checker for *;
 
@@ -85,7 +85,7 @@ contract Crafting is ICrafting, Ownable, ERC165 {
     }
 
     /******** Public API ********/
-    constructor(uint256 _id, address _addr) public {
+    constructor(uint256 _id, address _addr) {
         require(
             ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_ICRAFTINGFACTORY),
             "Caller does not support Interface."

@@ -3,19 +3,21 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/introspection/ERC165.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./Game.sol";
 import "../interfaces/IGameManager.sol";
 import "../factory/GameFactory.sol";
-import "../utils/Constants.sol";
+import "../../utils/Constants.sol";
 
-contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
+contract GameManager is AccessControl, Ownable, IGameManager, ERC165Storage {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
+    using SafeMath for *;
     using ERC165Checker for *;
 
     /******** Constants ********/
@@ -64,7 +66,7 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
 
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
-    constructor(address _owner) public {        
+    constructor(address _owner) {
         // Contract Deployer is now the owner and can set roles
         _setupRole(DEFAULT_ADMIN_ROLE, _owner);
         _setupRole(MINTER_ROLE, _owner);
@@ -72,6 +74,10 @@ contract GameManager is AccessControl, Ownable, IGameManager, ERC165 {
 
         _registerInterface(Constants._INTERFACE_ID_IGAMEMANAGER);
         transferOwnership(_owner);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, ERC165Storage) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     function setUri(string calldata _newUri) external override onlyOwner {

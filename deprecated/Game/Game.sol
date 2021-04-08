@@ -2,14 +2,15 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IGame.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
-import "../utils/Constants.sol";
+import "../../utils/Constants.sol";
 
-contract Game is ERC1155, Ownable, IGame {
+contract Game is ERC1155, Ownable, IGame, ERC165Storage {
     using EnumerableSet for EnumerableSet.UintSet;
     using Address for *;
     // using ERC165Checker for *;
@@ -48,7 +49,7 @@ contract Game is ERC1155, Ownable, IGame {
 
     /******** Public API ********/
     // url: "https://game.example/api/item/{id}.json"
-    constructor(uint256 _gameId, string memory _url, address _itemRegistryAddr) public ERC1155(_url) {
+    constructor(uint256 _gameId, string memory _url, address _itemRegistryAddr) ERC1155(_url) {
         require(
             ERC165Checker.supportsInterface(msg.sender, Constants._INTERFACE_ID_IGAMEFACTORY),
             "Caller does not support Interface."
@@ -73,6 +74,10 @@ contract Game is ERC1155, Ownable, IGame {
 
     function getItemInfo(uint256 _id) external view override returns(address, uint256)  {
         return (items[_id].creatorAddress, items[_id].maxSupply);
+    }
+    
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC165Storage) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     /******** Mutative Functions ********/

@@ -2,17 +2,17 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/introspection/ERC165.sol";
-import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../interfaces/IGame.sol";
-import "../utils/Constants.sol";
+import "../../utils/Constants.sol";
 
 // Todo: Restrict item add permissions
 
-contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
+contract GlobalItemRegistry is IGlobalItemRegistry, ERC165Storage {
     using Address for address;
     using EnumerableSet for EnumerableSet.UintSet;
     using ERC165Checker for *;
@@ -54,7 +54,7 @@ contract GlobalItemRegistry is IGlobalItemRegistry, ERC165 {
     }
 
     /******** Public API ********/
-    constructor() public {
+    constructor() {
         _registerInterface(Constants._INTERFACE_ID_IGLOBALITEMREGISTRY);
     }
 
