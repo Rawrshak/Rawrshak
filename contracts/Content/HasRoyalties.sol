@@ -1,16 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
 import "./LibRoyalties.sol";
 
-contract HasRoyalties is ERC165Storage {
-    
-    /******************** Constants ********************/
-    /*
-     * bytes4(keccak256('getRoyalties(uint256)')) == 0xbb3bafd6
-     */
-    bytes4 private constant _INTERFACE_ID_ROYALTIES = 0xbb3bafd6;
+contract HasRoyalties {
 
     /***************** Stored Variables *****************/
     // All assets sales on this contract will pay the contract royalties
@@ -26,7 +19,6 @@ contract HasRoyalties is ERC165Storage {
     /******************** Public API ********************/
     constructor(LibRoyalties.Fees[] memory _fees) {
         _setContractRoyalties(_fees);
-        _registerInterface(_INTERFACE_ID_ROYALTIES);
     }
 
     /**
@@ -49,10 +41,9 @@ contract HasRoyalties is ERC165Storage {
      * pair
      */
     function _setContractRoyalties(LibRoyalties.Fees[] memory _fees) internal {
+        LibRoyalties.validateFees(_fees);
         delete contractRoyalties;
         for (uint256 i = 0; i < _fees.length; ++i) {
-            require(_fees[i].account != address(0), "Invalid Account Address");
-            require(_fees[i].bps != 0, "Invalid Fees");
             contractRoyalties.push(_fees[i]);
         }
         if (contractRoyalties.length > 0) {
@@ -67,10 +58,9 @@ contract HasRoyalties is ERC165Storage {
      * pair
      */
     function _setTokenRoyalties(uint256 _tokenId, LibRoyalties.Fees[] memory _fees) internal {
+        LibRoyalties.validateFees(_fees);
         delete tokenRoyalties[_tokenId];
         for (uint256 i = 0; i < _fees.length; ++i) {
-            require(_fees[i].account != address(0), "Invalid Account Address");
-            require(_fees[i].bps != 0, "Invalid Fees");
             tokenRoyalties[_tokenId].push(_fees[i]);
         }
         if (tokenRoyalties[_tokenId].length > 0) {

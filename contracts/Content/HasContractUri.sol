@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165Storage.sol";
-
-contract HasContractURI is ERC165Storage {
-
-    /******************** Constants ********************/
-    /*
-     * bytes4(keccak256('contractURI()')) == 0xe8a3d485
-     */
-    bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
+contract HasContractURI {
 
     /***************** Stored Variables *****************/
     // Contract Information URI
@@ -18,7 +10,6 @@ contract HasContractURI is ERC165Storage {
     /******************** Public API ********************/
     constructor(string memory _contractURI) {
         contractURI = _contractURI;
-        _registerInterface(_INTERFACE_ID_CONTRACT_URI);
     }
 
     /**************** Internal Functions ****************/
