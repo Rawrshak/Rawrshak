@@ -25,14 +25,14 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.deploy(Utils);
 
     // Deploy ERC1155 Content Contracts
-    const contentStorage = await deployProxy(ContentStorage, ["ipfs:/", []], {deployer});
-    const content = await deployProxy(Content, ["RawrContent", "RCONT", "ipfs:/test", contentStorage.address], {deployer});
+    const contentStorage = await deployProxy(ContentStorage, ["ipfs:/", []], {deployer, initializer: '__ContentStorage_init'});
+    const content = await deployProxy(Content, ["RawrContent", "RCONT", "ipfs:/test", contentStorage.address], {deployer, initializer: '__Content_init'});
     
     // set content as contentStorage Parent 
     await contentStorage.setParent(content, {from: deployerAddress})
 
     // Deploy Content Contract Manager
-    const contentManager = await deployProxy(ContentManager, [content.address, contentStorage.address], {deployer});
+    const contentManager = await deployProxy(ContentManager, [content.address, contentStorage.address], {deployer, initializer: '__ContentManager_init'});
     await content.transferOwnership(contentManager, {from: deployerAddress});
     await contentStorage.grantRole(await ContentStorage.OWNER_ROLE(), contentManager, {from: deployerAddress});
 
