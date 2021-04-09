@@ -33,6 +33,10 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
         _registerInterface(_INTERFACE_ID_TOKEN_URI);
     }
 
+    /**
+     * @dev Returns the latest version of a token uri
+     * @param _tokenId uint256 ID of the token to query
+     */
     function getLatestTokenVersion(uint256 _tokenId) public view returns (uint256) {
         return tokenUris[_tokenId].version;
     }
@@ -67,8 +71,8 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
      */
     function _setTokenUri(uint256 _tokenId, string memory _uri) internal {
         // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
-        // we introduce a versioning system. As game assets can break and change, owners can use older
-        // versions of assets that they like more or non-breaking change assets.
+        // we introduce a versioning system. As game assets can break and get updated, asset owners can
+        // opt to use older versions of assets.
         if (bytes(tokenUris[_tokenId].dataUri[0]).length == 0) {
             tokenUris[_tokenId].version = 0;
         } else {
@@ -79,8 +83,8 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
     }
 
     /**
-     * @dev Internal function to set the token URI prefix.
-     * @param _tokenUriPrefix string URI prefix to assign
+     * @dev Internal function to set the token Uri prefix.
+     * @param _tokenUriPrefix string Uri prefix to assign
      */
     function _setTokenUriPrefix(string memory _tokenUriPrefix) internal {
         tokenUriPrefix = _tokenUriPrefix;

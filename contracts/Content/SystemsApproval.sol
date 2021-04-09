@@ -7,13 +7,17 @@ import "./LibAsset.sol";
 abstract contract SystemsApproval is ERC165StorageUpgradeable {
         
     /***************** Stored Variables *****************/
-    // Rawrshak system addresses that are approved to interact with this copntract
+    // Rawrshak system addresses that are approved to interact with this contract
     mapping(address => bool) private systemApproval;
 
     /*********************** Events *********************/
     event SystemApproved(LibAsset.SystemApprovalPair[] _operators);
 
     /**************** Internal Functions ****************/
+    /**
+     * @dev Internal function to check whether an operator is pre-approved
+     * @param _operator address to check
+     */
     function _isOperatorApprovedForAll(address _operator) internal view returns (bool) {
         return systemApproval[_operator];
     }

@@ -13,12 +13,19 @@ contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
     using ERC165CheckerUpgradeable for address;
     
     /******************** Constants ********************/
+    /*
+     * Todo: this
+     * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0xFFFFFFFF
+     */
+    // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0x00000003;
 
     /***************** Stored Variables *****************/
     address public content;
     address private contentStorage;
 
     /*********************** Events *********************/
+    event ContentContractCreated(address content, address contentStorage);
+
     /********************* Modifiers ********************/
     modifier addressExists(address addr) {
         require(addr != address(0), "Invalid permissions.");
@@ -45,6 +52,7 @@ contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
 
         content = _content;
         contentStorage = _contentStorage;
+        emit ContentContractCreated(content, contentStorage);
     }
     
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external onlyOwner addressExists(content) addressExists(contentStorage) {
@@ -64,16 +72,16 @@ contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
         ContentStorage(contentStorage).setTokenUriPrefix(_tokenUriPrefix);
     }
 
-    function updateTokenUriBatch(LibAsset.AssetUri[] memory _assets) external onlyOwner addressExists(contentStorage) {
-        ContentStorage(contentStorage).updateTokenUriBatch(_assets);
+    function setTokenUriBatch(LibAsset.AssetUri[] memory _assets) external onlyOwner addressExists(contentStorage) {
+        ContentStorage(contentStorage).setTokenUriBatch(_assets);
     }
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external onlyOwner addressExists(contentStorage) {
         ContentStorage(contentStorage).setContractRoyalties(_fee);
     }
     
-    function updateTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external onlyOwner addressExists(contentStorage) {
-        ContentStorage(contentStorage).updateTokenRoyaltiesBatch(_assets);
+    function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external onlyOwner addressExists(contentStorage) {
+        ContentStorage(contentStorage).setTokenRoyaltiesBatch(_assets);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165StorageUpgradeable) returns (bool) {

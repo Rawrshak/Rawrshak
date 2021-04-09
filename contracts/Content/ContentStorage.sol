@@ -10,7 +10,6 @@ import "./LibAsset.sol";
 import "./SystemsApproval.sol";
 import "../Utils/LibConstants.sol";
 
-// Todo: we could also name this "ContentExtension"
 contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalties, HasTokenUri {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
@@ -82,10 +81,11 @@ contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalti
     }
 
     function setTokenUriPrefix(string memory _tokenUriPrefix) external checkPermissions(OWNER_ROLE) {
+        // this can be set to nothing.
         _setTokenUriPrefix(_tokenUriPrefix);
     }
 
-    function updateTokenUriBatch(LibAsset.AssetUri[] memory _assets) external checkPermissions(OWNER_ROLE) {
+    function setTokenUriBatch(LibAsset.AssetUri[] memory _assets) external checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setTokenUri(_assets[i].tokenId, _assets[i].uri);
@@ -93,14 +93,20 @@ contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalti
     }
     
     function getRoyalties(uint256 _tokenId) external view checkPermissions(OWNER_ROLE) returns (LibRoyalties.Fees[] memory) {
+        // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
+        // _getRoyalties() will return the contract's default royalty fee. However, that can also
+        // be null. In the case of null, there are no royalty fees. 
         return _getRoyalties(_tokenId);
     }
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external checkPermissions(OWNER_ROLE) {
+        // This can be reset by setting _fee to an empty string.
+        // This overwrites the existing array of contract fees.
         _setContractRoyalties(_fee);
     }
 
-    function updateTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external checkPermissions(OWNER_ROLE) {
+    function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external checkPermissions(OWNER_ROLE) {
+        // This overwrites the existing array of contract fees.
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setTokenRoyalties(_assets[i].tokenId, _assets[i].fees);

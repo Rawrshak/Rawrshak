@@ -66,9 +66,9 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
 
     /**
      * @dev Internal function to set the royalties for a token
+     * @param _tokenId uint256 ID of the token to query
      * If the token id does not have royalties, the contract royalties is returned.
      * contractRoyalties and tokenRoyalties[tokenId] can both be null
-     * @param _tokenId uint256 ID of the token to query
      */
     function _getRoyalties(uint256 _tokenId) internal view returns (LibRoyalties.Fees[] memory) {
         if (tokenRoyalties[_tokenId].length == 0) {

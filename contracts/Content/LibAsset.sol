@@ -39,6 +39,8 @@ library LibAsset {
         bool approved;
     }
 
+    // Validate functions below are used to check the input to a function. This is to reduce 
+    // contract size for the contracts that use them.
     function validateTokenId(
         mapping(uint256 => bool) storage _tokenIds,
         uint256 _tokenId
