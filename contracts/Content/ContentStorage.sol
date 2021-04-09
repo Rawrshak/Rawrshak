@@ -2,60 +2,71 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 // import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./LibAsset.sol";
+import "../utils/Constants.sol";
+import "./SystemsApproval.sol";
 
-contract ContentStorage is OwnableUpgradeable, HasRoyalties, HasTokenURI {
-    using AddressUpgradeable for *;
+// Todo: we could also name this "ContentExtension"
+contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalties, HasTokenUri {
+    using AddressUpgradeable for address;
+    using ERC165CheckerUpgradeable for address;
     
     /******************** Constants ********************/
     /*
      * Todo: this
      * bytes4(keccak256('contractRoyalties()')) == 0xFFFFFFFF
      */
-    bytes4 private constant _INTERFACE_ID_ROYALTIES = 0xFFFFFFFF;
+    // bytes4 private constant _INTERFACE_ID_CONTENT_STORAGE = 0x00000001;
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     /***************** Stored Variables *****************/
-    address private parent;
+    address public parent;
     mapping(uint256 => bool) private ids;
 
     /*********************** Events *********************/
-    event AssetsAdded(LibAsset.CreateData[] assets);
-    event TokenUriUpdated(LibAsset.AssetUri[] assets);
-    event TokenRoyaltiesUpdated(LibAsset.AssetRoyalties[] assets);
+    event ParentSet(address parent);
+
+    /********************* Modifiers ********************/
+    modifier checkPermissions(bytes32 _role) {
+        require(hasRole(_role, msg.sender), "Invalid permissions.");
+        _;
+    }
 
     /******************** Public API ********************/
-    function __ContentStorage_init_unchained(
-        string memory _tokenURIPrefix,
+    function __ContentStorage_init(
+        string memory _tokenUriPrefix,
         LibRoyalties.Fees[] memory _contractFees
     ) internal initializer {
-        __Ownable_init_unchained();
+        __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
-        __HasTokenURI_init_unchained(_tokenURIPrefix);
+        __HasTokenUri_init_unchained(_tokenUriPrefix);
         __HasRoyalties_init_unchained(_contractFees);
+        _registerInterface(Constants._INTERFACE_ID_CONTENT_STORAGE);
+        _setupRole(OWNER_ROLE, _msgSender());
     }
 
-    function tokenURI(uint256 _tokenId, uint256 _version) public view returns (string memory) {
-        return _tokenURI(_tokenId, _version);
-    }
-
-    function getRoyalties(uint256 _tokenId) public view returns (LibRoyalties.Fees[] memory) {
-        return _getRoyalties(_tokenId);
-    }
-
-    function setParent(address _parent) external onlyOwner {
-        require(_parent.isContract(), "Input is not a contract address.");
+    function setParent(address _parent) external checkPermissions(OWNER_ROLE) {
+        require(_parent.isContract() && 
+                _parent.supportsInterface(Constants._INTERFACE_ID_CONTENT),
+                "Invalid Address");
         parent = _parent;
+        grantRole(OWNER_ROLE, parent);
+    }
+    
+    function isOperatorApprovedForAll(address _operator) external view checkPermissions(OWNER_ROLE) returns (bool) {
+        return _isOperatorApprovedForAll(_operator);
+    }
+    
+    function setSystemApproval(LibAsset.SystemApprovalPair[] memory _operators) external checkPermissions(OWNER_ROLE) {
+        return _setSystemApproval(_operators);
     }
 
-    function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external onlyOwner {
-        _setContractRoyalties(_fee);
-    }
-
-    function addAssetBatch(LibAsset.CreateData[] memory _assets) external onlyOwner {
+    function addAssetBatch(LibAsset.CreateData[] memory _assets) external checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(!ids[_assets[i].tokenId], "Token Id already exists.");
             _setTokenUri(_assets[i].tokenId, _assets[i].dataUri);
@@ -65,27 +76,41 @@ contract ContentStorage is OwnableUpgradeable, HasRoyalties, HasTokenURI {
                 _setTokenRoyalties(_assets[i].tokenId, _assets[i].fees);
             }
         }
-
-        emit AssetsAdded(_assets);
     }
 
-    function updateTokenUriBatch(LibAsset.AssetUri[] memory _assets) public onlyOwner {
+    function tokenUri(uint256 _tokenId, uint256 _version) external view checkPermissions(OWNER_ROLE)returns (string memory) {
+        return _tokenUri(_tokenId, _version);
+    }
+
+    function setTokenUriPrefix(string memory _tokenUriPrefix) external checkPermissions(OWNER_ROLE) {
+        _setTokenUriPrefix(_tokenUriPrefix);
+    }
+
+    function updateTokenUriBatch(LibAsset.AssetUri[] memory _assets) external checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setTokenUri(_assets[i].tokenId, _assets[i].uri);
         }
-
-        emit TokenUriUpdated(_assets);
+    }
+    
+    function getRoyalties(uint256 _tokenId) external view checkPermissions(OWNER_ROLE) returns (LibRoyalties.Fees[] memory) {
+        return _getRoyalties(_tokenId);
     }
 
-    function updateTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external onlyOwner {
+    function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external checkPermissions(OWNER_ROLE) {
+        _setContractRoyalties(_fee);
+    }
+
+    function updateTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setTokenRoyalties(_assets[i].tokenId, _assets[i].fees);
         }
-        
-        emit TokenRoyaltiesUpdated(_assets);
     }
-    
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
     uint256[50] private __gap;
 }

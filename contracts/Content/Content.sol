@@ -1,23 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
-import "./SystemsApproval.sol";
 import "./LibRoyalties.sol";
 import "../utils/Constants.sol";
 import "./ContentStorage.sol";
 
 
-contract Content is OwnableUpgradeable, SystemsApproval, ERC1155BurnableUpgradeable {
+contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165StorageUpgradeable {
+    using AddressUpgradeable for address;
+    using ERC165CheckerUpgradeable for address;
     
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('setContractURI(string memory)')) == 0x5b54d3f4
+     * Todo: this
+     * bytes4(keccak256('setContractUri(string memory)')) == 0x5b54d3f4
      * bytes4(keccak256('uri(uint256)')) == 0x0e89341c
      * bytes4(keccak256('setContractRoyalties(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
      * bytes4(keccak256('setTokenRoyalties(uint256, LibRoyalties.Fees[] memory)')) == 0x170ea8e3
@@ -36,7 +42,8 @@ contract Content is OwnableUpgradeable, SystemsApproval, ERC1155BurnableUpgradea
     mapping(uint256 => uint256) public supply;
 
     /*********************** Events *********************/
-    /********************* Modifiers ********************/
+    event AssetsAdded(LibAsset.CreateData[] assets);
+
     /******************** Public API ********************/
     function __Content_init(
         string memory _name,
@@ -48,29 +55,33 @@ contract Content is OwnableUpgradeable, SystemsApproval, ERC1155BurnableUpgradea
         __Ownable_init_unchained();
         __ERC1155Burnable_init_unchained();
         __ERC1155_init_unchained(_contractUri);
+        _registerInterface(Constants._INTERFACE_ID_CONTENT);
         name = _name;
         symbol = _symbol;
+        
+        require(_contentStorage.isContract() && 
+                _contentStorage.supportsInterface(Constants._INTERFACE_ID_CONTENT_STORAGE),
+                "Invalid Address");
         contentStorage = _contentStorage;
     }
 
-    function setContractURI(string memory _contractURI) public onlyOwner {
-        _setURI(_contractURI);
+    function setContractUri(string memory _contractUri) public onlyOwner {
+        _setURI(_contractUri);
     }
     
-    function tokenURI(uint256 _tokenId, uint256 _version) external view returns (string memory) {
-        return ContentStorage(contentStorage).tokenURI(_tokenId, _version);
+    function tokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
+        return ContentStorage(contentStorage).tokenUri(_tokenId, _version);
     }
     
     function getRoyalties(uint256 _tokenId) external view returns (LibRoyalties.Fees[] memory) {
         return ContentStorage(contentStorage).getRoyalties(_tokenId);
     }
 
-    function isApprovedForAll(address _owner, address _operator) public override(SystemsApproval, ERC1155Upgradeable) view returns (bool) {
-        return SystemsApproval.isApprovedForAll(_owner, _operator);
+    function isApprovedForAll(address _owner, address _operator) public override(ERC1155Upgradeable) view returns (bool) {
+        return ContentStorage(contentStorage).isOperatorApprovedForAll(_operator)|| super.isApprovedForAll(_owner, _operator);
     }
 
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external onlyOwner {
-        // LibAsset.validateAddAssetData(ids, _assets);
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId] == false, "Token Id already exists.");
             ids[_assets[i].tokenId] = true;
@@ -80,14 +91,20 @@ contract Content is OwnableUpgradeable, SystemsApproval, ERC1155BurnableUpgradea
             maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
         }
 
-        // emit event
+        emit AssetsAdded(_assets);
     }
 
     function mintBatch(LibAsset.MintData memory _data) external onlyOwner {
-        // LibAsset.validateMintData(ids, maxSupply, supply, _data);
+        // require(_data.to != address(0) && 
+        //         _data.amounts.length == _data.tokenIds.length,
+        //         "Invalid data input");
         require(_data.to != address(0), "Invalid address");
         require(_data.amounts.length == _data.tokenIds.length, "Input length mismatch");
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
+            // require(ids[_data.tokenIds[i]] && 
+            //         (maxSupply[_data.tokenIds[i]] == 0 ||
+            //             maxSupply[_data.tokenIds[i]] >= SafeMath.add(supply[_data.tokenIds[i]], _data.amounts[i])),
+            //     "Invalid data input");
             require(ids[_data.tokenIds[i]] == true, "token id doesn't exist");
             require(maxSupply[_data.tokenIds[i]] == 0 ||
                 maxSupply[_data.tokenIds[i]] >= SafeMath.add(supply[_data.tokenIds[i]], _data.amounts[i]), "Max Supply reached"
@@ -97,7 +114,9 @@ contract Content is OwnableUpgradeable, SystemsApproval, ERC1155BurnableUpgradea
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
     }
 
-
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC165StorageUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
     
     uint256[50] private __gap;
 }

@@ -4,31 +4,31 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-abstract contract HasContractURI is ERC165StorageUpgradeable {
+abstract contract HasContractUri is ERC165StorageUpgradeable {
 
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('contractURI()')) == 0xe8a3d485
+     * bytes4(keccak256('contractUri()')) == 0xe8a3d485
      */
     bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
 
     /***************** Stored Variables *****************/
-    // Contract Information URI
-    string public contractURI;
+    // Contract Information Uri
+    string public contractUri;
 
     /******************** Public API ********************/
-    function __HasContractURI_init_unchained(string memory _contractURI) internal initializer {
-        contractURI = _contractURI;
+    function __HasContractUri_init_unchained(string memory _contractUri) internal initializer {
+        contractUri = _contractUri;
         _registerInterface(_INTERFACE_ID_CONTRACT_URI);
     }
 
     /**************** Internal Functions ****************/
     /**
-     * @dev Internal function to set the contract URI
-     * @param _contractURI string URI prefix to assign
+     * @dev Internal function to set the contract Uri
+     * @param _contractUri string Uri prefix to assign
      */
-    function _setContractURI(string memory _contractURI) internal {
-        contractURI = _contractURI;
+    function _setContractUri(string memory _contractUri) internal {
+        contractUri = _contractUri;
     }
     
     uint256[50] private __gap;

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "./LibAsset.sol";
 
-abstract contract SystemsApproval is ERC1155Upgradeable {
+abstract contract SystemsApproval is ERC165StorageUpgradeable {
         
     /***************** Stored Variables *****************/
     // Rawrshak system addresses that are approved to interact with this copntract
@@ -13,12 +13,11 @@ abstract contract SystemsApproval is ERC1155Upgradeable {
     /*********************** Events *********************/
     event SystemApproved(LibAsset.SystemApprovalPair[] _operators);
 
-    /******************** Public API ********************/
-    function isApprovedForAll(address _owner, address _operator) public virtual override view returns (bool) {
-        return systemApproval[_operator] || super.isApprovedForAll(_owner, _operator);
+    /**************** Internal Functions ****************/
+    function _isOperatorApprovedForAll(address _operator) internal view returns (bool) {
+        return systemApproval[_operator];
     }
 
-    /**************** Internal Functions ****************/
     /**
      * @dev Internal function to approve a pre-approve system address
      * @param _operators [address,bool] addresses of system contracts to be approved

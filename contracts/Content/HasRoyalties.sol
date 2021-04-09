@@ -21,8 +21,8 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
     mapping (uint256 => LibRoyalties.Fees[]) tokenRoyalties;
     
     /*********************** Events *********************/
-    event RoyaltiesSet(uint256 tokenId, LibRoyalties.Fees[] fees);
-    event ContractRoyaltiesSet(LibRoyalties.Fees[] fees);
+    event TokenRoyaltiesUpdated(uint256 tokenId, LibRoyalties.Fees[] fees);
+    event ContractRoyaltiesUpdated(LibRoyalties.Fees[] fees);
 
     /******************** Public API ********************/
     function __HasRoyalties_init_unchained(LibRoyalties.Fees[] memory _fees) internal initializer {
@@ -43,7 +43,7 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
             contractRoyalties.push(_fees[i]);
         }
         if (contractRoyalties.length > 0) {
-            emit ContractRoyaltiesSet(_fees);
+            emit ContractRoyaltiesUpdated(_fees);
         }
     }
 
@@ -60,7 +60,7 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
             tokenRoyalties[_tokenId].push(_fees[i]);
         }
         if (tokenRoyalties[_tokenId].length > 0) {
-            emit RoyaltiesSet(_tokenId, _fees);
+            emit TokenRoyaltiesUpdated(_tokenId, _fees);
         }
     }
 
