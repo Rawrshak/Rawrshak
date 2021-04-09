@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./LibRoyalties.sol";
 
 library LibAsset {
@@ -57,7 +57,7 @@ library LibAsset {
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             require(_tokenIds[_data.tokenIds[i]] == true, "token id doesn't exist");
             require(_maxSupply[_data.tokenIds[i]] == 0 ||
-                _maxSupply[_data.tokenIds[i]] >= SafeMath.add(_supply[_data.tokenIds[i]], _data.amounts[i]), "Max Supply reached"
+                _maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(_supply[_data.tokenIds[i]], _data.amounts[i]), "Max Supply reached"
             );
         }
     }

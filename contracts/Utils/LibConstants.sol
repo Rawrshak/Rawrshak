@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-library Constants {
+library LibConstants {
 
-    /******** Shared Constants ********/
+    /******** Shared LibConstants ********/
 
     /* TODO: The Interface ID should be a hash that is going to be a XOR of the bytes4(keccak256('function(parameters))) for the actual interface. 
     But the interfaces aren't finalized yet so we can just keep them as they are now.

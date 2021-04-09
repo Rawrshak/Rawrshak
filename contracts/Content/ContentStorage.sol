@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-// import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./LibAsset.sol";
-import "../utils/Constants.sol";
 import "./SystemsApproval.sol";
+import "../Utils/LibConstants.sol";
 
 // Todo: we could also name this "ContentExtension"
 contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalties, HasTokenUri {
@@ -41,19 +40,19 @@ contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalti
     function __ContentStorage_init(
         string memory _tokenUriPrefix,
         LibRoyalties.Fees[] memory _contractFees
-    ) internal initializer {
+    ) public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __HasTokenUri_init_unchained(_tokenUriPrefix);
         __HasRoyalties_init_unchained(_contractFees);
-        _registerInterface(Constants._INTERFACE_ID_CONTENT_STORAGE);
+        _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(OWNER_ROLE, _msgSender());
     }
 
     function setParent(address _parent) external checkPermissions(OWNER_ROLE) {
-        require(_parent.isContract() && 
-                _parent.supportsInterface(Constants._INTERFACE_ID_CONTENT),
-                "Invalid Address");
+        require(_parent.isContract(), "Address is not a contract.");
+        require(_parent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
         parent = _parent;
         grantRole(OWNER_ROLE, parent);
     }

@@ -4,9 +4,7 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./LibAsset.sol";
-import "../utils/Constants.sol";
 import "./ContentStorage.sol";
 import "./Content.sol";
 
@@ -33,16 +31,16 @@ contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
         address _content,
         address _contentStorage
     )
-        external initializer
+        public initializer
     {
         __Ownable_init_unchained();
-        _registerInterface(Constants._INTERFACE_ID_CONTENT_MANAGER);
+        _registerInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER);
     
         require(_content.isContract() && 
-                _content.supportsInterface(Constants._INTERFACE_ID_CONTENT),
+                _content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT),
                 "Invalid Address");
         require(_contentStorage.isContract() && 
-                _contentStorage.supportsInterface(Constants._INTERFACE_ID_CONTENT_STORAGE),
+                _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
                 "Invalid Address");
 
         content = _content;
@@ -82,5 +80,5 @@ contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
         return super.supportsInterface(interfaceId);
     }
     
-    /**************** Internal Functions ****************/
+    uint256[50] private __gap;
 }

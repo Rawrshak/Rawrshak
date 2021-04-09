@@ -12,7 +12,6 @@ import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./LibRoyalties.sol";
-import "../utils/Constants.sol";
 import "./ContentStorage.sol";
 
 
@@ -50,18 +49,20 @@ contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165Storag
         string memory _symbol,
         string memory _contractUri,
         address _contentStorage)
-        external initializer
+        public initializer
     {
         __Ownable_init_unchained();
         __ERC1155Burnable_init_unchained();
         __ERC1155_init_unchained(_contractUri);
-        _registerInterface(Constants._INTERFACE_ID_CONTENT);
+        _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
         name = _name;
         symbol = _symbol;
         
-        require(_contentStorage.isContract() && 
-                _contentStorage.supportsInterface(Constants._INTERFACE_ID_CONTENT_STORAGE),
-                "Invalid Address");
+        require(_contentStorage.isContract(), "Address is not a contract.");
+        require(_contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE), "Address is not a Content Storage Contract");
+        // require(_contentStorage.isContract() && 
+        //         _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
+        //         "Invalid Address");
         contentStorage = _contentStorage;
     }
 
@@ -103,11 +104,11 @@ contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165Storag
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             // require(ids[_data.tokenIds[i]] && 
             //         (maxSupply[_data.tokenIds[i]] == 0 ||
-            //             maxSupply[_data.tokenIds[i]] >= SafeMath.add(supply[_data.tokenIds[i]], _data.amounts[i])),
+            //             maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i])),
             //     "Invalid data input");
             require(ids[_data.tokenIds[i]] == true, "token id doesn't exist");
             require(maxSupply[_data.tokenIds[i]] == 0 ||
-                maxSupply[_data.tokenIds[i]] >= SafeMath.add(supply[_data.tokenIds[i]], _data.amounts[i]), "Max Supply reached"
+                maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]), "Max Supply reached"
             );
             supply[_data.tokenIds[i]] = SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]);
         }
