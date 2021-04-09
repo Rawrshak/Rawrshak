@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "./LibAsset.sol";
 
-abstract contract SystemsApproval is ERC1155 {
+abstract contract SystemsApproval is ERC1155Upgradeable {
         
     /***************** Stored Variables *****************/
     // Rawrshak system addresses that are approved to interact with this copntract
@@ -14,7 +14,6 @@ abstract contract SystemsApproval is ERC1155 {
     event SystemApproved(LibAsset.SystemApprovalPair[] _operators);
 
     /******************** Public API ********************/
-
     function isApprovedForAll(address _owner, address _operator) public virtual override view returns (bool) {
         return systemApproval[_operator] || super.isApprovedForAll(_owner, _operator);
     }
@@ -30,4 +29,6 @@ abstract contract SystemsApproval is ERC1155 {
         }
         emit SystemApproved(_operators);
     }
+    
+    uint256[50] private __gap;
 }

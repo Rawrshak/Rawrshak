@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "./LibAsset.sol";
 
-contract HasTokenURI {
-    using Strings for uint256;
+abstract contract HasTokenURI is ERC165StorageUpgradeable {
+    using StringsUpgradeable for uint256;
+
+    /******************** Constants ********************/
+    /*
+     * bytes4(keccak256('tokenURIPrefix()')) == 0xc0ac9983
+     * bytes4(keccak256('getLatestTokenVersion(uint256)')) == 0x0a64da48
+     */
+    bytes4 private constant _INTERFACE_ID_TOKEN_URI = 0xcac843cb;
 
     /***************** Stored Variables *****************/
     // Token URI prefix
@@ -17,8 +26,9 @@ contract HasTokenURI {
     
 
     /******************** Public API ********************/
-    constructor(string memory _tokenURIPrefix) {
+    function __HasTokenURI_init_unchained(string memory _tokenURIPrefix) internal initializer {
         tokenURIPrefix = _tokenURIPrefix;
+        _registerInterface(_INTERFACE_ID_TOKEN_URI);
     }
 
     function getLatestTokenVersion(uint256 _tokenId) public view returns (uint256) {
@@ -72,4 +82,6 @@ contract HasTokenURI {
     function _setTokenURIPrefix(string memory _tokenURIPrefix) internal {
         tokenURIPrefix = _tokenURIPrefix;
     }
+    
+    uint256[50] private __gap;
 }

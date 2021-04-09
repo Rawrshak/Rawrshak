@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./LibRoyalties.sol";
 
-contract HasRoyalties {
+abstract contract HasRoyalties is ERC165StorageUpgradeable {
+
+    /******************** Constants ********************/
+    /*
+     * bytes4(keccak256('contractRoyalties()')) == 0x0982790e
+     */
+    bytes4 private constant _INTERFACE_ID_ROYALTIES = 0x0982790e;
 
     /***************** Stored Variables *****************/
     // All assets sales on this contract will pay the contract royalties
-    LibRoyalties.Fees[] contractRoyalties;
+    LibRoyalties.Fees[] public contractRoyalties;
 
     // Specific assets can also have their own royalties set
     mapping (uint256 => LibRoyalties.Fees[]) tokenRoyalties;
@@ -17,21 +25,9 @@ contract HasRoyalties {
     event ContractRoyaltiesSet(LibRoyalties.Fees[] fees);
 
     /******************** Public API ********************/
-    constructor(LibRoyalties.Fees[] memory _fees) {
+    function __HasRoyalties_init_unchained(LibRoyalties.Fees[] memory _fees) internal initializer {
         _setContractRoyalties(_fees);
-    }
-
-    /**
-     * @dev Extarnal function to set the royalties for a token
-     * If the token id does not have royalties, the contract royalties is returned.
-     * contractRoyalties and tokenRoyalties[tokenId] can both be null
-     * @param _tokenId uint256 ID of the token to query
-     */
-    function getRoyalties(uint256 _tokenId) external view returns (LibRoyalties.Fees[] memory) {
-        if (tokenRoyalties[_tokenId].length == 0) {
-            return contractRoyalties;
-        }
-        return tokenRoyalties[_tokenId];
+        _registerInterface(_INTERFACE_ID_ROYALTIES);
     }
 
     /**************** Internal Functions ****************/
@@ -67,4 +63,19 @@ contract HasRoyalties {
             emit RoyaltiesSet(_tokenId, _fees);
         }
     }
+
+    /**
+     * @dev Internal function to set the royalties for a token
+     * If the token id does not have royalties, the contract royalties is returned.
+     * contractRoyalties and tokenRoyalties[tokenId] can both be null
+     * @param _tokenId uint256 ID of the token to query
+     */
+    function _getRoyalties(uint256 _tokenId) internal view returns (LibRoyalties.Fees[] memory) {
+        if (tokenRoyalties[_tokenId].length == 0) {
+            return contractRoyalties;
+        }
+        return tokenRoyalties[_tokenId];
+    }
+    
+    uint256[50] private __gap;
 }
