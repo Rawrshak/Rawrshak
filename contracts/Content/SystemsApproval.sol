@@ -30,7 +30,11 @@ abstract contract SystemsApproval is ERC165StorageUpgradeable {
         for (uint256 i = 0; i < _operators.length; ++i) {
             systemApproval[_operators[i].operator] = _operators[i].approved;
         }
-        emit SystemApproved(_operators);
+
+        // only emit event if there are actual operators to change.
+        if (_operators.length > 0) {
+            emit SystemApproved(_operators);
+        }
     }
     
     uint256[50] private __gap;

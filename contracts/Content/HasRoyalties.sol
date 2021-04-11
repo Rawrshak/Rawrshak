@@ -42,9 +42,7 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
         for (uint256 i = 0; i < _fees.length; ++i) {
             contractRoyalties.push(_fees[i]);
         }
-        if (contractRoyalties.length > 0) {
-            emit ContractRoyaltiesUpdated(_fees);
-        }
+        emit ContractRoyaltiesUpdated(_fees);
     }
 
     /**
@@ -59,9 +57,7 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
         for (uint256 i = 0; i < _fees.length; ++i) {
             tokenRoyalties[_tokenId].push(_fees[i]);
         }
-        if (tokenRoyalties[_tokenId].length > 0) {
-            emit TokenRoyaltiesUpdated(_tokenId, _fees);
-        }
+        emit TokenRoyaltiesUpdated(_tokenId, _fees);
     }
 
     /**

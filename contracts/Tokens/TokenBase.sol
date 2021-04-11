@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "../Utils/LibConstants.sol";
+import "../utils/LibConstants.sol";
 
 abstract contract TokenBase is ERC20Upgradeable, ERC165StorageUpgradeable, AccessControlUpgradeable {
     // Create a new role identifier for the minter role. Limiting what each component of a system 

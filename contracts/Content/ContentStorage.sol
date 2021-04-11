@@ -8,7 +8,7 @@ import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./LibAsset.sol";
 import "./SystemsApproval.sol";
-import "../Utils/LibConstants.sol";
+import "../utils/LibConstants.sol";
 
 contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalties, HasTokenUri {
     using AddressUpgradeable for address;
@@ -67,6 +67,7 @@ contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalti
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(!ids[_assets[i].tokenId], "Token Id already exists.");
+            ids[_assets[i].tokenId] = true;
             _setTokenUri(_assets[i].tokenId, _assets[i].dataUri);
             
             // if this specific token has a different royalty fees than the contract
@@ -76,7 +77,7 @@ contract ContentStorage is AccessControlUpgradeable, SystemsApproval, HasRoyalti
         }
     }
 
-    function tokenUri(uint256 _tokenId, uint256 _version) external view checkPermissions(OWNER_ROLE)returns (string memory) {
+    function tokenUri(uint256 _tokenId, uint256 _version) external view checkPermissions(OWNER_ROLE) returns (string memory) {
         return _tokenUri(_tokenId, _version);
     }
 

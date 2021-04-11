@@ -12,7 +12,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
     /******************** Constants ********************/
     /*
      * bytes4(keccak256('tokenUriPrefix()')) == 0xc0ac9983
-     * bytes4(keccak256('getLatestTokenVersion(uint256)')) == 0x0a64da48
+     * bytes4(keccak256('getLatestUriVersion(uint256)')) == 0x0a64da48
      */
     bytes4 private constant _INTERFACE_ID_TOKEN_URI = 0xcac843cb;
 
@@ -25,7 +25,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
     
     /*********************** Events *********************/
     event TokenUriPrefixUpdated(string uriPrefix);
-    event TokenUriUpdated(string uri);
+    event TokenUriUpdated(uint256 id, uint256 version, string uri);
 
     /******************** Public API ********************/
     function __HasTokenUri_init_unchained(string memory _tokenUriPrefix) internal initializer {
@@ -37,7 +37,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
      * @dev Returns the latest version of a token uri
      * @param _tokenId uint256 ID of the token to query
      */
-    function getLatestTokenVersion(uint256 _tokenId) public view returns (uint256) {
+    function getLatestUriVersion(uint256 _tokenId) public view returns (uint256) {
         return tokenUris[_tokenId].version;
     }
 
@@ -49,18 +49,31 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
      * @param _version uint256 uri version to query
      */
     function _tokenUri(uint256 _tokenId, uint256 _version) internal view returns (string memory) {
+        // if prefix and token uris don't exist, return "";
+        if (bytes(tokenUriPrefix).length == 0 && tokenUris[_tokenId].dataUri.length == 0) {
+            return "";
+        }
+
+        // if there's a prefix, but no token uri, concatinate the token id
+        if (tokenUris[_tokenId].dataUri.length == 0) {
+            return string(abi.encodePacked(tokenUriPrefix, _tokenId.toString()));
+        }
+
+        // if they're requesting a version that doesn't exist, return latest version
+        if (_version > tokenUris[_tokenId].version) {
+            _version = tokenUris[_tokenId].version;
+        }
+
         // if prefix doesn't exist, return the token uri. This can be null.
         if (bytes(tokenUriPrefix).length == 0) {
             return tokenUris[_tokenId].dataUri[_version];
         }
         
         // if both prefix and token uri exist, concatinate prefix and token uri
-        if (bytes(tokenUris[_tokenId].dataUri[_version]).length >= 0) {
-            return string(abi.encodePacked(tokenUriPrefix, tokenUris[_tokenId].dataUri[_version]));
-        }
-
-        // if there's a prefix, but no token uri, concatinate the token id
-        return string(abi.encodePacked(tokenUriPrefix, _tokenId.toString()));
+        return string(abi.encodePacked(tokenUriPrefix, tokenUris[_tokenId].dataUri[_version]));
+        // if (bytes(tokenUris[_tokenId].dataUri[_version]).length >= 0) {
+            
+        // }
     }
 
     /**
@@ -73,13 +86,13 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
         // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
         // we introduce a versioning system. As game assets can break and get updated, asset owners can
         // opt to use older versions of assets.
-        if (bytes(tokenUris[_tokenId].dataUri[0]).length == 0) {
+        if (tokenUris[_tokenId].dataUri.length == 0) {
             tokenUris[_tokenId].version = 0;
         } else {
             tokenUris[_tokenId].version++;
         }
         tokenUris[_tokenId].dataUri.push(_uri);
-        emit TokenUriUpdated(_uri);
+        emit TokenUriUpdated(_tokenId, tokenUris[_tokenId].version, _uri);
     }
 
     /**

@@ -19,6 +19,12 @@ library LibAsset {
         uint256[] amounts;
     }
 
+    struct BurnData {
+        address account;
+        uint256[] tokenIds;
+        uint256[] amounts;
+    }
+
     struct Asset {
         string[] dataUri;
         uint256 version;

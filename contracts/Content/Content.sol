@@ -3,7 +3,7 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155BurnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -15,7 +15,7 @@ import "./LibRoyalties.sol";
 import "./ContentStorage.sol";
 
 
-contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165StorageUpgradeable {
+contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -52,7 +52,8 @@ contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165Storag
         public initializer
     {
         __Ownable_init_unchained();
-        __ERC1155Burnable_init_unchained();
+        __Context_init_unchained();
+        __ERC165_init_unchained();
         __ERC1155_init_unchained(_contractUri);
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
         name = _name;
@@ -71,6 +72,7 @@ contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165Storag
     }
     
     function tokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
+        // Todo: this should only be accessible if the player owns the asset
         return ContentStorage(contentStorage).tokenUri(_tokenId, _version);
     }
     
@@ -96,10 +98,6 @@ contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165Storag
     }
 
     function mintBatch(LibAsset.MintData memory _data) external onlyOwner {
-        // require(_data.to != address(0) && 
-        //         _data.amounts.length == _data.tokenIds.length,
-        //         "Invalid data input");
-        require(_data.to != address(0), "Invalid address");
         require(_data.amounts.length == _data.tokenIds.length, "Input length mismatch");
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             // require(ids[_data.tokenIds[i]] && 
@@ -113,6 +111,26 @@ contract Content is OwnableUpgradeable, ERC1155BurnableUpgradeable, ERC165Storag
             supply[_data.tokenIds[i]] = SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]);
         }
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
+    }
+
+    function burnBatch(LibAsset.BurnData memory _data) public virtual {
+        require(
+            _data.account == _msgSender() || isApprovedForAll(_data.account, _msgSender()),
+            "Caller is not approved."
+        );
+        require(_data.amounts.length == _data.tokenIds.length, "Input length mismatch");
+
+        for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
+            // require(ids[_data.tokenIds[i]] && 
+            //         (maxSupply[_data.tokenIds[i]] == 0 ||
+            //             maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i])),
+            //     "Invalid data input");
+            require(ids[_data.tokenIds[i]] == true, "token id doesn't exist");
+            // require(supply[_data.tokenIds[i]] >= _data.amounts[i], );
+            supply[_data.tokenIds[i]] = SafeMathUpgradeable.sub(supply[_data.tokenIds[i]], _data.amounts[i], "amount is greater than supply");
+        }
+
+        _burnBatch(_data.account, _data.tokenIds, _data.amounts);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC165StorageUpgradeable) returns (bool) {
