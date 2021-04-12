@@ -18,7 +18,7 @@ contract('Content Contract Tests', (accounts) => {
     var contentStorage;
     var asset = [
         [1, "CID-1", 0, [[deployerAddress, 200]]],
-        [2, "CID-2", 100, []],
+        [2, "CID-2", 100, []]
     ];
     var approvalPair = [[craftingSystemAddress, true]];
 
@@ -37,8 +37,8 @@ contract('Content Contract Tests', (accounts) => {
         // Add 1 asset
         await contentManager.addAssetBatch(asset);
 
-        // // give crafting system approval
-        // await contentStorage.setSystemApproval(approvalPair);
+        // give crafting system approval
+        await contentManager.setSystemApproval(approvalPair);
     });
 
     it('Check Content Manager proper deployment', async () => {
@@ -55,9 +55,9 @@ contract('Content Contract Tests', (accounts) => {
     it('Check Supported interfaces', async () => {
         // Content Storage interface
         assert.equal(
-            await contentStorage.supportsInterface("0x00000003"),
+            await contentManager.supportsInterface("0x00000003"),
             true, 
-            "the contract doesn't support the ContentStorage interface");
+            "the contract doesn't support the ContentManager interface");
     });
 
     it('Add Assets', async () => {
@@ -66,31 +66,93 @@ contract('Content Contract Tests', (accounts) => {
             [3, "CID-3", 1000, []]
         ];
         
-        TruffleAssert.eventEmitted(await content.addAssetBatch(newAssets), 'AssetsAdded');
+        await contentManager.addAssetBatch(newAssets);
+        assert.equal(
+            await content.tokenUri(3, 0),
+            "ipfs:/CID-3", 
+            "New asset wasn't added.");
     });
 
     it('Set Contract Uri', async () => {
-        TruffleAssert.eventEmitted(await content.setContractUri("ipfs:/contract-uri.json"), 'AssetsAdded');
+        await contentManager.setContractUri("ipfs:/contract-uri.json");
+        
+        assert.equal(
+            await content.uri(0),
+            "ipfs:/contract-uri.json", 
+            "Contract Uri was not set properly");
     });
 
-    it('Set operators for System Approval', async () => {
-        TruffleAssert.eventEmitted
-            (await content.setSystemApproval(content.lootboxSystemAddress), 'AssetsAdded');
+    it('Set operators for System Approval', async () => {        
+        assert.equal(
+            await content.isApprovedForAll(playerAddress, lootboxSystemAddress, {from: lootboxSystemAddress}),
+            false,
+            "lootbox system not should be approved yet.");
+
+        var lootboxApprovalPair = [[lootboxSystemAddress, true]];
+        await contentManager.setSystemApproval(lootboxApprovalPair);
+        assert.equal(
+            await content.isApprovedForAll(playerAddress, lootboxSystemAddress, {from: lootboxSystemAddress}),
+            true,
+            "lootbox system should be approved.");
     });
 
     it('Set Token Prefix', async () => {
+        assert.equal(
+            await content.tokenUri(1, 0),
+            "ipfs:/CID-1", 
+            "Token Uri Prefix wasn't set properly.");
 
+        await contentManager.setTokenUriPrefix("ipns:/");
+        
+        assert.equal(
+            await content.tokenUri(1, 0),
+            "ipns:/CID-1", 
+            "Token Uri Prefix wasn't set properly.");
     });
 
     it('Set Token URI', async () => {
-
+        var assetUri = [
+            [2, "CID-2-v1"]
+        ];
+        await contentManager.setTokenUriBatch(assetUri);
+        
+        assert.equal(
+            await content.tokenUri(2, 0),
+            "ipfs:/CID-2",
+            "Token 2 incorrect uri for previous version.");
+        
+        assert.equal(
+            await content.tokenUri(2, 1),
+            "ipfs:/CID-2-v1",
+            "Token 2 incorrect uri for latest version.");
+        
+        assert.equal(
+            await content.tokenUri(2, 2),
+            "ipfs:/CID-2-v1",
+            "Token 2 invalid version returns uri for latest version.");
     });
 
     it('Set Token Contract Royalties', async () => {
+        var assetRoyalty = [[deployerAddress, 200], [deployerAltAddress, 200]];
+        await contentManager.setContractRoyalties(assetRoyalty);
 
+        var royalties = await content.getRoyalties(2);
+        assert.equal(royalties.length, 2, "Incorrect contract royalties length");
+        assert.equal(royalties[0].account, deployerAddress, "Incorrect contract royalty account 1");
+        assert.equal(royalties[0].bps, 200, "Incorrect contract royalty bps 1");
+        assert.equal(royalties[1].account, deployerAltAddress, "Incorrect contract royalty account 2");
+        assert.equal(royalties[1].bps, 200, "Incorrect contract royalty bps 2");
     });
 
     it('Set Token Royalties', async () => {
+        var assetRoyalty = [[1, [[deployerAddress, 200], [deployerAltAddress, 200]]]];
+        await contentManager.setTokenRoyaltiesBatch(assetRoyalty);
 
+        var royalties = await content.getRoyalties(1);
+        assert.equal(royalties.length, 2, "Incorrect royalties length");
+        assert.equal(royalties[0].account, deployerAddress, "Incorrect royalty account 1");
+        assert.equal(royalties[0].bps, 200, "Incorrect royalty bps 1");
+        assert.equal(royalties[1].account, deployerAltAddress, "Incorrect royalty account 2");
+        assert.equal(royalties[1].bps, 200, "Incorrect royalty bps 2");
     });
 });
