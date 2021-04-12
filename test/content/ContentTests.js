@@ -1,7 +1,6 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const truffleAssertions = require('truffle-assertions');
-const Content = artifacts.require("Content")
-const ContentStorage = artifacts.require("ContentStorage")
+const Content = artifacts.require("Content");
+const ContentStorage = artifacts.require("ContentStorage");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Content Contract Tests', (accounts) => {

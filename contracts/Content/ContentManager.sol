@@ -41,6 +41,7 @@ contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
         public initializer
     {
         __Ownable_init_unchained();
+        __ERC165Storage_init_unchained();
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER);
     
         require(_content.isContract() && 
