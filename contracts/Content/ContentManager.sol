@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "./LibAsset.sol";
 import "./ContentStorage.sol";
 import "./Content.sol";
+import "./UniqueContent.sol";
 
 contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
@@ -87,6 +88,25 @@ contract ContentManager is OwnableUpgradeable, ERC165StorageUpgradeable {
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+    
+    function mintBatch(LibAsset.MintData memory _data) external onlyOwner addressExists(content) {
+        Content(content).mintBatch(_data);
+    }
+    
+    function mintUnique(
+        LibAsset.MintData memory _data,
+        address _uniqueContentContract,
+        address to
+    ) external onlyOwner addressExists(content) {
+        require(_uniqueContentContract.isContract() && 
+                _uniqueContentContract.supportsInterface(LibConstants._INTERFACE_ID_UNIQUE_CONTENT),
+                "Invalid Address");
+        require(_data.tokenIds.length == 1, "Only mint 1 asset per Unique Content Contract.");
+        require(_data.to == _uniqueContentContract, "Mint asset to the Unique Content Contract");
+        
+        Content(content).mintBatch(_data);
+        UniqueContent(_uniqueContentContract).mint(to);
     }
     
     uint256[50] private __gap;

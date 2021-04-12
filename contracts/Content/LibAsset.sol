@@ -45,6 +45,14 @@ library LibAsset {
         bool approved;
     }
 
+    struct UniqueContentData {
+        address creator;
+        address contentContract;
+        uint256 id;
+        string contractUri;
+        LibRoyalties.Fees[] contractFees;
+    }
+
     // Validate functions below are used to check the input to a function. This is to reduce 
     // contract size for the contracts that use them.
     function validateTokenId(

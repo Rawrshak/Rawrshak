@@ -71,7 +71,13 @@ contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgrade
         _setURI(_contractUri);
     }
     
-    function tokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
+    function tokenUri(uint256 _tokenId) public view returns (string memory) {
+        // Todo: this should only be accessible if the player owns the asset
+        uint256 version = ContentStorage(contentStorage).getLatestUriVersion(_tokenId);
+        return tokenUri(_tokenId, version);
+    }
+    
+    function tokenUri(uint256 _tokenId, uint256 _version) public view returns (string memory) {
         // Todo: this should only be accessible if the player owns the asset
         return ContentStorage(contentStorage).tokenUri(_tokenId, _version);
     }
