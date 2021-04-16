@@ -3,6 +3,10 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "./OrderbookStorage.sol";
+import "./EscrowDistributions.sol";
+import "./EscrowERC20.sol";
+import "./EscrowNFTs.sol";
 
 abstract contract ExchangeBase is OwnableUpgradeable {
     using AddressUpgradeable for address;
@@ -30,6 +34,10 @@ abstract contract ExchangeBase is OwnableUpgradeable {
 
     function _setContract(bytes4 name, address contractAddr) internal {
         require(contractAddr.isContract());
+        // Todo: Add interface to Contracts and check for correct interface
+        // if (name == ESCROW_ERC20_CONTRACT) {
+        //     require()
+        // }
         contracts[name] = contractAddr;
     }
 

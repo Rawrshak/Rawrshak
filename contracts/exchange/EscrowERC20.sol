@@ -36,6 +36,8 @@ contract EscrowERC20 is EscrowBase {
 
         // No need to do checks. The exchange contracts will do the checks.
         escrowedTokensByOwner[from][tokenAddr] = SafeMathUpgradeable.add(escrowedTokensByOwner[from][tokenAddr], amount);
+        
+        IERC20Upgradeable(tokenAddr).transferFrom(from, address(this), amount);
     }
 
     function transfer(address from, address to, address tokenAddr, uint256 amount) external onlyOwner {

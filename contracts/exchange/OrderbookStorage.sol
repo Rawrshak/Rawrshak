@@ -19,17 +19,21 @@ contract OrderbookStorage is OwnableUpgradeable {
         __Ownable_init_unchained();
     }
 
-    // function verifyOrders(
-    //     uint256[] memory orderIds,
-    //     LibOrder.AssetData memory asset,
-    //     address tokenAddr,
-    //     uint256 maxPrice,
-    //     bool isBuyOrder)
-    //     external view returns (bool) {
-    //     for (uint256 i = 0; i < orderIds.length; ++i) {
-    //         _verifyOrders(orders[orderIds[i]], )
-    //     }
-    // }
+    function verifyOrders(
+        uint256[] memory _orderIds,
+        LibOrder.AssetData memory _asset,
+        address _tokenAddr,
+        uint256 _maxPrice,
+        bool _isBuyOrder)
+        external view returns (bool) 
+    {
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            if (!LibOrder._verifyOrders(orders[_orderIds[i]], _asset, _tokenAddr, _maxPrice, _isBuyOrder)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     function placeOrder(uint256 id, LibOrder.OrderData memory order) external onlyOwner {
         require(orders[id].owner == address(0), "Order already exists");

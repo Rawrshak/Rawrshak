@@ -20,7 +20,7 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.AssetData) orderData;
     mapping(address => mapping(uint256 => uint256)) public escrowedAssetsByOwner;
-    mapping(address => mapping(uint256 => uint256)) public claimableAssetsByOwner;
+    // mapping(address => mapping(uint256 => uint256)) public claimableAssetsByOwner;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -33,7 +33,7 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
     }
 
     function deposit(
-        address from,
+        address user,
         uint256 orderId,
         uint256 amount,
         LibOrder.AssetData memory assetData
@@ -45,91 +45,58 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
 
         // No need to do checks. The exchange contracts will do the checks.
         orderData[orderId] = assetData;
-        escrowedAssetsByOwner[from][orderId] = amount;
+        escrowedAssetsByOwner[user][orderId] = amount;
+        _transferAsset(user, address(this), assetData.contentAddress, assetData.tokenId, amount);
     }
 
-    function transfer(address from, address to, uint256 orderId, uint256 amount) external onlyOwner {
-        // check escrowed asset, move from escrow to claimable
-        require(escrowedAssetsByOwner[from][orderId] >= amount, "Assets are already sold.");
-        
-        // move from escrow to claimable
-        escrowedAssetsByOwner[from][orderId] = SafeMathUpgradeable.sub(escrowedAssetsByOwner[from][orderId], amount);
-        claimableAssetsByOwner[to][orderId] = SafeMathUpgradeable.add(claimableAssetsByOwner[from][orderId], amount);
-    }
-
+    // withdraw() and withdrawBatch() is called when a user buys an escrowed asset, a seller cancels an order 
+    // and withdraw's their escrowed asset, or a buyer's order is filled and claims the escrowed asset.
     function withdraw(
+        address owner,
         address to,
-        uint256 orderId
+        uint256 orderId,
+        uint256 amount
     ) external onlyOwner {
         require(escrowedAssetsByOwner[to][orderId] > 0, "Asset was already sold.");
         require(orderData[orderId].contentAddress != address(0), "Invalid Order Data");
 
         address content = orderData[orderId].contentAddress;
         uint256 id = orderData[orderId].tokenId;
-        uint256 amount = escrowedAssetsByOwner[to][orderId];
-        escrowedAssetsByOwner[to][orderId] = 0;
 
-        _transferAsset(to, content, id, amount);
+        escrowedAssetsByOwner[owner][orderId] = SafeMathUpgradeable.sub(escrowedAssetsByOwner[owner][orderId], amount);
+
+        _transferAsset(address(this), to, content, id, amount);
     }
 
     function withdrawBatch(
+        address owner,
         address to,
-        uint256[] memory orderIds
+        uint256[] memory orderIds,
+        uint256[] memory amounts
     ) external onlyOwner {
         require(orderIds.length > 0, "invalid order length");
+        require(orderIds.length == amounts.length, "order length mismatch");
         for (uint256 i = 0; i < orderIds.length; ++i) {
             if (orderData[orderIds[i]].contentAddress == address(0) || 
-                escrowedAssetsByOwner[to][orderIds[i]] == 0) {
+                escrowedAssetsByOwner[owner][orderIds[i]] == 0) {
                 continue;
             }
 
             address content = orderData[orderIds[i]].contentAddress;
             uint256 id = orderData[orderIds[i]].tokenId;
-            uint256 amount = escrowedAssetsByOwner[to][orderIds[i]];
-            escrowedAssetsByOwner[to][orderIds[i]] = 0;
-            _transferAsset(to, content, id, amount);
-        }
-    }
+            
+            escrowedAssetsByOwner[owner][orderIds[i]] = SafeMathUpgradeable.sub(escrowedAssetsByOwner[owner][orderIds[i]], amounts[i]);
 
-    function claim(
-        address to,
-        uint256 orderId
-    ) external onlyOwner {
-        require(claimableAssetsByOwner[to][orderId] > 0, "Asset was already claimed.");
-        require(orderData[orderId].contentAddress != address(0), "Invalid Order Data");
-
-        address content = orderData[orderId].contentAddress;
-        uint256 id = orderData[orderId].tokenId;
-        uint256 amount = claimableAssetsByOwner[to][orderId];
-        claimableAssetsByOwner[to][orderId] = 0;        
-        _transferAsset(to, content, id, amount);
-    }
-
-    function claimBatch(
-        address to,
-        uint256[] memory orderIds
-    ) external onlyOwner {
-        require(orderIds.length > 0, "invalid order length");
-        for (uint256 i = 0; i < orderIds.length; ++i) {
-            if (orderData[orderIds[i]].contentAddress == address(0) || 
-                claimableAssetsByOwner[to][orderIds[i]] == 0) {
-                continue;
-            }
-
-            address content = orderData[orderIds[i]].contentAddress;
-            uint256 id = orderData[orderIds[i]].tokenId;
-            uint256 amount = claimableAssetsByOwner[to][orderIds[i]];
-            claimableAssetsByOwner[to][orderIds[i]] = 0;
-            _transferAsset(to, content, id, amount);
+            _transferAsset(address(this), to, content, id,  amounts[i]);
         }
     }
 
     /**************** Internal Functions ****************/
-    function _transferAsset(address to, address tokenAddr, uint256 id, uint256 amount) internal {
+    function _transferAsset(address from, address to, address tokenAddr, uint256 id, uint256 amount) internal {
         if (ERC165CheckerUpgradeable.supportsInterface(tokenAddr, type(IERC1155Upgradeable).interfaceId)) {
-            IERC1155Upgradeable(tokenAddr).safeTransferFrom(address(this), to, id, amount, "");
+            IERC1155Upgradeable(tokenAddr).safeTransferFrom(from, to, id, amount, "");
         } else {
-            IERC721Upgradeable(tokenAddr).safeTransferFrom(address(this), to, id, "");
+            IERC721Upgradeable(tokenAddr).safeTransferFrom(from, to, id, "");
         }
     }
 

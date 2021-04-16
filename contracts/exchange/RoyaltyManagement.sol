@@ -19,13 +19,11 @@ abstract contract RoyaltyManagement is ExchangeBase {
 
     /********************* Modifiers ********************/
     /******************** Public API ********************/
-    function __RoyaltyManagement_init() public initializer {
+    function __RoyaltyManagement_init_unchained() public initializer {
     }
 
     /**************** Internal Functions ****************/
     function _claimRoyalties(address user, address tokenAddr) internal {
-        require(tokenAddr != address(0), "Invalid address");
-        require(user != address(0), "Invalid recipient");
         require(contracts[ESCROW_DISTRIBUTIONS_CONTRACT] != address(0), "Distributions Escrow is not yet set");
         
         uint256 amountClaimed = EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).claimableTokensByOwner(user, tokenAddr);
@@ -43,8 +41,16 @@ abstract contract RoyaltyManagement is ExchangeBase {
         if (exchangeFees.length > 0) {
             delete exchangeFees;
         }
-        exchangeFees = newFees;
+        for (uint256 i = 0; i < newFees.length; ++i) {
+            exchangeFees.push(newFees[i]);
+        }
         emit PlatformFeesUpdated(newFees);
+    }
+    
+    function _getClaimableRoyalties(address user, address tokenAddr) internal view returns(uint256) {
+        require(contracts[ESCROW_DISTRIBUTIONS_CONTRACT] != address(0), "Distributions Escrow is not yet set");
+        
+        return EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).claimableTokensByOwner(user, tokenAddr);
     }
 
 
