@@ -9,6 +9,13 @@ import "./RoyaltyManagement.sol";
 import "./EscrowERC20.sol";
 import "../content/Content.sol";
 
+// Todo: 
+//      1. Add more events
+//      2. Contracts need to register an interface.
+//      3. Figure out who does the actual input checking
+//      4. Need to deduct royalties from total payment
+//      5. contract size too big. Need to further make the infrastructure more bite-sized.
+
 contract Exchange is Orderbook, RoyaltyManagement {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
@@ -18,17 +25,12 @@ contract Exchange is Orderbook, RoyaltyManagement {
     /*********************** Events *********************/
     /********************* Modifiers ********************/
     /******************** Public API ********************/
-    function __Exchange_init(
-        address escrowErc20Contract,
-        address escrowNFTsContract,
-        address escrowDistributionsContract,
-        address orderbookStorageContract
-    ) public initializer {
+    function __Exchange_init(address _registry) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Orderbook_init_unchained();
         __RoyaltyManagement_init_unchained(); 
-        __ExchangeBase_init_unchained(escrowErc20Contract, escrowNFTsContract, escrowDistributionsContract, orderbookStorageContract);
+        __ExchangeBase_init_unchained(_registry);
     }
 
     // exchange functions
@@ -40,16 +42,12 @@ contract Exchange is Orderbook, RoyaltyManagement {
         uint256 id = _generateOrderId(_msgSender(), _order.asset.contentAddress, _order.asset.tokenId);
 
         if (_order.isBuyOrder) {
-            // if it's a buy order, move tokens to ERC20 escrow.
-            require(contracts[ESCROW_ERC20_CONTRACT] != address(0), "ERC 20 Escrow Contract is not yet set");
-            
+            // if it's a buy order, move tokens to ERC20 escrow.            
             uint256 tokenAmount = SafeMathUpgradeable.mul(_order.amount, _order.price);
-            EscrowERC20(contracts[ESCROW_ERC20_CONTRACT]).deposit(_msgSender(), id, _order.tokenAddr, tokenAmount);
+            EscrowERC20(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT)).deposit(_msgSender(), id, _order.tokenAddr, tokenAmount);
         } else {
             // if it's a sell order, move NFT to escrow
-            require(contracts[ESCROW_NFTS_CONTRACT] != address(0), "ERC 20 Escrow Contract is not yet set");
-
-            EscrowNFTs(contracts[ESCROW_NFTS_CONTRACT]).deposit(_msgSender(), id, _order.amount, _order.asset);
+            EscrowNFTs(_getRegistry().getAddress(ESCROW_NFTS_CONTRACT)).deposit(_msgSender(), id, _order.amount, _order.asset);
         }
 
         // place order in orderbook
@@ -78,9 +76,9 @@ contract Exchange is Orderbook, RoyaltyManagement {
         uint256 totalPayment = 0;
         uint256[] memory paymentPerOrder = new uint256[](_orderIds.length);
         for (uint i = 0; i < _orderIds.length; ++i) {
-            orderAmount = OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrderAmount(_orderIds[i]);
+            orderAmount = OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrderAmount(_orderIds[i]);
             require(orderAmount >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
-            (, price) = OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrderPrice(_orderIds[i]);
+            (, price) = OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrderPrice(_orderIds[i]);
             
             paymentPerOrder[i] = SafeMathUpgradeable.mul(price, _amounts[i]);
             totalPayment = SafeMathUpgradeable.add(totalPayment, paymentPerOrder[i]);
@@ -115,11 +113,11 @@ contract Exchange is Orderbook, RoyaltyManagement {
         // send payment to escrow as claimable per order
         // Todo: payment per order is incorrect because it doesn't remove the royalty. Fix this
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            EscrowERC20(contracts[ESCROW_ERC20_CONTRACT]).deposit(_msgSender(), _orderIds[i], _token, paymentPerOrder[i]);
+            EscrowERC20(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT)).deposit(_msgSender(), _orderIds[i], _token, paymentPerOrder[i]);
         }
 
         // send asset to buyer
-        EscrowNFTs(contracts[ESCROW_NFTS_CONTRACT]).withdrawBatch(_msgSender(), _orderIds, _amounts);
+        EscrowNFTs(_getRegistry().getAddress(ESCROW_NFTS_CONTRACT)).withdrawBatch(_msgSender(), _orderIds, _amounts);
     }
 
     function fillSellOrder(
@@ -145,13 +143,13 @@ contract Exchange is Orderbook, RoyaltyManagement {
         uint256 totalAssetsToSell = 0;
         uint256[] memory paymentPerOrder = new uint256[](_orderIds.length);
         for (uint i = 0; i < _orderIds.length; ++i) {    
-            orderAmount = OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrderAmount(_orderIds[i]);
+            orderAmount = OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrderAmount(_orderIds[i]);
             require(orderAmount >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
-            (, price) = OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrderPrice(_orderIds[i]);
+            (, price) = OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrderPrice(_orderIds[i]);
 
             totalAssetsToSell = SafeMathUpgradeable.add(
                 totalAssetsToSell, 
-                OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrderAmount(_orderIds[i]));
+                OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrderAmount(_orderIds[i]));
             paymentPerOrder[i] = SafeMathUpgradeable.mul(price, _amounts[i]);
             totalPayment = SafeMathUpgradeable.add(totalPayment, paymentPerOrder[i]);
         }
@@ -168,7 +166,7 @@ contract Exchange is Orderbook, RoyaltyManagement {
         for (uint256 i = 0; i < contractFees.length; ++i) {
             royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(totalPayment, contractFees[i].bps), 10000);
             if (royalty > 0) {
-                _deposit(contracts[ESCROW_ERC20_CONTRACT], contractFees[i].account, _token, royalty);
+                _deposit(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT), contractFees[i].account, _token, royalty);
             }
         }
 
@@ -176,43 +174,43 @@ contract Exchange is Orderbook, RoyaltyManagement {
         for (uint256 i = 0; i < exchangeFees.length; ++i) {
             royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(totalPayment, exchangeFees[i].bps), 10000);
             if (royalty > 0) {
-                _deposit(contracts[ESCROW_ERC20_CONTRACT], exchangeFees[i].account, _token, royalty);
+                _deposit(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT), exchangeFees[i].account, _token, royalty);
             }
         }
 
 
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             // send asset to escrow where seller can claim it
-            EscrowNFTs(contracts[ESCROW_NFTS_CONTRACT]).deposit(_msgSender(), _orderIds[i], _amounts[i], _asset);
+            EscrowNFTs(_getRegistry().getAddress(ESCROW_NFTS_CONTRACT)).deposit(_msgSender(), _orderIds[i], _amounts[i], _asset);
             
             // send payment to escrow as claimable per order
             // Todo: payment per order is incorrect because it doesn't remove the royalty. Fix this
-            EscrowERC20(contracts[ESCROW_ERC20_CONTRACT]).withdraw(_msgSender(), _orderIds[i], paymentPerOrder[i]);
+            EscrowERC20(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT)).withdraw(_msgSender(), _orderIds[i], paymentPerOrder[i]);
         }
     }
 
     function deleteOrders(uint256 orderId) external {
-        LibOrder.OrderData memory order = OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrder(orderId);
+        LibOrder.OrderData memory order = OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(orderId);
         require(order.owner == _msgSender(), "Invalid order owner.");
         if (order.isBuyOrder) {
             // withdraw ERC20            
-            EscrowERC20(contracts[ESCROW_ERC20_CONTRACT]).withdraw(
+            EscrowERC20(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT)).withdraw(
                 _msgSender(),
                 orderId,
                 SafeMathUpgradeable.mul(order.price, order.amount));
         } else {
             // withdraw NFTs
-            EscrowNFTs(contracts[ESCROW_NFTS_CONTRACT]).withdraw(_msgSender(), orderId, order.amount);
+            EscrowNFTs(_getRegistry().getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_msgSender(), orderId, order.amount);
         }
 
         // delete orders
-        _deleteOrders(orderId);
+        _deleteOrder(orderId);
 
         // todo: emit Deleted Orders (orderIds)
     }
 
     function getOrder(uint256 id) external view returns (LibOrder.OrderData memory){
-        return OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrder(id);
+        return OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(id);
     }
 
     function claim(uint256[] memory orderIds) external {
@@ -221,17 +219,17 @@ contract Exchange is Orderbook, RoyaltyManagement {
         LibOrder.OrderData memory order;
         uint256 amount = 0;
         for (uint256 i = 0; i < orderIds.length; ++i) {
-            order = OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).getOrder(orderIds[i]);
+            order = OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(orderIds[i]);
             require(order.owner == _msgSender(), "Invalid order owner");
             if (order.isBuyOrder) {
                 // withdraw NFTs
-                amount = EscrowNFTs(contracts[ESCROW_NFTS_CONTRACT]).escrowedAssetsByOrder(orderIds[i]);
-                EscrowNFTs(contracts[ESCROW_NFTS_CONTRACT]).withdraw(_msgSender(), orderIds[i], amount);
+                amount = EscrowNFTs(_getRegistry().getAddress(ESCROW_NFTS_CONTRACT)).escrowedAssetsByOrder(orderIds[i]);
+                EscrowNFTs(_getRegistry().getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_msgSender(), orderIds[i], amount);
             } else {
                 // withdraw ERC20
                 // todo: fix ERC20                
-                amount = EscrowERC20(contracts[ESCROW_ERC20_CONTRACT]).escrowedTokensByOrder(orderIds[i]);
-                EscrowERC20(contracts[ESCROW_ERC20_CONTRACT]).withdraw(
+                amount = EscrowERC20(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT)).escrowedTokensByOrder(orderIds[i]);
+                EscrowERC20(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT)).withdraw(
                     _msgSender(),
                     orderIds[i],
                     amount);
@@ -257,5 +255,7 @@ contract Exchange is Orderbook, RoyaltyManagement {
     }
 
     /**************** Internal Functions ****************/
+
+    uint256[50] private __gap;
 
 }

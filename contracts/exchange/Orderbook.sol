@@ -30,15 +30,13 @@ abstract contract Orderbook is ExchangeBase {
                 _order.asset.contentAddress != address(0),
                 "Invalid Address.");
         require(_order.price > 0 && _order.amount > 0, "Invalid input price or amount");
-        require(contracts[ORDERBOOK_STORAGE_CONTRACT] != address(0), "Orderbook Contract is not yet set");
 
-        OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).placeOrder(_id, _order);
+        OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).placeOrder(_id, _order);
         emit OrderPlaced(_id, _order);
     }
 
     function _verifyOrders(uint256[] memory orderIds, LibOrder.AssetData memory asset, address tokenAddr, bool isBuyOrder) internal view returns (bool) {
-        require(contracts[ORDERBOOK_STORAGE_CONTRACT] != address(0), "Orderbook Contract is not yet set");
-        return OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).verifyOrders(
+        return OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOrders(
                 orderIds,
                 asset,
                 tokenAddr,
@@ -47,12 +45,11 @@ abstract contract Orderbook is ExchangeBase {
 
     function _fillOrders(uint256[] memory orderIds, uint256[] memory amounts) internal {
         // If we get to this point, the orders in the list of order ids have already been verified.
-        require(contracts[ORDERBOOK_STORAGE_CONTRACT] != address(0), "Orderbook Contract is not yet set");
         require(orderIds.length != amounts.length, "Orderbook Contract is not yet set");
 
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < orderIds.length; ++i) {
-            OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).fillOrder(orderIds[i], amounts[i]);
+            OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).fillOrder(orderIds[i], amounts[i]);
         }
         
         // call _verifyOrders
@@ -62,12 +59,10 @@ abstract contract Orderbook is ExchangeBase {
         // claim batch();
     }
 
-    function _deleteOrders(uint256 orderId) internal {
+    function _deleteOrder(uint256 orderId) internal {
         // If we get to this point, the orders in the list of order ids have already been verified.
-        require(contracts[ORDERBOOK_STORAGE_CONTRACT] != address(0), "Orderbook Contract is not yet set");
-
         // the caller will already fill in the orders up to the amount. 
-        OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).deleteOrder(orderId);
+        OrderbookStorage(_getRegistry().getAddress(ORDERBOOK_STORAGE_CONTRACT)).deleteOrder(orderId);
     }
     
     function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) internal returns(uint256) {

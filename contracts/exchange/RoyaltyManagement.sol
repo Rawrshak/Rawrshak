@@ -24,16 +24,13 @@ abstract contract RoyaltyManagement is ExchangeBase {
 
     /**************** Internal Functions ****************/
     function _claimRoyalties(address user, address tokenAddr) internal {
-        require(contracts[ESCROW_DISTRIBUTIONS_CONTRACT] != address(0), "Distributions Escrow is not yet set");
-        
-        uint256 amountClaimed = EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).claimableTokensByOwner(user, tokenAddr);
-        EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).claim(user, tokenAddr);
+        uint256 amountClaimed = EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).claimableTokensByOwner(user, tokenAddr);
+        EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).claim(user, tokenAddr);
         emit RoyaltiesClaimed(user, tokenAddr, amountClaimed);
     }
 
     function _deposit(address from, address to, address tokenAddr, uint256 amount) internal {
-        require(contracts[ESCROW_DISTRIBUTIONS_CONTRACT] != address(0), "Distributions Escrow is not yet set");
-        EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).deposit(from, to, tokenAddr, amount);
+        EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).deposit(from, to, tokenAddr, amount);
         emit RoyaltiesDistributed(from, to, tokenAddr, amount);
     }
 
@@ -47,10 +44,8 @@ abstract contract RoyaltyManagement is ExchangeBase {
         emit PlatformFeesUpdated(newFees);
     }
     
-    function _getDistributionsAmount(address user, address tokenAddr) internal view returns(uint256) {
-        require(contracts[ESCROW_DISTRIBUTIONS_CONTRACT] != address(0), "Distributions Escrow is not yet set");
-        
-        return EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).claimableTokensByOwner(user, tokenAddr);
+    function _getDistributionsAmount(address user, address tokenAddr) internal view returns(uint256) {        
+        return EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).claimableTokensByOwner(user, tokenAddr);
     }
 
 
