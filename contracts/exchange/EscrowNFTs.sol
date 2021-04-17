@@ -19,8 +19,7 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.AssetData) orderData;
-    mapping(address => mapping(uint256 => uint256)) public escrowedAssetsByOwner;
-    // mapping(address => mapping(uint256 => uint256)) public claimableAssetsByOwner;
+    mapping(uint256 => uint256) public escrowedAssetsByOrder;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -45,31 +44,29 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
 
         // No need to do checks. The exchange contracts will do the checks.
         orderData[orderId] = assetData;
-        escrowedAssetsByOwner[user][orderId] = amount;
+        escrowedAssetsByOrder[orderId] = amount;
         _transferAsset(user, address(this), assetData.contentAddress, assetData.tokenId, amount);
     }
 
     // withdraw() and withdrawBatch() is called when a user buys an escrowed asset, a seller cancels an order 
     // and withdraw's their escrowed asset, or a buyer's order is filled and claims the escrowed asset.
     function withdraw(
-        address owner,
         address to,
         uint256 orderId,
         uint256 amount
     ) external onlyOwner {
-        require(escrowedAssetsByOwner[to][orderId] > 0, "Asset was already sold.");
+        require(escrowedAssetsByOrder[orderId] > 0, "Asset was already sold.");
         require(orderData[orderId].contentAddress != address(0), "Invalid Order Data");
 
         address content = orderData[orderId].contentAddress;
         uint256 id = orderData[orderId].tokenId;
 
-        escrowedAssetsByOwner[owner][orderId] = SafeMathUpgradeable.sub(escrowedAssetsByOwner[owner][orderId], amount);
+        escrowedAssetsByOrder[orderId] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[orderId], amount);
 
         _transferAsset(address(this), to, content, id, amount);
     }
 
     function withdrawBatch(
-        address owner,
         address to,
         uint256[] memory orderIds,
         uint256[] memory amounts
@@ -78,14 +75,14 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         require(orderIds.length == amounts.length, "order length mismatch");
         for (uint256 i = 0; i < orderIds.length; ++i) {
             if (orderData[orderIds[i]].contentAddress == address(0) || 
-                escrowedAssetsByOwner[owner][orderIds[i]] == 0) {
+                escrowedAssetsByOrder[orderIds[i]] == 0) {
                 continue;
             }
 
             address content = orderData[orderIds[i]].contentAddress;
             uint256 id = orderData[orderIds[i]].tokenId;
             
-            escrowedAssetsByOwner[owner][orderIds[i]] = SafeMathUpgradeable.sub(escrowedAssetsByOwner[owner][orderIds[i]], amounts[i]);
+            escrowedAssetsByOrder[orderIds[i]] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[orderIds[i]], amounts[i]);
 
             _transferAsset(address(this), to, content, id,  amounts[i]);
         }

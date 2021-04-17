@@ -36,14 +36,13 @@ abstract contract Orderbook is ExchangeBase {
         emit OrderPlaced(_id, _order);
     }
 
-    function _verifyOrders(uint256[] memory orderIds, LibOrder.AssetData memory asset, address tokenAddr, uint256 maxPrice) internal view returns (bool) {
+    function _verifyOrders(uint256[] memory orderIds, LibOrder.AssetData memory asset, address tokenAddr, bool isBuyOrder) internal view returns (bool) {
         require(contracts[ORDERBOOK_STORAGE_CONTRACT] != address(0), "Orderbook Contract is not yet set");
         return OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).verifyOrders(
                 orderIds,
                 asset,
                 tokenAddr,
-                maxPrice,
-                true);
+                isBuyOrder);
     }
 
     function _fillOrders(uint256[] memory orderIds, uint256[] memory amounts) internal {
@@ -63,14 +62,12 @@ abstract contract Orderbook is ExchangeBase {
         // claim batch();
     }
 
-    function _deleteOrders(uint256[] memory orderIds) internal {
+    function _deleteOrders(uint256 orderId) internal {
         // If we get to this point, the orders in the list of order ids have already been verified.
         require(contracts[ORDERBOOK_STORAGE_CONTRACT] != address(0), "Orderbook Contract is not yet set");
 
         // the caller will already fill in the orders up to the amount. 
-        for (uint256 i = 0; i < orderIds.length; ++i) {
-            OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).deleteOrder(orderIds[i]);
-        }
+        OrderbookStorage(contracts[ORDERBOOK_STORAGE_CONTRACT]).deleteOrder(orderId);
     }
     
     function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) internal returns(uint256) {

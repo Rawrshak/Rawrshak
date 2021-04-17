@@ -23,12 +23,10 @@ library LibOrder {
         OrderData storage order,
         AssetData memory asset,
         address tokenAddr,
-        uint256 maxPrice,
         bool isBuyOrder) public view returns (bool) {
         if (order.asset.contentAddress == asset.contentAddress &&
             order.asset.tokenId == asset.tokenId && 
             order.tokenAddr == tokenAddr &&
-            order.price <= maxPrice &&
             order.isBuyOrder == isBuyOrder) {
                 return true;
             }

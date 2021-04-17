@@ -13,8 +13,12 @@ contract EscrowERC20 is EscrowBase {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
-    mapping(address => mapping(address => uint256)) public escrowedTokensByOwner;
-    mapping(address => mapping(address => uint256)) public claimableTokensByOwner;
+    // mapping(address => mapping(address => uint256)) public escrowedTokensByOrder;
+
+
+    mapping(uint256 => address) tokenData;
+    mapping(uint256 => uint256) public escrowedTokensByOrder;
+
     
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -25,52 +29,53 @@ contract EscrowERC20 is EscrowBase {
     }
     
     function deposit(
-        address from,
+        address user,
+        uint256 orderId,
         address tokenAddr,
         uint256 amount
     ) external onlyOwner {
         require(
             ERC165CheckerUpgradeable.supportsInterface(tokenAddr, LibConstants._INTERFACE_ID_TOKENBASE),
             "Invalid erc 20 contract interface.");
-        require(tokenAddr != address(0), "Invalid address");
+        // require(tokenAddr != address(0), "Invalid address");
 
         // No need to do checks. The exchange contracts will do the checks.
-        escrowedTokensByOwner[from][tokenAddr] = SafeMathUpgradeable.add(escrowedTokensByOwner[from][tokenAddr], amount);
-        
-        IERC20Upgradeable(tokenAddr).transferFrom(from, address(this), amount);
+        escrowedTokensByOrder[orderId] = SafeMathUpgradeable.add(escrowedTokensByOrder[orderId], amount);
+        tokenData[orderId] = tokenAddr;
+
+        IERC20Upgradeable(tokenAddr).transferFrom(user, address(this), amount);
     }
 
-    function transfer(address from, address to, address tokenAddr, uint256 amount) external onlyOwner {
-        require(escrowedTokensByOwner[from][tokenAddr] >= amount, "Invalid amount");
-        require(to != address(0) || from != address(0), "Invalid addresses");
+    // function transfer(address from, address to, address tokenAddr, uint256 amount) external onlyOwner {
+    //     require(escrowedTokensByOrder[tokenAddr] >= amount, "Invalid amount");
+    //     require(to != address(0) || from != address(0), "Invalid addresses");
 
-        // move from escrow to claimable
-        escrowedTokensByOwner[from][tokenAddr] = SafeMathUpgradeable.sub(escrowedTokensByOwner[from][tokenAddr], amount);
-        claimableTokensByOwner[to][tokenAddr] = SafeMathUpgradeable.add(claimableTokensByOwner[from][tokenAddr], amount);
+    //     // move from escrow to claimable
+    //     escrowedTokensByOrder[from][tokenAddr] = SafeMathUpgradeable.sub(escrowedTokensByOrder[from][tokenAddr], amount);
+    //     claimableTokensByOwner[to][tokenAddr] = SafeMathUpgradeable.add(claimableTokensByOwner[from][tokenAddr], amount);
+    // }
+
+    function withdraw(address user, uint256 orderId, uint256 amount) external onlyOwner {
+        require(escrowedTokensByOrder[orderId] >= amount, "Invalid amount");
+        // require(user != address(0), "Invalid recipient");
+
+        escrowedTokensByOrder[orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[orderId], amount);
+        IERC20Upgradeable(tokenData[orderId]).transferFrom(address(this), user, amount);
     }
 
-    function withdraw(address to, address tokenAddr, uint256 amount) external onlyOwner {
-        require(escrowedTokensByOwner[to][tokenAddr] >= amount, "Invalid amount");
-        require(tokenAddr != address(0), "Invalid address");
-        require(to != address(0), "Invalid recipient");
+    // function claim(
+    //     address to,
+    //     address tokenAddr
+    // ) external onlyOwner {
+    //     require(claimableTokensByOwner[to][tokenAddr] > 0, "Tokens were already claimed.");
+    //     require(tokenAddr != address(0), "Invalid address");
+    //     require(to != address(0), "Invalid recipient");
 
-        escrowedTokensByOwner[to][tokenAddr] = SafeMathUpgradeable.sub(escrowedTokensByOwner[to][tokenAddr], amount);
-        IERC20Upgradeable(tokenAddr).transferFrom(address(this), to, amount);
-    }
-
-    function claim(
-        address to,
-        address tokenAddr
-    ) external onlyOwner {
-        require(claimableTokensByOwner[to][tokenAddr] > 0, "Tokens were already claimed.");
-        require(tokenAddr != address(0), "Invalid address");
-        require(to != address(0), "Invalid recipient");
-
-        uint256 amount = claimableTokensByOwner[to][tokenAddr];
-        claimableTokensByOwner[to][tokenAddr] = 0;
+    //     uint256 amount = claimableTokensByOwner[to][tokenAddr];
+    //     claimableTokensByOwner[to][tokenAddr] = 0;
              
-        IERC20Upgradeable(tokenAddr).transferFrom(address(this), to, amount);
-    }
+    //     IERC20Upgradeable(tokenAddr).transferFrom(address(this), to, amount);
+    // }
 
     /**************** Internal Functions ****************/
 

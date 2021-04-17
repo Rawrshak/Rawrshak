@@ -18,12 +18,13 @@ contract EscrowDistributions is EscrowBase {
     /*********************** Events *********************/
     /********************* Modifiers ********************/
     /******************** Public API ********************/
-    function __EscrowERC20_init() public initializer {
+    function __EscrowDistributions_init() public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
     }
     
     function deposit(
+        address from,
         address to,
         address tokenAddr,
         uint256 amount
@@ -35,6 +36,7 @@ contract EscrowDistributions is EscrowBase {
 
         // No need to do checks. The exchange contracts will do the checks.
         claimableTokensByOwner[to][tokenAddr] = SafeMathUpgradeable.add(claimableTokensByOwner[to][tokenAddr], amount);
+        IERC20Upgradeable(tokenAddr).transferFrom(from, address(this), amount);
     }
 
     function claim(

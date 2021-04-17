@@ -14,7 +14,7 @@ abstract contract RoyaltyManagement is ExchangeBase {
 
     /*********************** Events *********************/
     event PlatformFeesUpdated(LibRoyalties.Fees[] fees);
-    event RoyaltiesDistributed(address to, address tokenAddr, uint256 amount);
+    event RoyaltiesDistributed(address from, address to, address tokenAddr, uint256 amount);
     event RoyaltiesClaimed(address to, address tokenAddr, uint256 amountClaimed);
 
     /********************* Modifiers ********************/
@@ -31,10 +31,10 @@ abstract contract RoyaltyManagement is ExchangeBase {
         emit RoyaltiesClaimed(user, tokenAddr, amountClaimed);
     }
 
-    function _deposit(address to, address tokenAddr, uint256 amount) internal {
+    function _deposit(address from, address to, address tokenAddr, uint256 amount) internal {
         require(contracts[ESCROW_DISTRIBUTIONS_CONTRACT] != address(0), "Distributions Escrow is not yet set");
-        EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).deposit(to, tokenAddr, amount);
-        emit RoyaltiesDistributed(to, tokenAddr, amount);
+        EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).deposit(from, to, tokenAddr, amount);
+        emit RoyaltiesDistributed(from, to, tokenAddr, amount);
     }
 
     function _setPlatformFees(LibRoyalties.Fees[] memory newFees) internal {
@@ -47,7 +47,7 @@ abstract contract RoyaltyManagement is ExchangeBase {
         emit PlatformFeesUpdated(newFees);
     }
     
-    function _getClaimableRoyalties(address user, address tokenAddr) internal view returns(uint256) {
+    function _getDistributionsAmount(address user, address tokenAddr) internal view returns(uint256) {
         require(contracts[ESCROW_DISTRIBUTIONS_CONTRACT] != address(0), "Distributions Escrow is not yet set");
         
         return EscrowDistributions(contracts[ESCROW_DISTRIBUTIONS_CONTRACT]).claimableTokensByOwner(user, tokenAddr);

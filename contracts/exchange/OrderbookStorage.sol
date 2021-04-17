@@ -9,9 +9,10 @@ contract OrderbookStorage is OwnableUpgradeable {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
-    mapping(uint256 => LibOrder.OrderData) orders;
+    mapping(uint256 => LibOrder.OrderData) public orders;
 
     /*********************** Events *********************/
+    event OrderFilled(uint256 orderId, uint256 amount);
     /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __OrderbookStorage_init() public initializer {
@@ -23,12 +24,11 @@ contract OrderbookStorage is OwnableUpgradeable {
         uint256[] memory _orderIds,
         LibOrder.AssetData memory _asset,
         address _tokenAddr,
-        uint256 _maxPrice,
         bool _isBuyOrder)
         external view returns (bool) 
     {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            if (!LibOrder._verifyOrders(orders[_orderIds[i]], _asset, _tokenAddr, _maxPrice, _isBuyOrder)) {
+            if (!LibOrder._verifyOrders(orders[_orderIds[i]], _asset, _tokenAddr, _isBuyOrder)) {
                 return false;
             }
         }
@@ -45,6 +45,10 @@ contract OrderbookStorage is OwnableUpgradeable {
         require(orders[id].owner != address(0), "Order doesn't exist");
 
         delete orders[id];
+    }
+
+    function getOrder(uint256 id) external view onlyOwner returns(LibOrder.OrderData memory) {
+        return orders[id];
     }
 
     function getOrderAsset(uint256 id) external view onlyOwner returns(LibOrder.AssetData memory) {
@@ -75,6 +79,8 @@ contract OrderbookStorage is OwnableUpgradeable {
         if (orders[id].amount == 0) {
             delete orders[id];
         }
+
+        emit OrderFilled(id, amount);
     }
 
 
