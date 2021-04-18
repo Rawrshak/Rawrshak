@@ -15,8 +15,11 @@ import "./ExecutionManager.sol";
 //      1. Add more events
 //      2. Contracts need to register an interface.
 //      3. Figure out who does the actual input checking
-//      4. Need to deduct royalties from total payment
-//      5. contract size too big. Need to further make the infrastructure more bite-sized.
+//[Done]4. Need to deduct royalties from total payment
+//[Done]5. contract size too big. Need to further make the infrastructure more bite-sized.
+//      6. Need to write an approval manager to allow users to set the default approvals for these
+//         operator contracts manually or automatically. This will be used for the Exchange, Crafting,
+//         and Lootbox contracts
 
 contract Exchange is OwnableUpgradeable {
     using AddressUpgradeable for address;
@@ -27,7 +30,6 @@ contract Exchange is OwnableUpgradeable {
     OrderbookManager orderbookManager;
     ExecutionManager executionManager;
 
-
     /***************** Stored Variables *****************/
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -35,9 +37,10 @@ contract Exchange is OwnableUpgradeable {
     function __Exchange_init(address _royaltyManager, address _orderbookManager, address _executionManager) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        // __Orderbook_init_unchained();
-        // __RoyaltyManagement_init_unchained(); 
-        // __ExchangeBase_init_unchained(_registry);
+        require(
+            _royaltyManager != address(0) && _orderbookManager != address(0) && _executionManager != address(0),
+            "Address cannot be empty."
+        );
         royaltyManager = RoyaltyManager(_royaltyManager);
         orderbookManager = OrderbookManager(_orderbookManager);
         executionManager = ExecutionManager(_executionManager);
@@ -46,8 +49,7 @@ contract Exchange is OwnableUpgradeable {
     // exchange functions
     function placeOrder(LibOrder.OrderData memory _order) external {        
         require(_order.owner == _msgSender(), "Invalid sender.");
-        require(_order.tokenAddr != address(0) || 
-                _order.asset.contentAddress != address(0),
+        require(_order.asset.contentAddress != address(0),
                 "Invalid Address.");
         require(_order.price > 0 && _order.amount > 0, "Invalid input price or amount");
 
@@ -57,7 +59,7 @@ contract Exchange is OwnableUpgradeable {
         if (_order.isBuyOrder) {
             // if it's a buy order, move tokens to ERC20 escrow.
             uint256 tokenAmount = SafeMathUpgradeable.mul(_order.amount, _order.price);
-            executionManager.placeBuyOrder(id, _order.tokenAddr, tokenAmount);
+            executionManager.placeBuyOrder(id, _order.token, tokenAmount);
         } else {
             // if it's a sell order, move NFT to escrow
             executionManager.placeSellOrder(id, _order.asset, _order.amount);
@@ -71,9 +73,9 @@ contract Exchange is OwnableUpgradeable {
         uint256[] memory _orderIds,
         uint256[] memory _amounts,
         LibOrder.AssetData memory _asset,
-        address _token) external {
+        bytes4 _token
+    ) external {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
-        require(_token.isContract(), "Invalid token address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
         require(_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
         require(orderbookManager.verifyOrders(_orderIds, _asset, _token, false), "Invalid input");
@@ -99,7 +101,7 @@ contract Exchange is OwnableUpgradeable {
         }
 
         // Execute trade
-        executionManager.executeBuyOrder(_orderIds, amountPerOrder, _amounts, _asset);
+        executionManager.executeBuyOrder(_orderIds, amountPerOrder, _amounts, _asset, _token);
         // emit BuyOrdersFilled();
     }
 
@@ -112,14 +114,9 @@ contract Exchange is OwnableUpgradeable {
         uint256[] memory _orderIds,
         uint256[] memory _amounts,
         LibOrder.AssetData memory _asset,
-        address _token) external {
-        // Check Input
-        // validate orders
-        //  - make sure all same asset
-        //  - make sure below max price
-        // Todo: might have to cut this down later
+        bytes4 _token
+    ) external {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
-        require(_token.isContract(), "Invalid token address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
         require(_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
         require(orderbookManager.verifyOrders(_orderIds, _asset, _token, true), "Invalid input");
@@ -128,7 +125,7 @@ contract Exchange is OwnableUpgradeable {
         (uint256 amountDue, uint256[] memory amountPerOrder) = orderbookManager.getPaymentTotals(_orderIds, _amounts);
         
         // check buyer's account balance
-        require(IERC20Upgradeable(_token).balanceOf(_msgSender()) >= amountDue, "Not enough funds.");
+        require(executionManager.verifyUserBalance(_token, amountDue), "Not enough funds.");
 
         // Storage->fill buy order
         orderbookManager.fillOrders(_orderIds, _amounts);
@@ -169,14 +166,12 @@ contract Exchange is OwnableUpgradeable {
         royaltyManager.setPlatformFees(newFees);
     }
 
-    function getDistributionsAmount(address token) external view returns (uint256) {
-        require(token != address(0), "Invalid address");
-        return royaltyManager.getDistributionsAmount(_msgSender(), token);
+    function getDistributionsAmount(bytes4 _token) external view returns (uint256) {
+        return royaltyManager.getDistributionsAmount(_msgSender(), _token);
     }
 
-    function claimRoyalties(address token) external {
-        require(token != address(0), "Invalid address");
-        royaltyManager.claimRoyalties(_msgSender(), token);
+    function claimRoyalties(bytes4 _token) external {
+        royaltyManager.claimRoyalties(_msgSender(), _token);
     }
 
     /**************** Internal Functions ****************/

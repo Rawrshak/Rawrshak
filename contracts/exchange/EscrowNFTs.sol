@@ -9,10 +9,10 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "./EscrowBase.sol";
+import "./StorageBase.sol";
 import "./LibOrder.sol";
 
-contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
+contract EscrowNFTs is StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for *;
     
@@ -30,7 +30,7 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         __AccessControl_init_unchained();
         __ERC1155Holder_init_unchained();
         __ERC721Holder_init_unchained();
-        __EscrowBase_init_unchained();
+        __StorageBase_init_unchained();
     }
 
     function deposit(
@@ -90,6 +90,10 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         }
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC1155ReceiverUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
     /**************** Internal Functions ****************/
     function _transferAsset(address from, address to, address tokenAddr, uint256 id, uint256 amount) internal {
         if (ERC165CheckerUpgradeable.supportsInterface(tokenAddr, type(IERC1155Upgradeable).interfaceId)) {
@@ -97,10 +101,6 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         } else {
             IERC721Upgradeable(tokenAddr).safeTransferFrom(from, to, id, "");
         }
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC1155ReceiverUpgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 
     uint256[50] private __gap;

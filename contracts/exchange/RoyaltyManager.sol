@@ -2,15 +2,16 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "./ExchangeBase.sol";
+import "./ManagerBase.sol";
 import "./EscrowDistributions.sol";
 import "../content/LibRoyalties.sol";
 import "../content/Content.sol";
 
-contract RoyaltyManager is ExchangeBase {
+contract RoyaltyManager is ManagerBase {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
+    mapping(bytes4 => bytes4) public tokenDistribution;
     LibRoyalties.Fees[] internal exchangeFees;
 
     /*********************** Events *********************/
@@ -20,20 +21,23 @@ contract RoyaltyManager is ExchangeBase {
 
     /********************* Modifiers ********************/
     /******************** Public API ********************/
-    function __RoyaltyManagement_init(address _registry) public initializer {
+    function __RoyaltyManager_init(address _registry) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __ExchangeBase_init_unchained(_registry);
+        __ManagerBase_init_unchained(_registry);
     }
 
-    /**************** Internal Functions ****************/
-    function claimRoyalties(address user, address tokenAddr) external onlyOwner {
-        uint256 amountClaimed = EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).claimableTokensByOwner(user, tokenAddr);
-        EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).claim(user, tokenAddr);
-        emit RoyaltiesClaimed(user, tokenAddr, amountClaimed);
+    function setTokenDistribution(bytes4 _token, bytes4 _tokenDistribution) external onlyOwner {
+        tokenDistribution[_token] = _tokenDistribution;
     }
 
-    function deductRoyaltiesFromUser(uint256 _orderId, address _from, address _token, LibOrder.AssetData calldata _asset, uint256 total) external onlyOwner returns(uint256 remaining){
+    function claimRoyalties(address _user, bytes4 _token) external onlyOwner {
+        uint256 amountClaimed = EscrowDistributions(registry.getAddress(tokenDistribution[_token])).claimableTokensByOwner(_user);
+        EscrowDistributions(registry.getAddress(tokenDistribution[_token])).claim(_user);
+        emit RoyaltiesClaimed(_user, EscrowERC20(registry.getAddress(_token)).token(), amountClaimed);
+    }
+
+    function deductRoyaltiesFromUser(uint256 _orderId, address _from, bytes4 _token, LibOrder.AssetData calldata _asset, uint256 total) external onlyOwner returns(uint256 remaining){
         remaining = total;
         
         LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
@@ -60,10 +64,8 @@ contract RoyaltyManager is ExchangeBase {
         return remaining;
     }
 
-    function deductRoyaltiesFromEscrow(uint256 _orderId, address _token, LibOrder.AssetData calldata _asset, uint256 total) external onlyOwner returns(uint256 remaining){
+    function deductRoyaltiesFromEscrow(uint256 _orderId, bytes4 _token, LibOrder.AssetData calldata _asset, uint256 total) external onlyOwner returns(uint256 remaining){
         remaining = total;
-
-        // Todo: this
         
         LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
         uint256 royalty = 0;
@@ -89,29 +91,30 @@ contract RoyaltyManager is ExchangeBase {
         return remaining;
     }
 
-    function setPlatformFees(LibRoyalties.Fees[] calldata newFees) external onlyOwner {
+    function setPlatformFees(LibRoyalties.Fees[] calldata _newFees) external onlyOwner {
         if (exchangeFees.length > 0) {
             delete exchangeFees;
         }
-        for (uint256 i = 0; i < newFees.length; ++i) {
-            exchangeFees.push(newFees[i]);
+        for (uint256 i = 0; i < _newFees.length; ++i) {
+            exchangeFees.push(_newFees[i]);
         }
-        emit PlatformFeesUpdated(newFees);
+        emit PlatformFeesUpdated(_newFees);
     }
     
-    function getDistributionsAmount(address user, address tokenAddr) external view returns(uint256) {        
-        return EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).claimableTokensByOwner(user, tokenAddr);
+    function getDistributionsAmount(address _user, bytes4 _token) external view returns(uint256) {        
+        return EscrowDistributions(registry.getAddress(_token)).claimableTokensByOwner(_user);
     }
 
-    function _depositFromEscrow(uint256 orderId, address to, address tokenAddr, uint256 amount) internal {
-        EscrowERC20(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT)).withdraw(orderId, amount);
-        EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).deposit(_getRegistry().getAddress(ESCROW_ERC20_CONTRACT), to, tokenAddr, amount);
-        emit RoyaltiesDistributed(orderId, to, tokenAddr, amount);
+    /**************** Internal Functions ****************/
+    function _depositFromEscrow(uint256 _orderId, address _to, bytes4 _token, uint256 _amount) internal {
+        EscrowERC20(registry.getAddress(_token)).withdraw(_orderId, _amount);
+        EscrowDistributions(registry.getAddress(tokenDistribution[_token])).deposit(registry.getAddress(_token), _to, _amount);
+        emit RoyaltiesDistributed(_orderId, _to, EscrowERC20(registry.getAddress(_token)).token(), _amount);
     }
 
-    function _deposit(uint256 orderId, address from, address to, address tokenAddr, uint256 amount) internal {
-        EscrowDistributions(_getRegistry().getAddress(ESCROW_DISTRIBUTIONS_CONTRACT)).deposit(from, to, tokenAddr, amount);
-        emit RoyaltiesDistributed(orderId, to, tokenAddr, amount);
+    function _deposit(uint256 _orderId, address _from, address _to, bytes4 _token, uint256 _amount) internal {
+        EscrowDistributions(registry.getAddress(tokenDistribution[_token])).deposit(_from, _to, _amount);
+        emit RoyaltiesDistributed(_orderId, _to, EscrowERC20(registry.getAddress(_token)).token(), _amount);
     }
 
     uint256[50] private __gap;

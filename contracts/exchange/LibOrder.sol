@@ -13,21 +13,21 @@ library LibOrder {
     struct OrderData {
         AssetData asset;
         address owner;
-        address tokenAddr;
+        bytes4 token;
         uint256 price;
         uint256 amount;
         bool isBuyOrder;
     }
 
     function _verifyOrders(
-        OrderData storage order,
-        AssetData memory asset,
-        address tokenAddr,
-        bool isBuyOrder) public view returns (bool) {
-        if (order.asset.contentAddress == asset.contentAddress &&
-            order.asset.tokenId == asset.tokenId && 
-            order.tokenAddr == tokenAddr &&
-            order.isBuyOrder == isBuyOrder) {
+        OrderData storage _order,
+        AssetData memory _asset,
+        bytes4 _token,
+        bool _isBuyOrder) public view returns (bool) {
+        if (_order.asset.contentAddress == _asset.contentAddress &&
+            _order.asset.tokenId == _asset.tokenId && 
+            _order.token == _token &&
+            _order.isBuyOrder == _isBuyOrder) {
                 return true;
             }
         return false;

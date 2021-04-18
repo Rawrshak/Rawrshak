@@ -9,32 +9,28 @@ import "./EscrowERC20.sol";
 import "./EscrowNFTs.sol";
 import "./AddressRegistry.sol";
 
-abstract contract ExchangeBase is OwnableUpgradeable {
+abstract contract ManagerBase is OwnableUpgradeable {
     using AddressUpgradeable for address;
     
     /******************** Constants ********************/
-    // bytes4(keccak256('EscrowERC20')) == 0xebf5787c
-    bytes4 constant public ESCROW_ERC20_CONTRACT = 0xebf5787c;
+    // bytes4(keccak256('RAWR')) == 0xd4df6855
+    bytes4 constant public ESCROW_RAWR_CONTRACT = 0xd4df6855;
+    // bytes4(keccak256('RAWR_DISTRIBUTIONS')) == 0xe26cf780
+    bytes4 constant public ESCROW_RAWR_DISTRIBUTIONS_CONTRACT = 0xe26cf780;
     // bytes4(keccak256('EscrowNFTs')) == 0x13534f58
     bytes4 constant public ESCROW_NFTS_CONTRACT = 0x13534f58;
-    // bytes4(keccak256('EscrowDistributions')) == 0x8354b629
-    bytes4 constant public ESCROW_DISTRIBUTIONS_CONTRACT = 0x8354b629;
     // bytes4(keccak256('OrderbookStorage')) == 0xe22271ab
     bytes4 constant public ORDERBOOK_STORAGE_CONTRACT = 0xe22271ab;
 
     /***************** Stored Variables *****************/
-    address private registry;
+    AddressRegistry internal registry;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
     /******************** Public API ********************/
-    function __ExchangeBase_init_unchained(address _registry) public initializer {
+    function __ManagerBase_init_unchained(address _registry) public initializer {
         require(_registry != address(0), "Registry passed.");
-        registry = _registry;
-    }
-
-    function _getRegistry() internal view returns(AddressRegistry) {
-        return AddressRegistry(registry);
+        registry = AddressRegistry(_registry);
     }
 
     uint256[50] private __gap;

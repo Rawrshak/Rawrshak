@@ -4,9 +4,8 @@ pragma solidity >=0.6.0 <0.9.0;
 // import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-abstract contract EscrowBase is AccessControlUpgradeable {
-    // Todo: rename this contract as it's not just a base for escrow contracts
-    
+abstract contract StorageBase is AccessControlUpgradeable {
+        
     /******************** Constants ********************/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
@@ -19,7 +18,7 @@ abstract contract EscrowBase is AccessControlUpgradeable {
     }
 
     /******************** Public API ********************/
-    function __EscrowBase_init_unchained() public initializer {
+    function __StorageBase_init_unchained() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(MANAGER_ROLE, _msgSender());
     }

@@ -3,10 +3,10 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "./EscrowBase.sol";
+import "./StorageBase.sol";
 import "./LibOrder.sol";
 
-contract OrderbookStorage is EscrowBase {
+contract OrderbookStorage is StorageBase {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
@@ -20,18 +20,18 @@ contract OrderbookStorage is EscrowBase {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
-        __EscrowBase_init_unchained();
+        __StorageBase_init_unchained();
     }
 
     function verifyOrders(
         uint256[] memory _orderIds,
         LibOrder.AssetData memory _asset,
-        address _tokenAddr,
+        bytes4 _token,
         bool _isBuyOrder)
         external view returns (bool) 
     {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            if (!LibOrder._verifyOrders(orders[_orderIds[i]], _asset, _tokenAddr, _isBuyOrder)) {
+            if (!LibOrder._verifyOrders(orders[_orderIds[i]], _asset, _token, _isBuyOrder)) {
                 return false;
             }
         }
@@ -50,28 +50,12 @@ contract OrderbookStorage is EscrowBase {
         delete orders[id];
     }
 
-    function getOrder(uint256 id) external view checkPermissions(MANAGER_ROLE) returns(LibOrder.OrderData memory) {
+    function getOrder(uint256 id) external view returns(LibOrder.OrderData memory) {
         return orders[id];
     }
 
-    function getOrderAsset(uint256 id) external view checkPermissions(MANAGER_ROLE) returns(LibOrder.AssetData memory) {
-        return orders[id].asset;
-    }
-
-    function getOrderOwner(uint256 id) external view checkPermissions(MANAGER_ROLE) returns(address) {
-        return orders[id].owner;
-    }
-
-    function getOrderPrice(uint256 id) external view checkPermissions(MANAGER_ROLE) returns(address, uint256) {
-        return (orders[id].tokenAddr, orders[id].price);
-    }
-
-    function getOrderAmount(uint256 id) external view checkPermissions(MANAGER_ROLE) returns(uint256) {
-        return orders[id].amount;
-    }
-
-    function isBuyOrder(uint256 id) external view checkPermissions(MANAGER_ROLE) returns(bool) {
-        return orders[id].isBuyOrder;
+    function verifyOwner(uint256 id) external view returns(bool) {
+        return orders[id].owner == _msgSender();
     }
 
     function fillOrder(uint256 id, uint256 amount) external checkPermissions(MANAGER_ROLE) {
