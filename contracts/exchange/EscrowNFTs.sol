@@ -26,9 +26,11 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
     /******************** Public API ********************/
     function __EscrowNFTs_init() public initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
+        __ERC165_init_unchained();
+        __AccessControl_init_unchained();
         __ERC1155Holder_init_unchained();
         __ERC721Holder_init_unchained();
+        __EscrowBase_init_unchained();
     }
 
     function deposit(
@@ -36,7 +38,7 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         uint256 orderId,
         uint256 amount,
         LibOrder.AssetData memory assetData
-    ) external onlyOwner {
+    ) external checkPermissions(MANAGER_ROLE) {
         require(
             ERC165CheckerUpgradeable.supportsInterface(assetData.contentAddress, type(IERC1155Upgradeable).interfaceId) || 
             ERC165CheckerUpgradeable.supportsInterface(assetData.contentAddress, type(IERC721Upgradeable).interfaceId),
@@ -54,7 +56,7 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         address to,
         uint256 orderId,
         uint256 amount
-    ) external onlyOwner {
+    ) external checkPermissions(MANAGER_ROLE) {
         require(escrowedAssetsByOrder[orderId] > 0, "Asset was already sold.");
         require(orderData[orderId].contentAddress != address(0), "Invalid Order Data");
 
@@ -70,7 +72,7 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         address to,
         uint256[] memory orderIds,
         uint256[] memory amounts
-    ) external onlyOwner {
+    ) external checkPermissions(MANAGER_ROLE) {
         require(orderIds.length > 0, "invalid order length");
         require(orderIds.length == amounts.length, "order length mismatch");
         for (uint256 i = 0; i < orderIds.length; ++i) {
@@ -95,6 +97,10 @@ contract EscrowNFTs is EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgrade
         } else {
             IERC721Upgradeable(tokenAddr).safeTransferFrom(from, to, id, "");
         }
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC1155ReceiverUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     uint256[50] private __gap;

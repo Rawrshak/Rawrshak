@@ -20,7 +20,9 @@ contract EscrowDistributions is EscrowBase {
     /******************** Public API ********************/
     function __EscrowDistributions_init() public initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
+        __ERC165_init_unchained();
+        __AccessControl_init_unchained();
+        __EscrowBase_init_unchained();
     }
     
     function deposit(
@@ -28,7 +30,8 @@ contract EscrowDistributions is EscrowBase {
         address to,
         address tokenAddr,
         uint256 amount
-    ) external onlyOwner {
+    ) external checkPermissions(MANAGER_ROLE) {
+        // Todo: might have to replace _INTERFACE_ID_TOKENBASE with IERC20Upgradeable if tokenbase has no difference.
         require(
             ERC165CheckerUpgradeable.supportsInterface(tokenAddr, LibConstants._INTERFACE_ID_TOKENBASE),
             "Invalid erc 20 contract interface.");
@@ -42,7 +45,7 @@ contract EscrowDistributions is EscrowBase {
     function claim(
         address to,
         address tokenAddr
-    ) external onlyOwner {
+    ) external checkPermissions(MANAGER_ROLE) {
         require(claimableTokensByOwner[to][tokenAddr] > 0, "Tokens were already claimed.");
 
         uint256 amount = claimableTokensByOwner[to][tokenAddr];

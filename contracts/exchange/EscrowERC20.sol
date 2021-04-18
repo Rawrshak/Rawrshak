@@ -25,7 +25,9 @@ contract EscrowERC20 is EscrowBase {
     /******************** Public API ********************/
     function __EscrowERC20_init() public initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
+        __ERC165_init_unchained();
+        __AccessControl_init_unchained();
+        __EscrowBase_init_unchained();
     }
     
     function deposit(
@@ -33,7 +35,7 @@ contract EscrowERC20 is EscrowBase {
         uint256 orderId,
         address tokenAddr,
         uint256 amount
-    ) external onlyOwner {
+    ) external checkPermissions(MANAGER_ROLE) {
         require(
             ERC165CheckerUpgradeable.supportsInterface(tokenAddr, LibConstants._INTERFACE_ID_TOKENBASE),
             "Invalid erc 20 contract interface.");
@@ -55,12 +57,17 @@ contract EscrowERC20 is EscrowBase {
     //     claimableTokensByOwner[to][tokenAddr] = SafeMathUpgradeable.add(claimableTokensByOwner[from][tokenAddr], amount);
     // }
 
-    function withdraw(address user, uint256 orderId, uint256 amount) external onlyOwner {
+    function withdraw(address user, uint256 orderId, uint256 amount) external checkPermissions(MANAGER_ROLE) {
         require(escrowedTokensByOrder[orderId] >= amount, "Invalid amount");
-        // require(user != address(0), "Invalid recipient");
 
         escrowedTokensByOrder[orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[orderId], amount);
         IERC20Upgradeable(tokenData[orderId]).transferFrom(address(this), user, amount);
+    }
+
+    function withdraw(uint256 orderId, uint256 amount) external checkPermissions(MANAGER_ROLE) {
+        require(escrowedTokensByOrder[orderId] >= amount, "Invalid amount");
+
+        escrowedTokensByOrder[orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[orderId], amount);
     }
 
     // function claim(

@@ -1,17 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-abstract contract EscrowBase is OwnableUpgradeable {
+abstract contract EscrowBase is AccessControlUpgradeable {
+    // Todo: rename this contract as it's not just a base for escrow contracts
     
     /******************** Constants ********************/
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+
     /***************** Stored Variables *****************/
     /*********************** Events *********************/
     /********************* Modifiers ********************/
-    /******************** Public API ********************/
-    function __EscrowBase_init() public initializer {
+    modifier checkPermissions(bytes32 _role) {
+        require(hasRole(_role, msg.sender), "Invalid permissions.");
+        _;
+    }
 
+    /******************** Public API ********************/
+    function __EscrowBase_init_unchained() public initializer {
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _setupRole(MANAGER_ROLE, _msgSender());
+    }
+
+    function registerManager(address _manager) external checkPermissions(DEFAULT_ADMIN_ROLE) {
+        grantRole(MANAGER_ROLE, _manager);
     }
 
     /**************** Internal Functions ****************/
