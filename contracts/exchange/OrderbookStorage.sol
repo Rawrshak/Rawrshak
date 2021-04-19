@@ -14,8 +14,6 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
     mapping(uint256 => LibOrder.OrderData) orders;
 
     /*********************** Events *********************/
-    event OrderFilled(uint256 orderId, uint256 amount);
-
     /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __OrderbookStorage_init() public initializer {
@@ -64,8 +62,6 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         require(orders[id].owner == address(0), "Order doesn't exists");
         require(orders[id].amount >= amount, "Invalid order amount");
         orders[id].amount = SafeMathUpgradeable.sub(orders[id].amount, amount);
-
-        emit OrderFilled(id, amount);
     }
 
 

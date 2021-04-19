@@ -31,8 +31,24 @@ contract Exchange is OwnableUpgradeable {
     IRoyaltyManager royaltyManager;
     IOrderbookManager orderbookManager;
     IExecutionManager executionManager;
-    
+
     /*********************** Events *********************/
+    event OrderPlaced(uint256 orderId, LibOrder.OrderData order);
+    event BuyOrdersFilled(
+        uint256[] _orderIds,
+        uint256[] _amounts,
+        LibOrder.AssetData _asset,
+        bytes4 _token,
+        uint256 amountOfAssetsSold);
+    event SellOrdersFilled(
+        uint256[] _orderIds,
+        uint256[] _amounts,
+        LibOrder.AssetData _asset,
+        bytes4 _token,
+        uint256 amountPaid);
+    event OrderDeleted(uint256 orderId);
+    event FilledOrdersClaimed(uint256[] orderIds);
+
     /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __Exchange_init(address _royaltyManager, address _orderbookManager, address _executionManager) public initializer {
@@ -65,6 +81,8 @@ contract Exchange is OwnableUpgradeable {
             // if it's a sell order, move NFT to escrow
             executionManager.placeSellOrder(id, _order.asset, _order.amount);
         }
+
+        emit OrderPlaced(id, _order);
     }
 
     // Buy order: someone wants to buy assets. 
@@ -103,7 +121,7 @@ contract Exchange is OwnableUpgradeable {
 
         // Execute trade
         executionManager.executeBuyOrder(_orderIds, amountPerOrder, _amounts, _asset, _token);
-        // emit BuyOrdersFilled();
+        emit BuyOrdersFilled(_orderIds, _amounts, _asset, _token, totalAssetsToSell);
     }
 
     // Sell order: someone has assets to get rid of
@@ -138,7 +156,7 @@ contract Exchange is OwnableUpgradeable {
 
         // Execute trade
         executionManager.executeSellOrder(_orderIds, amountPerOrder, _amounts, _token);
-        // emit SellOrdersFilled();
+        emit SellOrdersFilled(_orderIds, _amounts, _asset, _token, amountDue);
     }
 
     function deleteOrders(uint256 _orderId) external {
@@ -146,7 +164,7 @@ contract Exchange is OwnableUpgradeable {
         orderbookManager.deleteOrder(_orderId);
 
         executionManager.deleteOrder(_orderId);
-        // todo: emit Deleted Orders (orderIds)
+        emit OrderDeleted(_orderId);
     }
 
     function getOrder(uint256 id) external view returns (LibOrder.OrderData memory) {
@@ -157,7 +175,7 @@ contract Exchange is OwnableUpgradeable {
         require(orderIds.length > 0, "empty order length.");
         
         executionManager.claimOrders(orderIds);
-        // todo: emit claim order
+        emit FilledOrdersClaimed(orderIds);
     }
 
     // royalty functions

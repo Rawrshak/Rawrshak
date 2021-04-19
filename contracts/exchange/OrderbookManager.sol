@@ -14,9 +14,6 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
     uint256 orderIdCounter;
 
     /*********************** Events *********************/
-    event OrderPlaced(uint256 id, LibOrder.OrderData order);
-    event OrdersFilled(LibOrder.AssetData asset, uint256[] orderIds, address tokenAddr, uint256 totalAmount);
-
     /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __Orderbook_init(address _registry) public initializer {
@@ -31,7 +28,6 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         id = _generateOrderId(_order.owner, _order.asset.contentAddress, _order.asset.tokenId);
 
         IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).placeOrder(id, _order);
-        emit OrderPlaced(id, _order);
     }
 
     function verifyOrders(

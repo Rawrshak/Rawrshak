@@ -11,6 +11,8 @@ abstract contract StorageBase is AccessControlUpgradeable {
 
     /***************** Stored Variables *****************/
     /*********************** Events *********************/
+    event ManagerRegistered(address _manager, address _storage);
+
     /********************* Modifiers ********************/
     modifier checkPermissions(bytes32 _role) {
         require(hasRole(_role, msg.sender), "Invalid permissions.");
@@ -25,6 +27,7 @@ abstract contract StorageBase is AccessControlUpgradeable {
 
     function registerManager(address _manager) external checkPermissions(DEFAULT_ADMIN_ROLE) {
         grantRole(MANAGER_ROLE, _manager);
+        emit ManagerRegistered(_manager, address(this));
     }
 
     /**************** Internal Functions ****************/
