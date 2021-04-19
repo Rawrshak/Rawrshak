@@ -3,8 +3,9 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "./interfaces/IAddressRegistry.sol";
 
-contract AddressRegistry is OwnableUpgradeable {
+contract AddressRegistry is IAddressRegistry, OwnableUpgradeable {
     using AddressUpgradeable for address;
 
     /***************** Stored Variables *****************/
@@ -30,7 +31,7 @@ contract AddressRegistry is OwnableUpgradeable {
         }
     }
 
-    function getAddress(bytes4 _id) external view returns(address) {
+    function getAddress(bytes4 _id) external view override returns(address) {
         require(registry[_id] != address(0), "Missing Contract Address");
         return registry[_id];
     }

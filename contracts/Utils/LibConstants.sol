@@ -32,10 +32,23 @@ library LibConstants {
     // bytes4 constant _INTERFACE_ID_IEXCHANGE = 0x0000000C;
     // bytes4 constant _INTERFACE_ID_IMANAGERFACTORY = 0x0000000D;
 
-    
+    // Token Interface 
+    bytes4 constant _INTERFACE_ID_TOKENBASE = 0x00000004;
+
+    // Content Interfaces
     bytes4 constant _INTERFACE_ID_CONTENT = 0x00000001;
     bytes4 constant _INTERFACE_ID_CONTENT_STORAGE = 0x00000002;
     bytes4 constant _INTERFACE_ID_CONTENT_MANAGER = 0x00000003;
-    bytes4 constant _INTERFACE_ID_TOKENBASE = 0x00000004;
     bytes4 constant _INTERFACE_ID_UNIQUE_CONTENT = 0x00000005;
+
+    // Exchange Interfaces
+    bytes4 constant _INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;
+    bytes4 constant _INTERFACE_ID_ESCROW_NFTS           = 0x00000007;
+    bytes4 constant _INTERFACE_ID_ESCROW_ERC20          = 0x00000008;
+    bytes4 constant _INTERFACE_ID_ESCROW_DISTRIBUTIONS  = 0x00000009;
+    bytes4 constant _INTERFACE_ID_ORDERBOOK_STORAGE     = 0x0000000A;
+    bytes4 constant _INTERFACE_ID_ORDERBOOK_MANAGER     = 0x0000000B;
+    bytes4 constant _INTERFACE_ID_EXECUTION_MANAGER     = 0x0000000C;
+    bytes4 constant _INTERFACE_ID_ROYALTY_MANAGER       = 0x0000000D;
+    bytes4 constant _INTERFACE_ID_EXCHANGE              = 0x0000000E;
 }

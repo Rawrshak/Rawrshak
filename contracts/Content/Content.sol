@@ -13,9 +13,9 @@ import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./LibRoyalties.sol";
 import "./ContentStorage.sol";
+import "./interfaces/IContent.sol";
 
-
-contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
+contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -34,7 +34,7 @@ contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgrade
     /***************** Stored Variables *****************/
     string public name;
     string public symbol;
-    address contentStorage;
+    IContentStorage contentStorage;
 
     mapping(uint256 => bool) private ids;
     mapping(uint256 => uint256) public maxSupply;
@@ -59,38 +59,38 @@ contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgrade
         name = _name;
         symbol = _symbol;
         
-        require(_contentStorage.isContract(), "Address is not a contract.");
+        require(_contentStorage != address(0) && _contentStorage.isContract(), "Address is not a contract.");
         require(_contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE), "Address is not a Content Storage Contract");
         // require(_contentStorage.isContract() && 
         //         _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
         //         "Invalid Address");
-        contentStorage = _contentStorage;
+        contentStorage = IContentStorage(_contentStorage);
     }
 
-    function setContractUri(string memory _contractUri) public onlyOwner {
+    function setContractUri(string memory _contractUri) external override onlyOwner {
         _setURI(_contractUri);
     }
     
-    function tokenUri(uint256 _tokenId) public view returns (string memory) {
+    function tokenUri(uint256 _tokenId) external view override returns (string memory) {
         // Todo: this should only be accessible if the player owns the asset
-        uint256 version = ContentStorage(contentStorage).getLatestUriVersion(_tokenId);
-        return tokenUri(_tokenId, version);
+        uint256 version = HasTokenUri(address(contentStorage)).getLatestUriVersion(_tokenId);
+        return contentStorage.tokenUri(_tokenId, version);
     }
     
-    function tokenUri(uint256 _tokenId, uint256 _version) public view returns (string memory) {
+    function tokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
         // Todo: this should only be accessible if the player owns the asset
-        return ContentStorage(contentStorage).tokenUri(_tokenId, _version);
+        return contentStorage.tokenUri(_tokenId, _version);
     }
     
-    function getRoyalties(uint256 _tokenId) external view returns (LibRoyalties.Fees[] memory) {
-        return ContentStorage(contentStorage).getRoyalties(_tokenId);
+    function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
+        return contentStorage.getRoyalties(_tokenId);
     }
 
     function isApprovedForAll(address _owner, address _operator) public override(ERC1155Upgradeable) view returns (bool) {
-        return ContentStorage(contentStorage).isOperatorApprovedForAll(_operator)|| super.isApprovedForAll(_owner, _operator);
+        return contentStorage.isOperatorApprovedForAll(_operator)|| super.isApprovedForAll(_owner, _operator);
     }
 
-    function addAssetBatch(LibAsset.CreateData[] memory _assets) external onlyOwner {
+    function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyOwner {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId] == false, "Token Id already exists.");
             ids[_assets[i].tokenId] = true;
@@ -103,7 +103,7 @@ contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgrade
         emit AssetsAdded(_assets);
     }
 
-    function mintBatch(LibAsset.MintData memory _data) external onlyOwner {
+    function mintBatch(LibAsset.MintData memory _data) external override onlyOwner {
         require(_data.amounts.length == _data.tokenIds.length, "Input length mismatch");
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             // require(ids[_data.tokenIds[i]] && 
@@ -119,7 +119,7 @@ contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgrade
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
     }
 
-    function burnBatch(LibAsset.BurnData memory _data) public virtual {
+    function burnBatch(LibAsset.BurnData memory _data) external override {
         require(
             _data.account == _msgSender() || isApprovedForAll(_data.account, _msgSender()),
             "Caller is not approved."
@@ -142,6 +142,6 @@ contract Content is OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgrade
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
-    
+
     uint256[50] private __gap;
 }

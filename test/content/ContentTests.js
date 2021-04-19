@@ -82,8 +82,10 @@ contract('Content Contract Tests', (accounts) => {
 
     it('Trigger Content Storage Functions', async () => {
         // Test token uri
+        // Note: we use content.methods['function()']() below because it tokenUri() is an
+        //       overloaded function
         assert.equal(
-            await content.tokenUri(1, 0),
+            await content.methods['tokenUri(uint256,uint256)'](1, 0),
             "ipfs:/CID-1",
             "Token 1 uri is incorrect.");
         

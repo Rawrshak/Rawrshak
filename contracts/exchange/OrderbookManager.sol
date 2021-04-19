@@ -5,8 +5,9 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./ManagerBase.sol";
 import "./OrderbookStorage.sol";
 import "./LibOrder.sol";
+import "./interfaces/IOrderbookManager.sol";
 
-contract OrderbookManager is ManagerBase {
+contract OrderbookManager is IOrderbookManager, ManagerBase {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
@@ -26,10 +27,10 @@ contract OrderbookManager is ManagerBase {
     }
 
     /**************** Internal Functions ****************/
-    function placeOrder(LibOrder.OrderData memory _order) external onlyOwner returns(uint256 id){
+    function placeOrder(LibOrder.OrderData memory _order) external override onlyOwner returns(uint256 id){
         id = _generateOrderId(_order.owner, _order.asset.contentAddress, _order.asset.tokenId);
 
-        OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).placeOrder(id, _order);
+        IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).placeOrder(id, _order);
         emit OrderPlaced(id, _order);
     }
 
@@ -38,22 +39,25 @@ contract OrderbookManager is ManagerBase {
         LibOrder.AssetData memory _asset,
         bytes4 _token,
         bool _isBuyOrder
-    ) external view onlyOwner returns (bool) {
-        return OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOrders(
+    ) external view override onlyOwner returns (bool) {
+        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOrders(
                 _orderIds,
                 _asset,
                 _token,
                 _isBuyOrder);
     }
 
-    function getPaymentTotals(uint256[] calldata _orderIds, uint256[] calldata _amounts) external view onlyOwner returns(uint256 amountDue, uint256[] memory amountPerOrder) {
+    function getPaymentTotals(
+        uint256[] calldata _orderIds,
+        uint256[] calldata _amounts
+    ) external view override onlyOwner returns(uint256 amountDue, uint256[] memory amountPerOrder) {
         require(_orderIds.length == _amounts.length, "Invalid Length");
 
         amountPerOrder = new uint256[](_amounts.length);
         amountDue = 0;
         LibOrder.OrderData memory order;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            order = OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderIds[i]);
+            order = IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderIds[i]);
             require(order.amount >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
             
             amountPerOrder[i] = SafeMathUpgradeable.mul(order.price, _amounts[i]);
@@ -61,29 +65,29 @@ contract OrderbookManager is ManagerBase {
         }
     } 
 
-    function fillOrders(uint256[] memory orderIds, uint256[] memory amounts) external onlyOwner {
+    function fillOrders(uint256[] memory orderIds, uint256[] memory amounts) external override onlyOwner {
         // If we get to this point, the orders in the list of order ids have already been verified.
         require(orderIds.length != amounts.length, "Orderbook Contract is not yet set");
 
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < orderIds.length; ++i) {
-            OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).fillOrder(orderIds[i], amounts[i]);
+            IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).fillOrder(orderIds[i], amounts[i]);
         }
     }
 
-    function deleteOrder(uint256 orderId) external onlyOwner {
+    function deleteOrder(uint256 orderId) external override onlyOwner {
         // If we get to this point, the orders in the list of order ids have already been verified.
         // the caller will already fill in the orders up to the amount. 
         require(
-            OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOwner(orderId),
+            IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOwner(orderId),
             "Invalid order owner."
         );
 
-        OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).deleteOrder(orderId);
+        IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).deleteOrder(orderId);
     }
 
-    function getOrder(uint256 _orderId) external view returns(LibOrder.OrderData memory) {
-        return OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderId);
+    function getOrder(uint256 _orderId) external view override returns(LibOrder.OrderData memory) {
+        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderId);
     }
     
     function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) internal returns(uint256) {

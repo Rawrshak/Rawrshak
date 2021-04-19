@@ -11,15 +11,16 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./StorageBase.sol";
 import "./LibOrder.sol";
+import "./interfaces/IEscrowNFTs.sol";
 
-contract EscrowNFTs is StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
+contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for *;
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.AssetData) orderData;
-    mapping(uint256 => uint256) public escrowedAssetsByOrder;
+    mapping(uint256 => uint256) escrowedAssetsByOrder;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -33,12 +34,16 @@ contract EscrowNFTs is StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgrad
         __StorageBase_init_unchained();
     }
 
+    function getEscrowedAssetsByOrder(uint256 _orderId) external view override returns(uint256) {
+        return escrowedAssetsByOrder[_orderId];
+    }
+
     function deposit(
         address user,
         uint256 orderId,
         uint256 amount,
         LibOrder.AssetData memory assetData
-    ) external checkPermissions(MANAGER_ROLE) {
+    ) external override checkPermissions(MANAGER_ROLE) {
         require(
             ERC165CheckerUpgradeable.supportsInterface(assetData.contentAddress, type(IERC1155Upgradeable).interfaceId) || 
             ERC165CheckerUpgradeable.supportsInterface(assetData.contentAddress, type(IERC721Upgradeable).interfaceId),
@@ -56,7 +61,7 @@ contract EscrowNFTs is StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgrad
         address to,
         uint256 orderId,
         uint256 amount
-    ) external checkPermissions(MANAGER_ROLE) {
+    ) external override checkPermissions(MANAGER_ROLE) {
         require(escrowedAssetsByOrder[orderId] > 0, "Asset was already sold.");
         require(orderData[orderId].contentAddress != address(0), "Invalid Order Data");
 
@@ -72,7 +77,7 @@ contract EscrowNFTs is StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgrad
         address to,
         uint256[] memory orderIds,
         uint256[] memory amounts
-    ) external checkPermissions(MANAGER_ROLE) {
+    ) external override checkPermissions(MANAGER_ROLE) {
         require(orderIds.length > 0, "invalid order length");
         require(orderIds.length == amounts.length, "order length mismatch");
         for (uint256 i = 0; i < orderIds.length; ++i) {

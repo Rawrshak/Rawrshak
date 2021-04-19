@@ -7,9 +7,9 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./EscrowERC20.sol";
 import "../content/Content.sol";
 import "./LibOrder.sol";
-import "./RoyaltyManager.sol";
-import "./OrderbookManager.sol";
-import "./ExecutionManager.sol";
+import "./interfaces/IRoyaltyManager.sol";
+import "./interfaces/IOrderbookManager.sol";
+import "./interfaces/IExecutionManager.sol";
 
 // Todo: 
 //      1. Add more events
@@ -26,11 +26,12 @@ contract Exchange is OwnableUpgradeable {
     using ERC165CheckerUpgradeable for address;
     
     /******************** Constants ********************/
-    RoyaltyManager royaltyManager;
-    OrderbookManager orderbookManager;
-    ExecutionManager executionManager;
 
     /***************** Stored Variables *****************/
+    IRoyaltyManager royaltyManager;
+    IOrderbookManager orderbookManager;
+    IExecutionManager executionManager;
+    
     /*********************** Events *********************/
     /********************* Modifiers ********************/
     /******************** Public API ********************/
@@ -41,9 +42,9 @@ contract Exchange is OwnableUpgradeable {
             _royaltyManager != address(0) && _orderbookManager != address(0) && _executionManager != address(0),
             "Address cannot be empty."
         );
-        royaltyManager = RoyaltyManager(_royaltyManager);
-        orderbookManager = OrderbookManager(_orderbookManager);
-        executionManager = ExecutionManager(_executionManager);
+        royaltyManager = IRoyaltyManager(_royaltyManager);
+        orderbookManager = IOrderbookManager(_orderbookManager);
+        executionManager = IExecutionManager(_executionManager);
     }
 
     // exchange functions

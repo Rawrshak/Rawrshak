@@ -7,7 +7,7 @@ import "./OrderbookStorage.sol";
 import "./EscrowDistributions.sol";
 import "./EscrowERC20.sol";
 import "./EscrowNFTs.sol";
-import "./AddressRegistry.sol";
+import "./interfaces/IAddressRegistry.sol";
 
 abstract contract ManagerBase is OwnableUpgradeable {
     using AddressUpgradeable for address;
@@ -23,14 +23,14 @@ abstract contract ManagerBase is OwnableUpgradeable {
     bytes4 constant public ORDERBOOK_STORAGE_CONTRACT = 0xe22271ab;
 
     /***************** Stored Variables *****************/
-    AddressRegistry internal registry;
+    IAddressRegistry internal registry;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __ManagerBase_init_unchained(address _registry) public initializer {
         require(_registry != address(0), "Registry passed.");
-        registry = AddressRegistry(_registry);
+        registry = IAddressRegistry(_registry);
     }
 
     uint256[50] private __gap;
