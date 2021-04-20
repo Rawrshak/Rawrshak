@@ -5,6 +5,12 @@ import "../LibOrder.sol";
 
 interface IExecutionManager { 
     /******** Mutative Functions ********/
+    function getToken(bytes4 _token) external view returns(address);
+
+    function getTokenEscrow(bytes4 _token) external view returns(address);
+
+    function getNFTsEscrow() external view returns(address);
+    
     function placeBuyOrder(uint256 _orderId, bytes4 _token, uint256 _tokenAmount) external;
 
     function placeSellOrder(uint256 _orderId, LibOrder.AssetData memory _asset, uint256 _assetAmount) external;
@@ -26,9 +32,9 @@ interface IExecutionManager {
 
     function deleteOrder(uint256 _orderId) external;
 
-    function claimOrders(uint256[] calldata _orderIds) external;
+    function claimOrders(address _user, uint256[] calldata _orderIds) external;
 
-    function verifyUserBalance(bytes4 _token, uint256 amountDue) external view returns(bool);
+    function verifyUserBalance(address _user, bytes4 _token, uint256 amountDue) external view returns(bool);
 
     function verifyToken(bytes4 _token) external view returns(bool);
 }

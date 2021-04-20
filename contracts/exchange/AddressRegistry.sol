@@ -23,10 +23,10 @@ contract AddressRegistry is IAddressRegistry, OwnableUpgradeable, ERC165StorageU
         _registerInterface(LibConstants._INTERFACE_ID_ADDRESS_REGISTRY);
     }
 
-    function registerAddress(bytes4[] calldata _ids, address[] calldata _addresses) external onlyOwner {
+    function registerAddress(bytes4[] calldata _ids, address[] calldata _addresses) external override onlyOwner {
         // this will only called internally on creation. No need to check whether or not these addresses are 
         // valid contracts as we will guarantee that they are. Removing this saves gas costs.
-        require(_ids.length == _addresses.length, "Invalid input length.");
+        require(_ids.length > 0 && _ids.length == _addresses.length, "Invalid input length.");
 
         for (uint i = 0; i < _ids.length; ++i) {
             registry[_ids[i]] = _addresses[i];
@@ -35,6 +35,10 @@ contract AddressRegistry is IAddressRegistry, OwnableUpgradeable, ERC165StorageU
     }
 
     function getAddress(bytes4 _id) external view override returns(address) {
+        return registry[_id];
+    }
+
+    function getAddressWithCheck(bytes4 _id) external view override returns(address) {
         require(registry[_id] != address(0), "Missing Contract Address");
         return registry[_id];
     }

@@ -10,20 +10,33 @@ interface IRoyaltyManager {
     
     function claimRoyalties(address _user, bytes4 _token) external;
 
-    function deductRoyaltiesFromUser(
+    function getRequiredRoyalties(
         uint256 _orderId,
-        address _from,
-        bytes4 _token,
+        bytes4  _token,
         LibOrder.AssetData calldata _asset,
-        uint256 total
-    ) external returns(uint256 remaining);
+        uint256 _total
+    ) external returns(uint256[] memory royaltyAmounts, uint256 remaining);
 
-    function deductRoyaltiesFromEscrow(
-        uint256 _orderId,
+    function transferRoyalty(
         bytes4 _token,
-        LibOrder.AssetData calldata _asset,
-        uint256 total
-    ) external returns(uint256 remaining);
+        uint256 _orderId,
+        uint256 _amount
+    ) external;
+
+    // function deductRoyaltiesFromUser(
+    //     uint256 _orderId,
+    //     address _from,
+    //     bytes4 _token,
+    //     LibOrder.AssetData calldata _asset,
+    //     uint256 total
+    // ) external returns(uint256 remaining);
+
+    // function deductRoyaltiesFromEscrow(
+    //     uint256 _orderId,
+    //     bytes4 _token,
+    //     LibOrder.AssetData calldata _asset,
+    //     uint256 total
+    // ) external returns(uint256 remaining);
 
     function setPlatformFees(LibRoyalties.Fees[] calldata _newFees) external;
 

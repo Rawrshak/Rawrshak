@@ -6,7 +6,6 @@ import "../LibOrder.sol";
 interface IEscrowNFTs {
     // Mutable Functions
     function deposit(
-        address user,
         uint256 orderId,
         uint256 amount,
         LibOrder.AssetData memory assetData
@@ -14,8 +13,8 @@ interface IEscrowNFTs {
 
     function getEscrowedAssetsByOrder(uint256 _orderId) external view returns(uint256);
 
-    function withdraw(address to, uint256 orderId, uint256 amount) external;
+    function withdraw(uint256 orderId, uint256 amount) external;
 
-    function withdrawBatch(address to, uint256[] memory orderIds, uint256[] memory amounts) external;
+    function withdrawBatch(uint256[] memory orderIds, uint256[] memory amounts) external;
 
 }

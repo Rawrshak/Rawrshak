@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./StorageBase.sol";
 import "./interfaces/IEscrowERC20.sol";
+// import "./interfaces/IEscrowDistributions.sol";
 
 contract EscrowERC20 is IEscrowERC20, StorageBase {
     using AddressUpgradeable for address;
@@ -15,6 +16,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     /***************** Stored Variables *****************/
     address token;
     mapping(uint256 => uint256) escrowedTokensByOrder;
+    mapping(address => uint256) private claimableTokensByOwner;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -37,33 +39,45 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         return token;
     }
     
-    function getEscrowedTokensByOrder(uint256 orderId) external view override returns(uint256) {
-        return escrowedTokensByOrder[orderId];
+    function getEscrowedTokensByOrder(uint256 _orderId) external view override returns(uint256) {
+        return escrowedTokensByOrder[_orderId];
+    }
+
+    function getClaimableTokensByOwner(address _owner) external view override returns(uint256) {
+        return claimableTokensByOwner[_owner];
     }
     
     function deposit(
-        address user,
-        uint256 orderId,
-        uint256 amount
+        uint256 _orderId,
+        uint256 _amount
     ) external override checkPermissions(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
-        escrowedTokensByOrder[orderId] = SafeMathUpgradeable.add(escrowedTokensByOrder[orderId], amount);
-
-        IERC20Upgradeable(token).transferFrom(user, address(this), amount);
-    }
-
-    function withdraw(address user, uint256 orderId, uint256 amount) external override checkPermissions(MANAGER_ROLE) {
-        require(escrowedTokensByOrder[orderId] >= amount, "Invalid amount");
-
-        escrowedTokensByOrder[orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[orderId], amount);
-        IERC20Upgradeable(token).transferFrom(address(this), user, amount);
+        escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.add(escrowedTokensByOrder[_orderId], _amount);
     }
 
     // This is specificly used for royalties
-    function withdraw(uint256 orderId, uint256 amount) external override checkPermissions(MANAGER_ROLE) {
-        require(escrowedTokensByOrder[orderId] >= amount, "Invalid amount");
+    function withdraw(uint256 _orderId, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+        require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid _amount");
 
-        escrowedTokensByOrder[orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[orderId], amount);
+        escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);
+    }
+    
+    function transferRoyalty(
+        uint256 _orderId,
+        address _owner,
+        uint256 _amount
+    ) external override checkPermissions(MANAGER_ROLE) {        
+        require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid _amount");
+
+        // No need to do checks. The exchange contracts will do the checks.
+        escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);
+        claimableTokensByOwner[_owner] = SafeMathUpgradeable.add(claimableTokensByOwner[_owner], _amount);
+    }
+
+    function claim(address _owner) external override checkPermissions(MANAGER_ROLE) {
+        require(claimableTokensByOwner[_owner] > 0, "Tokens were already claimed.");
+
+        claimableTokensByOwner[_owner]= 0;
     }
 
     /**************** Internal Functions ****************/

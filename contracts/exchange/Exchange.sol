@@ -76,9 +76,23 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
             // if it's a buy order, move tokens to ERC20 escrow.
             uint256 tokenAmount = SafeMathUpgradeable.mul(_order.amount, _order.price);
             executionManager.placeBuyOrder(id, _order.token, tokenAmount);
+
+            // Send the Token Amount to the Escrow
+            IERC20Upgradeable(executionManager.getToken(_order.token))
+                .transferFrom(_msgSender(), executionManager.getTokenEscrow(_order.token), tokenAmount);
+
         } else {
             // if it's a sell order, move NFT to escrow
             executionManager.placeSellOrder(id, _order.asset, _order.amount);
+            
+            // Send the Assets to the Escrow
+            if (ERC165CheckerUpgradeable.supportsInterface(_order.asset.contentAddress, type(IERC1155Upgradeable).interfaceId)) {
+                IERC1155Upgradeable(_order.asset.contentAddress)
+                    .safeTransferFrom(_msgSender(), executionManager.getNFTsEscrow(), _order.asset.tokenId, _order.amount, "");
+            } else {
+                IERC721Upgradeable(_order.asset.contentAddress)
+                    .safeTransferFrom(_msgSender(), executionManager.getNFTsEscrow(), _order.asset.tokenId, "");
+            }
         }
 
         emit OrderPlaced(id, _order);
@@ -112,7 +126,10 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
 
         // Deduct royalties from escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            amountPerOrder[i] = royaltyManager.deductRoyaltiesFromEscrow(_orderIds[i], _token, _asset, amountPerOrder[i]);
+            (uint256[] memory royaltyAmounts, uint256 remaining) = royaltyManager.getRequiredRoyalties(_orderIds[i], _token, _asset, amountPerOrder[i]);
+            
+            royaltyManager.transferRoyalty(_token, _orderIds[i], royaltyAmounts);
+            amountPerOrder[i] = remaining;
         }
 
         // Execute trade
@@ -135,7 +152,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         (uint256 amountDue, uint256[] memory amountPerOrder) = orderbookManager.getPaymentTotals(_orderIds, _amounts);
         
         // check buyer's account balance
-        require(executionManager.verifyUserBalance(_token, amountDue), "Not enough funds.");
+        require(executionManager.verifyUserBalance(_msgSender(), _token, amountDue), "Not enough funds.");
 
         // Orderbook -> fill sell order
         orderbookManager.fillOrders(_orderIds, _amounts);
@@ -146,7 +163,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         }
 
         // Execute trade
-        executionManager.executeSellOrder(_orderIds, amountPerOrder, _amounts, _token);
+        executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _token);
         emit SellOrdersFilled(_orderIds, _amounts, _asset, _token, amountDue);
     }
 
@@ -156,7 +173,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         // delete orders
         orderbookManager.deleteOrder(_orderId);
 
-        executionManager.deleteOrder(_orderId);
+        executionManager.deleteOrder(_msgSender(), _orderId);
         emit OrderDeleted(_orderId);
     }
 
@@ -167,7 +184,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
     function claim(uint256[] memory orderIds) external {
         require(orderIds.length > 0, "empty order length.");
         
-        executionManager.claimOrders(orderIds);
+        executionManager.claimOrders(_msgSender(), orderIds);
         emit FilledOrdersClaimed(orderIds);
     }
 
@@ -198,6 +215,12 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         require(executionManager.verifyToken(_tokenDistribution), "Token Distribution hasn't been registered yet.");
         royaltyManager.addSupportedToken(_token, _tokenDistribution);
     }
+
+    // function approveERC20(uint256 amount) external returns(bool) {
+    //     require(amount > 0, "Invalid amount");
+
+    //     royaltyManager.approve()
+    // }
 
     /**************** Internal Functions ****************/
 

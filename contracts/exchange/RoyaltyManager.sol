@@ -12,7 +12,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
-    mapping(bytes4 => bytes4) tokenDistribution;
+    // mapping(bytes4 => bytes4) tokenDistribution;
     LibRoyalties.Fees[] exchangeFees;
 
     /*********************** Events *********************/
@@ -29,80 +29,129 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         _registerInterface(LibConstants._INTERFACE_ID_ROYALTY_MANAGER);
     }
 
-    function addSupportedToken(bytes4 _token, bytes4 _tokenDistribution) external override onlyOwner {
-        tokenDistribution[_token] = _tokenDistribution;
-    }
+    // function addSupportedToken(bytes4 _token, bytes4 _tokenDistribution) external override onlyOwner {
+    //     tokenDistribution[_token] = _tokenDistribution;
+    // }
 
     function claimRoyalties(address _user, bytes4 _token) external override onlyOwner {
         uint256 amountClaimed = _getDistributionsAmount(_user, _token);
-        IEscrowDistributions(registry.getAddress(tokenDistribution[_token])).claim(_user);
+        IEscrowERC20(registry.getAddress(_token)).claim(_user);
         emit RoyaltiesClaimed(_user, IEscrowERC20(registry.getAddress(_token)).getToken(), amountClaimed);
     }
 
-    function deductRoyaltiesFromUser(
-        uint256 _orderId,
-        address _from,
+    function transferRoyalty(
         bytes4 _token,
-        LibOrder.AssetData calldata _asset,
-        uint256 total
-    ) external override onlyOwner returns(uint256 remaining) {
-        remaining = total;
-        
-        LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
-        uint256 royalty = 0;
-        for (uint256 i = 0; i < contractFees.length; ++i) {
-            // Get Royalties owed per fee
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, contractFees[i].bps), 10000);
-            if (royalty > 0) {
-                _deposit(_orderId, _from, contractFees[i].account, _token, royalty);
-                remaining = SafeMathUpgradeable.sub(remaining, royalty);
-            }
-        }
+        uint256 _orderId,
+        uint256 _amount
+    ) external override onlyOwner {
+        // No need to do checks. The exchange contracts will do the checks.
 
-        // calculate total price and add royalties from asset and platform
-        for (uint256 i = 0; i < exchangeFees.length; ++i) {
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, exchangeFees[i].bps), 10000);
-            if (royalty > 0) {
-                _deposit(_orderId, _from, exchangeFees[i].account, _token, royalty);
-                remaining = SafeMathUpgradeable.sub(remaining, royalty);
-            }
-        }
 
-        // remaining is the amount that is going to the seller
-        return remaining;
+        IEscrowERC20(registry.getAddress(_token)).transferRoyalty(_orderId, _owner, _amount);
     }
 
-    function deductRoyaltiesFromEscrow(
-        uint256 _orderId,
-        bytes4 _token,
+    function getRequiredRoyalties(
+        bytes4  _token,
         LibOrder.AssetData calldata _asset,
-        uint256 total
-    ) external override onlyOwner returns(uint256 remaining) {
-        remaining = total;
-        
+        uint256 _total
+    ) external view override onlyOwner returns(uint256[] memory royaltyAmounts, uint256 remaining) {
+        remaining = _total;
+
         LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
+        royaltyAmounts = new uint256[](contractFees.length + exchangeFees.length);
         uint256 royalty = 0;
+        uint256 idx = 0;
         for (uint256 i = 0; i < contractFees.length; ++i) {
             // Get Royalties owed per fee
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, contractFees[i].bps), 10000);
-            if (royalty > 0) {
-                _depositFromEscrow(_orderId, contractFees[i].account, _token, royalty);
-                remaining = SafeMathUpgradeable.sub(remaining, royalty);
-            }
+            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, contractFees[i].bps), 10000);
+            royaltyAmounts[idx] = royalty;
+            remaining = SafeMathUpgradeable.sub(remaining, royalty);
+            ++idx;
         }
 
-        // calculate total price and add royalties from asset and platform
+        // calculate _total price and add royalties from asset and platform
         for (uint256 i = 0; i < exchangeFees.length; ++i) {
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, exchangeFees[i].bps), 10000);
-            if (royalty > 0) {
-                _depositFromEscrow(_orderId, exchangeFees[i].account, _token, royalty);
-                remaining = SafeMathUpgradeable.sub(remaining, royalty);
-            }
+            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, exchangeFees[i].bps), 10000);
+            royaltyAmounts[idx] = royalty;
+            remaining = SafeMathUpgradeable.sub(remaining, royalty);
+            ++idx;
         }
-
-        // remaining is the amount that is going to the seller
-        return remaining;
     }
+    
+    // function transferRoyalty(
+    //     uint256 _orderId,
+    //     address _owner,
+    //     uint256 _amount
+    // ) external override onlyOwner {
+
+    //     // No need to do checks. The exchange contracts will do the checks.
+    //     IEscrowERC20(registry.getAddress(_token)).withdraw(_orderIds[i], _paymentPerOrder[i]);
+    // }
+
+    // function deductRoyaltiesFromUser(
+    //     uint256 _orderId,
+    //     address _from,
+    //     bytes4 _token,
+    //     LibOrder.AssetData calldata _asset,
+    //     uint256 total
+    // ) external override onlyOwner returns(uint256 remaining) {
+    //     remaining = total;
+        
+    //     LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
+    //     uint256 royalty = 0;
+    //     for (uint256 i = 0; i < contractFees.length; ++i) {
+    //         // Get Royalties owed per fee
+    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, contractFees[i].bps), 10000);
+    //         if (royalty > 0) {
+    //             _deposit(_orderId, _from, contractFees[i].account, _token, royalty);
+    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
+    //         }
+    //     }
+
+    //     // calculate total price and add royalties from asset and platform
+    //     for (uint256 i = 0; i < exchangeFees.length; ++i) {
+    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, exchangeFees[i].bps), 10000);
+    //         if (royalty > 0) {
+    //             _deposit(_orderId, _from, exchangeFees[i].account, _token, royalty);
+    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
+    //         }
+    //     }
+
+    //     // remaining is the amount that is going to the seller
+    //     return remaining;
+    // }
+
+    // function deductRoyaltiesFromEscrow(
+    //     uint256 _orderId,
+    //     bytes4 _token,
+    //     LibOrder.AssetData calldata _asset,
+    //     uint256 total
+    // ) external override onlyOwner returns(uint256 remaining) {
+    //     remaining = total;
+        
+    //     LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
+    //     uint256 royalty = 0;
+    //     for (uint256 i = 0; i < contractFees.length; ++i) {
+    //         // Get Royalties owed per fee
+    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, contractFees[i].bps), 10000);
+    //         if (royalty > 0) {
+    //             _depositFromEscrow(_orderId, contractFees[i].account, _token, royalty);
+    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
+    //         }
+    //     }
+
+    //     // calculate total price and add royalties from asset and platform
+    //     for (uint256 i = 0; i < exchangeFees.length; ++i) {
+    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, exchangeFees[i].bps), 10000);
+    //         if (royalty > 0) {
+    //             _depositFromEscrow(_orderId, exchangeFees[i].account, _token, royalty);
+    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
+    //         }
+    //     }
+
+    //     // remaining is the amount that is going to the seller
+    //     return remaining;
+    // }
 
     function setPlatformFees(LibRoyalties.Fees[] calldata _newFees) external override onlyOwner {
         if (exchangeFees.length > 0) {
