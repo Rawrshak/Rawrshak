@@ -26,6 +26,7 @@ contract EscrowDistributions is IEscrowDistributions, StorageBase {
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
+        _registerInterface(LibConstants._INTERFACE_ID_ESCROW_DISTRIBUTIONS);
 
         // todo: check for correct interface
         require(_escrow.isContract(), "Invalid escrow address.");

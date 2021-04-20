@@ -2,8 +2,16 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 // import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "../utils/LibConstants.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+
 
 library LibOrder {
+    using AddressUpgradeable for address;
+    using ERC165CheckerUpgradeable for address;
 
     struct AssetData {
         address contentAddress;
@@ -17,6 +25,21 @@ library LibOrder {
         uint256 price;
         uint256 amount;
         bool isBuyOrder;
+    }
+
+    function verifyOrderData(OrderData calldata _order, address _sender) public view {
+        require(_order.owner == _sender, "Invalid sender.");
+        require(_order.price > 0 && _order.amount > 0, "Invalid input price or amount");
+        verifyAssetData(_order.asset);
+    }
+
+    function verifyAssetData(AssetData calldata _asset) public view {
+        require(_asset.contentAddress != address(0),"Invalid Address.");
+        require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
+        require(
+            (_asset.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) || 
+            (_asset.contentAddress.supportsInterface(type(IERC721Upgradeable).interfaceId)),
+            "Invalid contract interface.");
     }
 
     function _verifyOrders(

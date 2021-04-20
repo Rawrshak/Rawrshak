@@ -29,4 +29,6 @@ interface IExecutionManager {
     function claimOrders(uint256[] calldata _orderIds) external;
 
     function verifyUserBalance(bytes4 _token, uint256 amountDue) external view returns(bool);
+
+    function verifyToken(bytes4 _token) external view returns(bool);
 }

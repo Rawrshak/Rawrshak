@@ -22,6 +22,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_registry);
+        _registerInterface(LibConstants._INTERFACE_ID_EXECUTION_MANAGER);
     }
 
     function placeBuyOrder(uint256 _orderId, bytes4 _token, uint256 _tokenAmount) external override onlyOwner {
@@ -85,10 +86,12 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
 
     function claimOrders(uint256[] calldata _orderIds) external override onlyOwner {
+        IOrderbookStorage orderbookStorage = IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT));
         LibOrder.OrderData memory order;
         uint256 amount = 0;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            order = OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderIds[i]);
+            require(orderbookStorage.orderExists(_orderIds[i]), "Invalid Order.");
+            order = orderbookStorage.getOrder(_orderIds[i]);
             require(order.owner == _msgSender(), "User doesn't own this order");
             if (order.isBuyOrder) {
                 // withdraw NFTs
@@ -107,6 +110,10 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
 
     function verifyUserBalance(bytes4 _token, uint256 amountDue) external view override returns(bool) {
         return IERC20Upgradeable(IEscrowERC20(registry.getAddress(_token)).getToken()).balanceOf(_msgSender()) >= amountDue;
+    }
+
+    function verifyToken(bytes4 _token) external view override returns(bool) {
+        return registry.getAddress(_token) != address(0);
     }
 
     /**************** Internal Functions ****************/

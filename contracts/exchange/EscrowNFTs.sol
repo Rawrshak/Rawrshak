@@ -32,6 +32,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         __ERC1155Holder_init_unchained();
         __ERC721Holder_init_unchained();
         __StorageBase_init_unchained();
+        _registerInterface(LibConstants._INTERFACE_ID_ESCROW_NFTS);
     }
 
     function getEscrowedAssetsByOrder(uint256 _orderId) external view override returns(uint256) {
@@ -44,11 +45,6 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         uint256 amount,
         LibOrder.AssetData memory assetData
     ) external override checkPermissions(MANAGER_ROLE) {
-        require(
-            ERC165CheckerUpgradeable.supportsInterface(assetData.contentAddress, type(IERC1155Upgradeable).interfaceId) || 
-            ERC165CheckerUpgradeable.supportsInterface(assetData.contentAddress, type(IERC721Upgradeable).interfaceId),
-            "Invalid contract interface.");
-
         // No need to do checks. The exchange contracts will do the checks.
         orderData[orderId] = assetData;
         escrowedAssetsByOrder[orderId] = amount;
@@ -78,13 +74,9 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         uint256[] memory orderIds,
         uint256[] memory amounts
     ) external override checkPermissions(MANAGER_ROLE) {
-        require(orderIds.length > 0, "invalid order length");
-        require(orderIds.length == amounts.length, "order length mismatch");
-        for (uint256 i = 0; i < orderIds.length; ++i) {
-            if (orderData[orderIds[i]].contentAddress == address(0) || 
-                escrowedAssetsByOrder[orderIds[i]] == 0) {
-                continue;
-            }
+        for (uint256 i = 0; i < orderIds.length; ++i) {            
+            require(escrowedAssetsByOrder[orderIds[i]] > 0, "Asset was already sold.");
+            require(orderData[orderIds[i]].contentAddress != address(0), "Invalid Order Data");
 
             address content = orderData[orderIds[i]].contentAddress;
             uint256 id = orderData[orderIds[i]].tokenId;
@@ -95,7 +87,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         }
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC1155ReceiverUpgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(StorageBase, ERC1155ReceiverUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 

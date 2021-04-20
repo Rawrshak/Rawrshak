@@ -20,6 +20,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_registry);
+        _registerInterface(LibConstants._INTERFACE_ID_ORDERBOOK_MANAGER);
         orderIdCounter = 0;
     }
 
@@ -84,6 +85,10 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
 
     function getOrder(uint256 _orderId) external view override returns(LibOrder.OrderData memory) {
         return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderId);
+    }
+
+    function orderExists(uint256 _orderId) external view override returns(bool){
+        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).orderExists(_orderId);
     }
     
     function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) internal returns(uint256) {

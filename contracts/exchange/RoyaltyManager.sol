@@ -26,9 +26,10 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_registry);
+        _registerInterface(LibConstants._INTERFACE_ID_ROYALTY_MANAGER);
     }
 
-    function setTokenDistribution(bytes4 _token, bytes4 _tokenDistribution) external override onlyOwner {
+    function addSupportedToken(bytes4 _token, bytes4 _tokenDistribution) external override onlyOwner {
         tokenDistribution[_token] = _tokenDistribution;
     }
 
@@ -113,6 +114,10 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         emit PlatformFeesUpdated(_newFees);
     }
     
+    function getPlatformFees() external view override returns(LibRoyalties.Fees[] memory) {
+        return exchangeFees;
+    }
+
     function getDistributionsAmount(address _user, bytes4 _token) external view override returns(uint256) {        
         return _getDistributionsAmount(_user, _token);
     }

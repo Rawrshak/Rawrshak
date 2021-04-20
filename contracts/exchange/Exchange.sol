@@ -2,6 +2,7 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./EscrowERC20.sol";
@@ -12,16 +13,11 @@ import "./interfaces/IOrderbookManager.sol";
 import "./interfaces/IExecutionManager.sol";
 
 // Todo: 
-//      1. Add more events
-//      2. Contracts need to register an interface.
-//      3. Figure out who does the actual input checking
-//[Done]4. Need to deduct royalties from total payment
-//[Done]5. contract size too big. Need to further make the infrastructure more bite-sized.
-//      6. Need to write an approval manager to allow users to set the default approvals for these
+//      1. Need to write an approval manager to allow users to set the default approvals for these
 //         operator contracts manually or automatically. This will be used for the Exchange, Crafting,
 //         and Lootbox contracts
 
-contract Exchange is OwnableUpgradeable {
+contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -58,17 +54,20 @@ contract Exchange is OwnableUpgradeable {
             _royaltyManager != address(0) && _orderbookManager != address(0) && _executionManager != address(0),
             "Address cannot be empty."
         );
+        require(_royaltyManager.supportsInterface(LibConstants._INTERFACE_ID_ROYALTY_MANAGER), "Invalid manager interface.");
+        require(_orderbookManager.supportsInterface(LibConstants._INTERFACE_ID_ORDERBOOK_MANAGER), "Invalid manager interface.");
+        require(_executionManager.supportsInterface(LibConstants._INTERFACE_ID_EXECUTION_MANAGER), "Invalid manager interface.");
+        
         royaltyManager = IRoyaltyManager(_royaltyManager);
         orderbookManager = IOrderbookManager(_orderbookManager);
         executionManager = IExecutionManager(_executionManager);
+        _registerInterface(LibConstants._INTERFACE_ID_EXCHANGE);
     }
 
     // exchange functions
     function placeOrder(LibOrder.OrderData memory _order) external {        
-        require(_order.owner == _msgSender(), "Invalid sender.");
-        require(_order.asset.contentAddress != address(0),
-                "Invalid Address.");
-        require(_order.price > 0 && _order.amount > 0, "Invalid input price or amount");
+        LibOrder.verifyOrderData(_order, _msgSender());
+        require(executionManager.verifyToken(_order.token), "Token is not supported.");
 
         // place order in orderbook
         uint256 id = orderbookManager.placeOrder(_order);
@@ -85,9 +84,6 @@ contract Exchange is OwnableUpgradeable {
         emit OrderPlaced(id, _order);
     }
 
-    // Buy order: someone wants to buy assets. 
-    // Fill Buy Order: money goes from escrow to user
-    //           assets go from user to escrow
     function fillBuyOrder(
         uint256[] memory _orderIds,
         uint256[] memory _amounts,
@@ -95,9 +91,9 @@ contract Exchange is OwnableUpgradeable {
         bytes4 _token
     ) external {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
-        require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
-        require(_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
-        require(orderbookManager.verifyOrders(_orderIds, _asset, _token, false), "Invalid input");
+        require(executionManager.verifyToken(_token), "Token is not supported.");
+        LibOrder.verifyAssetData(_asset);
+        require(orderbookManager.verifyOrders(_orderIds, _asset, _token, false), "Invalid order");
 
         // Get Total Payment
         (, uint256[] memory amountPerOrder) = orderbookManager.getPaymentTotals(_orderIds, _amounts);
@@ -111,7 +107,7 @@ contract Exchange is OwnableUpgradeable {
         // Verify that the buyer has these NFTs
         require(Content(_asset.contentAddress).balanceOf(_msgSender(), _asset.tokenId) >= totalAssetsToSell, "Not enough assets.");
 
-        // Storage->fill buy order
+        // Orderbook -> fill buy order
         orderbookManager.fillOrders(_orderIds, _amounts);
 
         // Deduct royalties from escrow
@@ -124,11 +120,6 @@ contract Exchange is OwnableUpgradeable {
         emit BuyOrdersFilled(_orderIds, _amounts, _asset, _token, totalAssetsToSell);
     }
 
-    // Sell order: someone has assets to get rid of
-    // Fill Sell Order: money goes from user to escrow
-    //           assets go from escrow to user
-    //          User is a buyer
-    //          Escrow is the seller
     function fillSellOrder(
         uint256[] memory _orderIds,
         uint256[] memory _amounts,
@@ -136,8 +127,8 @@ contract Exchange is OwnableUpgradeable {
         bytes4 _token
     ) external {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
-        require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
-        require(_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
+        require(executionManager.verifyToken(_token), "Token is not supported.");
+        LibOrder.verifyAssetData(_asset);
         require(orderbookManager.verifyOrders(_orderIds, _asset, _token, true), "Invalid input");
 
         // Get Total Payment
@@ -146,7 +137,7 @@ contract Exchange is OwnableUpgradeable {
         // check buyer's account balance
         require(executionManager.verifyUserBalance(_token, amountDue), "Not enough funds.");
 
-        // Storage->fill buy order
+        // Orderbook -> fill sell order
         orderbookManager.fillOrders(_orderIds, _amounts);
 
         // Deduct royalties
@@ -160,6 +151,8 @@ contract Exchange is OwnableUpgradeable {
     }
 
     function deleteOrders(uint256 _orderId) external {
+        require(orderbookManager.orderExists(_orderId), "Invalid Order.");
+
         // delete orders
         orderbookManager.deleteOrder(_orderId);
 
@@ -185,12 +178,25 @@ contract Exchange is OwnableUpgradeable {
         royaltyManager.setPlatformFees(newFees);
     }
 
+    function getPlatformFees() external view returns(LibRoyalties.Fees[] memory fees) {
+        return royaltyManager.getPlatformFees();
+    }
+
     function getDistributionsAmount(bytes4 _token) external view returns (uint256) {
+        require(executionManager.verifyToken(_token), "Token is not supported.");
         return royaltyManager.getDistributionsAmount(_msgSender(), _token);
     }
 
     function claimRoyalties(bytes4 _token) external {
+        require(executionManager.verifyToken(_token), "Token is not supported.");
         royaltyManager.claimRoyalties(_msgSender(), _token);
+    }
+
+    function addSupportedToken(bytes4 _token, bytes4 _tokenDistribution) external {
+        // this is called when we're adding new supported tokens after they're registered
+        require(executionManager.verifyToken(_token), "Token hasn't been registered yet.");
+        require(executionManager.verifyToken(_tokenDistribution), "Token Distribution hasn't been registered yet.");
+        royaltyManager.addSupportedToken(_token, _tokenDistribution);
     }
 
     /**************** Internal Functions ****************/

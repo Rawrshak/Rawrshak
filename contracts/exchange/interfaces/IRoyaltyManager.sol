@@ -6,7 +6,7 @@ import "../../content/LibRoyalties.sol";
 
 interface IRoyaltyManager { 
     /******** Mutative Functions ********/
-    function setTokenDistribution(bytes4 _token, bytes4 _tokenDistribution) external;
+    function addSupportedToken(bytes4 _token, bytes4 _tokenDistribution) external;
     
     function claimRoyalties(address _user, bytes4 _token) external;
 
@@ -26,6 +26,8 @@ interface IRoyaltyManager {
     ) external returns(uint256 remaining);
 
     function setPlatformFees(LibRoyalties.Fees[] calldata _newFees) external;
+
+    function getPlatformFees() external view returns(LibRoyalties.Fees[] memory);
 
     function getDistributionsAmount(address _user, bytes4 _token) external view returns(uint256);
 }

@@ -21,6 +21,11 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
+        _registerInterface(LibConstants._INTERFACE_ID_ORDERBOOK_STORAGE);
+    }
+
+    function orderExists(uint256 _orderId) external view override returns(bool) {
+        return orders[_orderId].owner != address(0);
     }
 
     function verifyOrders(
@@ -38,15 +43,12 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         return true;
     }
 
-    function placeOrder(uint256 id, LibOrder.OrderData memory order) external override checkPermissions(MANAGER_ROLE) {
-        require(orders[id].owner == address(0), "Order already exists");
-
+    function placeOrder(uint256 id, LibOrder.OrderData memory order) external override checkPermissions(MANAGER_ROLE) { 
         orders[id] = order;
     }
 
     function deleteOrder(uint256 id) external override checkPermissions(MANAGER_ROLE) {
-        require(orders[id].owner != address(0), "Order doesn't exist");
-
+        // todo: should I delete the memory or still keep it?
         delete orders[id];
     }
 
@@ -59,8 +61,6 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
     }
 
     function fillOrder(uint256 id, uint256 amount) external override checkPermissions(MANAGER_ROLE) {
-        require(orders[id].owner == address(0), "Order doesn't exists");
-        require(orders[id].amount >= amount, "Invalid order amount");
         orders[id].amount = SafeMathUpgradeable.sub(orders[id].amount, amount);
     }
 

@@ -6,6 +6,8 @@ import "../LibOrder.sol";
 
 interface IOrderbookStorage {
     // View Functions
+    function orderExists(uint256 _orderId) external view returns(bool);
+
     function verifyOrders(
         uint256[] memory _orderIds,
         LibOrder.AssetData memory _asset,

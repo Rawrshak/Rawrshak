@@ -3,9 +3,11 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "./interfaces/IAddressRegistry.sol";
+import "../utils/LibConstants.sol";
 
-contract AddressRegistry is IAddressRegistry, OwnableUpgradeable {
+contract AddressRegistry is IAddressRegistry, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
 
     /***************** Stored Variables *****************/
@@ -18,6 +20,7 @@ contract AddressRegistry is IAddressRegistry, OwnableUpgradeable {
     function __AddressRegistry_init() public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
+        _registerInterface(LibConstants._INTERFACE_ID_ADDRESS_REGISTRY);
     }
 
     function registerAddress(bytes4[] calldata _ids, address[] calldata _addresses) external onlyOwner {

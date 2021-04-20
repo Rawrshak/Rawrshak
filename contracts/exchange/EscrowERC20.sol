@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./StorageBase.sol";
-import "../utils/LibConstants.sol";
 import "./interfaces/IEscrowERC20.sol";
 
 contract EscrowERC20 is IEscrowERC20, StorageBase {
@@ -29,6 +28,8 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
+        _registerInterface(LibConstants._INTERFACE_ID_ESCROW_ERC20);
+        
         token = _token;
     }
 
@@ -58,6 +59,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         IERC20Upgradeable(token).transferFrom(address(this), user, amount);
     }
 
+    // This is specificly used for royalties
     function withdraw(uint256 orderId, uint256 amount) external override checkPermissions(MANAGER_ROLE) {
         require(escrowedTokensByOrder[orderId] >= amount, "Invalid amount");
 
