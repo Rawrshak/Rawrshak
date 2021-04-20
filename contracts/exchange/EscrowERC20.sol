@@ -62,6 +62,14 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);
     }
     
+    function depositRoyalty(
+        address _owner,
+        uint256 _amount
+    ) external override checkPermissions(MANAGER_ROLE) {
+        // No need to do checks. The exchange contracts will do the checks.
+        claimableTokensByOwner[_owner] = SafeMathUpgradeable.add(claimableTokensByOwner[_owner], _amount);
+    }
+    
     function transferRoyalty(
         uint256 _orderId,
         address _owner,

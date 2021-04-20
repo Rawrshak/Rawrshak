@@ -17,7 +17,9 @@ interface IEscrowERC20 {
     // View functions
     function getClaimableTokensByOwner(address _owner) external view returns(uint256); 
     
-    // Mutable Functions    
+    // Mutable Functions
+    function depositRoyalty(address _owner, uint256 _amount) external;
+
     function transferRoyalty(uint256 _orderId, address _to, uint256 _amount) external;
 
     function claim(address _owner) external;

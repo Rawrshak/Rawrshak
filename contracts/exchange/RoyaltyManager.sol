@@ -6,7 +6,7 @@ import "./ManagerBase.sol";
 import "../content/LibRoyalties.sol";
 import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
-import "./interfaces/IEscrowDistributions.sol";
+// import "./interfaces/IEscrowDistributions.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     
@@ -29,32 +29,44 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         _registerInterface(LibConstants._INTERFACE_ID_ROYALTY_MANAGER);
     }
 
-    // function addSupportedToken(bytes4 _token, bytes4 _tokenDistribution) external override onlyOwner {
-    //     tokenDistribution[_token] = _tokenDistribution;
-    // }
-
     function claimRoyalties(address _user, bytes4 _token) external override onlyOwner {
         uint256 amountClaimed = _getDistributionsAmount(_user, _token);
         IEscrowERC20(registry.getAddress(_token)).claim(_user);
         emit RoyaltiesClaimed(_user, IEscrowERC20(registry.getAddress(_token)).getToken(), amountClaimed);
     }
 
+    function depositRoyalty(
+        bytes4 _token,
+        address[] memory _accounts,
+        uint256[] memory _amounts
+    ) external override onlyOwner {
+        // No need to do checks. these values are returned from getRequiredRoyalties()
+        // This is called in a fill sell order where Tokens are sent from the buyer to the escrow. We 
+        // need to update the royalties table internally 
+        for (uint256 i = 0; i < _accounts.length; ++i) {
+            IEscrowERC20(registry.getAddress(_token)).depositRoyalty(_accounts[i], _amounts[i]);
+        }
+    }
+
     function transferRoyalty(
         bytes4 _token,
         uint256 _orderId,
-        uint256 _amount
+        address[] memory _accounts,
+        uint256[] memory _amounts
     ) external override onlyOwner {
-        // No need to do checks. The exchange contracts will do the checks.
+        // No need to do checks. these values are returned from getRequiredRoyalties()
+        // This is called in a fill buy order where Tokens are stored in the escrow and need to be "moved"
+        // to the "claimable" table for the asset creator
 
-
-        IEscrowERC20(registry.getAddress(_token)).transferRoyalty(_orderId, _owner, _amount);
+        for (uint256 i = 0; i < _accounts.length; ++i) {
+            IEscrowERC20(registry.getAddress(_token)).transferRoyalty(_orderId, _accounts[i], _amounts[i]);
+        }
     }
 
     function getRequiredRoyalties(
-        bytes4  _token,
         LibOrder.AssetData calldata _asset,
         uint256 _total
-    ) external view override onlyOwner returns(uint256[] memory royaltyAmounts, uint256 remaining) {
+    ) external view override onlyOwner returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining) {
         remaining = _total;
 
         LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
@@ -63,7 +75,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 idx = 0;
         for (uint256 i = 0; i < contractFees.length; ++i) {
             // Get Royalties owed per fee
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, contractFees[i].bps), 10000);
+            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, contractFees[i].bps), 10000);accounts[idx] = contractFees[i].account;
             royaltyAmounts[idx] = royalty;
             remaining = SafeMathUpgradeable.sub(remaining, royalty);
             ++idx;
@@ -71,87 +83,12 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
 
         // calculate _total price and add royalties from asset and platform
         for (uint256 i = 0; i < exchangeFees.length; ++i) {
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, exchangeFees[i].bps), 10000);
+            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, exchangeFees[i].bps), 10000);accounts[idx] = exchangeFees[i].account;
             royaltyAmounts[idx] = royalty;
             remaining = SafeMathUpgradeable.sub(remaining, royalty);
             ++idx;
         }
     }
-    
-    // function transferRoyalty(
-    //     uint256 _orderId,
-    //     address _owner,
-    //     uint256 _amount
-    // ) external override onlyOwner {
-
-    //     // No need to do checks. The exchange contracts will do the checks.
-    //     IEscrowERC20(registry.getAddress(_token)).withdraw(_orderIds[i], _paymentPerOrder[i]);
-    // }
-
-    // function deductRoyaltiesFromUser(
-    //     uint256 _orderId,
-    //     address _from,
-    //     bytes4 _token,
-    //     LibOrder.AssetData calldata _asset,
-    //     uint256 total
-    // ) external override onlyOwner returns(uint256 remaining) {
-    //     remaining = total;
-        
-    //     LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
-    //     uint256 royalty = 0;
-    //     for (uint256 i = 0; i < contractFees.length; ++i) {
-    //         // Get Royalties owed per fee
-    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, contractFees[i].bps), 10000);
-    //         if (royalty > 0) {
-    //             _deposit(_orderId, _from, contractFees[i].account, _token, royalty);
-    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
-    //         }
-    //     }
-
-    //     // calculate total price and add royalties from asset and platform
-    //     for (uint256 i = 0; i < exchangeFees.length; ++i) {
-    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, exchangeFees[i].bps), 10000);
-    //         if (royalty > 0) {
-    //             _deposit(_orderId, _from, exchangeFees[i].account, _token, royalty);
-    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
-    //         }
-    //     }
-
-    //     // remaining is the amount that is going to the seller
-    //     return remaining;
-    // }
-
-    // function deductRoyaltiesFromEscrow(
-    //     uint256 _orderId,
-    //     bytes4 _token,
-    //     LibOrder.AssetData calldata _asset,
-    //     uint256 total
-    // ) external override onlyOwner returns(uint256 remaining) {
-    //     remaining = total;
-        
-    //     LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
-    //     uint256 royalty = 0;
-    //     for (uint256 i = 0; i < contractFees.length; ++i) {
-    //         // Get Royalties owed per fee
-    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, contractFees[i].bps), 10000);
-    //         if (royalty > 0) {
-    //             _depositFromEscrow(_orderId, contractFees[i].account, _token, royalty);
-    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
-    //         }
-    //     }
-
-    //     // calculate total price and add royalties from asset and platform
-    //     for (uint256 i = 0; i < exchangeFees.length; ++i) {
-    //         royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(total, exchangeFees[i].bps), 10000);
-    //         if (royalty > 0) {
-    //             _depositFromEscrow(_orderId, exchangeFees[i].account, _token, royalty);
-    //             remaining = SafeMathUpgradeable.sub(remaining, royalty);
-    //         }
-    //     }
-
-    //     // remaining is the amount that is going to the seller
-    //     return remaining;
-    // }
 
     function setPlatformFees(LibRoyalties.Fees[] calldata _newFees) external override onlyOwner {
         if (exchangeFees.length > 0) {
@@ -173,18 +110,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
 
     /**************** Internal Functions ****************/
     function _getDistributionsAmount(address _user, bytes4 _token) internal view returns(uint256) {
-        return IEscrowDistributions(registry.getAddress(_token)).getClaimableTokensByOwner(_user);
-    }
-
-    function _depositFromEscrow(uint256 _orderId, address _to, bytes4 _token, uint256 _amount) internal {
-        IEscrowERC20(registry.getAddress(_token)).withdraw(_orderId, _amount);
-        IEscrowDistributions(registry.getAddress(tokenDistribution[_token])).deposit(registry.getAddress(_token), _to, _amount);
-        emit RoyaltiesDistributed(_orderId, _to, IEscrowERC20(registry.getAddress(_token)).getToken(), _amount);
-    }
-
-    function _deposit(uint256 _orderId, address _from, address _to, bytes4 _token, uint256 _amount) internal {
-        IEscrowDistributions(registry.getAddress(tokenDistribution[_token])).deposit(_from, _to, _amount);
-        emit RoyaltiesDistributed(_orderId, _to, IEscrowERC20(registry.getAddress(_token)).getToken(), _amount);
+        return IEscrowERC20(registry.getAddress(_token)).getClaimableTokensByOwner(_user);
     }
 
     uint256[50] private __gap;

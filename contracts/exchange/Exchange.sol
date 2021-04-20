@@ -109,6 +109,10 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         LibOrder.verifyAssetData(_asset);
         require(orderbookManager.verifyOrders(_orderIds, _asset, _token, false), "Invalid order");
 
+        if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC721Upgradeable).interfaceId)) {
+            require(_orderIds.length == 1, "Only 1 unique asset can be bought at a time.");
+        }
+
         // Get Total Payment
         (, uint256[] memory amountPerOrder) = orderbookManager.getPaymentTotals(_orderIds, _amounts);
         
@@ -124,16 +128,34 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         // Orderbook -> fill buy order
         orderbookManager.fillOrders(_orderIds, _amounts);
 
-        // Deduct royalties from escrow
+        // Deduct royalties from escrow per order and transfer to claimable in escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            (uint256[] memory royaltyAmounts, uint256 remaining) = royaltyManager.getRequiredRoyalties(_orderIds[i], _token, _asset, amountPerOrder[i]);
+            (address[] memory accounts,
+             uint256[] memory royaltyAmounts,
+             uint256 remaining) = royaltyManager.getRequiredRoyalties(_asset, amountPerOrder[i]);
             
-            royaltyManager.transferRoyalty(_token, _orderIds[i], royaltyAmounts);
+            royaltyManager.transferRoyalty(_token, _orderIds[i], accounts, royaltyAmounts);
             amountPerOrder[i] = remaining;
         }
 
-        // Execute trade
+        // Update Escrow records for the orders
         executionManager.executeBuyOrder(_orderIds, amountPerOrder, _amounts, _asset, _token);
+
+        // Move asset from user to escrow
+        if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC1155Upgradeable).interfaceId)) {
+            IERC1155Upgradeable(_asset.contentAddress)
+                .safeTransferFrom(_msgSender(), executionManager.getNFTsEscrow(), _asset.tokenId, totalAssetsToSell, "");
+        } else {
+            IERC721Upgradeable(_asset.contentAddress)
+                .safeTransferFrom(_msgSender(), executionManager.getNFTsEscrow(), _asset.tokenId, "");
+        }
+
+        // Move payment from escrow to user
+        for (uint256 i = 0; i < amountPerOrder.length; ++i) {            
+            IERC20Upgradeable(executionManager.getToken(_token))
+                .transferFrom(executionManager.getTokenEscrow(_token), _msgSender(), amountPerOrder[i]);
+        }
+
         emit BuyOrdersFilled(_orderIds, _amounts, _asset, _token, totalAssetsToSell);
     }
 
@@ -148,22 +170,52 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         LibOrder.verifyAssetData(_asset);
         require(orderbookManager.verifyOrders(_orderIds, _asset, _token, true), "Invalid input");
 
+        if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC721Upgradeable).interfaceId)) {
+            require(_orderIds.length == 1, "Only 1 unique asset can be bought at a time.");
+        }
+
         // Get Total Payment
         (uint256 amountDue, uint256[] memory amountPerOrder) = orderbookManager.getPaymentTotals(_orderIds, _amounts);
         
         // check buyer's account balance
         require(executionManager.verifyUserBalance(_msgSender(), _token, amountDue), "Not enough funds.");
+        
+        // Get Total Assets to buy
+        uint256 totalAssetsToBuy = 0;
+        for (uint256 i = 0; i < _amounts.length; ++i) {
+            totalAssetsToBuy = SafeMathUpgradeable.add(totalAssetsToBuy, _amounts[i]);
+        }
 
         // Orderbook -> fill sell order
         orderbookManager.fillOrders(_orderIds, _amounts);
 
         // Deduct royalties
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            amountPerOrder[i] = royaltyManager.deductRoyaltiesFromUser(_orderIds[i], _msgSender(), _token, _asset, amountPerOrder[i]);
+            (address[] memory accounts,
+             uint256[] memory royaltyAmounts,
+             uint256 remaining) = royaltyManager.getRequiredRoyalties(_asset, amountPerOrder[i]);
+
+            // for each order, update the royalty table for each creator to get paid
+            royaltyManager.depositRoyalty(_token, accounts, royaltyAmounts);
+            amountPerOrder[i] = remaining;
         }
 
         // Execute trade
-        executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _token);
+        executionManager.executeSellOrder(_orderIds, amountPerOrder, _amounts, _token);
+
+        // send the entire payment from the buyer to the escrow
+        IERC20Upgradeable(executionManager.getToken(_token))
+            .transferFrom(_msgSender(), executionManager.getTokenEscrow(_token), amountDue);
+
+        // Move asset from escrow to user
+        if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC1155Upgradeable).interfaceId)) {
+            IERC1155Upgradeable(_asset.contentAddress)
+                .safeTransferFrom(executionManager.getNFTsEscrow(), _msgSender(), _asset.tokenId, totalAssetsToBuy, "");
+        } else {
+            IERC721Upgradeable(_asset.contentAddress)
+                .safeTransferFrom(executionManager.getNFTsEscrow(), _msgSender(), _asset.tokenId, "");
+        }
+
         emit SellOrdersFilled(_orderIds, _amounts, _asset, _token, amountDue);
     }
 
@@ -173,7 +225,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         // delete orders
         orderbookManager.deleteOrder(_orderId);
 
-        executionManager.deleteOrder(_msgSender(), _orderId);
+        executionManager.deleteOrder(_orderId);
         emit OrderDeleted(_orderId);
     }
 
@@ -181,7 +233,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         return orderbookManager.getOrder(id);
     }
 
-    function claim(uint256[] memory orderIds) external {
+    function claimOrders(uint256[] memory orderIds) external {
         require(orderIds.length > 0, "empty order length.");
         
         executionManager.claimOrders(_msgSender(), orderIds);
@@ -208,20 +260,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         require(executionManager.verifyToken(_token), "Token is not supported.");
         royaltyManager.claimRoyalties(_msgSender(), _token);
     }
-
-    function addSupportedToken(bytes4 _token, bytes4 _tokenDistribution) external {
-        // this is called when we're adding new supported tokens after they're registered
-        require(executionManager.verifyToken(_token), "Token hasn't been registered yet.");
-        require(executionManager.verifyToken(_tokenDistribution), "Token Distribution hasn't been registered yet.");
-        royaltyManager.addSupportedToken(_token, _tokenDistribution);
-    }
-
-    // function approveERC20(uint256 amount) external returns(bool) {
-    //     require(amount > 0, "Invalid amount");
-
-    //     royaltyManager.approve()
-    // }
-
+    
     /**************** Internal Functions ****************/
 
     uint256[50] private __gap;
