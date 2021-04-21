@@ -37,11 +37,6 @@ contract('Escrow ERC20 Contract', (accounts) => {
             escrow.address != 0x0,
             true,
             "Escrow was not deployed properly.");
-
-        assert.equal(
-            await escrow.getToken(),
-            rawrToken.address,
-            "Rawr Token was not stored in the EscrowERC20 contract properly.");
     });
 
     it('Supports the EscrowERC20 Interface', async () => {

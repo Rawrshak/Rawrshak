@@ -56,8 +56,8 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         return orders[id];
     }
 
-    function verifyOwner(uint256 id) external view override returns(bool) {
-        return orders[id].owner == _msgSender();
+    function verifyOwner(uint256 id, address owner) external view override returns(bool) {
+        return orders[id].owner == owner;
     }
 
     function fillOrder(uint256 id, uint256 amount) external override checkPermissions(MANAGER_ROLE) {

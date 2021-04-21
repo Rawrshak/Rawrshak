@@ -72,11 +72,11 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         }
     }
 
-    function deleteOrder(uint256 orderId) external override onlyOwner {
+    function deleteOrder(uint256 orderId, address owner) external override onlyOwner {
         // If we get to this point, the orders in the list of order ids have already been verified.
         // the caller will already fill in the orders up to the amount. 
         require(
-            IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOwner(orderId),
+            IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOwner(orderId, owner),
             "Invalid order owner."
         );
 

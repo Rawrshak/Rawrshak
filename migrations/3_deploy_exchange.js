@@ -11,9 +11,13 @@ const ExecutionManager= artifacts.require("ExecutionManager");
 const RoyaltyManager= artifacts.require("RoyaltyManager");
 const OrderbookManager= artifacts.require("OrderbookManager");
 const OrderbookStorage= artifacts.require("OrderbookStorage");
+const LibOrder = artifacts.require("LibOrder");
 
 
 module.exports = async function(deployer, networks, accounts) {
+
+    await deployer.deploy(LibOrder);
+    await deployer.link(LibOrder, [OrderbookStorage]);
 
     // Todo: Deploy Exchange contracts
 

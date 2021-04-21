@@ -19,7 +19,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
-    mapping(uint256 => LibOrder.AssetData) orderData;
+    mapping(uint256 => LibOrder.AssetData) assetData;
     mapping(uint256 => uint256) escrowedAssetsByOrder;
 
     /*********************** Events *********************/
@@ -35,67 +35,51 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         _registerInterface(LibConstants._INTERFACE_ID_ESCROW_NFTS);
     }
 
-    function getEscrowedAssetsByOrder(uint256 _orderId) external view override returns(uint256) {
-        return escrowedAssetsByOrder[_orderId];
+    function getEscrowedAssetsByOrder(uint256 _orderId) external view override returns(uint256 _amount) {
+        _amount = escrowedAssetsByOrder[_orderId];
+    }
+
+    function getOrderAsset(uint256 _orderId) external view override returns(LibOrder.AssetData memory _assetData) {
+        _assetData = assetData[_orderId];
     }
 
     function deposit(
-        uint256 orderId,
-        uint256 amount,
-        LibOrder.AssetData memory assetData
+        uint256 _orderId,
+        uint256 _amount,
+        LibOrder.AssetData memory _assetData
     ) external override checkPermissions(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
-        orderData[orderId] = assetData;
-        escrowedAssetsByOrder[orderId] = amount;
-        // _transferAsset(user, address(this), assetData.contentAddress, assetData.tokenId, amount);
+        assetData[_orderId] = _assetData;
+        escrowedAssetsByOrder[_orderId] = _amount;
     }
 
     // withdraw() and withdrawBatch() is called when a user buys an escrowed asset, a seller cancels an order 
     // and withdraw's their escrowed asset, or a buyer's order is filled and claims the escrowed asset.
     function withdraw(
-        uint256 orderId,
-        uint256 amount
+        uint256 _orderId,
+        uint256 _amount
     ) external override checkPermissions(MANAGER_ROLE) {
-        require(escrowedAssetsByOrder[orderId] > 0, "Asset was already sold.");
-        require(orderData[orderId].contentAddress != address(0), "Invalid Order Data");
+        require(escrowedAssetsByOrder[_orderId] >= _amount, "Incorrect order amount to withdraw");
+        require(assetData[_orderId].contentAddress != address(0), "Invalid Order Data");
 
-        // address content = orderData[orderId].contentAddress;
-        // uint256 id = orderData[orderId].tokenId;
-
-        escrowedAssetsByOrder[orderId] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[orderId], amount);
-
-        // _transferAsset(address(this), to, content, id, amount);
+        escrowedAssetsByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[_orderId], _amount);
     }
 
     function withdrawBatch(
-        uint256[] memory orderIds,
-        uint256[] memory amounts
+        uint256[] memory _orderIds,
+        uint256[] memory _amounts
     ) external override checkPermissions(MANAGER_ROLE) {
-        for (uint256 i = 0; i < orderIds.length; ++i) {            
-            require(escrowedAssetsByOrder[orderIds[i]] > 0, "Asset was already sold.");
-            require(orderData[orderIds[i]].contentAddress != address(0), "Invalid Order Data");
-
-            // address content = orderData[orderIds[i]].contentAddress;
-            // uint256 id = orderData[orderIds[i]].tokenId;
+        for (uint256 i = 0; i < _orderIds.length; ++i) {            
+            require(escrowedAssetsByOrder[_orderIds[i]] > 0, "Asset was already sold.");
+            require(assetData[_orderIds[i]].contentAddress != address(0), "Invalid Order Data");
             
-            escrowedAssetsByOrder[orderIds[i]] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[orderIds[i]], amounts[i]);
-
-            // _transferAsset(address(this), to, content, id,  amounts[i]);
+            escrowedAssetsByOrder[_orderIds[i]] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[_orderIds[i]], _amounts[i]);
         }
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(StorageBase, ERC1155ReceiverUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
-
-    /**************** Internal Functions ****************/
-    // function _transferAsset(address from, address to, address tokenAddr, uint256 id, uint256 amount) internal {
-    //     if (ERC165CheckerUpgradeable.supportsInterface(tokenAddr, type(IERC1155Upgradeable).interfaceId)) {
-    //         IERC1155Upgradeable(tokenAddr).safeTransferFrom(from, to, id, amount, "");
-    //     } else {
-    //         IERC721Upgradeable(tokenAddr).safeTransferFrom(from, to, id, "");
-    //     }
-    // }
 
     uint256[50] private __gap;
 }

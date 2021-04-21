@@ -223,7 +223,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         require(orderbookManager.orderExists(_orderId), "Invalid Order.");
 
         // delete orders
-        orderbookManager.deleteOrder(_orderId);
+        orderbookManager.deleteOrder(_orderId, _msgSender());
 
         executionManager.deleteOrder(_orderId);
         emit OrderDeleted(_orderId);
@@ -260,7 +260,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         require(executionManager.verifyToken(_token), "Token is not supported.");
         royaltyManager.claimRoyalties(_msgSender(), _token);
     }
-    
+
     /**************** Internal Functions ****************/
 
     uint256[50] private __gap;

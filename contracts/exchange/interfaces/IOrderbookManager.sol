@@ -27,5 +27,5 @@ interface IOrderbookManager {
 
     function fillOrders(uint256[] memory orderIds, uint256[] memory amounts) external;
 
-    function deleteOrder(uint256 orderId) external;
+    function deleteOrder(uint256 orderId, address owner) external;
 }

@@ -17,7 +17,7 @@ interface IOrderbookStorage {
 
     function getOrder(uint256 id) external view returns(LibOrder.OrderData memory);
 
-    function verifyOwner(uint256 id) external view returns(bool);
+    function verifyOwner(uint256 id, address owner) external view returns(bool);
 
     // Mutable Functions
     function placeOrder(uint256 id, LibOrder.OrderData memory order) external;

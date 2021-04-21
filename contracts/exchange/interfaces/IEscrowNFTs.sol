@@ -11,7 +11,9 @@ interface IEscrowNFTs {
         LibOrder.AssetData memory assetData
     ) external;
 
-    function getEscrowedAssetsByOrder(uint256 _orderId) external view returns(uint256);
+    function getEscrowedAssetsByOrder(uint256 _orderId) external view returns(uint256 amount);
+    
+    function getOrderAsset(uint256 _orderId) external view returns(LibOrder.AssetData memory orderData);
 
     function withdraw(uint256 orderId, uint256 amount) external;
 
