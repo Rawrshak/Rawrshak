@@ -64,7 +64,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
 
     function fillOrders(uint256[] memory orderIds, uint256[] memory amounts) external override onlyOwner {
         // If we get to this point, the orders in the list of order ids have already been verified.
-        require(orderIds.length != amounts.length, "Orderbook Contract is not yet set");
+        require(orderIds.length == amounts.length, "Invalid input lengths");
 
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < orderIds.length; ++i) {
