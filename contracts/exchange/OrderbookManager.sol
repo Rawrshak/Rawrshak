@@ -16,7 +16,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
     /*********************** Events *********************/
     /********************* Modifiers ********************/
     /******************** Public API ********************/
-    function __Orderbook_init(address _registry) public initializer {
+    function __OrderbookManager_init(address _registry) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_registry);
