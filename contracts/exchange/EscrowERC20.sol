@@ -57,7 +57,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
 
     // This is specificly used for royalties
     function withdraw(uint256 _orderId, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
-        require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid _amount");
+        require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid amount");
 
         escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);
     }
@@ -75,7 +75,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         address _owner,
         uint256 _amount
     ) external override checkPermissions(MANAGER_ROLE) {        
-        require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid _amount");
+        require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid amount");
 
         // No need to do checks. The exchange contracts will do the checks.
         escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);

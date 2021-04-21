@@ -4,7 +4,7 @@ const OrderbookManager = artifacts.require("OrderbookManager");
 const AddressRegistry = artifacts.require("AddressRegistry");
 const TruffleAssert = require("truffle-assertions");
 
-contract('Orderbook Storage Contract', (accounts)=> {
+contract('Orderbook Manager Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
         orderbookManagerAddress,    // execution manager address
@@ -71,14 +71,14 @@ contract('Orderbook Storage Contract', (accounts)=> {
         await orderbookManager.placeOrder(orderData1, {from: deployerAddress});
     });
 
-    it('Check if OrderbookStorage was deployed properly', async () => {
+    it('Check if OrderbookManager was deployed properly', async () => {
         assert.equal(
             orderbookManager.address != 0x0,
             true,
             "Orderbook Manager was not deployed properly.");
     });
 
-    it('Supports the OrderbookStorage Interface', async () => {
+    it('Supports the OrderbookManager Interface', async () => {
         // _INTERFACE_ID_ORDERBOOK_MANAGER = 0x0000000B
         assert.equal(
             await orderbookManager.supportsInterface("0x0000000B"),

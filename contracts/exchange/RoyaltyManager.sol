@@ -69,13 +69,15 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     ) external view override onlyOwner returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining) {
         remaining = _total;
 
-        LibRoyalties.Fees[] memory contractFees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
-        royaltyAmounts = new uint256[](contractFees.length + exchangeFees.length);
+        LibRoyalties.Fees[] memory fees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
+        royaltyAmounts = new uint256[](fees.length + exchangeFees.length);
+        accounts = new address[](fees.length + exchangeFees.length);
         uint256 royalty = 0;
         uint256 idx = 0;
-        for (uint256 i = 0; i < contractFees.length; ++i) {
+        for (uint256 i = 0; i < fees.length; ++i) {
             // Get Royalties owed per fee
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, contractFees[i].bps), 10000);accounts[idx] = contractFees[i].account;
+            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, fees[i].bps), 10000);
+            accounts[idx] = fees[i].account;
             royaltyAmounts[idx] = royalty;
             remaining = SafeMathUpgradeable.sub(remaining, royalty);
             ++idx;
@@ -83,7 +85,8 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
 
         // calculate _total price and add royalties from asset and platform
         for (uint256 i = 0; i < exchangeFees.length; ++i) {
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, exchangeFees[i].bps), 10000);accounts[idx] = exchangeFees[i].account;
+            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, exchangeFees[i].bps), 10000);
+            accounts[idx] = exchangeFees[i].account;
             royaltyAmounts[idx] = royalty;
             remaining = SafeMathUpgradeable.sub(remaining, royalty);
             ++idx;
