@@ -45,7 +45,6 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;
     bytes4 constant _INTERFACE_ID_ESCROW_NFTS           = 0x00000007;
     bytes4 constant _INTERFACE_ID_ESCROW_ERC20          = 0x00000008;
-    bytes4 constant _INTERFACE_ID_ESCROW_DISTRIBUTIONS  = 0x00000009;
     bytes4 constant _INTERFACE_ID_ORDERBOOK_STORAGE     = 0x0000000A;
     bytes4 constant _INTERFACE_ID_ORDERBOOK_MANAGER     = 0x0000000B;
     bytes4 constant _INTERFACE_ID_EXECUTION_MANAGER     = 0x0000000C;

@@ -93,19 +93,9 @@ contract('Escrow ERC20 Contract', (accounts) => {
     
     it('Deposit 10000 RAWR tokens from player 1', async () => {
         // Allow rawr tokens to be escrowed
-        await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
+        // await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
 
-        // executionManagerAllowance = await rawrToken.allowance(playerAddress, executionManagerAddress);
-        // escrowAllowance = await rawrToken.allowance(playerAddress, escrow.address);
-        // console.log("Escrow: " + escrowAllowance.toString() + ", Execution Manager Allowance: " + executionManagerAllowance.toString());
-
-        await escrow.deposit(playerAddress, 1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
-
-        assert.equal(
-            (await rawrToken.balanceOf(escrow.address)).toString(), 
-            web3.utils.toWei('10000', 'ether').toString(), 
-            "10000 wasn't sent to escrow."
-        );
+        await escrow.deposit(1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
 
         // check escrowed tokens by order (1)
         assert.equal (
@@ -117,16 +107,9 @@ contract('Escrow ERC20 Contract', (accounts) => {
     
     it('Withdraw 10000 RAWR tokens from player 2', async () => {
         // Allow rawr tokens to be escrowed
-        await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
-        await escrow.deposit(playerAddress, 1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await escrow.deposit(1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
 
-        await escrow.methods['withdraw(address,uint256,uint256)'](player2Address, 1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
-
-        assert.equal(
-            (await rawrToken.balanceOf(player2Address)).toString(), 
-            web3.utils.toWei('10000', 'ether').toString(), 
-            "10000 wasn't withdrawn to player 2."
-        );
+        await escrow.withdraw(1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
 
         // check escrowed tokens by order (1)
         assert.equal (
@@ -138,17 +121,10 @@ contract('Escrow ERC20 Contract', (accounts) => {
     
     it('Withdraw 10000 RAWR tokens from player 2 in 2 transactions', async () => {
         // Allow rawr tokens to be escrowed
-        await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
-        await escrow.deposit(playerAddress, 1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await escrow.deposit(1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
 
-        await escrow.methods['withdraw(address,uint256,uint256)'](player2Address, 1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
-        await escrow.methods['withdraw(address,uint256,uint256)'](player2Address, 1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
-
-        assert.equal(
-            (await rawrToken.balanceOf(player2Address)).toString(), 
-            web3.utils.toWei('10000', 'ether').toString(), 
-            "10000 wasn't withdrawn to player 2."
-        );
+        await escrow.withdraw(1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+        await escrow.withdraw(1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
 
         // check escrowed tokens by order (1)
         assert.equal (
@@ -158,24 +134,102 @@ contract('Escrow ERC20 Contract', (accounts) => {
         );
     });
 
-    it('Call withdraw without withdrawing the tokens', async () => {
+    it('Invalid Withdraw', async () => {
         // Allow rawr tokens to be escrowed
-        await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
-        await escrow.deposit(playerAddress, 1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await escrow.deposit(1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
 
-        await escrow.methods['withdraw(uint256,uint256)'](1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await TruffleAssert.fails(
+            escrow.withdraw(1, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
         
         // check escrowed tokens by order (1)
+        assert.equal (
+            await escrow.getEscrowedTokensByOrder(1),
+            web3.utils.toWei('5000', 'ether'), 
+            "Internal value for Order 1 is incorrect."
+        );
+    });
+
+    it('Deposit Royalty', async () => {
+        await escrow.deposit(1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+        
+        await escrow.depositRoyalty(playerAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+        
+        // check escrowed tokens by order (1)
+        assert.equal (
+            await escrow.getEscrowedTokensByOrder(1),
+            web3.utils.toWei('5000', 'ether'), 
+            "Internal value for Order 1 is incorrect."
+        );
+        
+        // check claimable tokens for player 1
+        assert.equal (
+            await escrow.getClaimableTokensByOwner(playerAddress),
+            web3.utils.toWei('5000', 'ether'), 
+            "Claimable royalty for Player 1 is incorrect."
+        );
+    });
+
+    it('Transfer Royalty from escrow to claimable', async () => {
+        await escrow.deposit(1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+        
+        await escrow.transferRoyalty(1, playerAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
+        
+        // check escrowed tokens by order (1)
+        assert.equal (
+            await escrow.getEscrowedTokensByOrder(1),
+            web3.utils.toWei('4000', 'ether'), 
+            "Internal value for Order 1 is incorrect."
+        );
+        
+        // check claimable tokens for player 1
+        assert.equal (
+            await escrow.getClaimableTokensByOwner(playerAddress),
+            web3.utils.toWei('1000', 'ether'), 
+            "Claimable royalty for Player 1 is incorrect."
+        );
+    });
+
+    it('Claim Royalty', async () => {
+        await escrow.depositRoyalty(playerAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+        
+        assert.equal (
+            await escrow.getClaimableTokensByOwner(playerAddress),
+            web3.utils.toWei('5000', 'ether'), 
+            "Claimable royalty for Player 1 is incorrect."
+        );
+
+        await escrow.claim(playerAddress, {from: executionManagerAddress});
+
+        assert.equal (
+            await escrow.getClaimableTokensByOwner(playerAddress),
+            0, 
+            "Claimable royalty for Player 1 is incorrect."
+        );
+    });
+
+    it('Place Order and Fill Order', async () => {
+        await escrow.deposit(1, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+
+        await escrow.transferRoyalty(1, playerAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
+        
+        await escrow.withdraw(1, web3.utils.toWei('4000', 'ether'), {from: executionManagerAddress});
+
+        await escrow.claim(playerAddress, {from: executionManagerAddress});
+
+        // Check escrowed tokens for Order 1
         assert.equal (
             await escrow.getEscrowedTokensByOrder(1),
             0, 
             "Internal value for Order 1 is incorrect."
         );
-        
-        assert.equal(
-            (await rawrToken.balanceOf(escrow.address)).toString(), 
-            web3.utils.toWei('10000', 'ether').toString(), 
-            "10000 wasn't incorrectly withdrawrn from the escrow."
+
+        // Checked claimable tokens for player 1
+        assert.equal (
+            await escrow.getClaimableTokensByOwner(playerAddress),
+            0, 
+            "Claimable royalty for Player 1 is incorrect."
         );
     });
 });
