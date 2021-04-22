@@ -129,13 +129,13 @@ contract('Royalty Manager Contract', (accounts)=> {
         await royaltyManager.depositRoyalty(rawrId, creators, amounts, {from: deployerAddress});
 
         assert.equal(
-            await royaltyManager.getDistributionsAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.getClaimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
         
         assert.equal(
-            await royaltyManager.getDistributionsAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.getClaimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('100', 'ether').toString(),
             "Royalty was not deposited in Creator 2 address escrow."
         );
@@ -153,13 +153,13 @@ contract('Royalty Manager Contract', (accounts)=> {
         await royaltyManager.transferRoyalty(rawrId, 1, creators, amounts, {from:deployerAddress});
 
         assert.equal(
-            await royaltyManager.getDistributionsAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.getClaimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
         
         assert.equal(
-            await royaltyManager.getDistributionsAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.getClaimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('100', 'ether').toString(),
             "Royalty was not deposited in Creator 2 address escrow."
         );
@@ -209,7 +209,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
 
         assert.equal(
-            await royaltyManager.getDistributionsAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.getClaimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
             0,
             "Royalty was not claimed yet."
         );
@@ -220,7 +220,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
         
         assert.equal(
-            await royaltyManager.getDistributionsAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.getClaimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
             0,
             "Royalty was not claimed yet."
         );

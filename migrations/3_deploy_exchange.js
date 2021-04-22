@@ -18,6 +18,7 @@ module.exports = async function(deployer, networks, accounts) {
 
     await deployer.deploy(LibOrder);
     await deployer.link(LibOrder, [OrderbookStorage]);
+    await deployer.link(LibOrder, [Exchange]);
 
     // Todo: Deploy Exchange contracts
 

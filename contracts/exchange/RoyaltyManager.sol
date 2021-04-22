@@ -30,7 +30,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     }
 
     function claimRoyalties(address _user, bytes4 _token) external override onlyOwner {
-        uint256 amountClaimed = _getDistributionsAmount(_user, _token);
+        uint256 amountClaimed = _getClaimableRoyaltyAmount(_user, _token);
         IEscrowERC20(registry.getAddress(_token)).claim(_user);
         emit RoyaltiesClaimed(_user, IEscrowERC20(registry.getAddress(_token)).getToken(), amountClaimed);
     }
@@ -107,12 +107,12 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         return exchangeFees;
     }
 
-    function getDistributionsAmount(address _user, bytes4 _token) external view override returns(uint256) {        
-        return _getDistributionsAmount(_user, _token);
+    function getClaimableRoyaltyAmount(address _user, bytes4 _token) external view override returns(uint256) {        
+        return _getClaimableRoyaltyAmount(_user, _token);
     }
 
     /**************** Internal Functions ****************/
-    function _getDistributionsAmount(address _user, bytes4 _token) internal view returns(uint256) {
+    function _getClaimableRoyaltyAmount(address _user, bytes4 _token) internal view returns(uint256) {
         return IEscrowERC20(registry.getAddress(_token)).getClaimableTokensByOwner(_user);
     }
 

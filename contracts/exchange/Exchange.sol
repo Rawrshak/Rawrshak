@@ -251,9 +251,9 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         return royaltyManager.getPlatformFees();
     }
 
-    function getDistributionsAmount(bytes4 _token) external view returns (uint256) {
+    function getClaimableRoyaltyAmount(bytes4 _token) external view returns (uint256) {
         require(executionManager.verifyToken(_token), "Token is not supported.");
-        return royaltyManager.getDistributionsAmount(_msgSender(), _token);
+        return royaltyManager.getClaimableRoyaltyAmount(_msgSender(), _token);
     }
 
     function claimRoyalties(bytes4 _token) external {

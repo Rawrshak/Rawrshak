@@ -30,5 +30,5 @@ interface IRoyaltyManager {
 
     function getPlatformFees() external view returns(LibRoyalties.Fees[] memory);
 
-    function getDistributionsAmount(address _user, bytes4 _token) external view returns(uint256);
+    function getClaimableRoyaltyAmount(address _user, bytes4 _token) external view returns(uint256);
 }
