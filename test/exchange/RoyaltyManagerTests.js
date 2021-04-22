@@ -29,6 +29,7 @@ contract('Royalty Manager Contract', (accounts)=> {
     var rawrId = "0xd4df6855";
     var rawrToken;
     var royaltyManager;
+    var escrow;
     var manager_role;
     var default_admin_role;
     var assetData;
@@ -47,7 +48,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
-        // Add 1 asset
+        // Add 2 assets
         await contentManager.addAssetBatch(asset);
         
         // Setup Content Contract Royalty
