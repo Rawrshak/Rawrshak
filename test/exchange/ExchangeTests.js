@@ -133,6 +133,7 @@ contract('Exchange Contract', (accounts)=> {
         
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
+        await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 1]];
@@ -169,11 +170,77 @@ contract('Exchange Contract', (accounts)=> {
     // });
 
     // it('Place buy order', async () => {
+    //     var orderData = [
+    //         [content.address, 1],
+    //         player2Address,
+    //         rawrId,
+    //         web3.utils.toWei('1000', 'ether'),
+    //         1,
+    //         true
+    //     ];
 
+    //     await rawrToken.approve(exchange.address, web3.utils.toWei('1000', 'ether'), {from: player2Address});
+
+    //     var orderPlacedEvents = await exchange.placeOrder(orderData, {from: player2Address});
+    //     TruffleAssert.eventEmitted(
+    //         orderPlacedEvents,
+    //         'OrderPlaced'
+    //     );
+
+    //     var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
+
+    //     order = await exchange.getOrder(orderId);
+    //     assert.equal(
+    //         order.owner,
+    //         player2Address,
+    //         "Buy Order was placed");
+
+    //     assert.equal(
+    //         await escrowRawr.getEscrowedTokensByOrder(orderId),
+    //         web3.utils.toWei('1000', 'ether'),
+    //         "1000 RAWR tokens were not escrowed");
+
+    //     assert.equal(
+    //         await rawrToken.balanceOf(escrowRawr.address),
+    //         web3.utils.toWei('1000', 'ether'),
+    //         "Escrow Should own 1000 tokens");
     // });
 
     // it('Place sell order', async () => {
+    //     var orderData = [
+    //         [content.address, 1],
+    //         playerAddress,
+    //         rawrId,
+    //         web3.utils.toWei('1000', 'ether'),
+    //         1,
+    //         false
+    //     ];
 
+    //     await content.setApprovalForAll(exchange.address, true, {from:playerAddress});
+        
+    //     var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
+    //     TruffleAssert.eventEmitted(
+    //         orderPlacedEvents,
+    //         'OrderPlaced'
+    //     );
+
+    //     var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
+
+    //     order = await exchange.getOrder(orderId);
+    //     assert.equal(
+    //         order.owner,
+    //         playerAddress,
+    //         "Sell Order was placed");
+
+    //     assert.equal(
+    //         await escrowContent.getEscrowedAssetsByOrder(orderId),
+    //         1,
+    //         "1 NFT was not escrowed");
+
+    //     assert.equal(
+    //         await content.balanceOf(escrowContent.address, 1),
+    //         1,
+    //         "Escrow Should own 1 asset in the Content contract");
     // });
 
     // it('Delete Orders', async () => {
