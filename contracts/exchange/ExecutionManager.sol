@@ -37,15 +37,16 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         return address(registry.getAddress(ESCROW_NFTS_CONTRACT));
     }
 
-    function placeBuyOrder(uint256 _orderId, bytes4 _token, uint256 _tokenAmount) external override onlyOwner {
-        IEscrowERC20(registry.getAddress(_token)).deposit(_orderId, _tokenAmount);
+    function placeBuyOrder(uint256 _orderId, bytes4 _token, address _sender, uint256 _tokenAmount) external override onlyOwner {
+        IEscrowERC20(registry.getAddress(_token)).deposit(_orderId, _sender, _tokenAmount);
     }
 
-    function placeSellOrder(uint256 _orderId, LibOrder.AssetData memory _asset, uint256 _assetAmount) external override onlyOwner {
-        IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).deposit(_orderId, _assetAmount, _asset);
+    function placeSellOrder(uint256 _orderId, address _sender, LibOrder.AssetData memory _asset, uint256 _assetAmount) external override onlyOwner {
+        IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).deposit(_orderId, _sender, _assetAmount, _asset);
     }
 
     function executeBuyOrder(
+        address _user,
         uint256[] calldata _orderIds,
         uint256[] calldata _paymentPerOrder,
         uint256[] calldata _amounts,
@@ -56,16 +57,17 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input lenght");
         
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            // Send Assets to user
-            IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).deposit(_orderIds[i], _amounts[i], _asset);
+            // Send Assets to escrow
+            IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).deposit(_orderIds[i], _user, _amounts[i], _asset);
             
-            // send payment to escrow as claimable per order
-            IEscrowERC20(registry.getAddress(_token)).withdraw(_orderIds[i], _paymentPerOrder[i]);
+            // send payment from escrow to user
+            IEscrowERC20(registry.getAddress(_token)).withdraw(_orderIds[i], _user, _paymentPerOrder[i]);
         }
     }
 
     // Send assets from escrow to user, send tokens from user to escrow
     function executeSellOrder(
+        address _user,
         uint256[] calldata _orderIds,
         uint256[] calldata _paymentPerOrder,
         uint256[] calldata _amounts,
@@ -74,25 +76,26 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     {
         require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input lenght");
         
-        // send payment to escrow as claimable per order
+        // send payment from user to escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            IEscrowERC20(registry.getAddress(_token)).deposit(_orderIds[i], _paymentPerOrder[i]);
+            IEscrowERC20(registry.getAddress(_token)).deposit(_orderIds[i], _user, _paymentPerOrder[i]);
         }
 
         // send asset to buyer
-        IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdrawBatch(_orderIds, _amounts);
+        IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdrawBatch(_orderIds, _user, _amounts);
     }
 
-    function deleteOrder(uint256 _orderId) external override onlyOwner {
-        LibOrder.OrderData memory order = OrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderId);
-        if (order.isBuyOrder) {
-            // withdraw ERC20            
-            IEscrowERC20(registry.getAddress(order.token)).withdraw(
+    function deleteOrder(uint256 _orderId, address _user, LibOrder.OrderData memory _order) external override onlyOwner {
+        
+        if (_order.isBuyOrder) {
+            // withdraw ERC20
+            IEscrowERC20(registry.getAddress(_order.token)).withdraw(
                 _orderId,
-                SafeMathUpgradeable.mul(order.price, order.amount));
+                _user, 
+                SafeMathUpgradeable.mul(_order.price, _order.amount));
         } else {
             // withdraw NFTs
-            IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_orderId, order.amount);
+            IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_orderId, _user, _order.amount);
         }
     }
 
@@ -107,12 +110,13 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
             if (order.isBuyOrder) {
                 // withdraw NFTs
                 amount = IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).getEscrowedAssetsByOrder(_orderIds[i]);
-                IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_orderIds[i], amount);
+                IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_orderIds[i], _user, amount);
             } else {
                 // withdraw ERC20               
                 amount = IEscrowERC20(registry.getAddress(order.token)).getEscrowedTokensByOrder(_orderIds[i]);
                 IEscrowERC20(registry.getAddress(order.token)).withdraw(
                     _orderIds[i],
+                    _user,
                     amount);
             }
         }

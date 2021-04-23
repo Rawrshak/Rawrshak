@@ -1,6 +1,7 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
+const ContentManager = artifacts.require("ContentManager");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
 const TruffleAssert = require("truffle-assertions");
 
@@ -33,9 +34,18 @@ contract('Escrow NFTs Contract', (accounts) => {
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
         contentStorage.setParent(content.address);
 
-        // Add 1 asset        
-        await content.addAssetBatch(asset);
-        await contentStorage.addAssetBatch(asset);
+        // Setup content manager
+        contentManager = await ContentManager.new();
+        await contentManager.__ContentManager_init(content.address, contentStorage.address);
+        await content.transferOwnership(contentManager.address, {from: deployerAddress});
+        await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        
+        // Add 2 assets
+        await contentManager.addAssetBatch(asset);
+        
+        // Mint an assets
+        var mintData = [playerAddress, [1, 2], [10, 1]];
+        await contentManager.mintBatch(mintData, {from: deployerAddress});
 
         // give crafting system approval
         await contentStorage.setSystemApproval(approvalPair);
@@ -107,12 +117,25 @@ contract('Escrow NFTs Contract', (accounts) => {
     it('Depositing Asset', async () => {
         var assetData = [content.address, 1];
 
-        await escrow.deposit(1, 1, assetData, {from: executionManagerAddress});
+        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+        await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
 
         assert.equal(
             await escrow.getEscrowedAssetsByOrder(1),
             1,
+            "Incorrect number of assets escrow recorded"
+        );
+
+        assert.equal(
+            await content.balanceOf(escrow.address, 1),
+            1,
             "Incorrect number of assets escrowed."
+        );
+
+        assert.equal(
+            await content.balanceOf(playerAddress, 1),
+            9,
+            "Incorrect number of assets owned by the player"
         );
         
         var internalAssetData = await escrow.getOrderAsset(1);
@@ -126,29 +149,43 @@ contract('Escrow NFTs Contract', (accounts) => {
     it('Withdraw Asset', async () => {
         var assetData = [content.address, 1];
 
-        await escrow.deposit(1, 1, assetData, {from: executionManagerAddress});
+        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+        await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
         
-        await escrow.withdraw(1, 1, {from: executionManagerAddress});
+        await escrow.withdraw(1, playerAddress, 1, {from: executionManagerAddress});
 
         assert.equal(
             await escrow.getEscrowedAssetsByOrder(1),
             0,
             "Incorrect number of assets escrowed."
         );
+
+        assert.equal(
+            await content.balanceOf(escrow.address, 1),
+            0,
+            "Asset not withdrawn from the escrow"
+        );
+
+        assert.equal(
+            await content.balanceOf(playerAddress, 1),
+            10,
+            "Player wasn't able to withdraw asset"
+        );
     });
     
     it('Invalid Withdraws', async () => {
         var assetData = [content.address, 1];
 
-        await escrow.deposit(1, 1, assetData, {from: executionManagerAddress});
+        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+        await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
         
         await TruffleAssert.fails(
-            escrow.withdraw(1, 2, {from: executionManagerAddress}),
+            escrow.withdraw(1, playerAddress, 2, {from: executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         await TruffleAssert.fails(
-            escrow.withdraw(2, 1, {from: executionManagerAddress}),
+            escrow.withdraw(2, playerAddress, 1, {from: executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
@@ -162,13 +199,14 @@ contract('Escrow NFTs Contract', (accounts) => {
     it('Withdraw Batch Asset', async () => {
         var assetData = [content.address, 1];
 
-        await escrow.deposit(1, 1, assetData, {from: executionManagerAddress});
-        await escrow.deposit(2, 3, assetData, {from: executionManagerAddress});
-        await escrow.deposit(3, 2, assetData, {from: executionManagerAddress});
+        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+        await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
+        await escrow.deposit(2, playerAddress, 3, assetData, {from: executionManagerAddress});
+        await escrow.deposit(3, playerAddress, 2, assetData, {from: executionManagerAddress});
         
         var orders = [1,2,3];
         var amounts = [1,3,1];
-        await escrow.withdrawBatch(orders, amounts, {from: executionManagerAddress});
+        await escrow.withdrawBatch(orders, playerAddress, amounts, {from: executionManagerAddress});
 
         assert.equal(
             await escrow.getEscrowedAssetsByOrder(2),
@@ -186,22 +224,23 @@ contract('Escrow NFTs Contract', (accounts) => {
     it('Invalid Withdraws', async () => {
         var assetData = [content.address, 1];
         
-        await escrow.deposit(1, 1, assetData, {from: executionManagerAddress});
-        await escrow.deposit(2, 3, assetData, {from: executionManagerAddress});
-        await escrow.deposit(3, 2, assetData, {from: executionManagerAddress});
+        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+        await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
+        await escrow.deposit(2, playerAddress, 3, assetData, {from: executionManagerAddress});
+        await escrow.deposit(3, playerAddress, 2, assetData, {from: executionManagerAddress});
         
         var orders = [1,2,3];
         var amounts = [1,4,1];
 
         await TruffleAssert.fails(
-            escrow.withdrawBatch(orders, amounts, {from: executionManagerAddress}),
+            escrow.withdrawBatch(orders, playerAddress, amounts, {from: executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         var orders = [1,4];
         var amounts = [1,1];
         await TruffleAssert.fails(
-            escrow.withdrawBatch(orders, amounts, {from: executionManagerAddress}),
+            escrow.withdrawBatch(orders, playerAddress, amounts, {from: executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });

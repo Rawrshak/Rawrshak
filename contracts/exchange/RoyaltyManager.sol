@@ -36,6 +36,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     }
 
     function depositRoyalty(
+        address _sender,
         bytes4 _token,
         address[] memory _accounts,
         uint256[] memory _amounts
@@ -44,7 +45,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         // This is called in a fill sell order where Tokens are sent from the buyer to the escrow. We 
         // need to update the royalties table internally 
         for (uint256 i = 0; i < _accounts.length; ++i) {
-            IEscrowERC20(registry.getAddress(_token)).depositRoyalty(_accounts[i], _amounts[i]);
+            IEscrowERC20(registry.getAddress(_token)).depositRoyalty(_sender, _accounts[i], _amounts[i]);
         }
     }
 

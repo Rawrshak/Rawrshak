@@ -14,6 +14,7 @@ interface IRoyaltyManager {
     ) external returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining);
 
     function depositRoyalty(
+        address _sender,
         bytes4 _token,
         address[] memory _accounts,
         uint256[] memory _amounts

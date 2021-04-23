@@ -11,11 +11,12 @@ interface IExecutionManager {
 
     function getNFTsEscrow() external view returns(address);
     
-    function placeBuyOrder(uint256 _orderId, bytes4 _token, uint256 _tokenAmount) external;
+    function placeBuyOrder(uint256 _orderId, bytes4 _token, address _sender, uint256 _tokenAmount) external;
 
-    function placeSellOrder(uint256 _orderId, LibOrder.AssetData memory _asset, uint256 _assetAmount) external;
+    function placeSellOrder(uint256 _orderId, address _sender, LibOrder.AssetData memory _asset, uint256 _assetAmount) external;
 
     function executeBuyOrder(
+        address _user,
         uint256[] calldata _orderIds,
         uint256[] calldata _paymentPerOrder,
         uint256[] calldata _amounts,
@@ -24,13 +25,14 @@ interface IExecutionManager {
         external;
 
     function executeSellOrder(
+        address _user,
         uint256[] calldata _orderIds,
         uint256[] calldata _paymentPerOrder,
         uint256[] calldata _amounts,
         bytes4 _token)
         external;
 
-    function deleteOrder(uint256 _orderId) external;
+    function deleteOrder(uint256 _orderId, address _user, LibOrder.OrderData memory _order) external;
 
     function claimOrders(address _user, uint256[] calldata _orderIds) external;
 

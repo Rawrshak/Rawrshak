@@ -49,25 +49,32 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     
     function deposit(
         uint256 _orderId,
+        address _sender,
         uint256 _amount
     ) external override checkPermissions(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.add(escrowedTokensByOrder[_orderId], _amount);
+        
+        // Send the Token Amount to the Escrow
+        IERC20Upgradeable(token).transferFrom(_sender, address(this), _amount);
     }
 
     // This is specificly used for royalties
-    function withdraw(uint256 _orderId, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+    function withdraw(uint256 _orderId, address _receiver, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
         require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid amount");
 
         escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);
+        IERC20Upgradeable(token).transfer(_receiver, _amount);
     }
     
     function depositRoyalty(
+        address _sender,
         address _owner,
         uint256 _amount
     ) external override checkPermissions(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         claimableTokensByOwner[_owner] = SafeMathUpgradeable.add(claimableTokensByOwner[_owner], _amount);
+        IERC20Upgradeable(token).transferFrom(_sender, address(this), _amount);
     }
     
     function transferRoyalty(
@@ -85,7 +92,10 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     function claim(address _owner) external override checkPermissions(MANAGER_ROLE) {
         require(claimableTokensByOwner[_owner] > 0, "Tokens were already claimed.");
 
+        uint256 amount = claimableTokensByOwner[_owner];
         claimableTokensByOwner[_owner]= 0;
+        
+        IERC20Upgradeable(token).transfer(_owner, amount);
     }
 
     /**************** Internal Functions ****************/

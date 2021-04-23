@@ -103,9 +103,13 @@ contract('Execution Manager Contract', (accounts)=> {
         
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
+        await rawrToken.transfer(player2Address, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
 
         // Mint an asset
-        var mintData = [playerAddress, [1, 2], [10, 1]];
+        var mintData = [playerAddress, [1], [10]];
+        await contentManager.mintBatch(mintData, {from: deployerAddress});
+        
+        mintData = [player2Address, [2], [5]];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
     });
 
@@ -151,7 +155,8 @@ contract('Execution Manager Contract', (accounts)=> {
             true
         ];
 
-        await executionManager.placeBuyOrder(1, rawrId, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
+        await executionManager.placeBuyOrder(1, rawrId, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
         
         assert.equal(
             await escrowRawr.getEscrowedTokensByOrder(1),
@@ -163,7 +168,7 @@ contract('Execution Manager Contract', (accounts)=> {
     it('Place Sell Order', async () => {
 
         var sellOrderData = [ 
-            [content.address, 2],
+            [content.address, 1],
             playerAddress,
             rawrId,
             web3.utils.toWei('1000', 'ether'),
@@ -171,7 +176,8 @@ contract('Execution Manager Contract', (accounts)=> {
             true
         ];
 
-        await executionManager.placeSellOrder(1, [content.address, 2], 2, {from: deployerAddress});
+        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
+        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
         
         assert.equal(
             await escrowContent.getEscrowedAssetsByOrder(1),
@@ -181,14 +187,16 @@ contract('Execution Manager Contract', (accounts)=> {
     });
 
     it('Execute Buy Order', async () => {
-        await executionManager.placeBuyOrder(1, rawrId, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
+        await executionManager.placeBuyOrder(1, rawrId, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
 
         var orders = [1];
         var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
         var amounts = [1];
-        var asset = [content.address, 1];
+        var asset = [content.address, 2];
 
-        await executionManager.executeBuyOrder(orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress});
+        await content.setApprovalForAll(escrowContent.address, true, {from:player2Address});
+        await executionManager.executeBuyOrder(player2Address, orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress});
 
         assert.equal(
             await escrowRawr.getEscrowedTokensByOrder(1),
@@ -204,34 +212,38 @@ contract('Execution Manager Contract', (accounts)=> {
     });
 
     it('Invalid Execute Buy Order', async () => {
-        await executionManager.placeBuyOrder(1, rawrId, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
+        await executionManager.placeBuyOrder(1, rawrId, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
 
         var orders = [1, 2];
         var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
         var amounts = [1];
         var asset = [content.address, 1];
 
+        await content.setApprovalForAll(escrowContent.address, true, {from:player2Address});
         await TruffleAssert.fails(
-            executionManager.executeBuyOrder(orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress}),
+            executionManager.executeBuyOrder(player2Address, orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         
         paymentPerOrder = [web3.utils.toWei('1000', 'ether'), web3.utils.toWei('1000', 'ether')];
         await TruffleAssert.fails(
-            executionManager.executeBuyOrder(orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress}),
+            executionManager.executeBuyOrder(player2Address, orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
 
     it('Execute Sell Order', async () => {
-        await executionManager.placeSellOrder(1, [content.address, 2], 2, {from: deployerAddress});
+        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
+        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
 
         var orders = [1];
         var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
         var amounts = [1];
 
-        await executionManager.executeSellOrder(orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress});
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('1000', 'ether'), {from:player2Address});
+        await executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress});
 
         assert.equal(
             await escrowRawr.getEscrowedTokensByOrder(1),
@@ -241,22 +253,24 @@ contract('Execution Manager Contract', (accounts)=> {
     });
 
     it('Invalid Execute Sell Order', async () => {
-        await executionManager.placeBuyOrder(1, rawrId, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
+        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
+        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
 
         var orders = [1, 2];
         var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
         var amounts = [1];
         var asset = [content.address, 1];
 
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('1000', 'ether'), {from:player2Address});
         await TruffleAssert.fails(
-            executionManager.executeSellOrder(orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress}),
+            executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
-        
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:player2Address});
         paymentPerOrder = [web3.utils.toWei('1000', 'ether'), web3.utils.toWei('1000', 'ether')];
         await TruffleAssert.fails(
-            executionManager.executeSellOrder(orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress}),
+            executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
@@ -272,9 +286,10 @@ contract('Execution Manager Contract', (accounts)=> {
         ];
 
         await orderbookStorage.placeOrder(1, sellOrderData, {from: testManagerAddress});
-        await executionManager.placeSellOrder(1, [content.address, 1], 2, {from: deployerAddress});
+        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
+        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
         
-        await executionManager.deleteOrder(1, {from: deployerAddress});
+        await executionManager.deleteOrder(1, playerAddress, sellOrderData, {from: deployerAddress});
 
         assert.equal(
             await escrowContent.getEscrowedAssetsByOrder(1),
@@ -292,9 +307,10 @@ contract('Execution Manager Contract', (accounts)=> {
         ];
 
         await orderbookStorage.placeOrder(2, buyOrderData, {from: testManagerAddress});
-        await executionManager.placeBuyOrder(2, rawrId, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
+        await executionManager.placeBuyOrder(2, rawrId, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
         
-        await executionManager.deleteOrder(2, {from: deployerAddress});
+        await executionManager.deleteOrder(2, playerAddress, buyOrderData, {from: deployerAddress});
 
         assert.equal(
             await escrowRawr.getEscrowedTokensByOrder(1),
@@ -314,14 +330,16 @@ contract('Execution Manager Contract', (accounts)=> {
             true
         ];
         await orderbookStorage.placeOrder(1, buyOrderData, {from: testManagerAddress});
-        await executionManager.placeBuyOrder(1, rawrId, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
+        await executionManager.placeBuyOrder(1, rawrId, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
 
         var orders = [1];
         var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
         var amounts = [2];
         var asset = [content.address, 2];
 
-        await executionManager.executeBuyOrder(orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress});
+        await content.setApprovalForAll(escrowContent.address, true, {from:player2Address});
+        await executionManager.executeBuyOrder(player2Address, orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress});
 
         await executionManager.claimOrders(playerAddress, orders, {from:deployerAddress});
 
@@ -344,13 +362,15 @@ contract('Execution Manager Contract', (accounts)=> {
         ];
 
         await orderbookStorage.placeOrder(1, sellOrderData, {from: testManagerAddress});
-        await executionManager.placeSellOrder(1, [content.address, 1], 2, {from: deployerAddress});
+        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
+        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
 
         var orders = [1];
         var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
         var amounts = [2];
 
-        await executionManager.executeSellOrder(orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress});
+        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:player2Address});
+        await executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress});
 
         await executionManager.claimOrders(playerAddress, orders, {from:deployerAddress});
 

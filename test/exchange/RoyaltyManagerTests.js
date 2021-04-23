@@ -126,7 +126,8 @@ contract('Royalty Manager Contract', (accounts)=> {
         creators = [creator1Address, creator2Address];
         amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
 
-        await royaltyManager.depositRoyalty(rawrId, creators, amounts, {from: deployerAddress});
+        await rawrToken.approve(escrow.address, web3.utils.toWei('300', 'ether'), {from:playerAddress});
+        await royaltyManager.depositRoyalty(playerAddress, rawrId, creators, amounts, {from: deployerAddress});
 
         assert.equal(
             await royaltyManager.getClaimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
@@ -143,7 +144,9 @@ contract('Royalty Manager Contract', (accounts)=> {
 
     it('Transfer Royalty from escrow to royalty owner', async () => {
         // deposit 10000 RAWR tokens for Order 1 
-        await escrow.deposit(1, web3.utils.toWei('10000', 'ether'), {from: testManagerAddress});
+        
+        await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
+        await escrow.deposit(1, playerAddress, web3.utils.toWei('10000', 'ether'), {from: testManagerAddress});
 
         // assert.equal(await escrow.getEscrowedTokensByOrder(id), web3.utils.toWei('10000', 'ether'), "Incorrect Deposit.");
 
@@ -200,7 +203,8 @@ contract('Royalty Manager Contract', (accounts)=> {
         creators = [creator1Address, creator2Address];
         amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
 
-        await royaltyManager.depositRoyalty(rawrId, creators, amounts, {from: deployerAddress});
+        await rawrToken.approve(escrow.address, web3.utils.toWei('300', 'ether'), {from:playerAddress});
+        await royaltyManager.depositRoyalty(playerAddress, rawrId, creators, amounts, {from: deployerAddress});
 
         // claim royalties
         TruffleAssert.eventEmitted(
