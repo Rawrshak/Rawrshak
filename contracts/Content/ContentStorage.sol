@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
-import "./LibAsset.sol";
+import "../libraries/LibAsset.sol";
 import "./SystemsApproval.sol";
 import "../utils/LibConstants.sol";
 import "./interfaces/IContentStorage.sol";

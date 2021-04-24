@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
-import "./LibAsset.sol";
+import "../libraries/LibAsset.sol";
 
 abstract contract SystemsApproval is ERC165StorageUpgradeable {
         

@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import "./LibAsset.sol";
+import "../libraries/LibAsset.sol";
 
 abstract contract HasTokenUri is ERC165StorageUpgradeable {
     using StringsUpgradeable for uint256;

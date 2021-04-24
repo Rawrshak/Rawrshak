@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "../LibOrder.sol";
-import "../../content/LibRoyalties.sol";
+import "../../libraries/LibOrder.sol";
+import "../../libraries/LibRoyalties.sol";
 
 interface IRoyaltyManager { 
     /******** Mutative Functions ********/    

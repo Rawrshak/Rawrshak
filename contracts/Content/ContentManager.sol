@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
-import "./LibAsset.sol";
+import "../libraries/LibAsset.sol";
 import "./UniqueContent.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";

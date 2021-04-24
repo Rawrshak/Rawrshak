@@ -4,7 +4,7 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./ManagerBase.sol";
 import "./OrderbookStorage.sol";
-import "./LibOrder.sol";
+import "../libraries/LibOrder.sol";
 import "./interfaces/IExecutionManager.sol";
 import "./interfaces/IEscrowERC20.sol";
 import "./interfaces/IEscrowNFTs.sol";

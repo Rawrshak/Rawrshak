@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
-import "./LibRoyalties.sol";
+import "../libraries/LibRoyalties.sol";
 import "./ContentStorage.sol";
 import "./interfaces/IContent.sol";
 

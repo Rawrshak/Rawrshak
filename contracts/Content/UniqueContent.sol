@@ -7,8 +7,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpg
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./Content.sol";
-import "./LibRoyalties.sol";
-import "./LibAsset.sol";
+import "../libraries/LibRoyalties.sol";
+import "../libraries/LibAsset.sol";
 import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "../utils/LibConstants.sol";

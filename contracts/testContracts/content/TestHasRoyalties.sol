@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "../../content/HasRoyalties.sol";
-import "../../content/LibAsset.sol";
+import "../../libraries/LibAsset.sol";
 
 contract TestHasRoyalties is HasRoyalties {
     function __TestHasRoyalties_init(LibRoyalties.Fees[] memory _contractFees) external initializer {

@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./StorageBase.sol";
-import "./LibOrder.sol";
+import "../libraries/LibOrder.sol";
 import "./interfaces/IEscrowNFTs.sol";
 
 contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {

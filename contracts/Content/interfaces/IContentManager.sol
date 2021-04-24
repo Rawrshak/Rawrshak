@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "../LibRoyalties.sol";
-import "../LibAsset.sol";
+import "../../libraries/LibRoyalties.sol";
+import "../../libraries/LibAsset.sol";
 
 interface IContentManager {
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;

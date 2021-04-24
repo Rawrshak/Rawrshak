@@ -2,7 +2,7 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "./LibRoyalties.sol";
+import "../libraries/LibRoyalties.sol";
 
 library LibAsset {
 

@@ -3,7 +3,7 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./ManagerBase.sol";
-import "../content/LibRoyalties.sol";
+import "../libraries/LibRoyalties.sol";
 import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
 // import "./interfaces/IEscrowDistributions.sol";
