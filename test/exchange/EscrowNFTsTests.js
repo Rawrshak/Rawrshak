@@ -40,15 +40,16 @@ contract('Escrow NFTs Contract', (accounts) => {
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         
+        // give crafting system approval
+        var approvalPair = [[contentManager.address, true], [executionManagerAddress, true]];
+        await contentManager.setSystemApproval(approvalPair);
+
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
         
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 1]];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
-
-        // give crafting system approval
-        await contentStorage.setSystemApproval(approvalPair);
 
         escrow = await EscrowNFTs.new();
         await escrow.__EscrowNFTs_init({from: deployerAddress});

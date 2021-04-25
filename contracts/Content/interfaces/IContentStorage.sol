@@ -7,7 +7,7 @@ import "../../libraries/LibAsset.sol";
 interface IContentStorage {
     function setParent(address _parent) external;
 
-    function isOperatorApprovedForAll(address _operator) external view returns (bool);    
+    function isSystemOperator(address _operator) external view returns (bool);    
     
     function setSystemApproval(LibAsset.SystemApprovalPair[] memory _operators) external;
 

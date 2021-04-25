@@ -18,7 +18,6 @@ contract('Content Contract Tests', (accounts) => {
         [1, "CID-1", 0, [[deployerAddress, 200]]],
         [2, "CID-2", 100, []],
     ];
-    var approvalPair = [[craftingSystemAddress, true]];
 
     beforeEach(async () => {
         contentStorage = await ContentStorage.new();
@@ -26,6 +25,10 @@ contract('Content Contract Tests', (accounts) => {
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
         contentStorage.setParent(content.address);
+
+        // give crafting system approval
+        var approvalPair = [[deployerAddress, true], [craftingSystemAddress, true]];
+        await contentStorage.setSystemApproval(approvalPair);
 
         // Add 1 asset        
         await content.addAssetBatch(asset);
@@ -98,7 +101,7 @@ contract('Content Contract Tests', (accounts) => {
 
         // test approval 
         assert.equal(
-            await content.isApprovedForAll(playerAddress, craftingSystemAddress, {from: craftingSystemAddress}),
+            await contentStorage.isSystemOperator(craftingSystemAddress, {from: deployerAddress}),
             true,
             "Crafting System Address does not have the correct permissions.");
     });
@@ -195,7 +198,7 @@ contract('Content Contract Tests', (accounts) => {
 
         var burnData = [playerAddress, [1], [5]];
         await TruffleAssert.fails(
-            content.burnBatch(burnData, {from: deployerAddress}),
+            content.burnBatch(burnData, {from: lootboxSystemAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         

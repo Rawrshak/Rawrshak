@@ -19,6 +19,7 @@ contract('Orderbook Manager Contract', (accounts)=> {
     var manager_role;
     var default_admin_role;
     
+    // chrsum-todo: yeah, fix this. this is all broken
     // this id is equal to OrderbookManater::_generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) for orderData1
     var id = "65600910303247073906956533339282992986889185960763440211503657039086888009496";
     var orderData1= [ 

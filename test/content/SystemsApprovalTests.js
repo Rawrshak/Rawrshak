@@ -17,7 +17,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
 
     it('Check that deployer is not approved yet', async () => {
         assert.equal(
-            await testContract.isOperatorApprovedForAll(deployerAddress),
+            await testContract.isSystemOperator(deployerAddress),
             false,
             "deployer shouldn't be approved yet.");
     });
@@ -31,7 +31,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         );
 
         assert.equal(
-            await testContract.isOperatorApprovedForAll(craftingSystemAddress),
+            await testContract.isSystemOperator(craftingSystemAddress),
             false,
             "crafting system shouldn't be approved yet.");
     });
@@ -48,7 +48,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await testContract.isOperatorApprovedForAll(craftingSystemAddress),
+            await testContract.isSystemOperator(craftingSystemAddress),
             true,
             "crafting system should be approved.");
     });
@@ -67,12 +67,12 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await testContract.isOperatorApprovedForAll(craftingSystemAddress),
+            await testContract.isSystemOperator(craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await testContract.isOperatorApprovedForAll(lootboxSystemAddress),
+            await testContract.isSystemOperator(lootboxSystemAddress),
             true,
             "lootbox system should be approved.");
     });
@@ -91,12 +91,12 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await testContract.isOperatorApprovedForAll(craftingSystemAddress),
+            await testContract.isSystemOperator(craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await testContract.isOperatorApprovedForAll(lootboxSystemAddress),
+            await testContract.isSystemOperator(lootboxSystemAddress),
             false,
             "lootbox system should not be approved.");
     });
@@ -127,12 +127,12 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await testContract.isOperatorApprovedForAll(craftingSystemAddress),
+            await testContract.isSystemOperator(craftingSystemAddress),
             false,
             "crafting system should not be approved.");
             
         assert.equal(
-            await testContract.isOperatorApprovedForAll(lootboxSystemAddress),
+            await testContract.isSystemOperator(lootboxSystemAddress),
             false,
             "lootbox system should not be approved.");
     });

@@ -18,7 +18,7 @@ abstract contract SystemsApproval is ERC165StorageUpgradeable {
      * @dev Internal function to check whether an operator is pre-approved
      * @param _operator address to check
      */
-    function _isOperatorApprovedForAll(address _operator) internal view returns (bool) {
+    function _isSystemOperator(address _operator) internal view returns (bool) {
         return systemApproval[_operator];
     }
 

@@ -28,17 +28,17 @@ library LibSalvage {
         SalvageReward[] rewards;
     }
 
-    function verify(SalvageableAsset memory _asset) internal view {
-        require(_asset.asset.content.isContract(), "Content address is not an contract");
-        require(_asset.asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Token contract is not a Content Contract");
+    function verify(SalvageableAsset memory _asset) internal pure {
+        // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
+        // here, it means we've verified the asset and reward assets correctly.
         require(_asset.rewards.length > 0, "Invalid rewards length.");
-
         for (uint256 i = 0; i < _asset.rewards.length; ++i) {
-            require(_asset.rewards[i].asset.content.isContract(), "Content address is not an contract");
-            require(_asset.rewards[i].asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Token contract is not a Content Contract");
             require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability < 10000, "Invalid probability.");
             require(_asset.rewards[i].amount > 0, "Invalid reward amount.");
         }
     }
 
+    function salvage(SalvageableAsset storage asset) internal view {
+        
+    }
 }

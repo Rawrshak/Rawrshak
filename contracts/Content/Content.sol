@@ -59,11 +59,11 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         name = _name;
         symbol = _symbol;
         
-        require(_contentStorage != address(0) && _contentStorage.isContract(), "Address is not a contract.");
-        require(_contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE), "Address is not a Content Storage Contract");
-        // require(_contentStorage.isContract() && 
-        //         _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
-        //         "Invalid Address");
+        // require(_contentStorage != address(0) && _contentStorage.isContract(), "Address is not a contract.");
+        // require(_contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE), "Address is not a Content Storage Contract");
+        require(_contentStorage.isContract() && 
+                _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
+                "Invalid Address");
         contentStorage = IContentStorage(_contentStorage);
     }
 
@@ -86,8 +86,8 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         return contentStorage.getRoyalties(_tokenId);
     }
 
-    function isApprovedForAll(address _owner, address _operator) public override(ERC1155Upgradeable) view returns (bool) {
-        return contentStorage.isOperatorApprovedForAll(_operator)|| super.isApprovedForAll(_owner, _operator);
+    function isSystemOperator(address _operator) external view override returns (bool) {
+        return _isSystemOperator(_operator);
     }
 
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyOwner {
@@ -103,16 +103,18 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         emit AssetsAdded(_assets);
     }
 
-    function mintBatch(LibAsset.MintData memory _data) external override onlyOwner {
-        require(_data.amounts.length == _data.tokenIds.length, "Input length mismatch");
+    function mintBatch(LibAsset.MintData memory _data) external override {
+        require(_isSystemOperator(_msgSender()), "Invalid permissions");
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             // require(ids[_data.tokenIds[i]] && 
             //         (maxSupply[_data.tokenIds[i]] == 0 ||
             //             maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i])),
             //     "Invalid data input");
-            require(ids[_data.tokenIds[i]] == true, "token id doesn't exist");
-            require(maxSupply[_data.tokenIds[i]] == 0 ||
-                maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]), "Max Supply reached"
+            require(ids[_data.tokenIds[i]], "token id missing");
+            require(
+                maxSupply[_data.tokenIds[i]] == 0 ||
+                maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]),
+                "Max Supply reached"
             );
             supply[_data.tokenIds[i]] = SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]);
         }
@@ -121,17 +123,16 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
 
     function burnBatch(LibAsset.BurnData memory _data) external override {
         require(
-            _data.account == _msgSender() || isApprovedForAll(_data.account, _msgSender()),
+            _data.account == _msgSender() || _isSystemOperator(_msgSender()),
             "Caller is not approved."
         );
-        require(_data.amounts.length == _data.tokenIds.length, "Input length mismatch");
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             // require(ids[_data.tokenIds[i]] && 
             //         (maxSupply[_data.tokenIds[i]] == 0 ||
             //             maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i])),
             //     "Invalid data input");
-            require(ids[_data.tokenIds[i]] == true, "token id doesn't exist");
+            require(ids[_data.tokenIds[i]], "token id doesn't exist");
             // require(supply[_data.tokenIds[i]] >= _data.amounts[i], );
             supply[_data.tokenIds[i]] = SafeMathUpgradeable.sub(supply[_data.tokenIds[i]], _data.amounts[i], "amount is greater than supply");
         }
@@ -141,6 +142,10 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function _isSystemOperator(address _operator) internal view returns(bool) {
+        return contentStorage.isSystemOperator(_operator);
     }
 
     uint256[50] private __gap;

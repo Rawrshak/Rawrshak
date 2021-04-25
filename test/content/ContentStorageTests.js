@@ -185,11 +185,11 @@ contract('ContentStorage Contract Tests', (accounts) => {
     
     it('Basic System Approval tests', async () => {
         assert.equal(
-            await contentStorage.isOperatorApprovedForAll(craftingSystemAddress),
+            await contentStorage.isSystemOperator(craftingSystemAddress),
             false,
             "crafting contract shouldn't be approved yet.");
         assert.equal(
-            await contentStorage.isOperatorApprovedForAll(lootboxSystemAddress),
+            await contentStorage.isSystemOperator(lootboxSystemAddress),
             false,
             "lootbox contract shouldn't be approved yet.");
 
@@ -197,12 +197,12 @@ contract('ContentStorage Contract Tests', (accounts) => {
         await contentStorage.setSystemApproval(approvalPair, {from: deployerAddress});
         
         assert.equal(
-            await contentStorage.isOperatorApprovedForAll(craftingSystemAddress),
+            await contentStorage.isSystemOperator(craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await contentStorage.isOperatorApprovedForAll(lootboxSystemAddress),
+            await contentStorage.isSystemOperator(lootboxSystemAddress),
             true,
             "lootbox system should be approved.");
     });

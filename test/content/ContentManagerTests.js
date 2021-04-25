@@ -20,7 +20,6 @@ contract('Content Contract Tests', (accounts) => {
         [1, "CID-1", 0, [[deployerAddress, 200]]],
         [2, "CID-2", 100, []]
     ];
-    var approvalPair = [[craftingSystemAddress, true]];
 
     beforeEach(async () => {
         contentStorage = await ContentStorage.new();
@@ -34,11 +33,12 @@ contract('Content Contract Tests', (accounts) => {
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
+        // give crafting system approval
+        var approvalPair = [[contentManager.address, true], [craftingSystemAddress, true]];
+        await contentManager.setSystemApproval(approvalPair);
+
         // Add 1 asset
         await contentManager.addAssetBatch(asset);
-
-        // give crafting system approval
-        await contentManager.setSystemApproval(approvalPair);
     });
 
     it('Check Content Manager proper deployment', async () => {
@@ -84,14 +84,14 @@ contract('Content Contract Tests', (accounts) => {
 
     it('Set operators for System Approval', async () => {        
         assert.equal(
-            await content.isApprovedForAll(playerAddress, lootboxSystemAddress, {from: lootboxSystemAddress}),
+            await contentStorage.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
             false,
             "lootbox system not should be approved yet.");
 
         var lootboxApprovalPair = [[lootboxSystemAddress, true]];
         await contentManager.setSystemApproval(lootboxApprovalPair);
         assert.equal(
-            await content.isApprovedForAll(playerAddress, lootboxSystemAddress, {from: lootboxSystemAddress}),
+            await contentStorage.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
             true,
             "lootbox system should be approved.");
     });

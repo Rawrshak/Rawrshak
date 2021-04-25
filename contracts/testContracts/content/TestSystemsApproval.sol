@@ -8,8 +8,8 @@ contract TestSystemsApproval is SystemsApproval {
         __ERC165_init_unchained();
     }
 
-    function isOperatorApprovedForAll(address _operator) external view returns (bool) {
-        return _isOperatorApprovedForAll(_operator);
+    function isSystemOperator(address _operator) external view returns (bool) {
+        return _isSystemOperator(_operator);
     }
 
     function setSystemApproval(LibAsset.SystemApprovalPair[] memory _operators) external {

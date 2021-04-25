@@ -57,8 +57,8 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApp
         grantRole(OWNER_ROLE, parent);
     }
     
-    function isOperatorApprovedForAll(address _operator) external view override checkPermissions(OWNER_ROLE) returns (bool) {
-        return _isOperatorApprovedForAll(_operator);
+    function isSystemOperator(address _operator) external view override checkPermissions(OWNER_ROLE) returns (bool) {
+        return _isSystemOperator(_operator);
     }
     
     function setSystemApproval(LibAsset.SystemApprovalPair[] memory _operators) external override checkPermissions(OWNER_ROLE) {

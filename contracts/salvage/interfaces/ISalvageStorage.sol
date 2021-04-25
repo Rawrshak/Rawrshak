@@ -7,6 +7,8 @@ interface ISalvageStorage {
     /******** Mutative Functions ********/
     function registerManager(address _manager) external;
 
+    function registerContent(address _content) external;
+
     function addSalvageableAssetBatch(LibSalvage.SalvageableAsset[] memory _asset) external;
 
     function getId(LibSalvage.AssetData calldata _asset) external pure returns(uint256);

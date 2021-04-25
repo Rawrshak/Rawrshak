@@ -56,6 +56,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
 
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
+
         emit ContentContractCreated(_content, _contentStorage);
     }
     

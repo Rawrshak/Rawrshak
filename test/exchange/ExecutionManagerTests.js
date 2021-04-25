@@ -59,6 +59,10 @@ contract('Execution Manager Contract', (accounts)=> {
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
+        // give crafting system approval
+        var approvalPair = [[contentManager.address, true]];
+        await contentManager.setSystemApproval(approvalPair);
+
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
         
