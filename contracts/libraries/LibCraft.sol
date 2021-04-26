@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../utils/LibConstants.sol";
 
-library LibSalvage {
+library LibCraft {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
 
@@ -36,6 +36,16 @@ library LibSalvage {
         SalvageReward[] rewards;
     }
 
+    struct Recipe {
+        uint256 id;
+        uint256 craftingRate;
+        bool enabled;
+        AssetData[] materials;
+        uint256[] materialAmounts;
+        AssetData[] rewards;
+        uint256[] rewardAmounts;
+    }
+
     function verifySalvageableAsset(SalvageableAsset memory _asset) internal pure {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
         // here, it means we've verified the asset and reward assets correctly.
@@ -61,7 +71,7 @@ library LibSalvage {
         // }
     }
 
-    function _random(address _sender, uint256 _seed) internal view returns (uint256) {
+    function random(address _sender, uint256 _seed) internal view returns (uint256) {
         return uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), _sender, _seed)));
     }
 }

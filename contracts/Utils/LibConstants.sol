@@ -52,6 +52,7 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_EXCHANGE              = 0x0000000E;
 
     // Salvage Interfaces
-    bytes4 constant _INTERFACE_ID_SALVAGE_STORAGE       = 0x0000000F;
+    bytes4 constant _INTERFACE_ID_SALVAGE               = 0x0000000F;
+    bytes4 constant _INTERFACE_ID_CRAFT                 = 0x00000010;
 
 }
