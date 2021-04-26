@@ -9,7 +9,13 @@ interface ISalvageStorage {
 
     function registerContent(address _content) external;
 
-    function addSalvageableAssetBatch(LibSalvage.SalvageableAsset[] memory _asset) external;
+    function managerSetPause(bool _setPause) external;
+
+    function setSalvageableAssetBatch(LibSalvage.SalvageableAsset[] memory _asset) external;
+
+    function salvage(LibSalvage.AssetData memory _asset, uint256 _amount) external;
+
+    function salvageBatch(LibSalvage.AssetData[] memory _assets, uint256[] memory _amounts) external;
 
     function getId(LibSalvage.AssetData calldata _asset) external pure returns(uint256);
 }

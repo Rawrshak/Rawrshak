@@ -12,6 +12,13 @@ library LibSalvage {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
 
+    enum SalvageType {
+        Guarantee,
+        Random
+    }
+
+    uint256 constant NUM_SALVAGE_TYPE = 2;
+
     struct AssetData {
         address content;
         uint256 tokenId;
@@ -33,26 +40,23 @@ library LibSalvage {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
         // here, it means we've verified the asset and reward assets correctly.
         require(_asset.rewards.length > 0, "Invalid rewards length.");
+        require(_asset.salvageType < NUM_SALVAGE_TYPE, "Invalid Salvage Type");
         for (uint256 i = 0; i < _asset.rewards.length; ++i) {
             require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability < 10000, "Invalid probability.");
             require(_asset.rewards[i].amount > 0, "Invalid reward amount.");
         }
     }
 
-    // function verifySalvageInput(LibSalvage.AssetData memory _asset, uint256 _amount) internal {
-
-    // }
-
     function salvage(SalvageableAsset storage _asset, uint256 rolls) internal view returns(SalvageReward[] memory materials, uint256[] memory amounts) {
         // guarantee
-        if (_asset.salvageType == 0) {
+        if (SalvageType(_asset.salvageType) == SalvageType.Guarantee) {
             materials = _asset.rewards;
             amounts = new uint256[](_asset.rewards.length);
             for (uint256 i = 0; i < _asset.rewards.length; ++i) {
                 amounts[i] = SafeMathUpgradeable.mul(_asset.rewards[i].amount, rolls);
             }
         }
-        // } else if (_asset.salvageType == 1) {
+        // } else if (SalvageType(_asset.salvageType) == SalvageType.Random) {
         //     // todo: Random 
         // }
     }
