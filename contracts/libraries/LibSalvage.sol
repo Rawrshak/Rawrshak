@@ -5,6 +5,7 @@ pragma solidity >=0.6.0 <0.9.0;
 // import "../libraries/LibRoyalties.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../utils/LibConstants.sol";
 
 library LibSalvage {
@@ -28,7 +29,7 @@ library LibSalvage {
         SalvageReward[] rewards;
     }
 
-    function verify(SalvageableAsset memory _asset) internal pure {
+    function verifySalvageableAsset(SalvageableAsset memory _asset) internal pure {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
         // here, it means we've verified the asset and reward assets correctly.
         require(_asset.rewards.length > 0, "Invalid rewards length.");
@@ -38,7 +39,25 @@ library LibSalvage {
         }
     }
 
-    function salvage(SalvageableAsset storage asset) internal view {
-        
+    // function verifySalvageInput(LibSalvage.AssetData memory _asset, uint256 _amount) internal {
+
+    // }
+
+    function salvage(SalvageableAsset storage _asset, uint256 rolls) internal view returns(SalvageReward[] memory materials, uint256[] memory amounts) {
+        // guarantee
+        if (_asset.salvageType == 0) {
+            materials = _asset.rewards;
+            amounts = new uint256[](_asset.rewards.length);
+            for (uint256 i = 0; i < _asset.rewards.length; ++i) {
+                amounts[i] = SafeMathUpgradeable.mul(_asset.rewards[i].amount, rolls);
+            }
+        }
+        // } else if (_asset.salvageType == 1) {
+        //     // todo: Random 
+        // }
+    }
+
+    function _random(address _sender, uint256 _seed) internal view returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), _sender, _seed)));
     }
 }
