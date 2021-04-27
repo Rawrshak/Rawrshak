@@ -1,6 +1,6 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const OrderbookStorage = artifacts.require("OrderbookStorage");
-const OrderbookManager = artifacts.require("OrderbookManager");
+const TestOrderbookManager = artifacts.require("TestOrderbookManager");
 const AddressRegistry = artifacts.require("AddressRegistry");
 const TruffleAssert = require("truffle-assertions");
 
@@ -19,9 +19,8 @@ contract('Orderbook Manager Contract', (accounts)=> {
     var manager_role;
     var default_admin_role;
     
-    // chrsum-todo: yeah, fix this. this is all broken
     // this id is equal to OrderbookManater::_generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) for orderData1
-    var id = "65600910303247073906956533339282992986889185960763440211503657039086888009496";
+    var id;
     var orderData1= [ 
         [contentAddress, 1],
         creatorAddress,
@@ -30,7 +29,6 @@ contract('Orderbook Manager Contract', (accounts)=> {
         5,
         true
     ];
-    var id2 = "34429011507259389172665464469010178019086748464235661131818834612175354916358";
     var orderData2= [ 
         [contentAddress, 2],
         creatorAddress,
@@ -39,7 +37,6 @@ contract('Orderbook Manager Contract', (accounts)=> {
         5,
         false
     ];
-    var id3 = "106708280690735125642163073309750865640798382330490872099223523634175988105609";
     var orderData3= [ 
         [contentAddress, 1],
         creatorAddress,
@@ -61,8 +58,8 @@ contract('Orderbook Manager Contract', (accounts)=> {
         var addresses = [orderbookStorage.address];
         await registry.registerAddress(ids, addresses, {from: deployerAddress});
 
-        orderbookManager = await OrderbookManager.new();
-        await orderbookManager.__OrderbookManager_init(registry.address, {from: deployerAddress});
+        orderbookManager = await TestOrderbookManager.new();
+        await orderbookManager.__TestOrderbookManager_init(registry.address, {from: deployerAddress});
 
         manager_role = await orderbookStorage.MANAGER_ROLE();
 
@@ -70,6 +67,8 @@ contract('Orderbook Manager Contract', (accounts)=> {
         await orderbookStorage.registerManager(orderbookManager.address, {from:deployerAddress})
         
         await orderbookManager.placeOrder(orderData1, {from: deployerAddress});
+
+        id = await orderbookManager.getId(orderData1);
     });
 
     it('Check if OrderbookManager was deployed properly', async () => {
@@ -91,6 +90,7 @@ contract('Orderbook Manager Contract', (accounts)=> {
         // var id = await orderbookManager.generateOrderId(orderData1);
         // this id is equal to OrderbookManater::_generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) for orderData1
         await orderbookManager.placeOrder(orderData2, {from: deployerAddress});
+        var id2 = await orderbookManager.getId(orderData2);
         
         // check if the order was saved
         storedOrderData = await orderbookManager.getOrder(id2, {from: deployerAddress});
@@ -127,7 +127,9 @@ contract('Orderbook Manager Contract', (accounts)=> {
 
     it('Place multiple Orders', async () => {
         await orderbookManager.placeOrder(orderData2, {from: deployerAddress});
+        var id2 = await orderbookManager.getId(orderData2);
         await orderbookManager.placeOrder(orderData3, {from: deployerAddress});
+        var id3 = await orderbookManager.getId(orderData3);
         
         // check if the order was saved
         storedOrderData = await orderbookManager.getOrder(id3, {from: deployerAddress});
@@ -164,7 +166,9 @@ contract('Orderbook Manager Contract', (accounts)=> {
 
     it('Verifys saves Order data', async () => {
         await orderbookManager.placeOrder(orderData2, {from: deployerAddress});
+        var id2 = await orderbookManager.getId(orderData2);
         await orderbookManager.placeOrder(orderData3, {from: deployerAddress});
+        var id3 = await orderbookManager.getId(orderData3);
 
         assert.equal(
             await orderbookManager.verifyOrders(
@@ -193,7 +197,9 @@ contract('Orderbook Manager Contract', (accounts)=> {
 
     it('Get Payment totals', async () => {
         await orderbookManager.placeOrder(orderData2, {from: deployerAddress});
+        var id2 = await orderbookManager.getId(orderData2);
         await orderbookManager.placeOrder(orderData3, {from: deployerAddress});
+        var id3 = await orderbookManager.getId(orderData3);
 
         var paymentTotals = await orderbookManager.getPaymentTotals([id, id3], [1, 1]);
 
@@ -238,6 +244,7 @@ contract('Orderbook Manager Contract', (accounts)=> {
 
     it('Invalid Input Length', async () => {
         await orderbookManager.placeOrder(orderData2, {from: deployerAddress});
+        var id2 = await orderbookManager.getId(orderData2);
         
         await TruffleAssert.fails(
             orderbookManager.getPaymentTotals([id, id3], [1]),
@@ -264,7 +271,9 @@ contract('Orderbook Manager Contract', (accounts)=> {
 
     it('Fill Orders', async () => {
         await orderbookManager.placeOrder(orderData2, {from: deployerAddress});
+        var id2 = await orderbookManager.getId(orderData2);
         await orderbookManager.placeOrder(orderData3, {from: deployerAddress});
+        var id3 = await orderbookManager.getId(orderData3);
 
         await orderbookManager.fillOrders([id, id3], [1, 1], {from: deployerAddress});
         
@@ -282,7 +291,6 @@ contract('Orderbook Manager Contract', (accounts)=> {
     });
 
     it('Delete Order', async () => {
-
         await TruffleAssert.fails(
             orderbookManager.deleteOrder(id, maliciousAddress, {from: deployerAddress}),
             TruffleAssert.ErrorType.REVERT

@@ -11,7 +11,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
-    uint256 orderIdCounter;
+    uint256 internal orderIdCounter;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -26,7 +26,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
 
     /**************** Internal Functions ****************/
     function placeOrder(LibOrder.OrderData memory _order) external override onlyOwner returns(uint256 id){
-        id = _generateOrderId(_order.owner, _order.asset.contentAddress, _order.asset.tokenId);
+        id = _generateOrderId(_order.owner, _order.asset.contentAddress, _order.asset.tokenId, orderIdCounter++);
 
         IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).placeOrder(id, _order);
     }
@@ -91,8 +91,8 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).orderExists(_orderId);
     }
     
-    function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId) internal returns(uint256) {
-        return uint256(keccak256(abi.encodePacked(_user, _tokenAddr, _tokenId, orderIdCounter++)));
+    function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId, uint256 _orderIdCounter) internal pure returns(uint256) {
+        return uint256(keccak256(abi.encodePacked(_user, _tokenAddr, _tokenId, _orderIdCounter)));
     }
     
     uint256[50] private __gap;
