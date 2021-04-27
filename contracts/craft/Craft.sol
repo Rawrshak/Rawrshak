@@ -44,6 +44,7 @@ contract Craft is ICraft, CraftBase {
             require(_recipes[i].materials.length > 0 && _recipes[i].materials.length == _recipes[i].materialAmounts.length, "Invalid materials length");
             require(_recipes[i].rewards.length > 0 && _recipes[i].rewards.length == _recipes[i].rewardAmounts.length, "Invalid rewards length");
             require(_recipes[i].id != 0, "Invalid id");
+            require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 10000, "Invalid crafting rate.");
 
             LibCraft.Recipe storage recipe = recipes[_recipes[i].id];
             recipe.id = _recipes[i].id;
