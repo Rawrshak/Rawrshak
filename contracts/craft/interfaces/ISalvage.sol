@@ -12,4 +12,6 @@ interface ISalvage {
     function salvageBatch(LibCraft.AssetData[] memory _assets, uint256[] memory _amounts) external;
 
     function getId(LibCraft.AssetData calldata _asset) external pure returns(uint256);
+
+    function getSalvageRewards(uint256 _id) external view returns(LibCraft.SalvageReward[] memory rewards);
 }

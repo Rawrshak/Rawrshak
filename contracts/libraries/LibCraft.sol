@@ -52,7 +52,7 @@ library LibCraft {
         require(_asset.rewards.length > 0, "Invalid rewards length.");
         require(_asset.salvageType < NUM_SALVAGE_TYPE, "Invalid Salvage Type");
         for (uint256 i = 0; i < _asset.rewards.length; ++i) {
-            require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability < 10000, "Invalid probability.");
+            require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 10000, "Invalid probability.");
             require(_asset.rewards[i].amount > 0, "Invalid reward amount.");
         }
     }

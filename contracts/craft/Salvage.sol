@@ -32,10 +32,10 @@ contract Salvage is ISalvage, CraftBase {
     
     /******************** Public API ********************/
     function __Salvage_init(uint256 _seed) public initializer {
-        __CraftBase_init_unchained(_seed);
         __Pausable_init_unchained();
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
+        __CraftBase_init_unchained(_seed);
         _registerInterface(LibConstants._INTERFACE_ID_SALVAGE);
     }
 
@@ -56,7 +56,7 @@ contract Salvage is ISalvage, CraftBase {
                 delete salvageableAssets[id].rewards;
             }
 
-            for (uint256 j = 0; j < _assets[id].rewards.length; ++j) {
+            for (uint256 j = 0; j < _assets[i].rewards.length; ++j) {
                 require(contentContracts.contains(_assets[i].rewards[j].asset.content), "Invalid Content Contract permissions - rewards");
                 salvageableAssets[id].rewards.push(_assets[i].rewards[j]);
             }
@@ -100,6 +100,10 @@ contract Salvage is ISalvage, CraftBase {
     function getId(LibCraft.AssetData calldata _asset) external pure override returns(uint256) {
         return _getId(_asset.content, _asset.tokenId);
     } 
+
+    function getSalvageRewards(uint256 _id) external view override returns(LibCraft.SalvageReward[] memory rewards) {
+        rewards = salvageableAssets[_id].rewards;
+    }
 
     /**************** Internal Functions ****************/
     function _getId(address _content, uint256 _tokenId) internal pure returns(uint256) {

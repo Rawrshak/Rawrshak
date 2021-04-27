@@ -30,10 +30,10 @@ contract Craft is ICraft, CraftBase {
 
     /******************** Public API ********************/
     function __Craft_init(uint256 _seed) public initializer {
-        __CraftBase_init_unchained(_seed);
         __Pausable_init_unchained();
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
+        __CraftBase_init_unchained(_seed);
         _registerInterface(LibConstants._INTERFACE_ID_CRAFT);
     }
 
