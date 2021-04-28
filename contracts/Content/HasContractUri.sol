@@ -13,7 +13,7 @@ abstract contract HasContractUri is ERC165StorageUpgradeable {
 
     /***************** Stored Variables *****************/
     // Contract Information Uri
-    string public contractUri;
+    string internal contractUri;
 
     /******************** Public API ********************/
     function __HasContractUri_init_unchained(string memory _contractUri) internal initializer {

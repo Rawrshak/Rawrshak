@@ -50,7 +50,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
 
     it('Check default Token Uris with just the prefix', async () => {
         assert.equal(
-            await testContract.tokenUri(1, 0),
+            await testContract.tokenDataUri(1, 0),
             "ipfs:/1",
             "Token Uri Prefix isn't set properly.");
     });
@@ -60,7 +60,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         await testContract.__TestHasTokenUri_init("");
 
         assert.equal(
-            await testContract.tokenUri(1, 0),
+            await testContract.tokenDataUri(1, 0),
             "",
             "Token Uri should be empty");
     });
@@ -83,7 +83,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
             }
         );
         assert.equal(
-            await testContract.tokenUri(1, 0),
+            await testContract.tokenDataUri(1, 0),
             "ipfs:/testCID/1",
             "Token Uri isn't set properly.");
     });
@@ -131,12 +131,12 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         
         // check the two versions
         assert.equal(
-            await testContract.tokenUri(1, 0),
+            await testContract.tokenDataUri(1, 0),
             "ipfs:/testCID/1",
             "Token Uri isn't set properly.");
 
         assert.equal(
-            await testContract.tokenUri(1, 1),
+            await testContract.tokenDataUri(1, 1),
             "ipfs:/testCID/1v2",
             "Token Uri isn't set properly.");
     });
@@ -147,13 +147,13 @@ contract('HasTokenUri Contract Tests', (accounts) => {
 
         // check latest version
         assert.equal(
-            await testContract.tokenUri(1, 1),
+            await testContract.tokenDataUri(1, 1),
             "ipfs:/testCID/1v2",
             "Token Uri isn't set properly for the correct version.");
 
         // check invalid version
         assert.equal(
-            await testContract.tokenUri(1, 2),
+            await testContract.tokenDataUri(1, 2),
             "ipfs:/testCID/1v2",
             "Latest Token Uri isn't properly returned.");
     });
@@ -177,12 +177,12 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         await testContract.setTokenUriBatch(tokenUris);
 
         assert.equal(
-            await testContract.tokenUri(1, 0),
+            await testContract.tokenDataUri(1, 0),
             "ipfs:/testCID/1",
             "Incorrect Token Uri");
             
         assert.equal(
-            await testContract.tokenUri(1, 1),
+            await testContract.tokenDataUri(1, 1),
             "ipfs:/testCID/1",
             "Incorrect Token Uri with incorrect version.");
     });
@@ -195,12 +195,12 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         await testContract.setTokenUriBatch(tokenUris);
 
         assert.equal(
-            await testContract.tokenUri(1, 0),
+            await testContract.tokenDataUri(1, 0),
             "ipfs:/testCID/1",
             "Incorrect Token Uri");
             
         assert.equal(
-            await testContract.tokenUri(2, 0),
+            await testContract.tokenDataUri(2, 0),
             "ipfs:/testCID/2",
             "Incorrect Token Uri");
     });
@@ -213,17 +213,17 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         await testContract.setTokenUriBatch(tokenUris);
 
         assert.equal(
-            await testContract.tokenUri(1, 0),
+            await testContract.tokenDataUri(1, 0),
             "ipfs:/testCID/1",
             "Incorrect Token Uri");
             
         assert.equal(
-            await testContract.tokenUri(1, 1),
+            await testContract.tokenDataUri(1, 1),
             "ipfs:/testCID/A",
             "Incorrect Token Uri");
 
         assert.equal(
-            await testContract.tokenUri(2, 0),
+            await testContract.tokenDataUri(2, 0),
             "ipfs:/testCID/2",
             "Incorrect Token Uri");
     });

@@ -12,4 +12,8 @@ contract TestHasContractUri is HasContractUri {
     function setContractUri(string memory _contractUri) external {
         _setContractUri(_contractUri);
     }
+
+    function getContractUri() public view returns (string memory) {
+        return contractUri;
+    }
 }

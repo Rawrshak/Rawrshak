@@ -36,12 +36,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     string public symbol;
     IContentStorage contentStorage;
 
-    mapping(uint256 => bool) private ids;
-    mapping(uint256 => uint256) public maxSupply;
-    mapping(uint256 => uint256) public supply;
-
     /*********************** Events *********************/
-    event AssetsAdded(LibAsset.CreateData[] assets);
 
     /******************** Public API ********************/
     function __Content_init(
@@ -59,27 +54,35 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         name = _name;
         symbol = _symbol;
         
-        // require(_contentStorage != address(0) && _contentStorage.isContract(), "Address is not a contract.");
-        // require(_contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE), "Address is not a Content Storage Contract");
         require(_contentStorage.isContract() && 
                 _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
                 "Invalid Address");
         contentStorage = IContentStorage(_contentStorage);
     }
 
-    function setContractUri(string memory _contractUri) external override onlyOwner {
-        _setURI(_contractUri);
+    function approveAllSystems(bool _approve) external override {
+        return contentStorage.userApprove(_msgSender(), _approve);
     }
-    
+
     function tokenUri(uint256 _tokenId) external view override returns (string memory) {
-        // Todo: this should only be accessible if the player owns the asset
+        return contentStorage.uri(_tokenId);
+    }
+
+    function tokenDataUri(uint256 _tokenId) external view override returns (string memory) {
+        // user cannot access token uri if they do not own it.
+        if (balanceOf(_msgSender(), _tokenId) == 0) {
+            return "";
+        }
         uint256 version = HasTokenUri(address(contentStorage)).getLatestUriVersion(_tokenId);
-        return contentStorage.tokenUri(_tokenId, version);
+        return contentStorage.tokenDataUri(_tokenId, version);
     }
     
-    function tokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
-        // Todo: this should only be accessible if the player owns the asset
-        return contentStorage.tokenUri(_tokenId, _version);
+    function tokenDataUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
+        // user cannot access token uri if they do not own it.
+        if (balanceOf(_msgSender(), _tokenId) == 0) {
+            return "";
+        }
+        return contentStorage.tokenDataUri(_tokenId, _version);
     }
     
     function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
@@ -87,54 +90,34 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     function isSystemOperator(address _operator) external view override returns (bool) {
-        return _isSystemOperator(_operator);
+        return _isSystemOperatorApproved(_msgSender(), _operator);
     }
 
-    function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyOwner {
-        for (uint256 i = 0; i < _assets.length; ++i) {
-            require(ids[_assets[i].tokenId] == false, "Token Id already exists.");
-            ids[_assets[i].tokenId] = true;
-            // max supply can be 0. If max supply is 0, then this asset has no supply cap and can be
-            // continuously minted.
-            supply[_assets[i].tokenId] = 0;
-            maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
-        }
-
-        emit AssetsAdded(_assets);
+    function getSupplyInfo(uint256 _tokenId) external view override returns (uint256 supply, uint256 maxSupply) {
+        return (_supply(_tokenId), _maxSupply(_tokenId));
     }
 
     function mintBatch(LibAsset.MintData memory _data) external override {
-        require(_isSystemOperator(_msgSender()), "Invalid permissions");
+        require(_isSystemOperatorApproved(_data.to, _msgSender()), "Invalid permissions");
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
-            // require(ids[_data.tokenIds[i]] && 
-            //         (maxSupply[_data.tokenIds[i]] == 0 ||
-            //             maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i])),
-            //     "Invalid data input");
-            require(ids[_data.tokenIds[i]], "token id missing");
+            require(_tokenExists(_data.tokenIds[i]), "token id missing");
             require(
-                maxSupply[_data.tokenIds[i]] == 0 ||
-                maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]),
+                _maxSupply(_data.tokenIds[i]) == 0 ||
+                _maxSupply(_data.tokenIds[i]) >= SafeMathUpgradeable.add(_supply(_data.tokenIds[i]), _data.amounts[i]),
                 "Max Supply reached"
             );
-            supply[_data.tokenIds[i]] = SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i]);
+
+            _updateSupply(_data.tokenIds[i], SafeMathUpgradeable.add(_supply(_data.tokenIds[i]), _data.amounts[i]));
         }
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
     }
 
     function burnBatch(LibAsset.BurnData memory _data) external override {
-        require(
-            _data.account == _msgSender() || _isSystemOperator(_msgSender()),
-            "Caller is not approved."
-        );
+        require(_data.account == _msgSender() || _isSystemOperatorApproved(_data.account, _msgSender()), "Caller is not approved.");
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
-            // require(ids[_data.tokenIds[i]] && 
-            //         (maxSupply[_data.tokenIds[i]] == 0 ||
-            //             maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(supply[_data.tokenIds[i]], _data.amounts[i])),
-            //     "Invalid data input");
-            require(ids[_data.tokenIds[i]], "token id doesn't exist");
-            // require(supply[_data.tokenIds[i]] >= _data.amounts[i], );
-            supply[_data.tokenIds[i]] = SafeMathUpgradeable.sub(supply[_data.tokenIds[i]], _data.amounts[i], "amount is greater than supply");
+            require(_tokenExists(_data.tokenIds[i]), "token id missing");
+            _updateSupply(_data.tokenIds[i], SafeMathUpgradeable.sub(_supply(_data.tokenIds[i]), _data.amounts[i], "amount is greater than supply"));
         }
 
         _burnBatch(_data.account, _data.tokenIds, _data.amounts);
@@ -144,9 +127,26 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         return super.supportsInterface(interfaceId);
     }
 
-    function _isSystemOperator(address _operator) internal view returns(bool) {
-        return contentStorage.isSystemOperator(_operator);
+    function _isSystemOperatorApproved(address _user, address _operator) internal view returns(bool) {
+        return contentStorage.isSystemOperatorApproved(_user, _operator);
     }
+
+    function _supply(uint256 _tokenId) internal view returns(uint256) {
+        return contentStorage.getSupply(_tokenId);
+    }
+
+    function _maxSupply(uint256 _tokenId) internal view returns(uint256) {
+        return contentStorage.getMaxSupply(_tokenId);
+    }
+
+    function _tokenExists(uint256 _tokenId) internal view returns(bool) {
+        return contentStorage.getIds(_tokenId);
+    }
+
+    function _updateSupply(uint256 _tokenId, uint256 _newSupply) internal {
+        return contentStorage.updateSupply(_tokenId, _newSupply);
+    }
+
 
     uint256[50] private __gap;
 }

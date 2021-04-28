@@ -66,7 +66,7 @@ contract('Salvage Contract', (accounts)=> {
 
         // give crafting system approval
         var approvalPair = [[contentManager.address, true]];
-        await contentManager.setSystemApproval(approvalPair);
+        await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
@@ -98,7 +98,7 @@ contract('Salvage Contract', (accounts)=> {
         
         // Register the salvage as a system on the content contract
         var approvalPair = [[salvage.address, true]];
-        await contentManager.setSystemApproval(approvalPair, {from: deployerAddress});
+        await contentManager.registerSystem(approvalPair, {from: deployerAddress});
 
         // registered manager
         await salvage.registerManager(managerAddress, {from: deployerAddress});

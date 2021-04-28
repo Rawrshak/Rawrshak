@@ -26,9 +26,12 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApp
     /***************** Stored Variables *****************/
     address public parent;
     mapping(uint256 => bool) private ids;
+    mapping(uint256 => uint256) private maxSupply;
+    mapping(uint256 => uint256) private supply;
 
     /*********************** Events *********************/
     event ParentSet(address parent);
+    event AssetsAdded(LibAsset.CreateData[] assets);
 
     /********************* Modifiers ********************/
     modifier checkPermissions(bytes32 _role) {
@@ -57,29 +60,60 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApp
         grantRole(OWNER_ROLE, parent);
     }
     
-    function isSystemOperator(address _operator) external view override checkPermissions(OWNER_ROLE) returns (bool) {
-        return _isSystemOperator(_operator);
+    function getIds(uint256 _tokenId) external view override returns (bool) {
+        return ids[_tokenId];
+    }
+
+    function getSupply(uint256 _tokenId) external view override returns (uint256) {
+        return supply[_tokenId];
+    }
+
+    function getMaxSupply(uint256 _tokenId) external view override returns (uint256) {
+        return maxSupply[_tokenId];
     }
     
-    function setSystemApproval(LibAsset.SystemApprovalPair[] memory _operators) external override checkPermissions(OWNER_ROLE) {
-        return _setSystemApproval(_operators);
+    function isSystemOperatorApproved(address _user, address _operator) external view override checkPermissions(OWNER_ROLE) returns (bool) {
+        return _isSystemOperatorApproved(_user, _operator);
+    }
+    
+    function registerSystems(LibAsset.SystemApprovalPair[] memory _operators) external override checkPermissions(OWNER_ROLE) {
+        return _registerSystems(_operators);
+    }
+    
+    function userApprove(address _user, bool _approved) external override checkPermissions(OWNER_ROLE) {
+        return _userApprove(_user, _approved);
     }
 
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(!ids[_assets[i].tokenId], "Token Id already exists.");
             ids[_assets[i].tokenId] = true;
-            _setTokenUri(_assets[i].tokenId, _assets[i].dataUri);
+            supply[_assets[i].tokenId] = 0;
+            maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
+
+            _setTokenDataUri(_assets[i].tokenId, _assets[i].dataUri);
             
             // if this specific token has a different royalty fees than the contract
             if (_assets[i].fees.length != 0) {
                 _setTokenRoyalties(_assets[i].tokenId, _assets[i].fees);
             }
         }
+
+        emit AssetsAdded(_assets);
     }
 
-    function tokenUri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
-        return _tokenUri(_tokenId, _version);
+    function updateSupply(uint256 _tokenId, uint256 _supply) external override checkPermissions(OWNER_ROLE) {
+        supply[_tokenId] = _supply;
+    }
+
+    // returns the token uri for public token info
+    function uri(uint256 _tokenId) external view override returns (string memory) {
+        return _tokenUri(_tokenId);
+    }
+
+    // returns the token uri for private token info
+    function tokenDataUri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
+        return _tokenDataUri(_tokenId, _version);
     }
 
     function setTokenUriPrefix(string memory _tokenUriPrefix) external override checkPermissions(OWNER_ROLE) {
@@ -87,10 +121,10 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApp
         _setTokenUriPrefix(_tokenUriPrefix);
     }
 
-    function setTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
+    function setTokenDataUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
-            _setTokenUri(_assets[i].tokenId, _assets[i].uri);
+            _setTokenDataUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
     

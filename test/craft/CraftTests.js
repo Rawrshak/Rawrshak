@@ -65,7 +65,7 @@ contract('Craft Contract', (accounts)=> {
 
         // give crafting system approval
         var approvalPair = [[contentManager.address, true]];
-        await contentManager.setSystemApproval(approvalPair);
+        await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
@@ -97,7 +97,7 @@ contract('Craft Contract', (accounts)=> {
         
         // Register the craft as a system on the content contract
         var approvalPair = [[craft.address, true]];
-        await contentManager.setSystemApproval(approvalPair, {from: deployerAddress});
+        await contentManager.registerSystem(approvalPair, {from: deployerAddress});
 
         // registered manager
         await craft.registerManager(managerAddress, {from: deployerAddress});

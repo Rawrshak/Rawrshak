@@ -6,14 +6,12 @@ import "../../libraries/LibAsset.sol";
 
 interface IContentManager {
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
-
-    function setContractUri(string memory _contractUri) external;
     
-    function setSystemApproval(LibAsset.SystemApprovalPair[] memory _operators) external;
+    function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) external;
     
     function setTokenUriPrefix(string memory _tokenUriPrefix) external;
 
-    function setTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setTokenDataUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
     

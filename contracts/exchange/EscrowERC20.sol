@@ -7,7 +7,6 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./StorageBase.sol";
 import "./interfaces/IEscrowERC20.sol";
-// import "./interfaces/IEscrowDistributions.sol";
 
 contract EscrowERC20 is IEscrowERC20, StorageBase {
     using AddressUpgradeable for address;

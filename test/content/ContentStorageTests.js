@@ -216,17 +216,17 @@ contract('ContentStorage Contract Tests', (accounts) => {
         await contentStorage.addAssetBatch(asset);
 
         assert.equal(
-            await contentStorage.tokenUri(1, 0),
+            await contentStorage.tokenDataUri(1, 0),
             "ipfs:/CID-1",
             "Token 1 incorrect uri");
 
         assert.equal(
-            await contentStorage.tokenUri(2, 0),
+            await contentStorage.tokenDataUri(2, 0),
             "ipfs:/",
             "Token 2 incorrect uri");
 
         assert.equal(
-            await contentStorage.tokenUri(3, 0),
+            await contentStorage.tokenDataUri(3, 0),
             "ipfs:/CID-3",
             "Token 3 incorrect uri");
             
@@ -241,7 +241,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await contentStorage.tokenUri(2, 1),
+            await contentStorage.tokenDataUri(2, 1),
             "ipfs:/CID-2",
             "Token 2 incorrect uri");
     });

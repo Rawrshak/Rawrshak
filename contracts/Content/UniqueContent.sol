@@ -43,6 +43,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
     function __UniqueContent_init(
         string memory _name,
         string memory _symbol,
+        string memory _contractUri,
         LibAsset.UniqueContentData memory _mintData)
         public initializer
     {
@@ -60,7 +61,9 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
                 _mintData.contentContract.supportsInterface(LibConstants._INTERFACE_ID_CONTENT),
                 "Invalid Address");
         creator = _mintData.creator;
-        id = _mintData.id;        
+        id = _mintData.id;
+
+        _setContractUri(_contractUri);
 
         emit UniqueContentCreated(_name, _symbol, _mintData);
     }
@@ -85,32 +88,44 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         return royalties;
     }
 
-    function ownerOf(uint256) public view override(IUniqueContent, ERC721Upgradeable) returns (address) {
+    function ownerOf(uint256) public view override returns (address) {
         return super.ownerOf(0);
     }
 
-    function safeTransferFrom(address from, address to, uint256, bytes memory data) public override(IUniqueContent, ERC721Upgradeable) {
+    function safeTransferFrom(address from, address to, uint256, bytes memory data) public override {
         super.safeTransferFrom(from, to, 0, data);
     }
 
-    function safeTransferFrom(address from, address to, uint256) public override(IUniqueContent, ERC721Upgradeable) {
+    function safeTransferFrom(address from, address to, uint256) public override {
         super.safeTransferFrom(from, to, 0, "");
     }
 
-    function transferFrom(address from, address to, uint256) public override(IUniqueContent, ERC721Upgradeable) {
+    function transferFrom(address from, address to, uint256) public override {
         super.transferFrom(from, to, 0);
     }
 
-    function approve(address to, uint256) public override(IUniqueContent, ERC721Upgradeable) {
+    function approve(address to, uint256) public override {
         super.approve(to, 0);
     }
 
-    function getApproved(uint256) public view override(IUniqueContent, ERC721Upgradeable) returns (address) {
+    function getApproved(uint256) public view override returns (address) {
         return super.getApproved(0);
     }
 
-    function tokenURI(uint256) public view override(IUniqueContent, ERC721Upgradeable) returns (string memory) {
+    function uri() external view override returns (string memory) {
+        return contractUri;
+    }
+
+    function tokenURI(uint256) public view override returns (string memory) {
         return Content(contentContract).tokenUri(id);
+    }
+
+    function tokenDataURI(uint256) external view override returns (string memory) {
+        // only owner of the token can open the token's data uri
+        if (ownerOf(0) == _msgSender()) {
+            return "";
+        }
+        return Content(contentContract).tokenDataUri(id);
     }
 
     function mint(address to) external override onlyOwner {
@@ -125,7 +140,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         // only the creator can burn the unique asset. They must, however, own the token first.
         require(_msgSender() == creator, "Invalid burn permissions.");
         require(contentContract != address(0), "Invalid Content Contract address");
-        require(Content(contentContract).balanceOf(address(this), id) == 1, "This contract doesn't own the token.");
+        require(ownerOf(0) == _msgSender(), "Burner doesn't own this asset");
         require(isMinted == true, "Unique Content is has already been burned");
         
         _burn(0);

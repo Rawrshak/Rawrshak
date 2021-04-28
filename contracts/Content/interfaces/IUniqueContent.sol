@@ -6,21 +6,11 @@ import "../../libraries/LibAsset.sol";
 
 interface IUniqueContent {
 
+    function uri() external view returns (string memory);
+
+    function tokenDataURI(uint256) external view returns (string memory);
+
     function getRoyalties() external view returns (LibRoyalties.Fees[] memory);
-
-    function ownerOf(uint256) external view returns (address);
-
-    function safeTransferFrom(address from, address to, uint256, bytes memory data) external;
-
-    function safeTransferFrom(address from, address to, uint256) external;
-
-    function transferFrom(address from, address to, uint256) external;
-
-    function approve(address to, uint256) external;
-
-    function getApproved(uint256) external view returns (address);
-
-    function tokenURI(uint256) external view returns (string memory);
 
     function mint(address to) external;
 

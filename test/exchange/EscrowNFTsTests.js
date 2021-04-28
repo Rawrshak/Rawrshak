@@ -42,7 +42,7 @@ contract('Escrow NFTs Contract', (accounts) => {
         
         // give crafting system approval
         var approvalPair = [[contentManager.address, true], [executionManagerAddress, true]];
-        await contentManager.setSystemApproval(approvalPair);
+        await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);

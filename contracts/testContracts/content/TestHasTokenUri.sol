@@ -9,8 +9,8 @@ contract TestHasTokenUri is HasTokenUri {
         __ERC165Storage_init_unchained();
     }
 
-    function tokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
-        return _tokenUri(_tokenId, _version);
+    function tokenDataUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
+        return _tokenDataUri(_tokenId, _version);
     }
 
     function setTokenUriPrefix(string memory _tokenUriPrefix) external {
@@ -20,7 +20,7 @@ contract TestHasTokenUri is HasTokenUri {
 
     function setTokenUriBatch(LibAsset.AssetUri[] memory _assets) external {
         for (uint256 i = 0; i < _assets.length; ++i) {
-            _setTokenUri(_assets[i].tokenId, _assets[i].uri);
+            _setTokenDataUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
 }

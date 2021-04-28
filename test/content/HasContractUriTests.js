@@ -19,7 +19,7 @@ contract('HasContractUri Contract Tests', (accounts) => {
 
     it('Check default Contract Uri', async () => {
         assert.equal(
-            await testContract.contractUri(),
+            await testContract.getContractUri(),
             "",
             "Contract Uri should be empty.");
     });
@@ -28,7 +28,7 @@ contract('HasContractUri Contract Tests', (accounts) => {
         testContract = await TestHasContractUri.new();
         await testContract.__TestHasContractUri_init("ipfs:/TestContractInfo.json");
         assert.equal(
-            await testContract.contractUri(),
+            await testContract.getContractUri(),
             "ipfs:/TestContractInfo.json",
             "Contract Uri should not be empty.");
     });
@@ -36,7 +36,7 @@ contract('HasContractUri Contract Tests', (accounts) => {
     it('Setting the default contract uri', async () => {
         await testContract.setContractUri("ipfs:/TestContractInfo.json");
         assert.equal(
-            await testContract.contractUri(),
+            await testContract.getContractUri(),
             "ipfs:/TestContractInfo.json",
             "Contract Uri should not be empty.");
     });
@@ -44,7 +44,7 @@ contract('HasContractUri Contract Tests', (accounts) => {
     it('Setting the default contract uri to null string', async () => {
         await testContract.setContractUri("");
         assert.equal(
-            await testContract.contractUri(),
+            await testContract.getContractUri(),
             "",
             "Contract Uri should be empty.");
     });

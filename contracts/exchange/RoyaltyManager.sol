@@ -6,7 +6,6 @@ import "./ManagerBase.sol";
 import "../libraries/LibRoyalties.sol";
 import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
-// import "./interfaces/IEscrowDistributions.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     
