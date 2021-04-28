@@ -14,8 +14,8 @@ abstract contract SystemsApproval is ERC165StorageUpgradeable {
     EnumerableSetUpgradeable.AddressSet private users;
 
     /*********************** Events *********************/
-    event UserApproved(address _user, bool approved);
-    event SystemApproved(LibAsset.SystemApprovalPair[] _operators);
+    event UserApproved(address user, bool approved);
+    event SystemApproved(LibAsset.SystemApprovalPair[] operators);
 
     /**************** Internal Functions ****************/
     /**

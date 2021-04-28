@@ -18,29 +18,55 @@ contract('SystemsApproval Contract Tests', (accounts) => {
 
     it('Check that deployer is not approved yet', async () => {
         assert.equal(
-            await testContract.isSystemOperator(deployerAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, deployerAddress, {from: deployerAddress}),
             false,
             "deployer shouldn't be approved yet.");
     });
 
-    it('Pass no arguments to setSystemApproval function', async () => {            
+    it('Pass no arguments to registerSystems function', async () => {            
         var approvalPair = [];
         TruffleAssert.eventNotEmitted(
-            await testContract.setSystemApproval(approvalPair, {from: deployerAddress}),
+            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'SystemApproved',
             null
         );
 
         assert.equal(
-            await testContract.isSystemOperator(craftingSystemAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress, {from: deployerAddress}),
             false,
             "crafting system shouldn't be approved yet.");
     });
 
-    it('Approve Crafting System operator', async () => {            
+    it('Registering Crafting System operator', async () => {            
         var approvalPair = [[craftingSystemAddress, true]];
         TruffleAssert.eventEmitted(
-            await testContract.setSystemApproval(approvalPair, {from: deployerAddress}),
+            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
+            'SystemApproved',
+            (ev) => {
+                return ev[0][0].operator == craftingSystemAddress
+                    && ev[0][0].approved == true;
+            }
+        );
+
+        TruffleAssert.eventEmitted(
+            await testContract.userApprove(deployerAddress, true, {from: deployerAddress}),
+            'UserApproved',
+            (ev) => {
+                return ev.user == deployerAddress
+                    && ev.approved == true;
+            }
+        );
+        
+        assert.equal(
+            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+            true,
+            "crafting system should be approved.");
+    });
+
+    it('User Not Approved', async () => {            
+        var approvalPair = [[craftingSystemAddress, true]];
+        TruffleAssert.eventEmitted(
+            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'SystemApproved',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
@@ -49,15 +75,15 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await testContract.isSystemOperator(craftingSystemAddress),
-            true,
-            "crafting system should be approved.");
+            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+            false,
+            "crafting system should be approved because user has not given permission.");
     });
 
-    it('Approving multiple operators', async () => {            
+    it('Registering multiple operators', async () => {            
         var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
         TruffleAssert.eventEmitted(
-            await testContract.setSystemApproval(approvalPair, {from: deployerAddress}),
+            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'SystemApproved',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
@@ -67,21 +93,23 @@ contract('SystemsApproval Contract Tests', (accounts) => {
             }
         );
         
+        await testContract.userApprove(deployerAddress, true, {from: deployerAddress});
+        
         assert.equal(
-            await testContract.isSystemOperator(craftingSystemAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await testContract.isSystemOperator(lootboxSystemAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
             true,
             "lootbox system should be approved.");
     });
 
-    it('Approving 1 and disapproving 1 operator', async () => {            
+    it('Registering 1 and unregistering 1 operator', async () => {            
         var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, false]];
         TruffleAssert.eventEmitted(
-            await testContract.setSystemApproval(approvalPair, {from: deployerAddress}),
+            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'SystemApproved',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
@@ -91,21 +119,23 @@ contract('SystemsApproval Contract Tests', (accounts) => {
             }
         );
         
+        await testContract.userApprove(deployerAddress, true, {from: deployerAddress});
+        
         assert.equal(
-            await testContract.isSystemOperator(craftingSystemAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await testContract.isSystemOperator(lootboxSystemAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
             false,
             "lootbox system should not be approved.");
     });
 
-    it('Approving multiple and disapproving multiple operators', async () => {            
+    it('Registering multiple and unregistering multiple operators', async () => {            
         var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
         TruffleAssert.eventEmitted(
-            await testContract.setSystemApproval(approvalPair, {from: deployerAddress}),
+            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'SystemApproved',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
@@ -117,7 +147,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         
         approvalPair = [[craftingSystemAddress, false], [lootboxSystemAddress, false]];
         TruffleAssert.eventEmitted(
-            await testContract.setSystemApproval(approvalPair, {from: deployerAddress}),
+            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'SystemApproved',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
@@ -127,13 +157,15 @@ contract('SystemsApproval Contract Tests', (accounts) => {
             }
         );
         
+        await testContract.userApprove(deployerAddress, true, {from: deployerAddress});
+        
         assert.equal(
-            await testContract.isSystemOperator(craftingSystemAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
             false,
             "crafting system should not be approved.");
             
         assert.equal(
-            await testContract.isSystemOperator(lootboxSystemAddress),
+            await testContract.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
             false,
             "lootbox system should not be approved.");
     });
