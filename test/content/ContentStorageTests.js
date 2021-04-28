@@ -92,7 +92,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
     // }
 
     it('Add single asset', async () => {
-        var asset = [[1, "CID-1", 0, [[deployerAddress, 200]]]];
+        var asset = [[1, "CID-1", 100, [[deployerAddress, 200]]]];
         var results = await contentStorage.addAssetBatch(asset);
 
         TruffleAssert.eventEmitted(
@@ -107,13 +107,28 @@ contract('ContentStorage Contract Tests', (accounts) => {
         
         TruffleAssert.eventEmitted(
             results,
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 0
                     && ev.uri == "CID-1";
             }
         );
+        
+        assert.equal(
+            await contentStorage.getIds(1),
+            true,
+            "Asset wasn't added properly - id doesn't exist");
+    
+        assert.equal(
+            await contentStorage.getSupply(1),
+            0,
+            "Asset wasn't added properly - supply is incorrect");
+        
+        assert.equal(
+            await contentStorage.getMaxSupply(1),
+            100,
+            "Asset wasn't added properly - maxSupply is incorrect");
     });
 
     it('Add multiple assets', async () => {
@@ -126,7 +141,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         // Check the token URIs
         TruffleAssert.eventEmitted(
             results,
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 0
@@ -136,7 +151,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         
         TruffleAssert.eventEmitted(
             results,
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
                 return ev.id == 2
                     && ev.version == 0
@@ -153,6 +168,23 @@ contract('ContentStorage Contract Tests', (accounts) => {
                     && ev.fees[0].bps == 200;
             }
         );
+    });
+
+    it('Update the current asset supply', async () => {
+        var asset = [[1, "CID-1", 100, [[deployerAddress, 200]]]];
+        await contentStorage.addAssetBatch(asset);
+
+        assert.equal(
+            await contentStorage.getSupply(1),
+            0,
+            "Asset wasn't added properly - supply is incorrect");
+            
+        await contentStorage.updateSupply(1, 5); 
+
+        assert.equal(
+            await contentStorage.getSupply(1),
+            5,
+            "Asset wasn't added properly - supply is incorrect");
     });
     
     it('Basic Royalties tests', async () => {
@@ -184,34 +216,35 @@ contract('ContentStorage Contract Tests', (accounts) => {
     });
     
     it('Basic System Approval tests', async () => {
+        var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
+        await contentStorage.registerSystems(approvalPair, {from: deployerAddress});
+
         assert.equal(
-            await contentStorage.isSystemOperator(craftingSystemAddress),
+            await contentStorage.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
             false,
             "crafting contract shouldn't be approved yet.");
         assert.equal(
-            await contentStorage.isSystemOperator(lootboxSystemAddress),
+            await contentStorage.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
             false,
             "lootbox contract shouldn't be approved yet.");
-
-        var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
-        await contentStorage.setSystemApproval(approvalPair, {from: deployerAddress});
+        await contentStorage.userApprove(deployerAddress, true, {from: deployerAddress});
         
         assert.equal(
-            await contentStorage.isSystemOperator(craftingSystemAddress),
+            await contentStorage.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await contentStorage.isSystemOperator(lootboxSystemAddress),
+            await contentStorage.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
             true,
             "lootbox system should be approved.");
     });
 
     it('Basic Uri tests', async () => {
         var asset = [
-            [1, "CID-1", 0, [[deployerAddress, 200]]],
+            [1, "ipfs:/CID-1", 0, [[deployerAddress, 200]]],
             [2, "", 10, []],
-            [3, "CID-3", 10, []]
+            [3, "ipfs:/CID-3", 10, []]
         ];
         await contentStorage.addAssetBatch(asset);
 
@@ -222,7 +255,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
         assert.equal(
             await contentStorage.tokenDataUri(2, 0),
-            "ipfs:/",
+            "",
             "Token 2 incorrect uri");
 
         assert.equal(
@@ -232,17 +265,34 @@ contract('ContentStorage Contract Tests', (accounts) => {
             
         // Update Asset 2
         var assetUri = [
-            [2, "CID-2"]
+            [2, "ipfs:/CID-2"]
         ];
         
         TruffleAssert.eventEmitted(
-            await contentStorage.setTokenUriBatch(assetUri),
-            'TokenUriUpdated'
+            await contentStorage.setTokenDataUriBatch(assetUri),
+            'TokenDataUriUpdated'
         );
         
         assert.equal(
             await contentStorage.tokenDataUri(2, 1),
             "ipfs:/CID-2",
+            "Token 2 incorrect uri");
+
+        // Test token uri
+        
+        assert.equal(
+            await contentStorage.uri(1),
+            "ipfs:/1",
+            "Token 2 incorrect uri");
+        
+        assert.equal(
+            await contentStorage.uri(2),
+            "ipfs:/2",
+            "Token 2 incorrect uri");
+    
+        assert.equal(
+            await contentStorage.uri(3),
+            "ipfs:/3",
             "Token 2 incorrect uri");
     });
 });

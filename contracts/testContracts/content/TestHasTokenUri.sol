@@ -9,6 +9,10 @@ contract TestHasTokenUri is HasTokenUri {
         __ERC165Storage_init_unchained();
     }
 
+    function tokenUri(uint256 _tokenId) external view returns (string memory) {
+        return _tokenUri(_tokenId);
+    }
+
     function tokenDataUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
         return _tokenDataUri(_tokenId, _version);
     }

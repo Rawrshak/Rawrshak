@@ -50,7 +50,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
 
     it('Check default Token Uris with just the prefix', async () => {
         assert.equal(
-            await testContract.tokenDataUri(1, 0),
+            await testContract.tokenUri(1),
             "ipfs:/1",
             "Token Uri Prefix isn't set properly.");
     });
@@ -60,7 +60,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         await testContract.__TestHasTokenUri_init("");
 
         assert.equal(
-            await testContract.tokenDataUri(1, 0),
+            await testContract.tokenUri(1),
             "",
             "Token Uri should be empty");
     });
@@ -74,92 +74,92 @@ contract('HasTokenUri Contract Tests', (accounts) => {
     // }
 
     it('Set Token 1 with proper uri', async () => {
-        var tokenUris = [[1, "testCID/1"]];
+        var tokenUris = [[1, "ipfs:/testCID-1"]];
         TruffleAssert.eventEmitted(
             await testContract.setTokenUriBatch(tokenUris),
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
-                return ev.uri == "testCID/1";
+                return ev.uri == "ipfs:/testCID-1";
             }
         );
         assert.equal(
             await testContract.tokenDataUri(1, 0),
-            "ipfs:/testCID/1",
-            "Token Uri isn't set properly.");
+            "ipfs:/testCID-1",
+            "Token Data Uri isn't set properly.");
     });
 
     it('Set Multiple tokens with proper uri', async () => {
-        var tokenUris = [[1, "testCID/1"], [2, "testCID/2"]];
+        var tokenUris = [[1, "ipfs:/testCID-1"], [2, "ipfs:/testCID-2"]];
         TruffleAssert.eventEmitted(
             await testContract.setTokenUriBatch(tokenUris),
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
-                return ev.id == 1 && ev.uri == "testCID/1";
+                return ev.id == 1 && ev.uri == "ipfs:/testCID-1";
             }
         );
         TruffleAssert.eventEmitted(
             await testContract.setTokenUriBatch(tokenUris),
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
-                return ev.id == 2 && ev.uri == "testCID/2";
+                return ev.id == 2 && ev.uri == "ipfs:/testCID-2";
             }
         );
     });
 
     it('Set Multiple tokens with the same id', async () => {
-        var tokenUris = [[1, "testCID/1"], [1, "testCID/1v2"]];
+        var tokenUris = [[1, "ipfs:/testCID-1"], [1, "ipfs:/testCID-1v2"]];
         var results = await testContract.setTokenUriBatch(tokenUris);
 
         TruffleAssert.eventEmitted(
             results,
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
                 return ev.id == 1 
                 && ev.version == 0
-                && ev.uri == "testCID/1";
+                && ev.uri == "ipfs:/testCID-1";
             }
         );
         TruffleAssert.eventEmitted(
             results,
-            'TokenUriUpdated',
+            'TokenDataUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 1
-                    && ev.uri == "testCID/1v2";
+                    && ev.uri == "ipfs:/testCID-1v2";
             }
         );
         
         // check the two versions
         assert.equal(
             await testContract.tokenDataUri(1, 0),
-            "ipfs:/testCID/1",
-            "Token Uri isn't set properly.");
+            "ipfs:/testCID-1",
+            "Token Data Uri isn't set properly.");
 
         assert.equal(
             await testContract.tokenDataUri(1, 1),
-            "ipfs:/testCID/1v2",
-            "Token Uri isn't set properly.");
+            "ipfs:/testCID-1v2",
+            "Token Data Uri isn't set properly.");
     });
 
     it('Token Uri with invalid version', async () => {
-        var tokenUris = [[1, "testCID/1"], [1, "testCID/1v2"]];
+        var tokenUris = [[1, "ipfs:/testCID-1"], [1, "ipfs:/testCID-1v2"]];
         await testContract.setTokenUriBatch(tokenUris);
 
         // check latest version
         assert.equal(
             await testContract.tokenDataUri(1, 1),
-            "ipfs:/testCID/1v2",
+            "ipfs:/testCID-1v2",
             "Token Uri isn't set properly for the correct version.");
 
         // check invalid version
         assert.equal(
             await testContract.tokenDataUri(1, 2),
-            "ipfs:/testCID/1v2",
+            "ipfs:/testCID-1v2",
             "Latest Token Uri isn't properly returned.");
     });
 
     it('Get Latest version', async () => {
-        var tokenUris = [[1, "testCID/1"], [1, "testCID/1v2"]];
+        var tokenUris = [[1, "ipfs:/testCID-1"], [1, "ipfs:/testCID-1v2"]];
         await testContract.setTokenUriBatch(tokenUris);
 
         // check latest version
@@ -173,17 +173,17 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         testContract = await TestHasTokenUri.new();
         await testContract.__TestHasTokenUri_init("");
 
-        var tokenUris = [[1, "ipfs:/testCID/1"]];
+        var tokenUris = [[1, "ipfs:/testCID-1"]];
         await testContract.setTokenUriBatch(tokenUris);
 
         assert.equal(
-            await testContract.tokenDataUri(1, 0),
-            "ipfs:/testCID/1",
+            await testContract.tokenUri(1),
+            "",
             "Incorrect Token Uri");
             
         assert.equal(
             await testContract.tokenDataUri(1, 1),
-            "ipfs:/testCID/1",
+            "ipfs:/testCID-1",
             "Incorrect Token Uri with incorrect version.");
     });
     

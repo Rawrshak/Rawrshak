@@ -60,15 +60,15 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApp
         grantRole(OWNER_ROLE, parent);
     }
     
-    function getIds(uint256 _tokenId) external view override returns (bool) {
+    function getIds(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (bool) {
         return ids[_tokenId];
     }
 
-    function getSupply(uint256 _tokenId) external view override returns (uint256) {
+    function getSupply(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (uint256) {
         return supply[_tokenId];
     }
 
-    function getMaxSupply(uint256 _tokenId) external view override returns (uint256) {
+    function getMaxSupply(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (uint256) {
         return maxSupply[_tokenId];
     }
     
