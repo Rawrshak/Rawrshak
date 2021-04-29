@@ -57,7 +57,7 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
         require(_content.isContract(), "Content address is not an contract");
         require(_content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Contract is not a Content Contract");
         // check if I have the correct permissions
-        require(IContent(_content).isSystemOperator(address(this)), "No contract permissions");
+        require(IContent(_content).isOperatorRegistered(address(this)), "No contract permissions");
         
         contentContracts.add(_content);
         

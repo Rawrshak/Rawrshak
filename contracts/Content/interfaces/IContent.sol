@@ -16,8 +16,10 @@ interface IContent {
     
     function tokenDataUri(uint256 _tokenId, uint256 _version) external view returns (string memory);
     
-    function isSystemOperator(address _operator) external view returns (bool);
+    function isSystemOperatorApproved(address _operator) external view returns (bool);
     
+    function isOperatorRegistered(address _operator) external view returns (bool);
+
     function getRoyalties(uint256 _tokenId) external view returns (LibRoyalties.Fees[] memory);
 
     // function addAssetBatch(LibAsset.CreateData[] memory _assets) external;

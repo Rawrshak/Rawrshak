@@ -64,7 +64,7 @@ contract('Craft Contract', (accounts)=> {
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
-        var approvalPair = [[contentManager.address, true]];
+        var approvalPair = [[deployerAddress, true], [contentManager.address, true]];
         await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
@@ -79,6 +79,9 @@ contract('Craft Contract', (accounts)=> {
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
         await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+
+        // approve systems for player address
+        await content.approveAllSystems(true, {from:playerAddress});
 
         // Mint an assets
         var mintData = [playerAddress, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10]];
@@ -426,11 +429,13 @@ contract('Craft Contract', (accounts)=> {
         var results = await craft.craft(1, 1, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetsCrafted');
         
+        var result = await content.getSupplyInfo(3);
         assert.equal(await content.balanceOf(playerAddress, 3), 9, "Material was not burned.");
-        assert.equal(await content.supply(3), 9, "Material supply is incorrect.");
+        assert.equal(result.supply, 9, "Material supply is incorrect.");
 
+        result = await content.getSupplyInfo(6);
         assert.equal(await content.balanceOf(playerAddress, 6), 1, "Reward was not burned.");
-        assert.equal(await content.supply(6), 1, "Reward supply is incorrect.");
+        assert.equal(result.supply, 1, "Reward supply is incorrect.");
     });
 
     it('Craft multiple instances of a recipe', async () => {
@@ -477,23 +482,29 @@ contract('Craft Contract', (accounts)=> {
         var results = await craft.craft(recipeId1, 3, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetsCrafted');
         
+        var result = await content.getSupplyInfo(3);
         assert.equal(await content.balanceOf(playerAddress, 3), 7, "Material 1 was not burned.");
-        assert.equal(await content.supply(3), 7, "Material 1 supply is incorrect.");
+        assert.equal(result.supply, 7, "Material 1 supply is incorrect.");
+        result = await content.getSupplyInfo(4);
         assert.equal(await content.balanceOf(playerAddress, 4), 7, "Material 2 was not burned.");
-        assert.equal(await content.supply(4), 7, "Material 2 supply is incorrect.");
+        assert.equal(result.supply, 7, "Material 2 supply is incorrect.");
+        result = await content.getSupplyInfo(6);
         assert.equal(await content.balanceOf(playerAddress, 6), 3, "Reward was not burned.");
-        assert.equal(await content.supply(6), 3, "Reward supply is incorrect.");
+        assert.equal(result.supply, 3, "Reward supply is incorrect.");
         
         // Craft recipe 2
         var results = await craft.craft(recipeId2, 2, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetsCrafted');
         
+        result = await content.getSupplyInfo(3);
         assert.equal(await content.balanceOf(playerAddress, 3), 3, "Material 1 was not burned.");
-        assert.equal(await content.supply(3), 3, "Material 1 supply is incorrect.");
+        assert.equal(result.supply, 3, "Material 1 supply is incorrect.");
+        result = await content.getSupplyInfo(5);
         assert.equal(await content.balanceOf(playerAddress, 5), 4, "Material 2 was not burned.");
-        assert.equal(await content.supply(5), 4, "Material 2 supply is incorrect.");
+        assert.equal(result.supply, 4, "Material 2 supply is incorrect.");
+        result = await content.getSupplyInfo(7);
         assert.equal(await content.balanceOf(playerAddress, 7), 4, "Reward was not burned.");
-        assert.equal(await content.supply(7), 4, "Reward supply is incorrect.");
+        assert.equal(result.supply, 4, "Reward supply is incorrect.");
     });
 
     it('Invalid Craft', async () => {

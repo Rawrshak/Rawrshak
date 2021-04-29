@@ -17,6 +17,8 @@ interface IContentStorage {
 
     function isSystemOperatorApproved(address _user, address _operator) external view returns (bool);
     
+    function isOperatorRegistered(address _operator) external view returns (bool);
+    
     function registerSystems(LibAsset.SystemApprovalPair[] memory _operators) external;
     
     function userApprove(address _user, bool _approved) external;

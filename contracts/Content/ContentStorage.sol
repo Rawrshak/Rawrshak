@@ -75,6 +75,10 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApp
     function isSystemOperatorApproved(address _user, address _operator) external view override checkPermissions(OWNER_ROLE) returns (bool) {
         return _isSystemOperatorApproved(_user, _operator);
     }
+
+    function isOperatorRegistered(address _operator) external view override returns (bool) {
+        return _isOperatorRegistered(_operator);
+    }
     
     function registerSystems(LibAsset.SystemApprovalPair[] memory _operators) external override checkPermissions(OWNER_ROLE) {
         return _registerSystems(_operators);

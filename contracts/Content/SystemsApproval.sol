@@ -26,6 +26,10 @@ abstract contract SystemsApproval is ERC165StorageUpgradeable {
         return users.contains(_user) && systems.contains(_operator);
     }
 
+    function _isOperatorRegistered(address _operator) internal view returns (bool) {
+        return systems.contains(_operator);
+    }
+
     /**
      * @dev Internal function to approve a pre-approve system address
      * @param _user [bool] user address

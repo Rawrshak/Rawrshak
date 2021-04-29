@@ -63,7 +63,7 @@ contract('Craft Base Contract', (accounts)=> {
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
-        var approvalPair = [[contentManager.address, true]];
+        var approvalPair = [[deployerAddress, true], [contentManager.address, true]];
         await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
@@ -78,6 +78,9 @@ contract('Craft Base Contract', (accounts)=> {
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
         await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+
+        // approve systems for player address
+        await content.approveAllSystems(true, {from:playerAddress});
 
         // Mint an assets
         var mintData = [playerAddress, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10]];

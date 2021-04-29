@@ -87,6 +87,8 @@ contract('Content Contract Tests', (accounts) => {
         // Note: we use content.methods['function()']() below because it tokenDataUri() is an
         //       overloaded function
 
+        await content.approveAllSystems(true, {from:playerAddress});
+
         var mintData = [playerAddress, [1], [1]];
         await content.mintBatch(mintData, {from: deployerAddress});
 
@@ -104,7 +106,7 @@ contract('Content Contract Tests', (accounts) => {
 
         // test not approved 
         assert.equal(
-            await content.isSystemOperator(craftingSystemAddress, {from: deployerAddress}),
+            await content.isSystemOperatorApproved(craftingSystemAddress, {from: deployerAddress}),
             false,
             "Crafting System Address does not have the correct permissions.");
 
@@ -112,7 +114,7 @@ contract('Content Contract Tests', (accounts) => {
 
         // test approval 
         assert.equal(
-            await content.isSystemOperator(craftingSystemAddress, {from: deployerAddress}),
+            await content.isSystemOperatorApproved(craftingSystemAddress, {from: deployerAddress}),
             true,
             "Crafting System Address does not have the correct permissions.");
     });
@@ -143,6 +145,8 @@ contract('Content Contract Tests', (accounts) => {
     // }
 
     it('Mint Assets', async () => {
+        await content.approveAllSystems(true, {from:playerAddress});
+
         var mintData = [playerAddress, [1, 2], [10, 1]];
         await content.mintBatch(mintData, {from: deployerAddress});
         
@@ -180,10 +184,10 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Burn Assets', async () => {
+        await content.approveAllSystems(true, {from:playerAddress});
+
         var mintData = [playerAddress, [1], [10]];
         await content.mintBatch(mintData, {from: deployerAddress});
-
-        await content.approveAllSystems(true, {from:playerAddress});
 
         var burnData = [playerAddress, [1], [5]];
         await content.burnBatch(burnData, {from: playerAddress});
@@ -197,6 +201,8 @@ contract('Content Contract Tests', (accounts) => {
     });
     
     it('Invalid burns', async () => {
+        await content.approveAllSystems(true, {from:playerAddress});
+
         var mintData = [playerAddress, [1], [10]];
         await content.mintBatch(mintData, {from: deployerAddress});
 
@@ -216,6 +222,8 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Transfer Assets', async () => {
+        await content.approveAllSystems(true, {from:playerAddress});
+
         var mintData = [playerAddress, [1], [10]];
         await content.mintBatch(mintData, {from: deployerAddress});
 
@@ -226,6 +234,8 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Invalid Transfer Assets', async () => {
+        await content.approveAllSystems(true, {from:playerAddress});
+
         var mintData = [playerAddress, [1], [10]];
         await content.mintBatch(mintData, {from: deployerAddress});
         

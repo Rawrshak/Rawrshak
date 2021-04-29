@@ -65,7 +65,7 @@ contract('Salvage Contract', (accounts)=> {
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
-        var approvalPair = [[contentManager.address, true]];
+        var approvalPair = [[deployerAddress, true], [contentManager.address, true]];
         await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
@@ -81,6 +81,9 @@ contract('Salvage Contract', (accounts)=> {
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
         await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
+        // approve systems for player address
+        await content.approveAllSystems(true, {from:playerAddress});
+        
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 10]];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
@@ -426,13 +429,16 @@ contract('Salvage Contract', (accounts)=> {
         var results = await salvage.salvage([content.address, 1], 1, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetSalvaged');
 
+        var result = await content.getSupplyInfo(1);
         assert.equal(await content.balanceOf(playerAddress, 1), 9, "Asset was not burned.");
-        assert.equal(await content.supply(1), 9, "Asset supply is incorrect.");
+        assert.equal(result.supply, 9, "Asset supply is incorrect.");
 
+        result = await content.getSupplyInfo(3);
         assert.equal(await content.balanceOf(playerAddress, 3), 2, "Materials Asset 3 was not minted to player");
-        assert.equal(await content.supply(3), 2, "Materials Asset 3 supply is incorrect.");
+        assert.equal(result.supply, 2, "Materials Asset 3 supply is incorrect.");
+        result = await content.getSupplyInfo(4);
         assert.equal(await content.balanceOf(playerAddress, 4), 1, "Materials Asset 4 was not minted to player");
-        assert.equal(await content.supply(4), 1, "Materials Asset 4 supply is incorrect.");
+        assert.equal(result.supply, 1, "Materials Asset 4 supply is incorrect.");
     });
 
     it('Salvage multiple instances of the same asset', async () => {
@@ -445,13 +451,16 @@ contract('Salvage Contract', (accounts)=> {
         var results = await salvage.salvage([content.address, 1], 5, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetSalvaged');
 
+        var result = await content.getSupplyInfo(1);
         assert.equal(await content.balanceOf(playerAddress, 1), 5, "Asset was not burned.");
-        assert.equal(await content.supply(1), 5, "Asset supply is incorrect.");
+        assert.equal(result.supply, 5, "Asset supply is incorrect.");
 
+        result = await content.getSupplyInfo(3);
         assert.equal(await content.balanceOf(playerAddress, 3), 10, "Materials Asset 3 was not minted to player");
-        assert.equal(await content.supply(3), 10, "Materials Asset 3 supply is incorrect.");
+        assert.equal(result.supply, 10, "Materials Asset 3 supply is incorrect.");
+        result = await content.getSupplyInfo(4);
         assert.equal(await content.balanceOf(playerAddress, 4), 5, "Materials Asset 4 was not minted to player");
-        assert.equal(await content.supply(4), 5, "Materials Asset 4 supply is incorrect.");
+        assert.equal(result.supply, 5, "Materials Asset 4 supply is incorrect.");
     });
 
     it('Salvage Multiple Asset', async () => {
@@ -503,17 +512,22 @@ contract('Salvage Contract', (accounts)=> {
         var results = await salvage.salvageBatch(assetsToSalvage, amounts, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetSalvagedBatch');
 
+        var result = await content.getSupplyInfo(1);
         assert.equal(await content.balanceOf(playerAddress, 1), 9, "Asset was not burned.");
-        assert.equal(await content.supply(1), 9, "Asset supply is incorrect.");
+        assert.equal(result.supply, 9, "Asset supply is incorrect.");
+        result = await content.getSupplyInfo(2);
         assert.equal(await content.balanceOf(playerAddress, 2), 9, "Asset 2 was not burned.");
-        assert.equal(await content.supply(2), 9, "Asset 2 supply is incorrect.");
+        assert.equal(result.supply, 9, "Asset 2 supply is incorrect.");
         
+        result = await content.getSupplyInfo(3);
         assert.equal(await content.balanceOf(playerAddress, 3), 4, "Asset 3 was not burned.");
-        assert.equal(await content.supply(3), 4, "Asset 3 supply is incorrect.");
+        assert.equal(result.supply, 4, "Asset 3 supply is incorrect.");
+        result = await content.getSupplyInfo(4);
         assert.equal(await content.balanceOf(playerAddress, 4), 1, "Asset 4 was not burned.");
-        assert.equal(await content.supply(4), 1, "Asset 4 supply is incorrect.");
+        assert.equal(result.supply, 1, "Asset 4 supply is incorrect.");
+        result = await content.getSupplyInfo(5);
         assert.equal(await content.balanceOf(playerAddress, 5), 3, "Asset 5 was not burned.");
-        assert.equal(await content.supply(5), 3, "Asset 5 supply is incorrect.");
+        assert.equal(result.supply, 3, "Asset 5 supply is incorrect.");
     });
 
     it('Salvage multiple instances of multiple asset', async () => {
@@ -565,17 +579,22 @@ contract('Salvage Contract', (accounts)=> {
         var results = await salvage.salvageBatch(assetsToSalvage, amounts, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetSalvagedBatch');
 
+        var result = await content.getSupplyInfo(1);
         assert.equal(await content.balanceOf(playerAddress, 1), 5, "Asset was not burned.");
-        assert.equal(await content.supply(1), 5, "Asset supply is incorrect.");
+        assert.equal(result.supply, 5, "Asset supply is incorrect.");
+        result = await content.getSupplyInfo(2);
         assert.equal(await content.balanceOf(playerAddress, 2), 3, "Asset 2 was not burned.");
-        assert.equal(await content.supply(2), 3, "Asset 2 supply is incorrect.");
+        assert.equal(result.supply, 3, "Asset 2 supply is incorrect.");
         
+        result = await content.getSupplyInfo(3);
         assert.equal(await content.balanceOf(playerAddress, 3), 24, "Asset 3 was not burned.");
-        assert.equal(await content.supply(3), 24, "Asset 3 supply is incorrect.");
+        assert.equal(result.supply, 24, "Asset 3 supply is incorrect.");
+        result = await content.getSupplyInfo(4);
         assert.equal(await content.balanceOf(playerAddress, 4), 5, "Asset 4 was not burned.");
-        assert.equal(await content.supply(4), 5, "Asset 4 supply is incorrect.");
+        assert.equal(result.supply, 5, "Asset 4 supply is incorrect.");
+        result = await content.getSupplyInfo(5);
         assert.equal(await content.balanceOf(playerAddress, 5), 21, "Asset 5 was not burned.");
-        assert.equal(await content.supply(5), 21, "Asset 5 supply is incorrect.");
+        assert.equal(result.supply, 21, "Asset 5 supply is incorrect.");
     });
 
     it('Invalid Salvage Asset', async () => {

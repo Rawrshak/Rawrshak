@@ -86,7 +86,7 @@ contract('Content Contract Tests', (accounts) => {
 
     it('Set operators for System Approval', async () => {        
         assert.equal(
-            await content.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
+            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: contentManager.address}),
             false,
             "lootbox system not should be approved yet.");
 
@@ -94,7 +94,7 @@ contract('Content Contract Tests', (accounts) => {
         await contentManager.registerSystem(lootboxApprovalPair);
 
         assert.equal(
-            await content.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
+            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: contentManager.address}),
             true,
             "lootbox system should be approved.");
     });
