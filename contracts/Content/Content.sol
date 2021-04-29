@@ -98,6 +98,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     function mintBatch(LibAsset.MintData memory _data) external override {
+        // Todo: Include the owner signatures to verify instead of using onlyOwner
         require(_isSystemOperatorApproved(_data.to, _msgSender()), "Invalid permissions");
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             require(_tokenExists(_data.tokenIds[i]), "token id missing");

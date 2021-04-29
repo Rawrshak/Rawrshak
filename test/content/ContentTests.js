@@ -15,8 +15,8 @@ contract('Content Contract Tests', (accounts) => {
     var content;
     var contentStorage;
     var asset = [
-        [1, "CID-1", 0, [[deployerAddress, 200]]],
-        [2, "CID-2", 100, []],
+        [1, "ipfs:/CID-1", 0, [[deployerAddress, 200]]],
+        [2, "ipfs:/CID-2", 100, []],
     ];
 
     beforeEach(async () => {
@@ -28,14 +28,11 @@ contract('Content Contract Tests', (accounts) => {
 
         // give crafting system approval
         var approvalPair = [[deployerAddress, true], [craftingSystemAddress, true]];
-        await contentStorage.setSystemApproval(approvalPair);
+        await contentStorage.registerSystems(approvalPair);
 
         // Add 1 asset        
-        await content.addAssetBatch(asset);
+        // await content.addAssetBatch(asset);
         await contentStorage.addAssetBatch(asset);
-
-        // give crafting system approval
-        await contentStorage.setSystemApproval(approvalPair);
     });
 
     it('Check Content proper deployment', async () => {
@@ -61,13 +58,15 @@ contract('Content Contract Tests', (accounts) => {
             true, 
             "The content contract isn't an ERC1155 implementation");
     });
-    
 
     it('Check Supply', async () => {
-        assert.equal(await content.supply(1), 0, "Asset 1 incorrect supply");
-        assert.equal(await content.maxSupply(1), 0, "Asset 1 incorrect max supply");
-        assert.equal(await content.supply(2), 0, "Asset 1 incorrect supply");
-        assert.equal(await content.maxSupply(2), 100, "Asset 1 incorrect max supply");
+        var results = await content.getSupplyInfo(1);
+        assert.equal(results.supply, 0, "Asset 1 incorrect supply");
+        assert.equal(results.maxSupply, 0, "Asset 1 incorrect max supply");
+        
+        results = await content.getSupplyInfo(2);
+        assert.equal(results.supply, 0, "Asset 2 incorrect supply");
+        assert.equal(results.maxSupply, 100, "Asset 2 incorrect max supply");
     });
 
     // CreateData
@@ -87,8 +86,12 @@ contract('Content Contract Tests', (accounts) => {
         // Test token uri
         // Note: we use content.methods['function()']() below because it tokenDataUri() is an
         //       overloaded function
+
+        var mintData = [playerAddress, [1], [1]];
+        await content.mintBatch(mintData, {from: deployerAddress});
+
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](1, 0),
+            await content.methods['tokenDataUri(uint256,uint256)'](1, 0, {from: playerAddress}),
             "ipfs:/CID-1",
             "Token 1 uri is incorrect.");
         
@@ -99,23 +102,19 @@ contract('Content Contract Tests', (accounts) => {
             true,
             "Token 1 royalties are incorrect");
 
+        // test not approved 
+        assert.equal(
+            await content.isSystemOperator(craftingSystemAddress, {from: deployerAddress}),
+            false,
+            "Crafting System Address does not have the correct permissions.");
+
+        await content.approveAllSystems(true, {from:deployerAddress});
+
         // test approval 
         assert.equal(
-            await contentStorage.isSystemOperator(craftingSystemAddress, {from: deployerAddress}),
+            await content.isSystemOperator(craftingSystemAddress, {from: deployerAddress}),
             true,
             "Crafting System Address does not have the correct permissions.");
-    });
-
-    it('Add Assets fails', async () => {
-        // invalid add because asset already exists
-        var newAssets = [
-            [2, "CID-2v", 0, [[deployerAddress, 300]]]
-        ];
-
-        await TruffleAssert.fails(
-            content.addAssetBatch(newAssets),
-            TruffleAssert.ErrorType.REVERT
-        );
     });
 
     it('Add Assets', async () => {
@@ -124,9 +123,10 @@ contract('Content Contract Tests', (accounts) => {
             [3, "CID-3", 1000, []]
         ];
         
-        TruffleAssert.eventEmitted(await content.addAssetBatch(newAssets), 'AssetsAdded');
-        assert.equal(await content.supply(3), 0, "Asset 3 incorrect supply");
-        assert.equal(await content.maxSupply(3), 1000, "Asset 3 incorrect max supply");
+        TruffleAssert.eventEmitted(await contentStorage.addAssetBatch(newAssets), 'AssetsAdded');
+        var supplyInfo = await content.getSupplyInfo(3, {from: deployerAddress});
+        assert.equal(supplyInfo.supply, 0, "Asset 3 incorrect supply");
+        assert.equal(supplyInfo.maxSupply, 1000, "Asset 3 incorrect max supply");
     });
 
     // MintData
@@ -146,8 +146,10 @@ contract('Content Contract Tests', (accounts) => {
         var mintData = [playerAddress, [1, 2], [10, 1]];
         await content.mintBatch(mintData, {from: deployerAddress});
         
-        assert.equal(await content.supply(1), 10, "Asset 1 incorrect supply");
-        assert.equal(await content.supply(2), 1, "Asset 2 incorrect supply");
+        var supplyInfo = await content.getSupplyInfo(1, {from: deployerAddress});
+        assert.equal(supplyInfo.supply, 10, "Asset 1 incorrect supply");
+        supplyInfo = await content.getSupplyInfo(2, {from: deployerAddress});
+        assert.equal(supplyInfo.supply, 1, "Asset 2 incorrect supply");
 
         var balance = await content.balanceOf(playerAddress, 1);
         assert.equal(balance.valueOf().toString(), "10", "Player doesn't have the minted assets.");
@@ -181,12 +183,14 @@ contract('Content Contract Tests', (accounts) => {
         var mintData = [playerAddress, [1], [10]];
         await content.mintBatch(mintData, {from: deployerAddress});
 
+        await content.approveAllSystems(true, {from:playerAddress});
+
         var burnData = [playerAddress, [1], [5]];
         await content.burnBatch(burnData, {from: playerAddress});
-        assert.equal(await content.supply(1), 5, "Asset 1 incorrect supply");
+        assert.equal((await content.getSupplyInfo(1)).supply, 5, "Asset 1 incorrect supply");
 
         await content.burnBatch(burnData, {from: craftingSystemAddress});
-        assert.equal(await content.supply(1), 0, "Asset 1 incorrect supply");
+        assert.equal((await content.getSupplyInfo(1)).supply, 0, "Asset 1 incorrect supply");
         
         var balance = await content.balanceOf(playerAddress, 1);
         assert.equal(balance.valueOf().toString(), "0", "Player still has the burned assets.");

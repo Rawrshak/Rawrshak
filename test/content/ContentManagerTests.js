@@ -17,8 +17,8 @@ contract('Content Contract Tests', (accounts) => {
     var content;
     var contentStorage;
     var asset = [
-        [1, "CID-1", 0, [[deployerAddress, 200]]],
-        [2, "CID-2", 100, []]
+        [1, "ipfs:/CID-1", 0, [[deployerAddress, 200]]],
+        [2, "ipfs:/CID-2", 100, []]
     ];
 
     beforeEach(async () => {
@@ -32,6 +32,8 @@ contract('Content Contract Tests', (accounts) => {
         await contentManager.__ContentManager_init(content.address, contentStorage.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        
+        await contentStorage.userApprove(contentManager.address, true);
 
         // give crafting system approval
         var approvalPair = [[contentManager.address, true], [craftingSystemAddress, true]];
@@ -63,71 +65,76 @@ contract('Content Contract Tests', (accounts) => {
     it('Add Assets', async () => {
         // Add 1 asset
         var newAssets = [
-            [3, "CID-3", 1000, []]
+            [3, "ipfs:/CID-3", 1000, []]
         ];
         
         await contentManager.addAssetBatch(newAssets);
+        await contentStorage.userApprove(playerAddress, true);
+
+        var mintData = [playerAddress, [3], [10]];
+        await content.mintBatch(mintData, {from: craftingSystemAddress});
+
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](3, 0),
+            await content.tokenUri(3),
+            "ipfs:/3", 
+            "New asset wasn't added.");
+        assert.equal(
+            await content.methods['tokenDataUri(uint256,uint256)'](3, 0, {from: playerAddress}),
             "ipfs:/CID-3", 
             "New asset wasn't added.");
     });
 
-    it('Set Contract Uri', async () => {
-        await contentManager.setContractUri("ipfs:/contract-uri.json");
-        
-        assert.equal(
-            await content.uri(0),
-            "ipfs:/contract-uri.json", 
-            "Contract Uri was not set properly");
-    });
-
     it('Set operators for System Approval', async () => {        
         assert.equal(
-            await contentStorage.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
+            await content.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
             false,
             "lootbox system not should be approved yet.");
 
         var lootboxApprovalPair = [[lootboxSystemAddress, true]];
         await contentManager.registerSystem(lootboxApprovalPair);
+
         assert.equal(
-            await contentStorage.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
+            await content.isSystemOperator(lootboxSystemAddress, {from: contentManager.address}),
             true,
             "lootbox system should be approved.");
     });
 
     it('Set Token Prefix', async () => {
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](1, 0),
-            "ipfs:/CID-1", 
+            await content.tokenUri(1),
+            "ipfs:/1", 
             "Token Uri Prefix wasn't set properly.");
 
         await contentManager.setTokenUriPrefix("ipns:/");
         
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](1, 0),
-            "ipns:/CID-1", 
+            await content.tokenUri(1),
+            "ipns:/1", 
             "Token Uri Prefix wasn't set properly.");
     });
 
     it('Set Token URI', async () => {
         var assetUri = [
-            [2, "CID-2-v1"]
+            [2, "ipfs:/CID-2-v1"]
         ];
-        await contentManager.setTokenUriBatch(assetUri);
-        
+        await contentManager.setTokenDataUriBatch(assetUri);
+        await contentStorage.userApprove(playerAddress, true);
+
+        var mintData = [playerAddress, [2], [1]];
+        await content.mintBatch(mintData, {from: craftingSystemAddress});
+
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](2, 0),
+            await content.methods['tokenDataUri(uint256,uint256)'](2, 0, {from: playerAddress}),
             "ipfs:/CID-2",
             "Token 2 incorrect uri for previous version.");
         
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](2, 1),
+            await content.methods['tokenDataUri(uint256,uint256)'](2, 1, {from: playerAddress}),
             "ipfs:/CID-2-v1",
             "Token 2 incorrect uri for latest version.");
         
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](2, 2),
+            await content.methods['tokenDataUri(uint256,uint256)'](2, 2, {from: playerAddress}),
             "ipfs:/CID-2-v1",
             "Token 2 invalid version returns uri for latest version.");
     });
