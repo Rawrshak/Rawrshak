@@ -47,6 +47,9 @@ contract('Escrow NFTs Contract', (accounts) => {
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
         
+        // approve systems for player address
+        await content.approveAllSystems(true, {from:playerAddress});
+
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 1]];
         await contentManager.mintBatch(mintData, {from: deployerAddress});

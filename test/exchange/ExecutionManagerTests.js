@@ -109,6 +109,10 @@ contract('Execution Manager Contract', (accounts)=> {
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
         await rawrToken.transfer(player2Address, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
 
+        // approve systems for player address
+        await content.approveAllSystems(true, {from:playerAddress});
+        await content.approveAllSystems(true, {from:player2Address});
+
         // Mint an asset
         var mintData = [playerAddress, [1], [10]];
         await contentManager.mintBatch(mintData, {from: deployerAddress});

@@ -89,8 +89,12 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         return contentStorage.getRoyalties(_tokenId);
     }
 
-    function isSystemOperator(address _operator) external view override returns (bool) {
+    function isSystemOperatorApproved(address _operator) external view override returns (bool) {
         return _isSystemOperatorApproved(_msgSender(), _operator);
+    }
+
+    function isOperatorRegistered(address _operator) external view override returns (bool) {
+        return contentStorage.isOperatorRegistered(_operator);
     }
 
     function getSupplyInfo(uint256 _tokenId) external view override returns (uint256 supply, uint256 maxSupply) {

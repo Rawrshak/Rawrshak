@@ -243,8 +243,7 @@ contract('Orderbook Manager Contract', (accounts)=> {
     });
 
     it('Invalid Input Length', async () => {
-        await orderbookManager.placeOrder(orderData2, {from: deployerAddress});
-        var id2 = await orderbookManager.getId(orderData2);
+        var id3 = await orderbookManager.getId(orderData3);
         
         await TruffleAssert.fails(
             orderbookManager.getPaymentTotals([id, id3], [1]),

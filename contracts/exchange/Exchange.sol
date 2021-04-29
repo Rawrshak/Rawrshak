@@ -127,21 +127,6 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         // Update Escrow records for the orders
         executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _asset, _token);
 
-        // // Move asset from user to escrow
-        // if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC1155Upgradeable).interfaceId)) {
-        //     IERC1155Upgradeable(_asset.contentAddress)
-        //         .safeTransferFrom(_msgSender(), executionManager.getNFTsEscrow(), _asset.tokenId, totalAssetsToSell, "");
-        // } else {
-        //     IERC721Upgradeable(_asset.contentAddress)
-        //         .safeTransferFrom(_msgSender(), executionManager.getNFTsEscrow(), _asset.tokenId, "");
-        // }
-
-        // // Move payment from escrow to user
-        // for (uint256 i = 0; i < amountPerOrder.length; ++i) {            
-        //     IERC20Upgradeable(executionManager.getToken(_token))
-        //         .transferFrom(executionManager.getTokenEscrow(_token), _msgSender(), amountPerOrder[i]);
-        // }
-
         emit BuyOrdersFilled(_orderIds, _amounts, _asset, _token, totalAssetsToSell);
     }
 
@@ -188,19 +173,6 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
 
         // Execute trade
         executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _token);
-
-        // // send the entire payment from the buyer to the escrow
-        // IERC20Upgradeable(executionManager.getToken(_token))
-        //     .transferFrom(_msgSender(), executionManager.getTokenEscrow(_token), amountDue);
-
-        // // Move asset from escrow to user
-        // if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC1155Upgradeable).interfaceId)) {
-        //     IERC1155Upgradeable(_asset.contentAddress)
-        //         .safeTransferFrom(executionManager.getNFTsEscrow(), _msgSender(), _asset.tokenId, totalAssetsToBuy, "");
-        // } else {
-        //     IERC721Upgradeable(_asset.contentAddress)
-        //         .safeTransferFrom(executionManager.getNFTsEscrow(), _msgSender(), _asset.tokenId, "");
-        // }
 
         emit SellOrdersFilled(_orderIds, _amounts, _asset, _token, amountDue);
     }
