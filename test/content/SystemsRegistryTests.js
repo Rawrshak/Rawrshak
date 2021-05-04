@@ -1,19 +1,20 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const TestSystemsApproval = artifacts.require("TestSystemsApproval")
+const SystemsRegistry = artifacts.require("SystemsRegistry");
 const TruffleAssert = require("truffle-assertions");
+const { sign } = require("../mint");
 
-// Todo: fix this
-contract('SystemsApproval Contract Tests', (accounts) => {
+contract('SystemsRegistry Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
         craftingSystemAddress,      // crafting system address
         lootboxSystemAddress,       // lootbox system address
+        playerAddress
     ] = accounts;
     var testContract;
 
     beforeEach(async () => {
-        testContract = await TestSystemsApproval.new();
-        await testContract.__TestSystemsApproval_init();
+        testContract = await SystemsRegistry.new();
+        await testContract.__SystemsRegistry_init();
     });
 
     it('Check that deployer is not approved yet', async () => {
@@ -25,10 +26,9 @@ contract('SystemsApproval Contract Tests', (accounts) => {
 
     it('Pass no arguments to registerSystems function', async () => {            
         var approvalPair = [];
-        TruffleAssert.eventNotEmitted(
+        TruffleAssert.eventEmitted(
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
-            'SystemApproved',
-            null
+            'RegisteredSystemsUpdated'
         );
 
         assert.equal(
@@ -41,7 +41,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         var approvalPair = [[craftingSystemAddress, true]];
         TruffleAssert.eventEmitted(
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
-            'SystemApproved',
+            'RegisteredSystemsUpdated',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
                     && ev[0][0].approved == true;
@@ -67,7 +67,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         var approvalPair = [[craftingSystemAddress, true]];
         TruffleAssert.eventEmitted(
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
-            'SystemApproved',
+            'RegisteredSystemsUpdated',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
                     && ev[0][0].approved == true;
@@ -84,7 +84,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
         TruffleAssert.eventEmitted(
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
-            'SystemApproved',
+            'RegisteredSystemsUpdated',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
                     && ev[0][0].approved == true
@@ -110,7 +110,7 @@ contract('SystemsApproval Contract Tests', (accounts) => {
         var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, false]];
         TruffleAssert.eventEmitted(
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
-            'SystemApproved',
+            'RegisteredSystemsUpdated',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
                     && ev[0][0].approved == true
@@ -132,23 +132,13 @@ contract('SystemsApproval Contract Tests', (accounts) => {
             "lootbox system should not be approved.");
     });
 
-    it('Registering multiple and unregistering multiple operators', async () => {            
-        var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
-        TruffleAssert.eventEmitted(
-            await testContract.registerSystems(approvalPair, {from: deployerAddress}),
-            'SystemApproved',
-            (ev) => {
-                return ev[0][0].operator == craftingSystemAddress
-                    && ev[0][0].approved == true
-                    && ev[0][1].operator == lootboxSystemAddress
-                    && ev[0][1].approved == true;
-            }
-        );
+    it('Registering multiple and unregistering multiple operators', async () => {  
+        await approveSystems(deployerAddress);
         
         approvalPair = [[craftingSystemAddress, false], [lootboxSystemAddress, false]];
         TruffleAssert.eventEmitted(
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
-            'SystemApproved',
+            'RegisteredSystemsUpdated',
             (ev) => {
                 return ev[0][0].operator == craftingSystemAddress
                     && ev[0][0].approved == false
@@ -169,4 +159,56 @@ contract('SystemsApproval Contract Tests', (accounts) => {
             false,
             "lootbox system should not be approved.");
     });
+
+    it('verify mint from a system operator', async () => {
+        await approveSystems(deployerAddress);
+        
+        const signature = await sign(playerAddress, [1], [1], 0, craftingSystemAddress, testContract.address);
+        var mintData = [playerAddress, [1], [1], 0, craftingSystemAddress, signature];
+
+        await testContract.verifyMint(mintData, craftingSystemAddress, {from: deployerAddress});
+        
+        // todo: check nonce for user
+        assert.equal(
+            await testContract.userMintNonce(playerAddress),
+            0,
+            "Caller nonce should not be incremented because it's a system operator.");
+    });
+
+    it('verify mint from a signed mint message', async () => {
+        await approveSystems(deployerAddress);
+        
+        const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, testContract.address);
+        var mintData = [playerAddress, [1], [1], 1, craftingSystemAddress, signature];
+
+        await testContract.verifyMint(mintData, playerAddress, {from: deployerAddress});
+        
+        assert.equal(
+            await testContract.userMintNonce(playerAddress),
+            1,
+            "User nonce was not incremented.");
+    });
+
+    it('verify mint failure from signed mint message from ', async () => {            
+        var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, false]];
+        await testContract.registerSystems(approvalPair, {from: deployerAddress});
+        
+        const signature = await sign(playerAddress, [1], [1], 1, lootboxSystemAddress, testContract.address);
+        var mintData = [playerAddress, [1], [1], 1, lootboxSystemAddress, signature];
+
+        TruffleAssert.fails(
+            testContract.verifyMint(mintData, playerAddress, {from: deployerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        )
+        
+        assert.equal(
+            await testContract.userMintNonce(playerAddress),
+            0,
+            "User nonce was incremented incorrectly.");
+    });
+
+    async function approveSystems(fromAddress) {
+        var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
+        await testContract.registerSystems(approvalPair, {from: fromAddress});
+    }
 });

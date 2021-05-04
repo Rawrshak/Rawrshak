@@ -1,7 +1,9 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
+const SystemsRegistry = artifacts.require("SystemsRegistry");
 const TruffleAssert = require("truffle-assertions");
+const { sign } = require("../mint");
 
 contract('Content Contract Tests', (accounts) => {
     const [
@@ -14,24 +16,27 @@ contract('Content Contract Tests', (accounts) => {
     ] = accounts;
     var content;
     var contentStorage;
+    var systemsRegistry;
     var asset = [
         [1, "ipfs:/CID-1", 0, [[deployerAddress, 200]]],
         [2, "ipfs:/CID-2", 100, []],
     ];
 
     beforeEach(async () => {
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
+        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
+        systemsRegistry.setParent(content.address);
 
         // give crafting system approval
         var approvalPair = [[deployerAddress, true], [craftingSystemAddress, true]];
-        await contentStorage.registerSystems(approvalPair);
+        await systemsRegistry.registerSystems(approvalPair);
 
         // Add 1 asset        
-        // await content.addAssetBatch(asset);
         await contentStorage.addAssetBatch(asset);
     });
 
@@ -82,15 +87,14 @@ contract('Content Contract Tests', (accounts) => {
     //     ]
     // }
 
-    it('Trigger Content Storage Functions', async () => {
+    it('Trigger Content Storage and Systems Register Functions', async () => {
         // Test token uri
         // Note: we use content.methods['function()']() below because it tokenDataUri() is an
         //       overloaded function
-
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        var mintData = [playerAddress, [1], [1]];
-        await content.mintBatch(mintData, {from: deployerAddress});
+        
+        const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, await content.systemsRegistry());
+        var mintData = [playerAddress, [1], [1], 1, craftingSystemAddress, signature];
+        await content.mintBatch(mintData, {from: playerAddress});
 
         assert.equal(
             await content.methods['tokenDataUri(uint256,uint256)'](1, 0, {from: playerAddress}),
@@ -106,15 +110,15 @@ contract('Content Contract Tests', (accounts) => {
 
         // test not approved 
         assert.equal(
-            await content.isSystemOperatorApproved(craftingSystemAddress, {from: deployerAddress}),
+            await content.isSystemOperatorApproved(craftingSystemAddress, {from: playerAddress}),
             false,
             "Crafting System Address does not have the correct permissions.");
 
-        await content.approveAllSystems(true, {from:deployerAddress});
+        await content.approveAllSystems(true, {from:playerAddress});
 
         // test approval 
         assert.equal(
-            await content.isSystemOperatorApproved(craftingSystemAddress, {from: deployerAddress}),
+            await content.isSystemOperatorApproved(craftingSystemAddress, {from: playerAddress}),
             true,
             "Crafting System Address does not have the correct permissions.");
     });
@@ -126,7 +130,7 @@ contract('Content Contract Tests', (accounts) => {
         ];
         
         TruffleAssert.eventEmitted(await contentStorage.addAssetBatch(newAssets), 'AssetsAdded');
-        var supplyInfo = await content.getSupplyInfo(3, {from: deployerAddress});
+        var supplyInfo = await content.getSupplyInfo(3, {from: playerAddress});
         assert.equal(supplyInfo.supply, 0, "Asset 3 incorrect supply");
         assert.equal(supplyInfo.maxSupply, 1000, "Asset 3 incorrect max supply");
     });
@@ -145,40 +149,42 @@ contract('Content Contract Tests', (accounts) => {
     // }
 
     it('Mint Assets', async () => {
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        var mintData = [playerAddress, [1, 2], [10, 1]];
-        await content.mintBatch(mintData, {from: deployerAddress});
+        const signature = await sign(playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, await content.systemsRegistry());
+        var mintData = [playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, signature];
+        await content.mintBatch(mintData, {from: playerAddress});
         
-        var supplyInfo = await content.getSupplyInfo(1, {from: deployerAddress});
+        var supplyInfo = await content.getSupplyInfo(1, {from: playerAddress});
         assert.equal(supplyInfo.supply, 10, "Asset 1 incorrect supply");
-        supplyInfo = await content.getSupplyInfo(2, {from: deployerAddress});
+        supplyInfo = await content.getSupplyInfo(2, {from: playerAddress});
         assert.equal(supplyInfo.supply, 1, "Asset 2 incorrect supply");
 
         var balance = await content.balanceOf(playerAddress, 1);
         assert.equal(balance.valueOf().toString(), "10", "Player doesn't have the minted assets.");
     });
 
-    it('Mint data length input mismatch', async () => {        
-        var invalidLengthData = [playerAddress, [1, 2], [10]];
+    it('Mint data length input mismatch', async () => {
+        const signature = await sign(playerAddress, [1, 2], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        var invalidLengthData = [playerAddress, [1, 2], [10], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
-            content.mintBatch(invalidLengthData, {from: deployerAddress}),
+            content.mintBatch(invalidLengthData, {from: playerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
 
     it('Mint invalid token id', async () => {
-        var invalidTokenIdData = [playerAddress, [4, 5], [1,1]];
+        const signature = await sign(playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, await content.systemsRegistry());
+        var invalidTokenIdData = [playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
-            content.mintBatch(invalidTokenIdData, {from: deployerAddress}),
+            content.mintBatch(invalidTokenIdData, {from: playerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
 
     it('Mint invalid supply', async () => {
-        var invalidSupplyData = [playerAddress, [2], [300]];
+        const signature = await sign(playerAddress, [2], [300], 1, craftingSystemAddress, await content.systemsRegistry());
+        var invalidSupplyData = [playerAddress, [2], [300], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
-            content.mintBatch(invalidSupplyData, {from: deployerAddress}),
+            content.mintBatch(invalidSupplyData, {from: playerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
@@ -186,8 +192,9 @@ contract('Content Contract Tests', (accounts) => {
     it('Burn Assets', async () => {
         await content.approveAllSystems(true, {from:playerAddress});
 
-        var mintData = [playerAddress, [1], [10]];
-        await content.mintBatch(mintData, {from: deployerAddress});
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
+        await content.mintBatch(mintData, {from: playerAddress});
 
         var burnData = [playerAddress, [1], [5]];
         await content.burnBatch(burnData, {from: playerAddress});
@@ -203,8 +210,9 @@ contract('Content Contract Tests', (accounts) => {
     it('Invalid burns', async () => {
         await content.approveAllSystems(true, {from:playerAddress});
 
-        var mintData = [playerAddress, [1], [10]];
-        await content.mintBatch(mintData, {from: deployerAddress});
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
+        await content.mintBatch(mintData, {from: playerAddress});
 
         var burnData = [playerAddress, [1], [5]];
         await TruffleAssert.fails(
@@ -222,10 +230,9 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Transfer Assets', async () => {
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        var mintData = [playerAddress, [1], [10]];
-        await content.mintBatch(mintData, {from: deployerAddress});
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
+        await content.mintBatch(mintData, {from: playerAddress});
 
         TruffleAssert.eventEmitted(
             await content.safeTransferFrom(playerAddress, player2Address, 1, 1, 0, {from:playerAddress}),
@@ -234,10 +241,9 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Invalid Transfer Assets', async () => {
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        var mintData = [playerAddress, [1], [10]];
-        await content.mintBatch(mintData, {from: deployerAddress});
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
+        await content.mintBatch(mintData, {from: playerAddress});
         
         await TruffleAssert.fails(
             content.safeTransferFrom(playerAddress, player2Address, 1, 1, 0, {from:deployerAddress}),

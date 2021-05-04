@@ -1,27 +1,17 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const RawrToken = artifacts.require("RawrToken");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
+const SystemsRegistry = artifacts.require("SystemsRegistry");
 const Craft = artifacts.require("Craft");
-const EscrowNFTs = artifacts.require("EscrowNFTs");
-const OrderbookManager = artifacts.require("OrderbookManager");
-const OrderbookStorage = artifacts.require("OrderbookStorage");
-const ExecutionManager = artifacts.require("ExecutionManager");
-const RoyaltyManager = artifacts.require("RoyaltyManager");
-const Exchange = artifacts.require("Exchange");
-const AddressRegistry = artifacts.require("AddressRegistry");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Craft Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
-        managerAddress,            // platform address fees
-        testManagerAddress,         // Only for putting in data for testing
-        creator1Address,             // content nft Address
-        creator2Address,             // creator Address
+        managerAddress,             // platform address fees
+        creatorAddress,             // content nft Address
         playerAddress,              // player 1 address
-        player2Address,              // player 2 address
     ] = accounts;
 
     // NFT
@@ -38,60 +28,44 @@ contract('Craft Contract', (accounts)=> {
         [7, "Reward-2", 0, []],
     ];
 
-    // Rawr Token 
-    var rawrId = "0xd4df6855";
-    var rawrToken;
-
     var craft;
     var manager_role;
-    var default_admin_role;
 
-    var nftAssetData;
+    // var nftAssetData;
     var initialRecipe;
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     beforeEach(async () => {
         // Set up NFT Contract
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
+        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
+        systemsRegistry.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
-        var approvalPair = [[deployerAddress, true], [contentManager.address, true]];
+        var approvalPair = [[creatorAddress, true]];
         await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
-        
-        nftAssetData = [content.address, 2];
-
-        // Setup RAWR token
-        rawrToken = await RawrToken.new();
-        await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
-
-        // Give player 1 20000 RAWR tokens
-        await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
-        await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
+    
         // approve systems for player address
         await content.approveAllSystems(true, {from:playerAddress});
 
         // Mint an assets
-        var mintData = [playerAddress, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10]];
+        var mintData = [playerAddress, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10], 1, zeroAddress, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
-        // var mintData = [player2Address, [1, 2], [10, 10]];
-        // await contentManager.mintBatch(mintData, {from: deployerAddress});
-
-        // Set contract royalties
-        var assetRoyalty = [[creator1Address, 200]];
-        await contentManager.setContractRoyalties(assetRoyalty, {from: deployerAddress});
 
         craft = await Craft.new();
         await craft.__Craft_init(1000);
@@ -370,11 +344,15 @@ contract('Craft Contract', (accounts)=> {
 
         // materials invalid content permission
         // test invalid contract asset
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         var contentStorage2 = await ContentStorage.new();
         await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         var content2 = await Content.new();
-        await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address);
-
+        await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address, systemsRegistry.address);
+        contentStorage2.setParent(content2.address);
+        systemsRegistry.setParent(content2.address);
+        
         var invalidRecipe = [
             [
                 1, // id
@@ -458,7 +436,7 @@ contract('Craft Contract', (accounts)=> {
             ],
             [
                 recipeId2, // id
-                5000, // crafting rate
+                10000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -489,7 +467,7 @@ contract('Craft Contract', (accounts)=> {
         assert.equal(await content.balanceOf(playerAddress, 4), 7, "Material 2 was not burned.");
         assert.equal(result.supply, 7, "Material 2 supply is incorrect.");
         result = await content.getSupplyInfo(6);
-        assert.equal(await content.balanceOf(playerAddress, 6), 3, "Reward was not burned.");
+        assert.equal(await content.balanceOf(playerAddress, 6), 3, "Reward was not created.");
         assert.equal(result.supply, 3, "Reward supply is incorrect.");
         
         // Craft recipe 2
@@ -503,7 +481,7 @@ contract('Craft Contract', (accounts)=> {
         assert.equal(await content.balanceOf(playerAddress, 5), 4, "Material 2 was not burned.");
         assert.equal(result.supply, 4, "Material 2 supply is incorrect.");
         result = await content.getSupplyInfo(7);
-        assert.equal(await content.balanceOf(playerAddress, 7), 4, "Reward was not burned.");
+        assert.equal(await content.balanceOf(playerAddress, 7), 4, "Reward was not created.");
         assert.equal(result.supply, 4, "Reward supply is incorrect.");
     });
 

@@ -2,7 +2,9 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
+const SystemsRegistry = artifacts.require("SystemsRegistry");
 const TruffleAssert = require("truffle-assertions");
+// const { sign } = require("../mint");
 
 contract('Content Contract Tests', (accounts) => {
     const [
@@ -20,23 +22,26 @@ contract('Content Contract Tests', (accounts) => {
         [1, "ipfs:/CID-1", 0, [[deployerAddress, 200]]],
         [2, "ipfs:/CID-2", 100, []]
     ];
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     beforeEach(async () => {
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
+        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
+        systemsRegistry.setParent(content.address);
 
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        
-        await contentStorage.userApprove(contentManager.address, true);
+        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
-        var approvalPair = [[contentManager.address, true], [craftingSystemAddress, true]];
+        var approvalPair = [[craftingSystemAddress, true]];
         await contentManager.registerSystem(approvalPair);
 
         // Add 1 asset
@@ -69,9 +74,9 @@ contract('Content Contract Tests', (accounts) => {
         ];
         
         await contentManager.addAssetBatch(newAssets);
-        await contentStorage.userApprove(playerAddress, true);
 
-        var mintData = [playerAddress, [3], [10]];
+        // const signature = await sign(playerAddress, [1], [1], 1, null, await content.systemsRegistry());
+        var mintData = [playerAddress, [3], [10], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(
@@ -85,8 +90,10 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Set operators for System Approval', async () => {        
+        await content.approveAllSystems(true, {from: playerAddress});
+
         assert.equal(
-            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: contentManager.address}),
+            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: playerAddress}),
             false,
             "lootbox system not should be approved yet.");
 
@@ -94,7 +101,7 @@ contract('Content Contract Tests', (accounts) => {
         await contentManager.registerSystem(lootboxApprovalPair);
 
         assert.equal(
-            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: contentManager.address}),
+            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: playerAddress}),
             true,
             "lootbox system should be approved.");
     });
@@ -118,9 +125,8 @@ contract('Content Contract Tests', (accounts) => {
             [2, "ipfs:/CID-2-v1"]
         ];
         await contentManager.setTokenDataUriBatch(assetUri);
-        await contentStorage.userApprove(playerAddress, true);
 
-        var mintData = [playerAddress, [2], [1]];
+        var mintData = [playerAddress, [2], [1], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(

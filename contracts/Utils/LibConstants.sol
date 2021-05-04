@@ -40,6 +40,7 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_CONTENT_STORAGE = 0x00000002;
     bytes4 constant _INTERFACE_ID_CONTENT_MANAGER = 0x00000003;
     bytes4 constant _INTERFACE_ID_UNIQUE_CONTENT = 0x00000005;
+    bytes4 constant _INTERFACE_ID_SYSTEMS_REGISTRY = 0x00000011;
 
     // Exchange Interfaces
     bytes4 constant _INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;

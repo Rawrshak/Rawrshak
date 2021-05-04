@@ -3,6 +3,7 @@ const RawrToken = artifacts.require("RawrToken");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
+const SystemsRegistry = artifacts.require("SystemsRegistry");
 const EscrowERC20 = artifacts.require("EscrowERC20");
 const RoyaltyManager = artifacts.require("RoyaltyManager");
 const AddressRegistry = artifacts.require("AddressRegistry");
@@ -36,21 +37,21 @@ contract('Royalty Manager Contract', (accounts)=> {
 
     beforeEach(async () => {
         // Set up NFT Contract
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
+        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
+        systemsRegistry.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-
-        // give crafting system approval
-        var approvalPair = [[contentManager.address, true]];
-        await contentManager.registerSystem(approvalPair);
+        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);

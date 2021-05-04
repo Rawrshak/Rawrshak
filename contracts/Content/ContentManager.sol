@@ -9,6 +9,7 @@ import "./UniqueContent.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
+import "./interfaces/ISystemsRegistry.sol";
 import "./interfaces/IUniqueContent.sol";
 
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
@@ -25,9 +26,10 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     /***************** Stored Variables *****************/
     IContent public content;
     IContentStorage private contentStorage;
+    ISystemsRegistry private systemsRegistry;
 
     /*********************** Events *********************/
-    event ContentContractCreated(address content, address contentStorage);
+    event ContentContractCreated(address content, address contentStorage, address systemsRegistry);
 
     /********************* Modifiers ********************/
     modifier addressExists(address addr) {
@@ -39,7 +41,8 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     
     function __ContentManager_init(
         address _content,
-        address _contentStorage
+        address _contentStorage,
+        address _systemsRegistry
     )
         public initializer
     {
@@ -56,8 +59,9 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
 
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
+        systemsRegistry = ISystemsRegistry(_systemsRegistry);
 
-        emit ContentContractCreated(_content, _contentStorage);
+        emit ContentContractCreated(_content, _contentStorage, _systemsRegistry);
     }
     
     function addAssetBatch(
@@ -68,7 +72,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     }
     
     function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
-        contentStorage.registerSystems(_operators);
+        systemsRegistry.registerSystems(_operators);
     }
     
     function setTokenUriPrefix(string memory _tokenUriPrefix) external override onlyOwner {

@@ -12,8 +12,10 @@ import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "../libraries/LibRoyalties.sol";
-import "./ContentStorage.sol";
+import "../utils/LibConstants.sol";
 import "./interfaces/IContent.sol";
+import "./interfaces/ISystemsRegistry.sol";
+import "./interfaces/IContentStorage.sol";
 
 contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
@@ -35,6 +37,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     string public name;
     string public symbol;
     IContentStorage contentStorage;
+    ISystemsRegistry public systemsRegistry;
 
     /*********************** Events *********************/
 
@@ -43,7 +46,8 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         string memory _name,
         string memory _symbol,
         string memory _contractUri,
-        address _contentStorage)
+        address _contentStorage,
+        address _systemsRegistry)
         public initializer
     {
         __Ownable_init_unchained();
@@ -58,10 +62,12 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
                 _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
                 "Invalid Address");
         contentStorage = IContentStorage(_contentStorage);
+        // todo: check _systemsRegistry as a contract
+        systemsRegistry = ISystemsRegistry(_systemsRegistry);
     }
 
     function approveAllSystems(bool _approve) external override {
-        return contentStorage.userApprove(_msgSender(), _approve);
+        return systemsRegistry.userApprove(_msgSender(), _approve);
     }
 
     function tokenUri(uint256 _tokenId) external view override returns (string memory) {
@@ -94,7 +100,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     function isOperatorRegistered(address _operator) external view override returns (bool) {
-        return contentStorage.isOperatorRegistered(_operator);
+        return systemsRegistry.isOperatorRegistered(_operator);
     }
 
     function getSupplyInfo(uint256 _tokenId) external view override returns (uint256 supply, uint256 maxSupply) {
@@ -102,9 +108,13 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     function mintBatch(LibAsset.MintData memory _data) external override {
-        // Todo: Include the owner signatures to verify instead of using onlyOwner
-        require(_isSystemOperatorApproved(_data.to, _msgSender()), "Invalid permissions");
+        // Todo: _isSystemOperatorApproved() must check if the sender is a minter address, a registered system, or owner. If 
+        //      these are not true, check the signatures to verify if a minter address signed the message. This doesn't need 
+        //      to check if the user allowed the system to mint for it. that doesn't make sense.
+        // require(_isSystemOperatorApproved(_data.to, _msgSender()), "Invalid permissions");
+        systemsRegistry.verifyMint(_data, _msgSender());
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
+            
             require(_tokenExists(_data.tokenIds[i]), "token id missing");
             require(
                 _maxSupply(_data.tokenIds[i]) == 0 ||
@@ -133,7 +143,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     function _isSystemOperatorApproved(address _user, address _operator) internal view returns(bool) {
-        return contentStorage.isSystemOperatorApproved(_user, _operator);
+        return systemsRegistry.isSystemOperatorApproved(_user, _operator);
     }
 
     function _supply(uint256 _tokenId) internal view returns(uint256) {

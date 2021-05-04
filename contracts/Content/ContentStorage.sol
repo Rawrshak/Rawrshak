@@ -7,11 +7,11 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "../libraries/LibAsset.sol";
-import "./SystemsApproval.sol";
+import "./SystemsRegistry.sol";
 import "../utils/LibConstants.sol";
 import "./interfaces/IContentStorage.sol";
 
-contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApproval, HasRoyalties, HasTokenUri {
+contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasTokenUri {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -70,22 +70,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, SystemsApp
 
     function getMaxSupply(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (uint256) {
         return maxSupply[_tokenId];
-    }
-    
-    function isSystemOperatorApproved(address _user, address _operator) external view override checkPermissions(OWNER_ROLE) returns (bool) {
-        return _isSystemOperatorApproved(_user, _operator);
-    }
-
-    function isOperatorRegistered(address _operator) external view override returns (bool) {
-        return _isOperatorRegistered(_operator);
-    }
-    
-    function registerSystems(LibAsset.SystemApprovalPair[] memory _operators) external override checkPermissions(OWNER_ROLE) {
-        return _registerSystems(_operators);
-    }
-    
-    function userApprove(address _user, bool _approved) external override checkPermissions(OWNER_ROLE) {
-        return _userApprove(_user, _approved);
     }
 
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override checkPermissions(OWNER_ROLE) {

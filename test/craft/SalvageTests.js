@@ -3,14 +3,8 @@ const RawrToken = artifacts.require("RawrToken");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
+const SystemsRegistry = artifacts.require("SystemsRegistry");
 const Salvage = artifacts.require("Salvage");
-const EscrowNFTs = artifacts.require("EscrowNFTs");
-const OrderbookManager = artifacts.require("OrderbookManager");
-const OrderbookStorage = artifacts.require("OrderbookStorage");
-const ExecutionManager = artifacts.require("ExecutionManager");
-const RoyaltyManager = artifacts.require("RoyaltyManager");
-const Exchange = artifacts.require("Exchange");
-const AddressRegistry = artifacts.require("AddressRegistry");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Salvage Contract', (accounts)=> {
@@ -18,7 +12,7 @@ contract('Salvage Contract', (accounts)=> {
         deployerAddress,            // Address that deployed contracts
         managerAddress,            // platform address fees
         testManagerAddress,         // Only for putting in data for testing
-        creator1Address,             // content nft Address
+        creatorAddress,             // content nft Address
         creator2Address,             // creator Address
         playerAddress,              // player 1 address
         player2Address,              // player 2 address
@@ -44,28 +38,31 @@ contract('Salvage Contract', (accounts)=> {
 
     var salvage;
     var manager_role;
-    var default_admin_role;
 
     var nftAssetData;
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     var initialSalvageableAssetData;
 
     beforeEach(async () => {
-        // Set up NFT Contract
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
+        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
+        systemsRegistry.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
-        var approvalPair = [[deployerAddress, true], [contentManager.address, true]];
+        var approvalPair = [[creatorAddress, true]];
         await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
@@ -83,15 +80,13 @@ contract('Salvage Contract', (accounts)=> {
 
         // approve systems for player address
         await content.approveAllSystems(true, {from:playerAddress});
-        
+
         // Mint an assets
-        var mintData = [playerAddress, [1, 2], [10, 10]];
+        var mintData = [playerAddress, [1, 2], [10, 10], 1, zeroAddress, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
-        // var mintData = [player2Address, [1, 2], [10, 10]];
-        // await contentManager.mintBatch(mintData, {from: deployerAddress});
 
         // Set contract royalties
-        var assetRoyalty = [[creator1Address, 200]];
+        var assetRoyalty = [[creatorAddress, 200]];
         await contentManager.setContractRoyalties(assetRoyalty, {from: deployerAddress});
 
         salvage = await Salvage.new();
@@ -281,11 +276,15 @@ contract('Salvage Contract', (accounts)=> {
         );
         
         // test invalid contract asset
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         var contentStorage2 = await ContentStorage.new();
         await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         var content2 = await Content.new();
-        await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address);
-
+        await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address, systemsRegistry.address);
+        contentStorage2.setParent(content2.address);
+        systemsRegistry.setParent(content2.address);
+        
         var invalidData = [
             [
                 [content2.address, 1],

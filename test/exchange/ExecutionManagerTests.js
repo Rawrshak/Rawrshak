@@ -3,6 +3,7 @@ const RawrToken = artifacts.require("RawrToken");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
+const SystemsRegistry = artifacts.require("SystemsRegistry");
 const EscrowERC20 = artifacts.require("EscrowERC20");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
 const OrderbookStorage = artifacts.require("OrderbookStorage");
@@ -34,11 +35,11 @@ contract('Execution Manager Contract', (accounts)=> {
     var rawrId = "0xd4df6855";
     var rawrToken;
 
-
     var escrowRawr;
     var escrowContent;
     var orderbookStorage;
     var executionManager;
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     var manager_role;
     var default_admin_role;
@@ -47,21 +48,25 @@ contract('Execution Manager Contract', (accounts)=> {
 
     beforeEach(async () => {
         // Set up NFT Contract
+        systemsRegistry = await SystemsRegistry.new();
+        await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address);
+        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
+        systemsRegistry.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
-        var approvalPair = [[contentManager.address, true]];
-        await contentManager.registerSystem(approvalPair);
+        // var approvalPair = [[contentManager.address, true]];
+        // await contentManager.registerSystem(approvalPair);
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
@@ -114,10 +119,10 @@ contract('Execution Manager Contract', (accounts)=> {
         await content.approveAllSystems(true, {from:player2Address});
 
         // Mint an asset
-        var mintData = [playerAddress, [1], [10]];
+        var mintData = [playerAddress, [1], [10], 0, zeroAddress, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
         
-        mintData = [player2Address, [2], [5]];
+        mintData = [player2Address, [2], [5], 0, zeroAddress, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
     });
 

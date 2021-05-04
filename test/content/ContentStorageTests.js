@@ -215,30 +215,30 @@ contract('ContentStorage Contract Tests', (accounts) => {
             "Token 3 incorrect royalties");
     });
     
-    it('Basic System Approval tests', async () => {
-        var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
-        await contentStorage.registerSystems(approvalPair, {from: deployerAddress});
+    // it('Basic System Approval tests', async () => {
+    //     var approvalPair = [[craftingSystemAddress, true], [lootboxSystemAddress, true]];
+    //     await contentStorage.registerSystems(approvalPair, {from: deployerAddress});
 
-        assert.equal(
-            await contentStorage.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
-            false,
-            "crafting contract shouldn't be approved yet.");
-        assert.equal(
-            await contentStorage.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
-            false,
-            "lootbox contract shouldn't be approved yet.");
-        await contentStorage.userApprove(deployerAddress, true, {from: deployerAddress});
+    //     assert.equal(
+    //         await contentStorage.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+    //         false,
+    //         "crafting contract shouldn't be approved yet.");
+    //     assert.equal(
+    //         await contentStorage.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
+    //         false,
+    //         "lootbox contract shouldn't be approved yet.");
+    //     await contentStorage.userApprove(deployerAddress, true, {from: deployerAddress});
         
-        assert.equal(
-            await contentStorage.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
-            true,
-            "crafting system should be approved.");
+    //     assert.equal(
+    //         await contentStorage.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+    //         true,
+    //         "crafting system should be approved.");
             
-        assert.equal(
-            await contentStorage.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
-            true,
-            "lootbox system should be approved.");
-    });
+    //     assert.equal(
+    //         await contentStorage.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
+    //         true,
+    //         "lootbox system should be approved.");
+    // });
 
     it('Basic Uri tests', async () => {
         var asset = [

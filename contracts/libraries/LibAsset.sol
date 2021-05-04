@@ -6,6 +6,8 @@ import "../libraries/LibRoyalties.sol";
 
 library LibAsset {
 
+    bytes32 public constant MINT_DATA_TYPEHASH = keccak256("MintData(address to,uint256[] tokenIds,uint256[] amounts,uint256 nonce,address signer)");
+        
     struct CreateData {
         uint256 tokenId;
         string dataUri;
@@ -17,6 +19,9 @@ library LibAsset {
         address to;
         uint256[] tokenIds;
         uint256[] amounts;
+        uint256 nonce;
+        address signer;
+        bytes signature;
     }
 
     struct BurnData {
@@ -88,5 +93,20 @@ library LibAsset {
             require(_tokenIds[_assets[i].tokenId] == false, "Token Id already exists.");
         }
     }
+
+    function hashMintData(MintData memory _data) internal pure returns (bytes32) {
+        return keccak256(abi.encode(
+                MINT_DATA_TYPEHASH,
+                _data.to,
+                keccak256(abi.encodePacked(_data.tokenIds)),
+                keccak256(abi.encodePacked(_data.amounts)),
+                _data.nonce,
+                _data.signer
+            ));
+    }
+
+    // function validateMintSignatures(MintData memory _data) internal view {
+
+    // }
 
 }
