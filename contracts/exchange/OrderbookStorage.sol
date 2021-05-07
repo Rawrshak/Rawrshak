@@ -48,7 +48,8 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
     }
 
     function deleteOrder(uint256 id) external override checkPermissions(MANAGER_ROLE) {
-        // todo: should I delete the memory or still keep it?
+        // Deleting costs 5000, but returns a 15000 gas refund at the end of your call, which will make
+        // the overall transaction cheaper, I think.
         delete orders[id];
     }
 

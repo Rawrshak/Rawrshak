@@ -2,9 +2,7 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
@@ -12,6 +10,8 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./StorageBase.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IEscrowNFTs.sol";
+import "../content/interfaces/IContent.sol";
+import "../content/interfaces/IUniqueContent.sol";
 
 contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     using AddressUpgradeable for address;
@@ -89,11 +89,11 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
     }
 
     function _transfer(uint256 _orderId, address _sender, address _receiver, uint256 amount) internal {
-        if (ERC165CheckerUpgradeable.supportsInterface(assetData[_orderId].contentAddress, type(IERC1155Upgradeable).interfaceId)) {
-                IERC1155Upgradeable(assetData[_orderId].contentAddress)
+        if (ERC165CheckerUpgradeable.supportsInterface(assetData[_orderId].contentAddress, LibConstants._INTERFACE_ID_CONTENT)) {
+                IContent(assetData[_orderId].contentAddress)
                     .safeTransferFrom(_sender, _receiver, assetData[_orderId].tokenId, amount, "");
             } else {
-                IERC721Upgradeable(assetData[_orderId].contentAddress)
+                IUniqueContent(assetData[_orderId].contentAddress)
                     .safeTransferFrom(_sender, _receiver, assetData[_orderId].tokenId, "");
             }
     }

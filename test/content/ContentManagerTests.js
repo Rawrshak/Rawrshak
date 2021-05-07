@@ -84,7 +84,7 @@ contract('Content Contract Tests', (accounts) => {
             "ipfs:/3", 
             "New asset wasn't added.");
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](3, 0, {from: playerAddress}),
+            await content.methods['hiddenTokenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
             "ipfs:/CID-3", 
             "New asset wasn't added.");
     });
@@ -93,7 +93,7 @@ contract('Content Contract Tests', (accounts) => {
         await content.approveAllSystems(true, {from: playerAddress});
 
         assert.equal(
-            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isSystemOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
             false,
             "lootbox system not should be approved yet.");
 
@@ -101,7 +101,7 @@ contract('Content Contract Tests', (accounts) => {
         await contentManager.registerSystem(lootboxApprovalPair);
 
         assert.equal(
-            await content.isSystemOperatorApproved(lootboxSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isSystemOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
             true,
             "lootbox system should be approved.");
     });
@@ -124,23 +124,23 @@ contract('Content Contract Tests', (accounts) => {
         var assetUri = [
             [2, "ipfs:/CID-2-v1"]
         ];
-        await contentManager.setTokenDataUriBatch(assetUri);
+        await contentManager.setHiddenTokenUriBatch(assetUri);
 
         var mintData = [playerAddress, [2], [1], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](2, 0, {from: playerAddress}),
+            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 0, {from: playerAddress}),
             "ipfs:/CID-2",
             "Token 2 incorrect uri for previous version.");
         
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](2, 1, {from: playerAddress}),
+            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 1, {from: playerAddress}),
             "ipfs:/CID-2-v1",
             "Token 2 incorrect uri for latest version.");
         
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](2, 2, {from: playerAddress}),
+            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 2, {from: playerAddress}),
             "ipfs:/CID-2-v1",
             "Token 2 invalid version returns uri for latest version.");
     });

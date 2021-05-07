@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 
-interface IContent {
+interface IContent is IERC1155Upgradeable {
 
     function approveAllSystems(bool _approve) external;
     
@@ -12,17 +13,11 @@ interface IContent {
 
     function tokenUri(uint256 _tokenId) external view returns (string memory);
     
-    function tokenDataUri(uint256 _tokenId) external view returns (string memory);
+    function hiddenTokenUri(uint256 _tokenId) external view returns (string memory);
     
-    function tokenDataUri(uint256 _tokenId, uint256 _version) external view returns (string memory);
-    
-    function isSystemOperatorApproved(address _operator) external view returns (bool);
-    
-    function isOperatorRegistered(address _operator) external view returns (bool);
+    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory);
 
     function getRoyalties(uint256 _tokenId) external view returns (LibRoyalties.Fees[] memory);
-
-    // function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
 
     function mintBatch(LibAsset.MintData memory _data) external;
 

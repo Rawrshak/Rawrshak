@@ -88,27 +88,27 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         return royalties;
     }
 
-    function ownerOf(uint256) public view override returns (address) {
+    function ownerOf(uint256) public view override(IERC721Upgradeable, ERC721Upgradeable) returns (address) {
         return super.ownerOf(0);
     }
 
-    function safeTransferFrom(address from, address to, uint256, bytes memory data) public override {
+    function safeTransferFrom(address from, address to, uint256, bytes memory data) public override(IERC721Upgradeable, ERC721Upgradeable) {
         super.safeTransferFrom(from, to, 0, data);
     }
 
-    function safeTransferFrom(address from, address to, uint256) public override {
+    function safeTransferFrom(address from, address to, uint256) public override(IERC721Upgradeable, ERC721Upgradeable) {
         super.safeTransferFrom(from, to, 0, "");
     }
 
-    function transferFrom(address from, address to, uint256) public override {
+    function transferFrom(address from, address to, uint256) public override(IERC721Upgradeable, ERC721Upgradeable) {
         super.transferFrom(from, to, 0);
     }
 
-    function approve(address to, uint256) public override {
+    function approve(address to, uint256) public override(IERC721Upgradeable, ERC721Upgradeable) {
         super.approve(to, 0);
     }
 
-    function getApproved(uint256) public view override returns (address) {
+    function getApproved(uint256) public view override(IERC721Upgradeable, ERC721Upgradeable) returns (address) {
         return super.getApproved(0);
     }
 
@@ -125,7 +125,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         if (ownerOf(0) == _msgSender()) {
             return "";
         }
-        return Content(contentContract).tokenDataUri(id);
+        return Content(contentContract).hiddenTokenUri(id);
     }
 
     function mint(address to) external override onlyOwner {
@@ -178,7 +178,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         return this.onERC1155BatchReceived.selector;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, ERC165StorageUpgradeable, ERC1155ReceiverUpgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, IERC165Upgradeable, ERC165StorageUpgradeable, ERC1155ReceiverUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
     /**************** Internal Functions ****************/

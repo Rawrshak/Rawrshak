@@ -25,7 +25,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
     
     /*********************** Events *********************/
     event TokenUriPrefixUpdated(string uriPrefix);
-    event TokenDataUriUpdated(uint256 id, uint256 version, string uri);
+    event HiddenTokenUriUpdated(uint256 id, uint256 version, string uri);
 
     /******************** Public API ********************/
     function __HasTokenUri_init_unchained(string memory _tokenUriPrefix) internal initializer {
@@ -60,7 +60,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
      * @param _tokenId uint256 ID of the token to query
      * @param _version uint256 uri version to query
      */
-    function _tokenDataUri(uint256 _tokenId, uint256 _version) internal view returns (string memory) {
+    function _hiddenTokenUri(uint256 _tokenId, uint256 _version) internal view returns (string memory) {
         // if they're requesting a version that doesn't exist, return latest version
         if (_version > tokenUris[_tokenId].version) {
             _version = tokenUris[_tokenId].version;
@@ -74,7 +74,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
      * @param _tokenId uint256 ID of the token to set its URI
      * @param _uri string URI to assign
      */
-    function _setTokenDataUri(uint256 _tokenId, string memory _uri) internal {
+    function _setHiddenTokenUri(uint256 _tokenId, string memory _uri) internal {
         // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
         // we introduce a versioning system. As game assets can break and get updated, asset owners can
         // opt to use older versions of assets.
@@ -84,7 +84,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
             tokenUris[_tokenId].version++;
         }
         tokenUris[_tokenId].dataUri.push(_uri);
-        emit TokenDataUriUpdated(_tokenId, tokenUris[_tokenId].version, _uri);
+        emit HiddenTokenUriUpdated(_tokenId, tokenUris[_tokenId].version, _uri);
     }
 
     /**

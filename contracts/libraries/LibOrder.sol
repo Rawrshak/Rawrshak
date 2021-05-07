@@ -37,8 +37,8 @@ library LibOrder {
         require(_asset.contentAddress != address(0),"Invalid Address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
         require(
-            (_asset.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) || 
-            (_asset.contentAddress.supportsInterface(type(IERC721Upgradeable).interfaceId)),
+            (_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT)) || 
+            (_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_UNIQUE_CONTENT)),
             "Invalid contract interface.");
     }
 

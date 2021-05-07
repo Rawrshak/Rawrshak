@@ -19,11 +19,11 @@ interface IContentStorage {
 
     function uri(uint256 _tokenId) external view returns (string memory);
 
-    function tokenDataUri(uint256 _tokenId, uint256 _version) external view  returns (string memory);
+    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view  returns (string memory);
 
     function setTokenUriPrefix(string memory _tokenUriPrefix) external;
 
-    function setTokenDataUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
     
     function getRoyalties(uint256 _tokenId) external view returns (LibRoyalties.Fees[] memory) ;
 

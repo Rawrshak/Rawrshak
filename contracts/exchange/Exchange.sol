@@ -12,11 +12,6 @@ import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IOrderbookManager.sol";
 import "./interfaces/IExecutionManager.sol";
 
-// Todo: 
-//      1. Need to write an approval manager to allow users to set the default approvals for these
-//         operator contracts manually or automatically. This will be used for the Exchange, Crafting,
-//         and Lootbox contracts
-
 contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;

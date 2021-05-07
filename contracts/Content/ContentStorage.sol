@@ -79,7 +79,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
             supply[_assets[i].tokenId] = 0;
             maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
 
-            _setTokenDataUri(_assets[i].tokenId, _assets[i].dataUri);
+            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].dataUri);
             
             // if this specific token has a different royalty fees than the contract
             if (_assets[i].fees.length != 0) {
@@ -100,8 +100,8 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     }
 
     // returns the token uri for private token info
-    function tokenDataUri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
-        return _tokenDataUri(_tokenId, _version);
+    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
+        return _hiddenTokenUri(_tokenId, _version);
     }
 
     function setTokenUriPrefix(string memory _tokenUriPrefix) external override checkPermissions(OWNER_ROLE) {
@@ -109,10 +109,10 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         _setTokenUriPrefix(_tokenUriPrefix);
     }
 
-    function setTokenDataUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
+    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
-            _setTokenDataUri(_assets[i].tokenId, _assets[i].uri);
+            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
     

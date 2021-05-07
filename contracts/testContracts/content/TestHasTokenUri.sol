@@ -13,8 +13,8 @@ contract TestHasTokenUri is HasTokenUri {
         return _tokenUri(_tokenId);
     }
 
-    function tokenDataUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
-        return _tokenDataUri(_tokenId, _version);
+    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
+        return _hiddenTokenUri(_tokenId, _version);
     }
 
     function setTokenUriPrefix(string memory _tokenUriPrefix) external {
@@ -22,9 +22,9 @@ contract TestHasTokenUri is HasTokenUri {
         _setTokenUriPrefix(_tokenUriPrefix);
     }
 
-    function setTokenUriBatch(LibAsset.AssetUri[] memory _assets) external {
+    function setHiddenTokenUri(LibAsset.AssetUri[] memory _assets) external {
         for (uint256 i = 0; i < _assets.length; ++i) {
-            _setTokenDataUri(_assets[i].tokenId, _assets[i].uri);
+            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
 }

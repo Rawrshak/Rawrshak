@@ -11,7 +11,7 @@ interface IContentManager {
     
     function setTokenUriPrefix(string memory _tokenUriPrefix) external;
 
-    function setTokenDataUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
     

@@ -54,6 +54,14 @@ contract('Content Contract Tests', (accounts) => {
             await content.uri(0),
             "ipfs:/contract-uri",
             "Contract uri is incorrect.");
+        assert.equal(
+            await content.dataStorage(),
+            contentStorage.address,
+            "Contract uri is incorrect.");
+        assert.equal(
+            await content.systemsRegistry(),
+            systemsRegistry.address,
+            "Contract uri is incorrect.");
     });
     
     it('Verify ERC1155 Implementation', async () => {
@@ -89,7 +97,7 @@ contract('Content Contract Tests', (accounts) => {
 
     it('Trigger Content Storage and Systems Register Functions', async () => {
         // Test token uri
-        // Note: we use content.methods['function()']() below because it tokenDataUri() is an
+        // Note: we use content.methods['function()']() below because it hiddenTokenUri() is an
         //       overloaded function
         
         const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, await content.systemsRegistry());
@@ -97,7 +105,7 @@ contract('Content Contract Tests', (accounts) => {
         await content.mintBatch(mintData, {from: playerAddress});
 
         assert.equal(
-            await content.methods['tokenDataUri(uint256,uint256)'](1, 0, {from: playerAddress}),
+            await content.methods['hiddenTokenUri(uint256,uint256)'](1, 0, {from: playerAddress}),
             "ipfs:/CID-1",
             "Token 1 uri is incorrect.");
         
@@ -110,7 +118,7 @@ contract('Content Contract Tests', (accounts) => {
 
         // test not approved 
         assert.equal(
-            await content.isSystemOperatorApproved(craftingSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isSystemOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
             false,
             "Crafting System Address does not have the correct permissions.");
 
@@ -118,7 +126,7 @@ contract('Content Contract Tests', (accounts) => {
 
         // test approval 
         assert.equal(
-            await content.isSystemOperatorApproved(craftingSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isSystemOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
             true,
             "Crafting System Address does not have the correct permissions.");
     });

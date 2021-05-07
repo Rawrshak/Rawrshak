@@ -36,7 +36,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     /***************** Stored Variables *****************/
     string public name;
     string public symbol;
-    IContentStorage contentStorage;
+    IContentStorage public dataStorage;
     ISystemsRegistry public systemsRegistry;
 
     /*********************** Events *********************/
@@ -46,8 +46,8 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         string memory _name,
         string memory _symbol,
         string memory _contractUri,
-        address _contentStorage,
-        address _systemsRegistry)
+        IContentStorage _dataStorage,
+        ISystemsRegistry _systemsRegistry)
         public initializer
     {
         __Ownable_init_unchained();
@@ -57,61 +57,50 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
         name = _name;
         symbol = _symbol;
-        
-        require(_contentStorage.isContract() && 
-                _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
-                "Invalid Address");
-        contentStorage = IContentStorage(_contentStorage);
-        // todo: check _systemsRegistry as a contract
-        systemsRegistry = ISystemsRegistry(_systemsRegistry);
+
+        dataStorage = _dataStorage;
+        systemsRegistry = _systemsRegistry;
     }
 
+    // SYSTEMS APPROVAL
     function approveAllSystems(bool _approve) external override {
         return systemsRegistry.userApprove(_msgSender(), _approve);
     }
 
+    // TOKEN URIS
     function tokenUri(uint256 _tokenId) external view override returns (string memory) {
-        return contentStorage.uri(_tokenId);
+        return dataStorage.uri(_tokenId);
     }
 
-    function tokenDataUri(uint256 _tokenId) external view override returns (string memory) {
-        // user cannot access token uri if they do not own it.
+    function hiddenTokenUri(uint256 _tokenId) external view override returns (string memory) {
+        // Hidden Token Uri can only be accessed if the user owns the token
         if (balanceOf(_msgSender(), _tokenId) == 0) {
             return "";
         }
-        uint256 version = HasTokenUri(address(contentStorage)).getLatestUriVersion(_tokenId);
-        return contentStorage.tokenDataUri(_tokenId, version);
+        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId);
+        return dataStorage.hiddenTokenUri(_tokenId, version);
     }
     
-    function tokenDataUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
-        // user cannot access token uri if they do not own it.
+    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
+        // Hidden Token Uri can only be accessed if the user owns the token
         if (balanceOf(_msgSender(), _tokenId) == 0) {
             return "";
         }
-        return contentStorage.tokenDataUri(_tokenId, _version);
+        return dataStorage.hiddenTokenUri(_tokenId, _version);
     }
     
+    // Royalties
     function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
-        return contentStorage.getRoyalties(_tokenId);
+        return dataStorage.getRoyalties(_tokenId);
     }
 
-    function isSystemOperatorApproved(address _operator) external view override returns (bool) {
-        return _isSystemOperatorApproved(_msgSender(), _operator);
-    }
-
-    function isOperatorRegistered(address _operator) external view override returns (bool) {
-        return systemsRegistry.isOperatorRegistered(_operator);
-    }
-
+    // Supply Info
     function getSupplyInfo(uint256 _tokenId) external view override returns (uint256 supply, uint256 maxSupply) {
         return (_supply(_tokenId), _maxSupply(_tokenId));
     }
 
+    // Asset Minting
     function mintBatch(LibAsset.MintData memory _data) external override {
-        // Todo: _isSystemOperatorApproved() must check if the sender is a minter address, a registered system, or owner. If 
-        //      these are not true, check the signatures to verify if a minter address signed the message. This doesn't need 
-        //      to check if the user allowed the system to mint for it. that doesn't make sense.
-        // require(_isSystemOperatorApproved(_data.to, _msgSender()), "Invalid permissions");
         systemsRegistry.verifyMint(_data, _msgSender());
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             
@@ -127,6 +116,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
     }
 
+    // Asset Burning
     function burnBatch(LibAsset.BurnData memory _data) external override {
         require(_data.account == _msgSender() || _isSystemOperatorApproved(_data.account, _msgSender()), "Caller is not approved.");
 
@@ -138,30 +128,32 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         _burnBatch(_data.account, _data.tokenIds, _data.amounts);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, ERC165StorageUpgradeable) returns (bool) {
+    // Interface support
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Upgradeable, IERC165Upgradeable, ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
+
+    /**************** Internal Functions ****************/
 
     function _isSystemOperatorApproved(address _user, address _operator) internal view returns(bool) {
         return systemsRegistry.isSystemOperatorApproved(_user, _operator);
     }
 
     function _supply(uint256 _tokenId) internal view returns(uint256) {
-        return contentStorage.getSupply(_tokenId);
+        return dataStorage.getSupply(_tokenId);
     }
 
     function _maxSupply(uint256 _tokenId) internal view returns(uint256) {
-        return contentStorage.getMaxSupply(_tokenId);
+        return dataStorage.getMaxSupply(_tokenId);
     }
 
     function _tokenExists(uint256 _tokenId) internal view returns(bool) {
-        return contentStorage.getIds(_tokenId);
+        return dataStorage.getIds(_tokenId);
     }
 
     function _updateSupply(uint256 _tokenId, uint256 _newSupply) internal {
-        return contentStorage.updateSupply(_tokenId, _newSupply);
+        return dataStorage.updateSupply(_tokenId, _newSupply);
     }
-
 
     uint256[50] private __gap;
 }

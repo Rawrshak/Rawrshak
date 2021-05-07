@@ -63,7 +63,7 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
         grantRole(OWNER_ROLE, parent);
     }
     
-    function isSystemOperatorApproved(address _user, address _operator) external view override checkPermissions(OWNER_ROLE) returns (bool) {
+    function isSystemOperatorApproved(address _user, address _operator) external view override returns (bool) {
         return users.contains(_user) && operators.contains(_operator);
     }
 

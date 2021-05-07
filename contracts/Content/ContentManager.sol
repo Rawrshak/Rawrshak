@@ -79,8 +79,8 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         contentStorage.setTokenUriPrefix(_tokenUriPrefix);
     }
 
-    function setTokenDataUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
-        contentStorage.setTokenDataUriBatch(_assets);
+    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
+        contentStorage.setHiddenTokenUriBatch(_assets);
     }
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external override onlyOwner {

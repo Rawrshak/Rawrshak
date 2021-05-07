@@ -168,7 +168,6 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
 
         await testContract.verifyMint(mintData, craftingSystemAddress, {from: deployerAddress});
         
-        // todo: check nonce for user
         assert.equal(
             await testContract.userMintNonce(playerAddress),
             0,

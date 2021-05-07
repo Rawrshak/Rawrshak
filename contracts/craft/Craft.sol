@@ -2,7 +2,6 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -153,7 +152,7 @@ contract Craft is ICraft, CraftBase {
         uint256 requiredAmount = 0;
         for (uint256 i = 0; i < recipes[_id].materials.length && noMissingAsset; ++i) {
             requiredAmount = SafeMathUpgradeable.mul(recipes[_id].materialAmounts[i], _amount);
-            noMissingAsset = IERC1155Upgradeable(recipes[_id].materials[i].content).balanceOf(_msgSender(), recipes[_id].materials[i].tokenId) > requiredAmount;
+            noMissingAsset = IContent(recipes[_id].materials[i].content).balanceOf(_msgSender(), recipes[_id].materials[i].tokenId) > requiredAmount;
         }
 
         require(noMissingAsset, "Not enough assets");

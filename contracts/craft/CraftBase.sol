@@ -2,7 +2,6 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -10,7 +9,8 @@ import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeab
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "./interfaces/ICraftBase.sol";
-import "../content/interfaces/IContent.sol";
+import "../content/Content.sol";
+import "../content/interfaces/ISystemsRegistry.sol";
 import "../utils/LibConstants.sol";
 import "../libraries/LibCraft.sol";
 
@@ -57,7 +57,8 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
         require(_content.isContract(), "Content address is not an contract");
         require(_content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Contract is not a Content Contract");
         // check if I have the correct permissions
-        require(IContent(_content).isOperatorRegistered(address(this)), "No contract permissions");
+
+        require(ISystemsRegistry(Content(_content).systemsRegistry()).isOperatorRegistered(address(this)), "No contract permissions");
         
         contentContracts.add(_content);
         

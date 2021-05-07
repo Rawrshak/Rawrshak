@@ -2,7 +2,6 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
@@ -116,7 +115,7 @@ contract Salvage is ISalvage, CraftBase {
         // 2. Check amount > 0
         require(_amount > 0, "Invalid amount");
         // 3. check if sender has the asset and the amount
-        require(IERC1155Upgradeable(_asset.content).balanceOf(_msgSender(), _asset.tokenId) > _amount, "Not enough owned asset");
+        require(IContent(_asset.content).balanceOf(_msgSender(), _asset.tokenId) > _amount, "Not enough owned asset");
     }
 
     function _burn(LibCraft.AssetData memory _asset, uint256 _burnAmount) internal {
