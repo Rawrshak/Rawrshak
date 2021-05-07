@@ -199,28 +199,28 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         emit FilledOrdersClaimed(orderIds);
     }
 
-    function getTokenEscrow(bytes4 _token) external view returns(address) {
-        return executionManager.getTokenEscrow(_token);
+    function tokenEscrow(bytes4 _token) external view returns(address) {
+        return executionManager.tokenEscrow(_token);
     }
 
-    function getNFTsEscrow() external view returns(address) {
-        return executionManager.getNFTsEscrow();
+    function nftsEscrow() external view returns(address) {
+        return executionManager.nftsEscrow();
     }
 
     // royalty functions
-    function setPlatformFees(LibRoyalties.Fees[] memory newFees) external onlyOwner {
+    function setExchangeFees(LibRoyalties.Fees[] memory newFees) external onlyOwner {
         require(newFees.length > 0, "Invalid fees.");
         
-        royaltyManager.setPlatformFees(newFees);
+        royaltyManager.setExchangeFees(newFees);
     }
 
-    function getPlatformFees() external view returns(LibRoyalties.Fees[] memory fees) {
-        return royaltyManager.getPlatformFees();
+    function getAllExchangeFees() external view returns(LibRoyalties.Fees[] memory fees) {
+        return royaltyManager.getAllExchangeFees();
     }
 
-    function getClaimableRoyaltyAmount(bytes4 _token) external view returns (uint256) {
+    function claimableRoyaltyAmount(bytes4 _token) external view returns (uint256) {
         require(executionManager.verifyToken(_token), "Token is not supported.");
-        return royaltyManager.getClaimableRoyaltyAmount(_msgSender(), _token);
+        return royaltyManager.claimableRoyaltyAmount(_msgSender(), _token);
     }
 
     function claimRoyalties(bytes4 _token) external {

@@ -4,12 +4,18 @@ pragma solidity >=0.6.0 <0.9.0;
 import "../../libraries/LibOrder.sol";
 
 interface IExecutionManager { 
+    /******** View Functions ********/
+    function token(bytes4 _token) external view returns(address);
+
+    function tokenEscrow(bytes4 _token) external view returns(address);
+
+    function nftsEscrow() external view returns(address);
+
+    function verifyUserBalance(address _user, bytes4 _token, uint256 amountDue) external view returns(bool);
+
+    function verifyToken(bytes4 _token) external view returns(bool);
+
     /******** Mutative Functions ********/
-    function getToken(bytes4 _token) external view returns(address);
-
-    function getTokenEscrow(bytes4 _token) external view returns(address);
-
-    function getNFTsEscrow() external view returns(address);
     
     function placeBuyOrder(uint256 _orderId, bytes4 _token, address _sender, uint256 _tokenAmount) external;
 
@@ -35,8 +41,4 @@ interface IExecutionManager {
     function deleteOrder(uint256 _orderId, address _user, LibOrder.OrderData memory _order) external;
 
     function claimOrders(address _user, uint256[] calldata _orderIds) external;
-
-    function verifyUserBalance(address _user, bytes4 _token, uint256 amountDue) external view returns(bool);
-
-    function verifyToken(bytes4 _token) external view returns(bool);
 }

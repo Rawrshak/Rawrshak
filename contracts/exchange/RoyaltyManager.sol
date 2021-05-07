@@ -29,9 +29,9 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     }
 
     function claimRoyalties(address _user, bytes4 _token) external override onlyOwner {
-        uint256 amountClaimed = _getClaimableRoyaltyAmount(_user, _token);
+        uint256 amountClaimed = _claimableRoyaltyAmount(_user, _token);
         IEscrowERC20(registry.getAddress(_token)).claim(_user);
-        emit RoyaltiesClaimed(_user, IEscrowERC20(registry.getAddress(_token)).getToken(), amountClaimed);
+        emit RoyaltiesClaimed(_user, IEscrowERC20(registry.getAddress(_token)).token(), amountClaimed);
     }
 
     function depositRoyalty(
@@ -40,7 +40,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         address[] memory _accounts,
         uint256[] memory _amounts
     ) external override onlyOwner {
-        // No need to do checks. these values are returned from getRequiredRoyalties()
+        // No need to do checks. these values are returned from requiredRoyalties()
         // This is called in a fill sell order where Tokens are sent from the buyer to the escrow. We 
         // need to update the royalties table internally 
         for (uint256 i = 0; i < _accounts.length; ++i) {
@@ -54,7 +54,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         address[] memory _accounts,
         uint256[] memory _amounts
     ) external override onlyOwner {
-        // No need to do checks. these values are returned from getRequiredRoyalties()
+        // No need to do checks. these values are returned from requiredRoyalties()
         // This is called in a fill buy order where Tokens are stored in the escrow and need to be "moved"
         // to the "claimable" table for the asset creator
 
@@ -69,7 +69,8 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     ) external view override onlyOwner returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining) {
         remaining = _total;
 
-        LibRoyalties.Fees[] memory fees = Content(_asset.contentAddress).getRoyalties(_asset.tokenId);
+        // Todo: Update this for unique content later on
+        LibRoyalties.Fees[] memory fees = IContent(_asset.contentAddress).getRoyalties(_asset.tokenId);
         royaltyAmounts = new uint256[](fees.length + exchangeFees.length);
         accounts = new address[](fees.length + exchangeFees.length);
         uint256 royalty = 0;
@@ -93,7 +94,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         }
     }
 
-    function setPlatformFees(LibRoyalties.Fees[] calldata _newFees) external override onlyOwner {
+    function setExchangeFees(LibRoyalties.Fees[] calldata _newFees) external override onlyOwner {
         if (exchangeFees.length > 0) {
             delete exchangeFees;
         }
@@ -103,17 +104,17 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         emit PlatformFeesUpdated(_newFees);
     }
     
-    function getPlatformFees() external view override returns(LibRoyalties.Fees[] memory) {
+    function getAllExchangeFees() external view override returns(LibRoyalties.Fees[] memory) {
         return exchangeFees;
     }
 
-    function getClaimableRoyaltyAmount(address _user, bytes4 _token) external view override returns(uint256) {        
-        return _getClaimableRoyaltyAmount(_user, _token);
+    function claimableRoyaltyAmount(address _user, bytes4 _token) external view override returns(uint256) {        
+        return _claimableRoyaltyAmount(_user, _token);
     }
 
     /**************** Internal Functions ****************/
-    function _getClaimableRoyaltyAmount(address _user, bytes4 _token) internal view returns(uint256) {
-        return IEscrowERC20(registry.getAddress(_token)).getClaimableTokensByOwner(_user);
+    function _claimableRoyaltyAmount(address _user, bytes4 _token) internal view returns(uint256) {
+        return IEscrowERC20(registry.getAddress(_token)).claimableTokensByOwner(_user);
     }
 
     uint256[50] private __gap;

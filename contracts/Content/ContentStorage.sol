@@ -24,10 +24,10 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     /***************** Stored Variables *****************/
-    address public parent;
-    mapping(uint256 => bool) private ids;
-    mapping(uint256 => uint256) private maxSupply;
-    mapping(uint256 => uint256) private supply;
+    address public override parent;
+    mapping(uint256 => bool) public override ids;
+    mapping(uint256 => uint256) public override maxSupply;
+    mapping(uint256 => uint256) public override supply;
 
     /*********************** Events *********************/
     event ParentSet(address parent);
@@ -59,18 +59,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         parent = _parent;
         grantRole(OWNER_ROLE, parent);
     }
-    
-    function getIds(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (bool) {
-        return ids[_tokenId];
-    }
-
-    function getSupply(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (uint256) {
-        return supply[_tokenId];
-    }
-
-    function getMaxSupply(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (uint256) {
-        return maxSupply[_tokenId];
-    }
 
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
@@ -95,7 +83,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     }
 
     // returns the token uri for public token info
-    function uri(uint256 _tokenId) external view override returns (string memory) {
+    function uri(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
         return _tokenUri(_tokenId);
     }
 

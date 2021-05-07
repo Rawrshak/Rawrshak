@@ -36,7 +36,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     /***************** Stored Variables *****************/
     string public name;
     string public symbol;
-    IContentStorage public dataStorage;
+    IContentStorage dataStorage;
     ISystemsRegistry public systemsRegistry;
 
     /*********************** Events *********************/
@@ -88,15 +88,17 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         }
         return dataStorage.hiddenTokenUri(_tokenId, _version);
     }
-    
-    // Royalties
+        // Royalties
     function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
         return dataStorage.getRoyalties(_tokenId);
     }
-
-    // Supply Info
-    function getSupplyInfo(uint256 _tokenId) external view override returns (uint256 supply, uint256 maxSupply) {
-        return (_supply(_tokenId), _maxSupply(_tokenId));
+    
+    function supply(uint256 _tokenId) external view override returns (uint256) {
+        return _supply(_tokenId);
+    }
+    
+    function maxSupply(uint256 _tokenId) external view override returns (uint256) {
+        return _maxSupply(_tokenId);
     }
 
     // Asset Minting
@@ -140,15 +142,15 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     function _supply(uint256 _tokenId) internal view returns(uint256) {
-        return dataStorage.getSupply(_tokenId);
+        return dataStorage.supply(_tokenId);
     }
 
     function _maxSupply(uint256 _tokenId) internal view returns(uint256) {
-        return dataStorage.getMaxSupply(_tokenId);
+        return dataStorage.maxSupply(_tokenId);
     }
 
     function _tokenExists(uint256 _tokenId) internal view returns(bool) {
-        return dataStorage.getIds(_tokenId);
+        return dataStorage.ids(_tokenId);
     }
 
     function _updateSupply(uint256 _tokenId, uint256 _newSupply) internal {

@@ -25,15 +25,15 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         _registerInterface(LibConstants._INTERFACE_ID_EXECUTION_MANAGER);
     }
     
-    function getToken(bytes4 _token) external view override returns(address) {
-        return IEscrowERC20(registry.getAddress(_token)).getToken();
+    function token(bytes4 _token) external view override returns(address) {
+        return IEscrowERC20(registry.getAddress(_token)).token();
     }
     
-    function getTokenEscrow(bytes4 _token) external view override returns(address) {
+    function tokenEscrow(bytes4 _token) external view override returns(address) {
         return address(registry.getAddress(_token));
     }
     
-    function getNFTsEscrow() external view override returns(address) {
+    function nftsEscrow() external view override returns(address) {
         return address(registry.getAddress(ESCROW_NFTS_CONTRACT));
     }
 
@@ -109,11 +109,11 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
             require(order.owner == _user, "User doesn't own this order");
             if (order.isBuyOrder) {
                 // withdraw NFTs
-                amount = IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).getEscrowedAssetsByOrder(_orderIds[i]);
+                amount = IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).escrowedAssetsByOrder(_orderIds[i]);
                 IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_orderIds[i], _user, amount);
             } else {
                 // withdraw ERC20               
-                amount = IEscrowERC20(registry.getAddress(order.token)).getEscrowedTokensByOrder(_orderIds[i]);
+                amount = IEscrowERC20(registry.getAddress(order.token)).escrowedTokensByOrder(_orderIds[i]);
                 IEscrowERC20(registry.getAddress(order.token)).withdraw(
                     _orderIds[i],
                     _user,
@@ -123,7 +123,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
 
     function verifyUserBalance(address _user, bytes4 _token, uint256 amountDue) external view override returns(bool) {
-        return IERC20Upgradeable(IEscrowERC20(registry.getAddress(_token)).getToken()).balanceOf(_user) >= amountDue;
+        return IERC20Upgradeable(IEscrowERC20(registry.getAddress(_token)).token()).balanceOf(_user) >= amountDue;
     }
 
     function verifyToken(bytes4 _token) external view override returns(bool) {

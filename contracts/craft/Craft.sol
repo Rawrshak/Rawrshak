@@ -45,31 +45,31 @@ contract Craft is ICraft, CraftBase {
             require(_recipes[i].id != 0, "Invalid id");
             require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 10000, "Invalid crafting rate.");
 
-            LibCraft.Recipe storage recipe = recipes[_recipes[i].id];
-            recipe.id = _recipes[i].id;
-            recipe.enabled = _recipes[i].enabled;
-            recipe.craftingRate = _recipes[i].craftingRate;
+            LibCraft.Recipe storage recipeData = recipes[_recipes[i].id];
+            recipeData.id = _recipes[i].id;
+            recipeData.enabled = _recipes[i].enabled;
+            recipeData.craftingRate = _recipes[i].craftingRate;
 
             // If recipe already exists, delete it first before updating
-            if (recipe.materials.length > 0) {
-                delete recipe.materials;
-                delete recipe.materialAmounts;
-                delete recipe.rewards;
-                delete recipe.rewardAmounts;
+            if (recipeData.materials.length > 0) {
+                delete recipeData.materials;
+                delete recipeData.materialAmounts;
+                delete recipeData.rewards;
+                delete recipeData.rewardAmounts;
             }
 
             for (uint256 j = 0; j < _recipes[i].materials.length; ++j) {
                 require(contentContracts.contains(_recipes[i].materials[j].content), "Invalid Content Contract permissions");
 
-                recipe.materials.push(_recipes[i].materials[j]);
-                recipe.materialAmounts.push(_recipes[i].materialAmounts[j]);
+                recipeData.materials.push(_recipes[i].materials[j]);
+                recipeData.materialAmounts.push(_recipes[i].materialAmounts[j]);
             }
 
             for (uint256 j = 0; j < _recipes[i].rewards.length; ++j) {
                 require(contentContracts.contains(_recipes[i].rewards[j].content), "Invalid Content Contract permissions");
 
-                recipe.rewards.push(_recipes[i].rewards[j]);
-                recipe.rewardAmounts.push(_recipes[i].rewardAmounts[j]);
+                recipeData.rewards.push(_recipes[i].rewards[j]);
+                recipeData.rewardAmounts.push(_recipes[i].rewardAmounts[j]);
             }
         }
 
@@ -114,7 +114,7 @@ contract Craft is ICraft, CraftBase {
         emit AssetsCrafted(_id, _amount);
     }
 
-    function getRecipe(uint256 _id) external view override returns(LibCraft.Recipe memory _recipe) {
+    function recipe(uint256 _id) external view override returns(LibCraft.Recipe memory _recipe) {
         // will return empty if it doesn't exist
         return recipes[_id];
     }

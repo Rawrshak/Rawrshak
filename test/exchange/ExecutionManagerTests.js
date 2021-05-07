@@ -143,17 +143,17 @@ contract('Execution Manager Contract', (accounts)=> {
 
     it('Verify Escrows and token address', async () => {
         assert.equal(
-            await executionManager.getToken(rawrId),
+            await executionManager.token(rawrId),
             rawrToken.address,
             "Execution Manager is not pointing to the correct token address.");
 
         assert.equal(
-            await executionManager.getTokenEscrow(rawrId),
+            await executionManager.tokenEscrow(rawrId),
             escrowRawr.address,
             "Execution Manager is not pointing to the correct token escrow.");
         
         assert.equal(
-            await executionManager.getNFTsEscrow(),
+            await executionManager.nftsEscrow(),
             escrowContent.address,
             "Execution Manager is not pointing to the correct asset escrow.");
     });
@@ -172,7 +172,7 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.placeBuyOrder(1, rawrId, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
         
         assert.equal(
-            await escrowRawr.getEscrowedTokensByOrder(1),
+            await escrowRawr.escrowedTokensByOrder(1),
             web3.utils.toWei('2000', 'ether').toString(),
             "Tokens were not escrowed."
         )
@@ -193,7 +193,7 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
         
         assert.equal(
-            await escrowContent.getEscrowedAssetsByOrder(1),
+            await escrowContent.escrowedAssetsByOrder(1),
             2,
             "Tokens were not escrowed."
         )
@@ -212,13 +212,13 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.executeBuyOrder(player2Address, orders, paymentPerOrder, amounts, asset, rawrId, {from:deployerAddress});
 
         assert.equal(
-            await escrowRawr.getEscrowedTokensByOrder(1),
+            await escrowRawr.escrowedTokensByOrder(1),
             web3.utils.toWei('1000', 'ether').toString(),
             "Payment was not withdrawn to the seller."
         )
 
         assert.equal(
-            await escrowContent.getEscrowedAssetsByOrder(1),
+            await escrowContent.escrowedAssetsByOrder(1),
             1,
             "Asset was not sent to escrow."
         )
@@ -259,7 +259,7 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress});
 
         assert.equal(
-            await escrowRawr.getEscrowedTokensByOrder(1),
+            await escrowRawr.escrowedTokensByOrder(1),
             web3.utils.toWei('1000', 'ether').toString(),
             "Tokens were not sent to escrow."
         )
@@ -305,7 +305,7 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.deleteOrder(1, playerAddress, sellOrderData, {from: deployerAddress});
 
         assert.equal(
-            await escrowContent.getEscrowedAssetsByOrder(1),
+            await escrowContent.escrowedAssetsByOrder(1),
             0,
             "Assets are still escrowed."
         );
@@ -326,7 +326,7 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.deleteOrder(2, playerAddress, buyOrderData, {from: deployerAddress});
 
         assert.equal(
-            await escrowRawr.getEscrowedTokensByOrder(1),
+            await escrowRawr.escrowedTokensByOrder(1),
             0,
             "Tokens are still escrowed."
         )
@@ -357,7 +357,7 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.claimOrders(playerAddress, orders, {from:deployerAddress});
 
         assert.equal(
-            await escrowContent.getEscrowedAssetsByOrder(1),
+            await escrowContent.escrowedAssetsByOrder(1),
             0,
             "Asset was not claimed properly."
         )
@@ -388,7 +388,7 @@ contract('Execution Manager Contract', (accounts)=> {
         await executionManager.claimOrders(playerAddress, orders, {from:deployerAddress});
 
         assert.equal(
-            await escrowRawr.getEscrowedTokensByOrder(1),
+            await escrowRawr.escrowedTokensByOrder(1),
             0,
             "Tokens are still escrowed."
         )

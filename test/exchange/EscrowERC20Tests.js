@@ -95,7 +95,7 @@ contract('Escrow ERC20 Contract', (accounts) => {
 
         // check escrowed tokens by order (1)
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             web3.utils.toWei('10000', 'ether').toString(), 
             "10000 wasn't deposited for Order 1."
         );
@@ -124,7 +124,7 @@ contract('Escrow ERC20 Contract', (accounts) => {
 
         // check escrowed tokens by order (1)
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             0, 
             "10000 rawr tokens moved wasn't recorded properly"
         );
@@ -152,7 +152,7 @@ contract('Escrow ERC20 Contract', (accounts) => {
 
         // check escrowed tokens by order (1)
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             0, 
             "10000 wasn't withdrawn for Order 1."
         );
@@ -176,7 +176,7 @@ contract('Escrow ERC20 Contract', (accounts) => {
         
         // check escrowed tokens by order (1)
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             web3.utils.toWei('5000', 'ether'), 
             "Internal value for Order 1 is incorrect."
         );
@@ -190,14 +190,14 @@ contract('Escrow ERC20 Contract', (accounts) => {
         
         // check escrowed tokens by order (1)
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             web3.utils.toWei('5000', 'ether'), 
             "Internal value for Order 1 is incorrect."
         );
         
         // check claimable tokens for player 1
         assert.equal (
-            await escrow.getClaimableTokensByOwner(creatorAddress),
+            await escrow.claimableTokensByOwner(creatorAddress),
             web3.utils.toWei('5000', 'ether'), 
             "Claimable royalty for creator address is incorrect."
         );
@@ -211,14 +211,14 @@ contract('Escrow ERC20 Contract', (accounts) => {
         
         // check escrowed tokens by order (1)
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             web3.utils.toWei('4000', 'ether'), 
             "Internal value for Order 1 is incorrect."
         );
         
         // check claimable tokens for player 1
         assert.equal (
-            await escrow.getClaimableTokensByOwner(creatorAddress),
+            await escrow.claimableTokensByOwner(creatorAddress),
             web3.utils.toWei('1000', 'ether'), 
             "Claimable royalty for Player 1 is incorrect."
         );
@@ -229,7 +229,7 @@ contract('Escrow ERC20 Contract', (accounts) => {
         await escrow.depositRoyalty(playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
         
         assert.equal (
-            await escrow.getClaimableTokensByOwner(creatorAddress),
+            await escrow.claimableTokensByOwner(creatorAddress),
             web3.utils.toWei('5000', 'ether'), 
             "Claimable royalty for creator address is incorrect."
         );
@@ -237,7 +237,7 @@ contract('Escrow ERC20 Contract', (accounts) => {
         await escrow.claim(creatorAddress, {from: executionManagerAddress});
 
         assert.equal (
-            await escrow.getClaimableTokensByOwner(creatorAddress),
+            await escrow.claimableTokensByOwner(creatorAddress),
             0, 
             "Claimable royalty for creator address is incorrect."
         );
@@ -261,14 +261,14 @@ contract('Escrow ERC20 Contract', (accounts) => {
 
         // Check escrowed tokens for Order 1
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             0, 
             "Internal value for Order 1 is incorrect."
         );
 
         // Checked claimable tokens for player 1
         assert.equal (
-            await escrow.getClaimableTokensByOwner(playerAddress),
+            await escrow.claimableTokensByOwner(playerAddress),
             0, 
             "Claimable royalty for Player 1 is incorrect."
         );

@@ -31,9 +31,9 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
      */
 
     /***************** Stored Variables *****************/
-    address public creator;
-    address public contentContract;
-    uint256 public id;
+    address public override creator;
+    address public override contentContract;
+    uint256 public override id;
     bool private isMinted = false;
     
     /*********************** Events *********************/
@@ -68,8 +68,8 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         emit UniqueContentCreated(_name, _symbol, _mintData);
     }
 
-    function getRoyalties() external view override returns (LibRoyalties.Fees[] memory) {
-        LibRoyalties.Fees[] memory tokenRoyalties = Content(contentContract).getRoyalties(id);
+    function getRoyalties(uint256) external view override returns (LibRoyalties.Fees[] memory) {
+        LibRoyalties.Fees[] memory tokenRoyalties = IContent(contentContract).getRoyalties(id);
         LibRoyalties.Fees[] memory royalties = new LibRoyalties.Fees[](tokenRoyalties.length + contractRoyalties.length);
         uint256 index = 0;
         

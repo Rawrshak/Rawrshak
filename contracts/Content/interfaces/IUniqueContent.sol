@@ -2,17 +2,22 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-import "../../libraries/LibRoyalties.sol";
-import "../../libraries/LibAsset.sol";
+import "./IRoyaltyProvider.sol";
 
-interface IUniqueContent is IERC721Upgradeable {
+interface IUniqueContent is IERC721Upgradeable, IRoyaltyProvider {
+
+    /******** View Functions ********/
+    function creator() external view returns(address);
+
+    function contentContract() external view returns(address);
+    
+    function id() external view returns(uint256);
 
     function uri() external view returns (string memory);
 
     function tokenDataURI(uint256) external view returns (string memory);
 
-    function getRoyalties() external view returns (LibRoyalties.Fees[] memory);
-
+    /******** Mutative Functions ********/
     function mint(address to) external;
 
     function burn(address to) external;

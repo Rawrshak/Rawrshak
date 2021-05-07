@@ -43,26 +43,26 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         return true;
     }
 
-    function placeOrder(uint256 id, LibOrder.OrderData memory order) external override checkPermissions(MANAGER_ROLE) { 
-        orders[id] = order;
+    function placeOrder(uint256 _id, LibOrder.OrderData memory _order) external override checkPermissions(MANAGER_ROLE) { 
+        orders[_id] = _order;
     }
 
-    function deleteOrder(uint256 id) external override checkPermissions(MANAGER_ROLE) {
+    function deleteOrder(uint256 _id) external override checkPermissions(MANAGER_ROLE) {
         // Deleting costs 5000, but returns a 15000 gas refund at the end of your call, which will make
         // the overall transaction cheaper, I think.
-        delete orders[id];
+        delete orders[_id];
     }
 
-    function getOrder(uint256 id) external view override returns(LibOrder.OrderData memory) {
-        return orders[id];
+    function getOrder(uint256 _id) external view override returns(LibOrder.OrderData memory) {
+        return orders[_id];
     }
 
-    function verifyOwner(uint256 id, address owner) external view override returns(bool) {
-        return orders[id].owner == owner;
+    function verifyOwner(uint256 _id, address _owner) external view override returns(bool) {
+        return orders[_id].owner == _owner;
     }
 
-    function fillOrder(uint256 id, uint256 amount) external override checkPermissions(MANAGER_ROLE) {
-        orders[id].amount = SafeMathUpgradeable.sub(orders[id].amount, amount);
+    function fillOrder(uint256 _id, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+        orders[_id].amount = SafeMathUpgradeable.sub(orders[_id].amount, _amount);
     }
 
 

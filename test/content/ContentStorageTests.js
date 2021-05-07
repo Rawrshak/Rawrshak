@@ -116,17 +116,17 @@ contract('ContentStorage Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await contentStorage.getIds(1),
+            await contentStorage.ids(1),
             true,
             "Asset wasn't added properly - id doesn't exist");
     
         assert.equal(
-            await contentStorage.getSupply(1),
+            await contentStorage.supply(1),
             0,
             "Asset wasn't added properly - supply is incorrect");
         
         assert.equal(
-            await contentStorage.getMaxSupply(1),
+            await contentStorage.maxSupply(1),
             100,
             "Asset wasn't added properly - maxSupply is incorrect");
     });
@@ -175,14 +175,14 @@ contract('ContentStorage Contract Tests', (accounts) => {
         await contentStorage.addAssetBatch(asset);
 
         assert.equal(
-            await contentStorage.getSupply(1),
+            await contentStorage.supply(1),
             0,
             "Asset wasn't added properly - supply is incorrect");
             
         await contentStorage.updateSupply(1, 5); 
 
         assert.equal(
-            await contentStorage.getSupply(1),
+            await contentStorage.supply(1),
             5,
             "Asset wasn't added properly - supply is incorrect");
     });

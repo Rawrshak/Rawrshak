@@ -19,8 +19,8 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
-    mapping(uint256 => LibOrder.AssetData) assetData;
-    mapping(uint256 => uint256) escrowedAssetsByOrder;
+    mapping(uint256 => LibOrder.AssetData) public override assetData;
+    mapping(uint256 => uint256) public override escrowedAssetsByOrder;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -33,14 +33,6 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         __ERC721Holder_init_unchained();
         __StorageBase_init_unchained();
         _registerInterface(LibConstants._INTERFACE_ID_ESCROW_NFTS);
-    }
-
-    function getEscrowedAssetsByOrder(uint256 _orderId) external view override returns(uint256 _amount) {
-        _amount = escrowedAssetsByOrder[_orderId];
-    }
-
-    function getOrderAsset(uint256 _orderId) external view override returns(LibOrder.AssetData memory _assetData) {
-        _assetData = assetData[_orderId];
     }
 
     function deposit(

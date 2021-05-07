@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
+import "../../content/interfaces/IRoyaltyProvider.sol";
 import "../../content/HasRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 
-contract TestHasRoyalties is HasRoyalties {
+contract TestHasRoyalties is IRoyaltyProvider, HasRoyalties {
     function __TestHasRoyalties_init(LibRoyalties.Fees[] memory _contractFees) external initializer {
         __HasRoyalties_init_unchained(_contractFees);
         __ERC165Storage_init_unchained();
     }
     
-    function getRoyalties(uint256 _tokenId) external view returns (LibRoyalties.Fees[] memory) {
+    function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
         // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
         // _getRoyalties() will return the contract's default royalty fee. However, that can also
         // be null. In the case of null, there are no royalty fees. 

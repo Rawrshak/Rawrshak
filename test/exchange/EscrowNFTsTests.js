@@ -131,7 +131,7 @@ contract('Escrow NFTs Contract', (accounts) => {
         await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
 
         assert.equal(
-            await escrow.getEscrowedAssetsByOrder(1),
+            await escrow.escrowedAssetsByOrder(1),
             1,
             "Incorrect number of assets escrow recorded"
         );
@@ -148,7 +148,7 @@ contract('Escrow NFTs Contract', (accounts) => {
             "Incorrect number of assets owned by the player"
         );
         
-        var internalAssetData = await escrow.getOrderAsset(1);
+        var internalAssetData = await escrow.assetData(1);
         assert.equal(
             internalAssetData[0] == assetData[0] && internalAssetData[1] == assetData[1],
             true,
@@ -165,7 +165,7 @@ contract('Escrow NFTs Contract', (accounts) => {
         await escrow.withdraw(1, playerAddress, 1, {from: executionManagerAddress});
 
         assert.equal(
-            await escrow.getEscrowedAssetsByOrder(1),
+            await escrow.escrowedAssetsByOrder(1),
             0,
             "Incorrect number of assets escrowed."
         );
@@ -200,7 +200,7 @@ contract('Escrow NFTs Contract', (accounts) => {
         );
 
         assert.equal(
-            await escrow.getEscrowedAssetsByOrder(1),
+            await escrow.escrowedAssetsByOrder(1),
             1,
             "Incorrect number of assets escrowed."
         );
@@ -219,13 +219,13 @@ contract('Escrow NFTs Contract', (accounts) => {
         await escrow.withdrawBatch(orders, playerAddress, amounts, {from: executionManagerAddress});
 
         assert.equal(
-            await escrow.getEscrowedAssetsByOrder(2),
+            await escrow.escrowedAssetsByOrder(2),
             0,
             "Incorrect number of assets escrowed."
         );
         
         assert.equal(
-            await escrow.getEscrowedAssetsByOrder(3),
+            await escrow.escrowedAssetsByOrder(3),
             1,
             "Incorrect number of assets escrowed."
         );

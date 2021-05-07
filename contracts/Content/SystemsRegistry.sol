@@ -18,7 +18,6 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
     using ECDSAUpgradeable for bytes32;
     using ERC165CheckerUpgradeable for address;
     
-
     /******************** Constants ********************/
     /*
      * Todo: this
@@ -28,12 +27,12 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     /***************** Stored Variables *****************/
-    address public parent;
+    address public override parent;
 
     // Rawrshak system addresses that are approved to interact with this contract
     EnumerableSetUpgradeable.AddressSet private operators;
     EnumerableSetUpgradeable.AddressSet private users;
-    mapping(address => uint256) public userMintNonce;
+    mapping(address => uint256) public override userMintNonce;
 
     /*********************** Events *********************/
     event ParentSet(address parent);

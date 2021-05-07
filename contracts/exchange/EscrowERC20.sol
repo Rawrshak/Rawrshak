@@ -13,9 +13,9 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     
     /******************** Constants ********************/
     /***************** Stored Variables *****************/
-    address token;
-    mapping(uint256 => uint256) escrowedTokensByOrder;
-    mapping(address => uint256) private claimableTokensByOwner;
+    address public override token;
+    mapping(uint256 => uint256) public override escrowedTokensByOrder;
+    mapping(address => uint256) public override claimableTokensByOwner;
 
     /*********************** Events *********************/
     /********************* Modifiers ********************/
@@ -32,18 +32,6 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         _registerInterface(LibConstants._INTERFACE_ID_ESCROW_ERC20);
         
         token = _token;
-    }
-
-    function getToken() external view override returns(address) {
-        return token;
-    }
-    
-    function getEscrowedTokensByOrder(uint256 _orderId) external view override returns(uint256) {
-        return escrowedTokensByOrder[_orderId];
-    }
-
-    function getClaimableTokensByOwner(address _owner) external view override returns(uint256) {
-        return claimableTokensByOwner[_owner];
     }
     
     function deposit(

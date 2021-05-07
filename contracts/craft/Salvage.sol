@@ -22,7 +22,7 @@ contract Salvage is ISalvage, CraftBase {
 
     
     /***************** Stored Variables *****************/
-    mapping(uint256 => LibCraft.SalvageableAsset) public salvageableAssets;
+    mapping(uint256 => LibCraft.SalvageableAsset) internal salvageableAssets;
 
     /*********************** Events *********************/
     event SalvageableAssetsUpdated(LibCraft.SalvageableAsset[] assets, uint256[] ids);

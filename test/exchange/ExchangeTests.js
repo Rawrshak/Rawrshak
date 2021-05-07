@@ -139,7 +139,7 @@ contract('Exchange Contract', (accounts)=> {
         await executionManager.transferOwnership(exchange.address, {from: deployerAddress});
 
         // Set default platform fees
-        await exchange.setPlatformFees([[platformAddress, 30]], {from: deployerAddress});
+        await exchange.setExchangeFees([[platformAddress, 30]], {from: deployerAddress});
         
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
@@ -169,7 +169,7 @@ contract('Exchange Contract', (accounts)=> {
     });
 
     it('Set Platform Royalty Fees', async () => {
-        currentExchangeFees = await exchange.getPlatformFees();
+        currentExchangeFees = await exchange.getAllExchangeFees();
 
         assert.equal(
             currentExchangeFees[0][0] == platformAddress && currentExchangeFees[0][1].toString() == 30,
@@ -179,11 +179,10 @@ contract('Exchange Contract', (accounts)=> {
 
         // set platform fees to 30bps
         var newFees = [[platformAddress, 50]];
-        await exchange.setPlatformFees(newFees, {from: deployerAddress});
+        await exchange.setExchangeFees(newFees, {from: deployerAddress});
 
-        currentExchangeFees = await exchange.getPlatformFees();
+        currentExchangeFees = await exchange.getAllExchangeFees();
 
-    
         assert.equal(
             currentExchangeFees[0][0] == platformAddress && currentExchangeFees[0][1].toString() == 50,
             true,
@@ -200,7 +199,7 @@ contract('Exchange Contract', (accounts)=> {
             true
         ];
 
-        await rawrToken.approve(await exchange.getTokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
+        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
 
         var orderPlacedEvents = await exchange.placeOrder(orderData, {from: player2Address});
         TruffleAssert.eventEmitted(
@@ -217,7 +216,7 @@ contract('Exchange Contract', (accounts)=> {
             "Buy Order was placed");
 
         assert.equal(
-            await escrowRawr.getEscrowedTokensByOrder(orderId),
+            await escrowRawr.escrowedTokensByOrder(orderId),
             web3.utils.toWei('1000', 'ether'),
             "1000 RAWR tokens were not escrowed");
 
@@ -237,7 +236,7 @@ contract('Exchange Contract', (accounts)=> {
             false
         ];
 
-        await content.setApprovalForAll(await exchange.getNFTsEscrow(), true, {from:playerAddress});
+        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:playerAddress});
         
         var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
         TruffleAssert.eventEmitted(
@@ -254,7 +253,7 @@ contract('Exchange Contract', (accounts)=> {
             "Sell Order was placed");
 
         assert.equal(
-            await escrowContent.getEscrowedAssetsByOrder(orderId),
+            await escrowContent.escrowedAssetsByOrder(orderId),
             1,
             "1 NFT was not escrowed");
 
@@ -274,7 +273,7 @@ contract('Exchange Contract', (accounts)=> {
             true
         ];
 
-        await rawrToken.approve(await exchange.getTokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
+        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
 
         var orderPlacedEvents = await exchange.placeOrder(orderData, {from: player2Address});
         TruffleAssert.eventEmitted(
@@ -293,7 +292,7 @@ contract('Exchange Contract', (accounts)=> {
         );
 
         assert.equal(
-            await escrowRawr.getEscrowedTokensByOrder(orderId),
+            await escrowRawr.escrowedTokensByOrder(orderId),
             0,
             "1000 RAWR tokens were not escrowed");
 
@@ -319,7 +318,7 @@ contract('Exchange Contract', (accounts)=> {
         ];
 
         // Player 1 Creates a buy order for an asset
-        await rawrToken.approve(await exchange.getTokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
+        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
         var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
         TruffleAssert.eventEmitted(
             orderPlacedEvents,
@@ -328,7 +327,7 @@ contract('Exchange Contract', (accounts)=> {
         var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
 
         // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await content.setApprovalForAll(await exchange.getNFTsEscrow(), true, {from:player2Address});
+        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:player2Address});
         var buyOrderFilled = await exchange.fillBuyOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
         TruffleAssert.eventEmitted(
             buyOrderFilled,
@@ -353,7 +352,7 @@ contract('Exchange Contract', (accounts)=> {
             false
         ];
 
-        await content.setApprovalForAll(await exchange.getNFTsEscrow(), true, {from:playerAddress});
+        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:playerAddress});
         var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
         TruffleAssert.eventEmitted(
             orderPlacedEvents,
@@ -363,7 +362,7 @@ contract('Exchange Contract', (accounts)=> {
         var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
 
         // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await rawrToken.approve(await exchange.getTokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
+        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
         var sellOrderFilled = await exchange.fillSellOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
     
         TruffleAssert.eventEmitted(
@@ -389,7 +388,7 @@ contract('Exchange Contract', (accounts)=> {
         ];
 
         // Player 1 Creates a buy order for an asset
-        await rawrToken.approve(await exchange.getTokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
+        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
         var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
         TruffleAssert.eventEmitted(
             orderPlacedEvents,
@@ -398,7 +397,7 @@ contract('Exchange Contract', (accounts)=> {
         var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
 
         // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await content.setApprovalForAll(await exchange.getNFTsEscrow(), true, {from:player2Address});
+        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:player2Address});
         var buyOrderFilled = await exchange.fillBuyOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
         TruffleAssert.eventEmitted(
             buyOrderFilled,
@@ -426,7 +425,7 @@ contract('Exchange Contract', (accounts)=> {
         ];
 
         // Player 1 Creates a buy order for an asset
-        await rawrToken.approve(await exchange.getTokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
+        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
         var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
         TruffleAssert.eventEmitted(
             orderPlacedEvents,
@@ -435,7 +434,7 @@ contract('Exchange Contract', (accounts)=> {
         var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
 
         // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await content.setApprovalForAll(await exchange.getNFTsEscrow(), true, {from:player2Address});
+        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:player2Address});
         var buyOrderFilled = await exchange.fillBuyOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
         TruffleAssert.eventEmitted(
             buyOrderFilled,
@@ -449,7 +448,7 @@ contract('Exchange Contract', (accounts)=> {
 
         // check claimable royalty for creator address
         assert.equal(
-            await exchange.getClaimableRoyaltyAmount(rawrId, {from: creator1Address}),
+            await exchange.claimableRoyaltyAmount(rawrId, {from: creator1Address}),
             web3.utils.toWei('20', 'ether').toString(),
             "Creator's address doesn't have the correct amount of royalty");
 

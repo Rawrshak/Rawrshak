@@ -83,7 +83,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         
         // set platform royalties
         var platformRoyalties = [[platformAddress, 30]];
-        await royaltyManager.setPlatformFees(platformRoyalties, {from: deployerAddress})
+        await royaltyManager.setExchangeFees(platformRoyalties, {from: deployerAddress})
 
         // Register the execution manager
         await escrow.registerManager(royaltyManager.address, {from:deployerAddress})
@@ -114,14 +114,14 @@ contract('Royalty Manager Contract', (accounts)=> {
         var platformRoyalties = [[platformAddress, 50]];
 
         TruffleAssert.eventEmitted(
-            await royaltyManager.setPlatformFees(platformRoyalties, {from: deployerAddress}),
+            await royaltyManager.setExchangeFees(platformRoyalties, {from: deployerAddress}),
             'PlatformFeesUpdated'
         );
 
-        var platformFees = await royaltyManager.getPlatformFees();
+        var exchangeFees = await royaltyManager.getAllExchangeFees();
 
         assert.equal(
-            platformFees[0][0] == platformAddress && platformFees[0][1].toString() == 50,
+            exchangeFees[0][0] == platformAddress && exchangeFees[0][1].toString() == 50,
             true,
             "Platform fees were not set properly."
         );
@@ -135,13 +135,13 @@ contract('Royalty Manager Contract', (accounts)=> {
         await royaltyManager.depositRoyalty(playerAddress, rawrId, creators, amounts, {from: deployerAddress});
 
         assert.equal(
-            await royaltyManager.getClaimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
         
         assert.equal(
-            await royaltyManager.getClaimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('100', 'ether').toString(),
             "Royalty was not deposited in Creator 2 address escrow."
         );
@@ -161,20 +161,20 @@ contract('Royalty Manager Contract', (accounts)=> {
         await royaltyManager.transferRoyalty(rawrId, 1, creators, amounts, {from:deployerAddress});
 
         assert.equal(
-            await royaltyManager.getClaimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
         
         assert.equal(
-            await royaltyManager.getClaimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('100', 'ether').toString(),
             "Royalty was not deposited in Creator 2 address escrow."
         );
         
         // check if amounts were moved from the escrow for the order to claimable for the creator
         assert.equal (
-            await escrow.getEscrowedTokensByOrder(1),
+            await escrow.escrowedTokensByOrder(1),
             web3.utils.toWei('9700', 'ether').toString(), 
             "Escrowed tokens for the Order was not updated."
         );
@@ -218,7 +218,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
 
         assert.equal(
-            await royaltyManager.getClaimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
             0,
             "Royalty was not claimed yet."
         );
@@ -229,7 +229,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
         
         assert.equal(
-            await royaltyManager.getClaimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
             0,
             "Royalty was not claimed yet."
         );

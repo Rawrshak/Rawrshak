@@ -5,13 +5,18 @@ import "../../libraries/LibOrder.sol";
 import "../../libraries/LibRoyalties.sol";
 
 interface IRoyaltyManager { 
-    /******** Mutative Functions ********/    
-    function claimRoyalties(address _user, bytes4 _token) external;
+    /******** View Functions ********/
+    function getAllExchangeFees() external view returns(LibRoyalties.Fees[] memory);
+
+    function claimableRoyaltyAmount(address _user, bytes4 _token) external view returns(uint256);
 
     function getRequiredRoyalties(
         LibOrder.AssetData calldata _asset,
         uint256 _total
-    ) external returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining);
+    ) external view returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining);
+
+    /******** Mutative Functions ********/
+    function claimRoyalties(address _user, bytes4 _token) external;
 
     function depositRoyalty(
         address _sender,
@@ -27,9 +32,5 @@ interface IRoyaltyManager {
         uint256[] memory _amounts
     ) external;
 
-    function setPlatformFees(LibRoyalties.Fees[] calldata _newFees) external;
-
-    function getPlatformFees() external view returns(LibRoyalties.Fees[] memory);
-
-    function getClaimableRoyaltyAmount(address _user, bytes4 _token) external view returns(uint256);
+    function setExchangeFees(LibRoyalties.Fees[] calldata _newFees) external;
 }

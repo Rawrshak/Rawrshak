@@ -5,6 +5,8 @@ import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 
 interface IContentManager {
+
+    /******** Mutative Functions ********/
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
     
     function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) external;
