@@ -8,6 +8,9 @@ import "./IContentSubsystemBase.sol";
 
 interface IContentStorage is IRoyaltyProvider, IContentSubsystemBase {
 
+    /*********************** Events *********************/
+    event AssetsAdded(LibAsset.CreateData[] assets);
+
     /******** View Functions ********/
     function ids(uint256 _tokenId) external view returns (bool);
 

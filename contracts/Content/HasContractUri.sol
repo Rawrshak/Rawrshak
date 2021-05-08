@@ -15,6 +15,9 @@ abstract contract HasContractUri is ERC165StorageUpgradeable {
     // Contract Information Uri
     string internal contractUri;
 
+    /*********************** Events *********************/
+    event ContractUriUpdated(string uriPrefix);
+
     /******************** Public API ********************/
     function __HasContractUri_init_unchained(string memory _contractUri) internal initializer {
         contractUri = _contractUri;
@@ -28,6 +31,8 @@ abstract contract HasContractUri is ERC165StorageUpgradeable {
      */
     function _setContractUri(string memory _contractUri) internal {
         contractUri = _contractUri;
+
+        emit ContractUriUpdated(_contractUri);
     }
     
     uint256[50] private __gap;

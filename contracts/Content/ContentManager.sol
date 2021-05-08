@@ -24,12 +24,9 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0x00000003;
 
     /***************** Stored Variables *****************/
-    IContent public content;
+    IContent public override content;
     IContentStorage private contentStorage;
     ISystemsRegistry private systemsRegistry;
-
-    /*********************** Events *********************/
-    event ContentContractCreated(address content, address contentStorage, address systemsRegistry);
 
     /********************* Modifiers ********************/
     modifier addressExists(address addr) {
@@ -67,7 +64,6 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     function addAssetBatch(
         LibAsset.CreateData[] memory _assets
     ) external override onlyOwner {
-        // content.addAssetBatch(_assets);
         contentStorage.addAssetBatch(_assets);
     }
     

@@ -11,14 +11,11 @@ import "./interfaces/IEscrowERC20.sol";
 contract EscrowERC20 is IEscrowERC20, StorageBase {
     using AddressUpgradeable for address;
     
-    /******************** Constants ********************/
     /***************** Stored Variables *****************/
     address public override token;
     mapping(uint256 => uint256) public override escrowedTokensByOrder;
     mapping(address => uint256) public override claimableTokensByOwner;
 
-    /*********************** Events *********************/
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __EscrowERC20_init(address _token) public initializer {
         require(

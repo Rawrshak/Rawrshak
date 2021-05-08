@@ -7,9 +7,6 @@ contract TestCraft is Craft {
     using EnumerableSetUpgradeable for *;
 
     function __TestCraft_init(uint256 _seed) external initializer {
-        __Pausable_init_unchained();
-        __AccessControl_init_unchained();
-        __ERC165Storage_init_unchained();
         __Craft_init(_seed);
     }
 }

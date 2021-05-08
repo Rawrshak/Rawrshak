@@ -29,10 +29,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     mapping(uint256 => uint256) public override maxSupply;
     mapping(uint256 => uint256) public override supply;
 
-    /*********************** Events *********************/
-    event ParentSet(address parent);
-    event AssetsAdded(LibAsset.CreateData[] assets);
-
     /********************* Modifiers ********************/
     modifier checkPermissions(bytes32 _role) {
         require(hasRole(_role, msg.sender), "Invalid permissions.");
@@ -58,6 +54,8 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         require(_parent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
         parent = _parent;
         grantRole(OWNER_ROLE, parent);
+        
+        emit ParentSet(_parent);
     }
 
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override checkPermissions(OWNER_ROLE) {

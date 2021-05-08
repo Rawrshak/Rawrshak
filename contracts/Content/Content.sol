@@ -24,22 +24,26 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     /******************** Constants ********************/
     /*
      * Todo: this
-     * bytes4(keccak256('setContractUri(string memory)')) == 0x5b54d3f4
-     * bytes4(keccak256('uri(uint256)')) == 0x0e89341c
-     * bytes4(keccak256('setContractRoyalties(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
-     * bytes4(keccak256('setTokenRoyalties(uint256, LibRoyalties.Fees[] memory)')) == 0x170ea8e3
-     * bytes4(keccak256('setSystemApproval(LibAsset.SystemApprovalPair[] memory)')) == 2d24632d
-     * bytes4(keccak256('isApprovedForAll(address, address)')) == 0x3a95ab7f
-     * bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
+     * ERC1155 interface == 0xd9b67a26
+     * bytes4(keccak256('name()')) == 0x06fdde03
+     * bytes4(keccak256('symbol()')) == 0x95d89b41
+     * bytes4(keccak256('systemsRegistry()')) == 0x2795ea5a
+     * bytes4(keccak256('supply(uint256)')) == 0x35403023
+     * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
+     * bytes4(keccak256('tokenUri(uint256)')) == 0x1675f455
+     * bytes4(keccak256('hiddenTokenUri(uint256)')) == 0x58a71a09
+     * bytes4(keccak256('hiddenTokenUri(uint256,uint256)')) == 0x37282594
+     * bytes4(keccak256('approveAllSystems(bool)')) == 0x04a90ad5
+     * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
+     * bytes4(keccak256('burnBatch(LibAsset.BurnData memory)')) == 0xa0a862d5
+     *      => 0x94b3e03b
      */
 
     /***************** Stored Variables *****************/
-    string public name;
-    string public symbol;
+    string public override name;
+    string public override symbol;
     IContentStorage dataStorage;
-    ISystemsRegistry public systemsRegistry;
-
-    /*********************** Events *********************/
+    ISystemsRegistry public override systemsRegistry;
 
     /******************** Public API ********************/
     function __Content_init(

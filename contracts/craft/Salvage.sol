@@ -23,11 +23,6 @@ contract Salvage is ISalvage, CraftBase {
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibCraft.SalvageableAsset) internal salvageableAssets;
-
-    /*********************** Events *********************/
-    event SalvageableAssetsUpdated(LibCraft.SalvageableAsset[] assets, uint256[] ids);
-    event AssetSalvaged(LibCraft.AssetData asset, uint256 amount);
-    event AssetSalvagedBatch(LibCraft.AssetData[] assets, uint256[] amounts);
     
     /******************** Public API ********************/
     function __Salvage_init(uint256 _seed) public initializer {

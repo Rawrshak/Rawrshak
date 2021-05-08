@@ -9,17 +9,10 @@ import "./interfaces/IRoyaltyManager.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     
-    /******************** Constants ********************/
     /***************** Stored Variables *****************/
     // mapping(bytes4 => bytes4) tokenDistribution;
     LibRoyalties.Fees[] exchangeFees;
 
-    /*********************** Events *********************/
-    event PlatformFeesUpdated(LibRoyalties.Fees[] fees);
-    event RoyaltiesDistributed(uint256 orderId, address to, address tokenAddr, uint256 amount);
-    event RoyaltiesClaimed(address to, address tokenAddr, uint256 amountClaimed);
-
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __RoyaltyManager_init(address _registry) public initializer {
         __Context_init_unchained();

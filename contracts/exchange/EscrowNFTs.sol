@@ -17,13 +17,10 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for *;
     
-    /******************** Constants ********************/
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.AssetData) public override assetData;
     mapping(uint256 => uint256) public override escrowedAssetsByOrder;
 
-    /*********************** Events *********************/
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __EscrowNFTs_init() public initializer {
         __Context_init_unchained();
@@ -80,6 +77,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         return super.supportsInterface(interfaceId);
     }
 
+    /**************** Internal Functions ****************/
     function _transfer(uint256 _orderId, address _sender, address _receiver, uint256 amount) internal {
         if (ERC165CheckerUpgradeable.supportsInterface(assetData[_orderId].contentAddress, LibConstants._INTERFACE_ID_CONTENT)) {
                 IContent(assetData[_orderId].contentAddress)

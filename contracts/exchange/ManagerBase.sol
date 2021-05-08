@@ -23,8 +23,6 @@ abstract contract ManagerBase is OwnableUpgradeable, ERC165StorageUpgradeable {
     /***************** Stored Variables *****************/
     IAddressRegistry internal registry;
 
-    /*********************** Events *********************/
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __ManagerBase_init_unchained(address _registry) public initializer {
         require(_registry != address(0), "Registry passed.");

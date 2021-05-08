@@ -35,7 +35,6 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
     mapping(address => uint256) public override userMintNonce;
 
     /*********************** Events *********************/
-    event ParentSet(address parent);
     event UserApproved(address user, bool approved);
     event RegisteredSystemsUpdated(LibAsset.SystemApprovalPair[] operators);
 
@@ -60,6 +59,8 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
         require(_parent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
         parent = _parent;
         grantRole(OWNER_ROLE, parent);
+
+        emit ParentSet(_parent);
     }
     
     function isSystemOperatorApproved(address _user, address _operator) external view override returns (bool) {

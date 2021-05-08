@@ -11,7 +11,6 @@ abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradea
     /******************** Constants ********************/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
-    /***************** Stored Variables *****************/
     /*********************** Events *********************/
     event ManagerRegistered(address _manager, address _storage);
 
@@ -34,7 +33,5 @@ abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradea
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
-
-    /**************** Internal Functions ****************/
 
 }

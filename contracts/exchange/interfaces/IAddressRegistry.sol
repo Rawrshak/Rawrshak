@@ -10,5 +10,8 @@ interface IAddressRegistry {
     
     /******** Mutative Functions ********/
     function registerAddress(bytes4[] calldata _ids, address[] calldata _addresses) external;
+    
+    /*********************** Events *********************/
+    event AddressRegistered(bytes4 id, address contractAddress);
 }
     

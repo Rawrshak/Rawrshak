@@ -9,12 +9,9 @@ import "./interfaces/IOrderbookStorage.sol";
 
 contract OrderbookStorage is IOrderbookStorage, StorageBase {
     
-    /******************** Constants ********************/
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.OrderData) orders;
 
-    /*********************** Events *********************/
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __OrderbookStorage_init() public initializer {
         __Context_init_unchained();
@@ -64,9 +61,6 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
     function fillOrder(uint256 _id, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
         orders[_id].amount = SafeMathUpgradeable.sub(orders[_id].amount, _amount);
     }
-
-
-    /**************** Internal Functions ****************/
 
     uint256[50] private __gap;
 

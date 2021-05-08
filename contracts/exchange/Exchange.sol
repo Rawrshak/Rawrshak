@@ -16,8 +16,6 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
-    /******************** Constants ********************/
-
     /***************** Stored Variables *****************/
     IRoyaltyManager royaltyManager;
     IOrderbookManager orderbookManager;
@@ -40,7 +38,6 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
     event OrderDeleted(uint256 orderId);
     event FilledOrdersClaimed(uint256[] orderIds);
 
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __Exchange_init(address _royaltyManager, address _orderbookManager, address _executionManager) public initializer {
         __Context_init_unchained();

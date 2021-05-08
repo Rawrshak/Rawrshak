@@ -9,12 +9,9 @@ import "./interfaces/IOrderbookManager.sol";
 
 contract OrderbookManager is IOrderbookManager, ManagerBase {
     
-    /******************** Constants ********************/
     /***************** Stored Variables *****************/
     uint256 internal orderIdCounter;
 
-    /*********************** Events *********************/
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __OrderbookManager_init(address _registry) public initializer {
         __Context_init_unchained();
@@ -91,6 +88,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).orderExists(_orderId);
     }
     
+    /**************** Internal Functions ****************/
     function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId, uint256 _orderIdCounter) internal pure returns(uint256) {
         return uint256(keccak256(abi.encodePacked(_user, _tokenAddr, _tokenId, _orderIdCounter)));
     }

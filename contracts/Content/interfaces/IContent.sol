@@ -5,10 +5,18 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.so
 import "../../libraries/LibRoyalties.sol";
 import "./IRoyaltyProvider.sol";
 import "../../libraries/LibAsset.sol";
+import "./ISystemsRegistry.sol";
+
 
 interface IContent is IRoyaltyProvider, IERC1155Upgradeable {
     
     /******** View Functions ********/
+    function name() external view returns (string memory);
+    
+    function symbol() external view returns (string memory);
+    
+    function systemsRegistry() external view returns (ISystemsRegistry);
+
     function supply(uint256 _tokenId) external view returns (uint256);
     
     function maxSupply(uint256 _tokenId) external view returns (uint256);

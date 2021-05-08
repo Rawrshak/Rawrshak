@@ -17,4 +17,10 @@ interface ICraft {
     function setRecipeCraftingRate(uint256 _id, uint256 _craftingRate) external;
 
     function craft(uint256 _id, uint256 _amount) external;
+    
+    /*********************** Events *********************/
+    event RecipeUpdated(LibCraft.Recipe[] _recipes);
+    event RecipeEnabled(uint256 _id, bool _enabled);
+    event RecipeCraftingRateUpdated(uint256 _id, uint256 _craftingRate);
+    event AssetsCrafted(uint256 _id, uint256 _amountSucceeded);
 }

@@ -7,9 +7,6 @@ contract TestSalvage is Salvage {
     using EnumerableSetUpgradeable for *;
 
     function __TestSalvage_init(uint256 _seed) external initializer {
-        __Pausable_init_unchained();
-        __AccessControl_init_unchained();
-        __ERC165Storage_init_unchained();
         __Salvage_init(_seed);
     }
 

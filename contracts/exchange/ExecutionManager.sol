@@ -11,12 +11,6 @@ import "./interfaces/IEscrowNFTs.sol";
 
 contract ExecutionManager is IExecutionManager, ManagerBase {
     
-    /******************** Constants ********************/
-    /***************** Stored Variables *****************/
-
-    /*********************** Events *********************/
-
-    /********************* Modifiers ********************/
     /******************** Public API ********************/
     function __ExecutionManager_init(address _registry) public initializer {
         __Context_init_unchained();

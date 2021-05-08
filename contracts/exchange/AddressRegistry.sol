@@ -12,9 +12,6 @@ contract AddressRegistry is IAddressRegistry, OwnableUpgradeable, ERC165StorageU
 
     /***************** Stored Variables *****************/
     mapping(bytes4 => address) private registry;
-    
-    /*********************** Events *********************/
-    event AddressRegistered(bytes4 id, address contractAddress);
 
     /******************** Public API ********************/
     function __AddressRegistry_init() public initializer {

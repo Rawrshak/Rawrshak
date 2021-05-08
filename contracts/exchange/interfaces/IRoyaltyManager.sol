@@ -33,4 +33,9 @@ interface IRoyaltyManager {
     ) external;
 
     function setExchangeFees(LibRoyalties.Fees[] calldata _newFees) external;
+
+    /*********************** Events *********************/
+    event PlatformFeesUpdated(LibRoyalties.Fees[] fees);
+    event RoyaltiesDistributed(uint256 orderId, address to, address tokenAddr, uint256 amount);
+    event RoyaltiesClaimed(address to, address tokenAddr, uint256 amountClaimed);
 }

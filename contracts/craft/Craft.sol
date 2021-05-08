@@ -22,10 +22,6 @@ contract Craft is ICraft, CraftBase {
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibCraft.Recipe) recipes;
-    
-    /*********************** Events *********************/
-    event RecipeUpdated(LibCraft.Recipe[] _recipes);
-    event AssetsCrafted(uint256 _id, uint256 _amountSucceeded);
 
     /******************** Public API ********************/
     function __Craft_init(uint256 _seed) public initializer {
@@ -79,12 +75,16 @@ contract Craft is ICraft, CraftBase {
     function setRecipeEnabled(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(exists(_id), "Recipe doesn't exist");
         recipes[_id].enabled = _enabled;
+
+        emit RecipeEnabled(_id, _enabled);
     }
 
     function setRecipeCraftingRate(uint256 _id, uint256 _craftingRate) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(exists(_id), "Recipe doesn't exist");
         require(_craftingRate > 0 && _craftingRate <= 10000, "Invalid crafting rate.");
         recipes[_id].craftingRate = _craftingRate;
+        
+        emit RecipeCraftingRateUpdated(_id, _craftingRate);
     }
 
     function craft(uint256 _id, uint256 _amount) external override whenNotPaused() {
@@ -123,6 +123,7 @@ contract Craft is ICraft, CraftBase {
         return recipes[_id].id != 0;
     }
 
+    /**************** Internal Functions ****************/
     function _burn(uint256 _id, uint256 _burnAmount) internal {
         LibAsset.BurnData memory burnData;
         burnData.account = _msgSender();
@@ -134,7 +135,7 @@ contract Craft is ICraft, CraftBase {
             IContent(recipes[_id].materials[i].content).burnBatch(burnData);
         }
     }
-
+    
     function _mint(uint256 _id, uint256 _rolls) internal {
         LibAsset.MintData memory mintData;
         mintData.to = _msgSender();

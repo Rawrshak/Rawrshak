@@ -55,13 +55,9 @@ contract('Content Contract Tests', (accounts) => {
             "ipfs:/contract-uri",
             "Contract uri is incorrect.");
         assert.equal(
-            await content.dataStorage(),
-            contentStorage.address,
-            "Contract uri is incorrect.");
-        assert.equal(
             await content.systemsRegistry(),
             systemsRegistry.address,
-            "Contract uri is incorrect.");
+            "System Registry address is incorrect.");
     });
     
     it('Verify ERC1155 Implementation', async () => {
