@@ -112,7 +112,7 @@ contract('Content Contract Tests', (accounts) => {
 
         // test not approved 
         assert.equal(
-            await systemsRegistry.isSystemOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
             false,
             "Crafting System Address does not have the correct permissions.");
 
@@ -120,7 +120,7 @@ contract('Content Contract Tests', (accounts) => {
 
         // test approval 
         assert.equal(
-            await systemsRegistry.isSystemOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
             true,
             "Crafting System Address does not have the correct permissions.");
     });

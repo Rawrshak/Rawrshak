@@ -63,8 +63,12 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
         emit ParentSet(_parent);
     }
     
-    function isSystemOperatorApproved(address _user, address _operator) external view override returns (bool) {
+    function isOperatorApproved(address _user, address _operator) external view override returns (bool) {
         return users.contains(_user) && operators.contains(_operator);
+    }
+    
+    function userApproval(address _user) external view override returns (bool) {
+        return users.contains(_user);
     }
 
     function verifyMint(LibAsset.MintData memory _data, address _caller) external override checkPermissions(OWNER_ROLE) {

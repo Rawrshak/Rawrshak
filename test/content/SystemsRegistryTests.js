@@ -19,7 +19,7 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
 
     it('Check that deployer is not approved yet', async () => {
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, deployerAddress, {from: deployerAddress}),
+            await testContract.isOperatorApproved(deployerAddress, deployerAddress, {from: deployerAddress}),
             false,
             "deployer shouldn't be approved yet.");
     });
@@ -32,7 +32,7 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
         );
 
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress, {from: deployerAddress}),
+            await testContract.isOperatorApproved(deployerAddress, craftingSystemAddress, {from: deployerAddress}),
             false,
             "crafting system shouldn't be approved yet.");
     });
@@ -58,7 +58,7 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, craftingSystemAddress),
             true,
             "crafting system should be approved.");
     });
@@ -75,7 +75,7 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
         );
         
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, craftingSystemAddress),
             false,
             "crafting system should be approved because user has not given permission.");
     });
@@ -96,12 +96,12 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
         await testContract.userApprove(deployerAddress, true, {from: deployerAddress});
         
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, lootboxSystemAddress),
             true,
             "lootbox system should be approved.");
     });
@@ -122,12 +122,12 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
         await testContract.userApprove(deployerAddress, true, {from: deployerAddress});
         
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, craftingSystemAddress),
             true,
             "crafting system should be approved.");
             
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, lootboxSystemAddress),
             false,
             "lootbox system should not be approved.");
     });
@@ -150,12 +150,12 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
         await testContract.userApprove(deployerAddress, true, {from: deployerAddress});
         
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, craftingSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, craftingSystemAddress),
             false,
             "crafting system should not be approved.");
             
         assert.equal(
-            await testContract.isSystemOperatorApproved(deployerAddress, lootboxSystemAddress),
+            await testContract.isOperatorApproved(deployerAddress, lootboxSystemAddress),
             false,
             "lootbox system should not be approved.");
     });

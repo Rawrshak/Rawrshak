@@ -124,7 +124,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
 
     // Asset Burning
     function burnBatch(LibAsset.BurnData memory _data) external override {
-        require(_data.account == _msgSender() || _isSystemOperatorApproved(_data.account, _msgSender()), "Caller is not approved.");
+        require(_data.account == _msgSender() || systemsRegistry.isOperatorApproved(_data.account, _msgSender()), "Caller is not approved.");
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             require(_tokenExists(_data.tokenIds[i]), "token id missing");
@@ -140,11 +140,6 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     /**************** Internal Functions ****************/
-
-    function _isSystemOperatorApproved(address _user, address _operator) internal view returns(bool) {
-        return systemsRegistry.isSystemOperatorApproved(_user, _operator);
-    }
-
     function _supply(uint256 _tokenId) internal view returns(uint256) {
         return dataStorage.supply(_tokenId);
     }

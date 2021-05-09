@@ -10,7 +10,9 @@ interface ISystemsRegistry is IContentSubsystemBase {
     /******** View Functions ********/
     function userMintNonce(address _user) external view returns (uint256);
 
-    function isSystemOperatorApproved(address _user, address _operator) external view returns (bool);
+    function isOperatorApproved(address _user, address _operator) external view returns (bool);
+    
+    function userApproval(address _user) external view returns (bool);
     
     function isOperatorRegistered(address _operator) external view returns (bool);
 

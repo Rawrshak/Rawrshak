@@ -4,6 +4,8 @@ pragma solidity >=0.6.0 <0.9.0;
 import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 import "./IContent.sol";
+import "./IContentStorage.sol";
+import "./ISystemsRegistry.sol";
 
 interface IContentManager {
 
@@ -12,6 +14,10 @@ interface IContentManager {
     
     /******** View Functions ********/
     function content() external view returns(IContent);
+    
+    function contentStorage() external view returns(IContentStorage);
+    
+    function systemsRegistry() external view returns(ISystemsRegistry);
 
     /******** Mutative Functions ********/
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;

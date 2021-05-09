@@ -93,7 +93,7 @@ contract('Content Contract Tests', (accounts) => {
         await content.approveAllSystems(true, {from: playerAddress});
 
         assert.equal(
-            await systemsRegistry.isSystemOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
             false,
             "lootbox system not should be approved yet.");
 
@@ -101,7 +101,7 @@ contract('Content Contract Tests', (accounts) => {
         await contentManager.registerSystem(lootboxApprovalPair);
 
         assert.equal(
-            await systemsRegistry.isSystemOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
+            await systemsRegistry.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
             true,
             "lootbox system should be approved.");
     });

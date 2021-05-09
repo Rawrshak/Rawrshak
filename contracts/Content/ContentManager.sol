@@ -25,8 +25,8 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
 
     /***************** Stored Variables *****************/
     IContent public override content;
-    IContentStorage private contentStorage;
-    ISystemsRegistry private systemsRegistry;
+    IContentStorage public override contentStorage;
+    ISystemsRegistry public override systemsRegistry;
 
     /********************* Modifiers ********************/
     modifier addressExists(address addr) {
