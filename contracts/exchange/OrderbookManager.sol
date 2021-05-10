@@ -8,6 +8,7 @@ import "../libraries/LibOrder.sol";
 import "./interfaces/IOrderbookManager.sol";
 
 contract OrderbookManager is IOrderbookManager, ManagerBase {
+    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     uint256 internal orderIdCounter;
@@ -54,8 +55,8 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
             order = IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderIds[i]);
             require(order.amount >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
             
-            amountPerOrder[i] = SafeMathUpgradeable.mul(order.price, _amounts[i]);
-            amountDue = SafeMathUpgradeable.add(amountDue, amountPerOrder[i]);
+            amountPerOrder[i] = order.price.mul(_amounts[i]);
+            amountDue = amountDue.add(amountPerOrder[i]);
         }
     } 
 

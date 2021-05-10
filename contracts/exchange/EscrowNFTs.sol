@@ -15,6 +15,7 @@ import "../content/interfaces/IUniqueContent.sol";
 
 contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     using AddressUpgradeable for address;
+    using SafeMathUpgradeable for uint256;
     using ERC165CheckerUpgradeable for *;
     
     /***************** Stored Variables *****************/
@@ -55,7 +56,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         require(escrowedAssetsByOrder[_orderId] >= _amount, "Incorrect order amount to withdraw");
         require(assetData[_orderId].contentAddress != address(0), "Invalid Order Data");
 
-        escrowedAssetsByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[_orderId], _amount);
+        escrowedAssetsByOrder[_orderId] = escrowedAssetsByOrder[_orderId].sub(_amount);
         _transfer(_orderId, address(this), _receiver, _amount);
     }
 
@@ -68,7 +69,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
             require(escrowedAssetsByOrder[_orderIds[i]] > 0, "Asset was already sold.");
             require(assetData[_orderIds[i]].contentAddress != address(0), "Invalid Order Data");
             
-            escrowedAssetsByOrder[_orderIds[i]] = SafeMathUpgradeable.sub(escrowedAssetsByOrder[_orderIds[i]], _amounts[i]);
+            escrowedAssetsByOrder[_orderIds[i]] = escrowedAssetsByOrder[_orderIds[i]].sub(_amounts[i]);
             _transfer(_orderIds[i], address(this), _receiver, _amounts[i]);
         }
     }

@@ -8,6 +8,7 @@ import "../libraries/LibOrder.sol";
 import "./interfaces/IOrderbookStorage.sol";
 
 contract OrderbookStorage is IOrderbookStorage, StorageBase {
+    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.OrderData) orders;
@@ -59,7 +60,7 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
     }
 
     function fillOrder(uint256 _id, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
-        orders[_id].amount = SafeMathUpgradeable.sub(orders[_id].amount, _amount);
+        orders[_id].amount = orders[_id].amount.sub(_amount);
     }
 
     uint256[50] private __gap;

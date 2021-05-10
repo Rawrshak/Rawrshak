@@ -20,6 +20,7 @@ import "./interfaces/IContentStorage.sol";
 contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
+    using SafeMathUpgradeable for uint256;
     
     /******************** Constants ********************/
     /*
@@ -113,11 +114,11 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
             require(_tokenExists(_data.tokenIds[i]), "token id missing");
             require(
                 _maxSupply(_data.tokenIds[i]) == 0 ||
-                _maxSupply(_data.tokenIds[i]) >= SafeMathUpgradeable.add(_supply(_data.tokenIds[i]), _data.amounts[i]),
+                _maxSupply(_data.tokenIds[i]) >= _supply(_data.tokenIds[i]).add(_data.amounts[i]),
                 "Max Supply reached"
             );
 
-            _updateSupply(_data.tokenIds[i], SafeMathUpgradeable.add(_supply(_data.tokenIds[i]), _data.amounts[i]));
+            _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]).add(_data.amounts[i]));
         }
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
     }
@@ -128,7 +129,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             require(_tokenExists(_data.tokenIds[i]), "token id missing");
-            _updateSupply(_data.tokenIds[i], SafeMathUpgradeable.sub(_supply(_data.tokenIds[i]), _data.amounts[i], "amount is greater than supply"));
+            _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]).sub(_data.amounts[i], "amount is greater than supply"));
         }
 
         _burnBatch(_data.account, _data.tokenIds, _data.amounts);

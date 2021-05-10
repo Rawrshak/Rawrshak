@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../libraries/LibRoyalties.sol";
 
 library LibAsset {
+    using SafeMathUpgradeable for uint256;
 
     bytes32 public constant MINT_DATA_TYPEHASH = keccak256("MintData(address to,uint256[] tokenIds,uint256[] amounts,uint256 nonce,address signer)");
         
@@ -78,7 +79,7 @@ library LibAsset {
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             require(_tokenIds[_data.tokenIds[i]] == true, "token id doesn't exist");
             require(_maxSupply[_data.tokenIds[i]] == 0 ||
-                _maxSupply[_data.tokenIds[i]] >= SafeMathUpgradeable.add(_supply[_data.tokenIds[i]], _data.amounts[i]), "Max Supply reached"
+                _maxSupply[_data.tokenIds[i]] >= _supply[_data.tokenIds[i]].add(_data.amounts[i]), "Max Supply reached"
             );
         }
     }

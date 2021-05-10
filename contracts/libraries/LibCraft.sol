@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-// import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-// import "../libraries/LibRoyalties.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../utils/LibConstants.sol";
 
 library LibCraft {
+    using SafeMathUpgradeable for uint256;
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
 
@@ -63,7 +62,7 @@ library LibCraft {
             materials = _asset.rewards;
             amounts = new uint256[](_asset.rewards.length);
             for (uint256 i = 0; i < _asset.rewards.length; ++i) {
-                amounts[i] = SafeMathUpgradeable.mul(_asset.rewards[i].amount, rolls);
+                amounts[i] = _asset.rewards[i].amount.mul(rolls);
             }
         }
         // } else if (SalvageType(_asset.salvageType) == SalvageType.Random) {

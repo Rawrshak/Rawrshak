@@ -10,6 +10,7 @@ import "./interfaces/IEscrowERC20.sol";
 import "./interfaces/IEscrowNFTs.sol";
 
 contract ExecutionManager is IExecutionManager, ManagerBase {
+    using SafeMathUpgradeable for uint256;
     
     /******************** Public API ********************/
     function __ExecutionManager_init(address _registry) public initializer {
@@ -86,7 +87,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
             IEscrowERC20(registry.getAddress(_order.token)).withdraw(
                 _orderId,
                 _user, 
-                SafeMathUpgradeable.mul(_order.price, _order.amount));
+                _order.price.mul(_order.amount));
         } else {
             // withdraw NFTs
             IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT)).withdraw(_orderId, _user, _order.amount);

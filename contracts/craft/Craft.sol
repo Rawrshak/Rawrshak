@@ -17,6 +17,7 @@ import "../libraries/LibCraft.sol";
 contract Craft is ICraft, CraftBase {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
+    using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for *;
     using LibCraft for *;
     
@@ -100,7 +101,7 @@ contract Craft is ICraft, CraftBase {
         if (recipes[_id].craftingRate < 10000) {
             for (uint256 i = 0; i < _amount; ++i) {
                 seed = LibCraft.random(_msgSender(), seed);
-                if (SafeMathUpgradeable.mod(seed, 10000) > recipes[_id].craftingRate) {
+                if (seed.mod(10000) > recipes[_id].craftingRate) {
                     // if crafting fails, deduct the number of rolls that failed
                     --_amount;
                 }
@@ -131,7 +132,7 @@ contract Craft is ICraft, CraftBase {
             burnData.tokenIds = new uint256[](1);
             burnData.amounts = new uint256[](1);
             burnData.tokenIds[0] = recipes[_id].materials[i].tokenId;
-            burnData.amounts[0] = SafeMathUpgradeable.mul(recipes[_id].materialAmounts[i], _burnAmount);
+            burnData.amounts[0] = recipes[_id].materialAmounts[i].mul(_burnAmount);
             IContent(recipes[_id].materials[i].content).burnBatch(burnData);
         }
     }
@@ -143,7 +144,7 @@ contract Craft is ICraft, CraftBase {
             mintData.tokenIds = new uint256[](1);
             mintData.amounts = new uint256[](1);
             mintData.tokenIds[0] = recipes[_id].rewards[i].tokenId;
-            mintData.amounts[0] = SafeMathUpgradeable.mul(recipes[_id].rewardAmounts[i], _rolls);
+            mintData.amounts[0] = recipes[_id].rewardAmounts[i].mul(_rolls);
             IContent(recipes[_id].rewards[i].content).mintBatch(mintData);
         }
     }
@@ -152,7 +153,7 @@ contract Craft is ICraft, CraftBase {
         bool noMissingAsset = true;
         uint256 requiredAmount = 0;
         for (uint256 i = 0; i < recipes[_id].materials.length && noMissingAsset; ++i) {
-            requiredAmount = SafeMathUpgradeable.mul(recipes[_id].materialAmounts[i], _amount);
+            requiredAmount = recipes[_id].materialAmounts[i].mul(_amount);
             noMissingAsset = IContent(recipes[_id].materials[i].content).balanceOf(_msgSender(), recipes[_id].materials[i].tokenId) > requiredAmount;
         }
 

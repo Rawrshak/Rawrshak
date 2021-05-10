@@ -8,6 +8,7 @@ import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
+    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     // mapping(bytes4 => bytes4) tokenDistribution;
@@ -70,19 +71,19 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 idx = 0;
         for (uint256 i = 0; i < fees.length; ++i) {
             // Get Royalties owed per fee
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, fees[i].bps), 10000);
+            royalty = _total.mul(fees[i].bps).div(10000);
             accounts[idx] = fees[i].account;
             royaltyAmounts[idx] = royalty;
-            remaining = SafeMathUpgradeable.sub(remaining, royalty);
+            remaining = remaining.sub(royalty);
             ++idx;
         }
 
         // calculate _total price and add royalties from asset and platform
         for (uint256 i = 0; i < exchangeFees.length; ++i) {
-            royalty = SafeMathUpgradeable.div(SafeMathUpgradeable.mul(_total, exchangeFees[i].bps), 10000);
+            royalty = _total.mul(exchangeFees[i].bps).div(10000);
             accounts[idx] = exchangeFees[i].account;
             royaltyAmounts[idx] = royalty;
-            remaining = SafeMathUpgradeable.sub(remaining, royalty);
+            remaining = remaining.sub(royalty);
             ++idx;
         }
     }

@@ -10,6 +10,7 @@ import "./interfaces/IEscrowERC20.sol";
 
 contract EscrowERC20 is IEscrowERC20, StorageBase {
     using AddressUpgradeable for address;
+    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     address public override token;
@@ -37,7 +38,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         uint256 _amount
     ) external override checkPermissions(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
-        escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.add(escrowedTokensByOrder[_orderId], _amount);
+        escrowedTokensByOrder[_orderId] = escrowedTokensByOrder[_orderId].add(_amount);
         
         // Send the Token Amount to the Escrow
         IERC20Upgradeable(token).transferFrom(_sender, address(this), _amount);
@@ -47,7 +48,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     function withdraw(uint256 _orderId, address _receiver, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
         require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid amount");
 
-        escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);
+        escrowedTokensByOrder[_orderId] = escrowedTokensByOrder[_orderId].sub(_amount);
         IERC20Upgradeable(token).transfer(_receiver, _amount);
     }
     
@@ -57,7 +58,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         uint256 _amount
     ) external override checkPermissions(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
-        claimableTokensByOwner[_owner] = SafeMathUpgradeable.add(claimableTokensByOwner[_owner], _amount);
+        claimableTokensByOwner[_owner] = claimableTokensByOwner[_owner].add(_amount);
         IERC20Upgradeable(token).transferFrom(_sender, address(this), _amount);
     }
     
@@ -69,8 +70,8 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid amount");
 
         // No need to do checks. The exchange contracts will do the checks.
-        escrowedTokensByOrder[_orderId] = SafeMathUpgradeable.sub(escrowedTokensByOrder[_orderId], _amount);
-        claimableTokensByOwner[_owner] = SafeMathUpgradeable.add(claimableTokensByOwner[_owner], _amount);
+        escrowedTokensByOrder[_orderId] = escrowedTokensByOrder[_orderId].sub(_amount);
+        claimableTokensByOwner[_owner] = claimableTokensByOwner[_owner].add(_amount);
     }
 
     function claim(address _owner) external override checkPermissions(MANAGER_ROLE) {
