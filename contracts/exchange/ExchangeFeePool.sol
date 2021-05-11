@@ -24,16 +24,19 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     uint256[] percentages;
 
     /******************** Public API ********************/
-    function __ExchangeFeePool_init_unchained(uint256 _bps) public initializer {
+    function __ExchangeFeePool_init(uint256 _bps) public initializer {
         __Context_init_unchained();
+        __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
-        setBps(_bps);
+        _registerInterface(LibConstants._INTERFACE_ID_EXCHANGE_FEE_POOL);
+        bps = _bps;
     }
  
     function setBps(uint256 _bps) public override checkPermissions(MANAGER_ROLE) {
         require(_bps > 0 && _bps < 10000, "Invalid rate");
         bps = _bps;
+        emit BpsUpdated(bps);
     }
 
     // gets the amount in the fee pool
@@ -41,7 +44,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         return amounts[_token];
     }
 
-    function updateFunds(address[] memory _funds, uint256[] memory _percentages) external override checkPermissions(MANAGER_ROLE) {
+    function updateDistributionFunds(address[] memory _funds, uint256[] memory _percentages) external override checkPermissions(MANAGER_ROLE) {
         require(_funds.length > 0 && _funds.length == _percentages.length, "Invalid input length");
 
         delete funds;
@@ -73,13 +76,13 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         require(funds.length > 0, "Invalid list of address for distribution");
         
         uint256 balance = IERC20Upgradeable(_tokenAddr).balanceOf(address(this));
-        require(balance >= amounts[_token], "Balance is incorrect.");
+        require(balance >= amounts[_token] && balance > 0, "Balance is incorrect.");
         amounts[_token] = 0;
 
         uint256[] memory distributions = new uint256[](funds.length);
         for (uint256 i = 0; i < funds.length; ++i) {
             distributions[i] = balance.mul(percentages[i]).div(10000);
-            IERC20Upgradeable(_tokenAddr).transferFrom(address(this), funds[i], distributions[i]);
+            IERC20Upgradeable(_tokenAddr).transfer(funds[i], distributions[i]);
         }
 
         emit FundsDistributed(funds, distributions);

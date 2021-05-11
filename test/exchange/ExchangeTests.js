@@ -6,6 +6,7 @@ const ContentManager = artifacts.require("ContentManager");
 const SystemsRegistry = artifacts.require("SystemsRegistry");
 const EscrowERC20 = artifacts.require("EscrowERC20");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
+const ExchangeFeePool = artifacts.require("ExchangeFeePool");
 const OrderbookManager = artifacts.require("OrderbookManager");
 const OrderbookStorage = artifacts.require("OrderbookStorage");
 const ExecutionManager = artifacts.require("ExecutionManager");
@@ -23,6 +24,7 @@ contract('Exchange Contract', (accounts)=> {
         creator2Address,             // creator Address
         playerAddress,              // player 1 address
         player2Address,              // player 2 address
+        stakingFund,                // staking fund address
     ] = accounts;
 
     // NFT
@@ -93,6 +95,8 @@ contract('Exchange Contract', (accounts)=> {
         await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
         escrowRawr = await EscrowERC20.new();
         await escrowRawr.__EscrowERC20_init(rawrToken.address, {from: deployerAddress});
+        feePool = await ExchangeFeePool.new();
+        await feePool.__ExchangeFeePool_init(30, {from: deployerAddress});
 
         // Setup Orderbook Storage
         orderbookStorage = await OrderbookStorage.new();
@@ -106,8 +110,8 @@ contract('Exchange Contract', (accounts)=> {
         await registry.__AddressRegistry_init({from: deployerAddress});
 
         // register the royalty manager
-        var addresses = [escrowRawr.address, escrowContent.address, orderbookStorage.address];
-        var escrowIds = ["0xd4df6855", "0x13534f58", "0xe22271ab"];
+        var addresses = [escrowRawr.address, escrowContent.address, orderbookStorage.address, feePool.address];
+        var escrowIds = ["0xd4df6855", "0x13534f58", "0xe22271ab", "0x018d6f5c"];
         await registry.registerAddress(escrowIds, addresses, {from: deployerAddress});
 
         // Create and Register the execution manager
@@ -126,7 +130,14 @@ contract('Exchange Contract', (accounts)=> {
         royaltyManager = await RoyaltyManager.new();
         await royaltyManager.__RoyaltyManager_init(registry.address, {from: deployerAddress});
         await escrowRawr.registerManager(royaltyManager.address, {from:deployerAddress})
+        await feePool.registerManager(royaltyManager.address, {from:deployerAddress});
         
+        // make deployer the manager of the fee pool
+        await feePool.registerManager(deployerAddress, {from:deployerAddress});
+
+        // add funds
+        await feePool.updateDistributionFunds([stakingFund], [10000], {from:deployerAddress});
+
         // Create the exchange contract
         exchange = await Exchange.new();
         await exchange.__Exchange_init(
@@ -137,9 +148,6 @@ contract('Exchange Contract', (accounts)=> {
         await royaltyManager.transferOwnership(exchange.address, {from: deployerAddress});
         await orderbookManager.transferOwnership(exchange.address, {from: deployerAddress});
         await executionManager.transferOwnership(exchange.address, {from: deployerAddress});
-
-        // // Set default platform fees
-        // await exchange.setExchangeFees([[platformAddress, 30]], {from: deployerAddress});
         
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
@@ -166,27 +174,6 @@ contract('Exchange Contract', (accounts)=> {
             exchange.address != 0x0,
             true,
             "Exchange was not deployed properly.");
-    });
-
-    it('Set Platform Royalty Fees', async () => {
-        currentExchangeFees = await exchange.getAllExchangeFees();
-
-        assert.equal(
-            currentExchangeFees[0][0] == platformAddress && currentExchangeFees[0][1].toString() == 30,
-            true,
-            "Default Exchange Fees are incorrect.");
-
-
-        // set platform fees to 30bps
-        // var newFees = [[platformAddress, 50]];
-        // await exchange.setExchangeFees(newFees, {from: deployerAddress});
-
-        // currentExchangeFees = await exchange.getAllExchangeFees();
-
-        assert.equal(
-            currentExchangeFees[0][0] == platformAddress && currentExchangeFees[0][1].toString() == 50,
-            true,
-            "Newly changed Exchange Fees are incorrect.");
     });
 
     it('Place buy order', async () => {
@@ -340,6 +327,16 @@ contract('Exchange Contract', (accounts)=> {
             (await rawrToken.balanceOf(player2Address)).toString(),
             web3.utils.toWei('10977', 'ether').toString(),
             "Player should have received the 977 tokens as payment");
+
+        assert.equal(
+            await feePool.totalFeePool(rawrId),
+            web3.utils.toWei('3', 'ether'),
+            "Fee Pool didn't store the correct amount of RAWR tokens.");
+            
+        assert.equal(
+            await rawrToken.balanceOf(feePool.address),
+            web3.utils.toWei('3', 'ether'),
+            "Fee Pool doesn't hold the correct amount of RAWR tokens.");
     });
 
     it('Fill sell order', async () => {
@@ -375,6 +372,16 @@ contract('Exchange Contract', (accounts)=> {
             await content.balanceOf(player2Address, 1),
             11,
             "Player 2 didn't properly receive his purchased asset.");
+            
+        assert.equal(
+            await feePool.totalFeePool(rawrId),
+            web3.utils.toWei('3', 'ether'),
+            "Fee Pool didn't store the correct amount of RAWR tokens.");
+            
+        assert.equal(
+            await rawrToken.balanceOf(feePool.address),
+            web3.utils.toWei('3', 'ether'),
+            "Fee Pool doesn't hold the correct amount of RAWR tokens.");
     });
 
     it('Claim Fulfilled order', async () => {
