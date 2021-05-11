@@ -114,6 +114,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
              uint256 remaining) = royaltyManager.getRequiredRoyalties(_asset, amountPerOrder[i]);
             
             royaltyManager.transferRoyalty(_token, _orderIds[i], accounts, royaltyAmounts);
+            royaltyManager.transferPlatformRoyalty(_token, _orderIds[i], amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
@@ -161,6 +162,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
 
             // for each order, update the royalty table for each creator to get paid
             royaltyManager.depositRoyalty(_msgSender(), _token, accounts, royaltyAmounts);
+            royaltyManager.depositPlatformRoyalty(_msgSender(), _token, amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
@@ -203,17 +205,6 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
 
     function nftsEscrow() external view returns(address) {
         return executionManager.nftsEscrow();
-    }
-
-    // royalty functions
-    function setExchangeFees(LibRoyalties.Fees[] memory newFees) external onlyOwner {
-        require(newFees.length > 0, "Invalid fees.");
-        
-        royaltyManager.setExchangeFees(newFees);
-    }
-
-    function getAllExchangeFees() external view returns(LibRoyalties.Fees[] memory fees) {
-        return royaltyManager.getAllExchangeFees();
     }
 
     function claimableRoyaltyAmount(bytes4 _token) external view returns (uint256) {

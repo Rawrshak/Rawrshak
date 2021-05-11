@@ -19,6 +19,8 @@ abstract contract ManagerBase is OwnableUpgradeable, ERC165StorageUpgradeable {
     bytes4 constant public ESCROW_NFTS_CONTRACT = 0x13534f58;
     // bytes4(keccak256('OrderbookStorage')) == 0xe22271ab
     bytes4 constant public ORDERBOOK_STORAGE_CONTRACT = 0xe22271ab;
+    // bytes4(keccak256('ExchangeFeePool')) == 0x018d6f5c
+    bytes4 constant public EXCHANGE_FEE_POOL = 0x018d6f5c;
 
     /***************** Stored Variables *****************/
     IAddressRegistry internal registry;

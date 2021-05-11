@@ -26,7 +26,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
     function placeOrder(LibOrder.OrderData memory _order) external override onlyOwner returns(uint256 id){
         id = _generateOrderId(_order.owner, _order.asset.contentAddress, _order.asset.tokenId, orderIdCounter++);
 
-        IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).placeOrder(id, _order);
+        _orderbook().placeOrder(id, _order);
     }
 
     function verifyOrders(
@@ -35,7 +35,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         bytes4 _token,
         bool _isBuyOrder
     ) external view override onlyOwner returns (bool) {
-        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOrders(
+        return _orderbook().verifyOrders(
                 _orderIds,
                 _asset,
                 _token,
@@ -52,7 +52,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         amountDue = 0;
         LibOrder.OrderData memory order;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            order = IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderIds[i]);
+            order = _orderbook().getOrder(_orderIds[i]);
             require(order.amount >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
             
             amountPerOrder[i] = order.price.mul(_amounts[i]);
@@ -66,7 +66,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
 
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < orderIds.length; ++i) {
-            IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).fillOrder(orderIds[i], amounts[i]);
+            _orderbook().fillOrder(orderIds[i], amounts[i]);
         }
     }
 
@@ -74,24 +74,28 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
         // If we get to this point, the orders in the list of order ids have already been verified.
         // the caller will already fill in the orders up to the amount. 
         require(
-            IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).verifyOwner(orderId, owner),
+            _orderbook().verifyOwner(orderId, owner),
             "Invalid order owner."
         );
 
-        IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).deleteOrder(orderId);
+        _orderbook().deleteOrder(orderId);
     }
 
     function getOrder(uint256 _orderId) external view override returns(LibOrder.OrderData memory) {
-        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).getOrder(_orderId);
+        return _orderbook().getOrder(_orderId);
     }
 
     function orderExists(uint256 _orderId) external view override returns(bool){
-        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT)).orderExists(_orderId);
+        return _orderbook().orderExists(_orderId);
     }
     
     /**************** Internal Functions ****************/
     function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId, uint256 _orderIdCounter) internal pure returns(uint256) {
         return uint256(keccak256(abi.encodePacked(_user, _tokenAddr, _tokenId, _orderIdCounter)));
+    }
+
+    function _orderbook() internal view returns(IOrderbookStorage) {
+        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT));
     }
     
     uint256[50] private __gap;

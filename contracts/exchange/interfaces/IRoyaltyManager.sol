@@ -6,7 +6,6 @@ import "../../libraries/LibRoyalties.sol";
 
 interface IRoyaltyManager { 
     /******** View Functions ********/
-    function getAllExchangeFees() external view returns(LibRoyalties.Fees[] memory);
 
     function claimableRoyaltyAmount(address _user, bytes4 _token) external view returns(uint256);
 
@@ -25,14 +24,16 @@ interface IRoyaltyManager {
         uint256[] memory _amounts
     ) external;
 
+    function depositPlatformRoyalty(address _sender, bytes4 _token, uint256 _total) external;
+
     function transferRoyalty(
         bytes4 _token,
         uint256 _orderId,
         address[] memory _accounts,
         uint256[] memory _amounts
     ) external;
-
-    function setExchangeFees(LibRoyalties.Fees[] calldata _newFees) external;
+    
+    function transferPlatformRoyalty(bytes4 _token, uint256 _orderId, uint256 _total) external;
 
     /*********************** Events *********************/
     event PlatformFeesUpdated(LibRoyalties.Fees[] fees);

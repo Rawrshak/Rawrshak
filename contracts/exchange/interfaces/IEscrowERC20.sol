@@ -20,6 +20,10 @@ interface IEscrowERC20 {
     function depositRoyalty(address _sender, address _owner, uint256 _amount) external;
 
     function transferRoyalty(uint256 _orderId, address _to, uint256 _amount) external;
+    
+    function depositPlatformRoyalty(address _sender, address _feePool, uint256 _amount) external;
+
+    function transferPlatformRoyalty(uint256 _orderId, address _feePool, uint256 _amount) external;
 
     function claim(address _owner) external;
 

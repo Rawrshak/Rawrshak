@@ -138,8 +138,8 @@ contract('Exchange Contract', (accounts)=> {
         await orderbookManager.transferOwnership(exchange.address, {from: deployerAddress});
         await executionManager.transferOwnership(exchange.address, {from: deployerAddress});
 
-        // Set default platform fees
-        await exchange.setExchangeFees([[platformAddress, 30]], {from: deployerAddress});
+        // // Set default platform fees
+        // await exchange.setExchangeFees([[platformAddress, 30]], {from: deployerAddress});
         
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
@@ -178,10 +178,10 @@ contract('Exchange Contract', (accounts)=> {
 
 
         // set platform fees to 30bps
-        var newFees = [[platformAddress, 50]];
-        await exchange.setExchangeFees(newFees, {from: deployerAddress});
+        // var newFees = [[platformAddress, 50]];
+        // await exchange.setExchangeFees(newFees, {from: deployerAddress});
 
-        currentExchangeFees = await exchange.getAllExchangeFees();
+        // currentExchangeFees = await exchange.getAllExchangeFees();
 
         assert.equal(
             currentExchangeFees[0][0] == platformAddress && currentExchangeFees[0][1].toString() == 50,

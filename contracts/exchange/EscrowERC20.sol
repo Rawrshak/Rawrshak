@@ -74,6 +74,17 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         claimableTokensByOwner[_owner] = claimableTokensByOwner[_owner].add(_amount);
     }
 
+    function depositPlatformRoyalty(address _sender, address _feePool, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+        // No need to do checks. The exchange contracts will do the checks.
+        IERC20Upgradeable(token).transferFrom(_sender, _feePool, _amount);
+    }
+
+    function transferPlatformRoyalty(uint256 _orderId, address _feePool, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+        // No need to do checks. The exchange contracts will do the checks.
+        escrowedTokensByOrder[_orderId] = escrowedTokensByOrder[_orderId].sub(_amount);
+        IERC20Upgradeable(token).transfer(_feePool, _amount);
+    }
+
     function claim(address _owner) external override checkPermissions(MANAGER_ROLE) {
         require(claimableTokensByOwner[_owner] > 0, "Tokens were already claimed.");
 
