@@ -7,40 +7,17 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../tokens/RawrToken.sol";
+import "./FundBase.sol";
 
-contract ExchangeRewardsPool is OwnableUpgradeable, ERC165StorageUpgradeable {
+contract ExchangeRewardsPool is FundBase {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
-    address public rawrToken;
-    uint256 public supply;
-    uint256 public remaining;
-
-    event FundsReceived(uint256 amount, uint256 rewardPoolSupply);
-    event Claimed(uint256 amount, uint256 remaining);
-
+    /******************** Public API ********************/
     function __ExchangeRewardsPool_init(address _token) public initializer {
-        require(_token.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_token, LibConstants._INTERFACE_ID_TOKENBASE),
-            "Invalid erc 20 contract interface.");
-        rawrToken = _token;
-        supply = 0;
-        remaining = 0;
-    }
-    
-    function receiveFunds(uint256 _amount) external onlyOwner {
-        require(_amount > 0, "Invalid amount");
-
-        supply = remaining.add(_amount);
-        remaining = supply;
-
-        emit FundsReceived(_amount, supply);
-    }
-
-    function claim(uint256 _amount) external onlyOwner {
-        require(_amount > 0, "Invalid claim");
-        remaining = remaining.sub(_amount);
-
-        emit Claimed(_amount, remaining);
+        __Context_init_unchained();
+        __AccessControl_init_unchained();
+        __ERC165_init_unchained();
+        __FundBase_init_unchained(_token);
     }
 }

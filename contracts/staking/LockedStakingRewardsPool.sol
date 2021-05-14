@@ -8,23 +8,25 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../tokens/RawrToken.sol";
 import "./StakingRewardsPool.sol";
+import "./interface/ILockedFundPool.sol";
+import "./LockedFundBase.sol";
 
-contract LockedStakingRewardsPool is OwnableUpgradeable, ERC165StorageUpgradeable {
+contract LockedStakingRewardsPool is LockedFundBase {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
     
-    address public rawrToken;
-    address public stakingRewardsPool;
-    uint256 public lockedSupply;    // 25% 
+    /***************** Stored Variables *****************/
     uint256 public emissionRate;    // (1.2^(1/52))-1 at the start
     uint256 public emissionRateSlowdown; // (1.2-1.02)/260 
     uint256 public intervalsBeforeEmissionRateStabilization;    // 260 - 5 years (260 weeks)
 
+    /*********************** Events *********************/
     event FundsReleased(uint256 amount, uint256 lockedFundsLeft, uint256 newEmissionsRate, uint256 intervalsLeft);
     
+    /******************** Public API ********************/
     function __LockedStakingRewardsPool_init(
         address _token,
-        address _stakingRewardsPool,
+        address _rewardsPool,
         uint256 _lockedSupply,
         uint256 _emissionRate,
         uint256 _emissionRateSlowdown,
@@ -33,33 +35,27 @@ contract LockedStakingRewardsPool is OwnableUpgradeable, ERC165StorageUpgradeabl
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ERC165_init_unchained();
+        __LockedFundBase_init_unchained(_token, _rewardsPool);
 
-        require(_token.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_token, LibConstants._INTERFACE_ID_TOKENBASE),
-            "Invalid erc 20 contract interface.");
-            
-        require(_stakingRewardsPool.isContract(),
-            "Invalid Staking Rewards Pool contract interface.");
-
-        rawrToken = _token;
-        stakingRewardsPool = _stakingRewardsPool;
         lockedSupply = _lockedSupply;
         emissionRate = _emissionRate;
         emissionRateSlowdown = _emissionRateSlowdown;
         intervalsBeforeEmissionRateStabilization = _intervalsBeforeEmissionRateStabilization;
     }
 
-    function replenishFunds(uint256 _amount) external onlyOwner {
+    function reloadFunds(uint256 _amount) external override onlyOwner {
         require(_amount > 0, "Invalid amount");
 
         lockedSupply = lockedSupply.add(_amount);
 
         // Note: LockedStakingRewardsPool must have minter role
-        TokenBase(rawrToken).mint(address(this), _amount);
+        TokenBase(token).mint(address(this), _amount);
+
+        emit FundsReloaded(_amount, lockedSupply);
     }
 
     // _staking amount received from the staking contract
-    function releaseFunds(uint256 _stakedTokensAmount) external onlyOwner {
+    function releaseFunds(uint256 _stakedTokensAmount) external override onlyOwner {
         require(_stakedTokensAmount > 0, "Invalid Staking amount");
 
         // calculate funds to release
@@ -74,8 +70,8 @@ contract LockedStakingRewardsPool is OwnableUpgradeable, ERC165StorageUpgradeabl
         }
 
         // if locked rewards is less than the funds to release, only release remaining amount
-        if (_erc20().balanceOf(stakingRewardsPool) <= releasedFunds) {
-            releasedFunds = _erc20().balanceOf(stakingRewardsPool);
+        if (_erc20().balanceOf(rewardsPool) <= releasedFunds) {
+            releasedFunds = _erc20().balanceOf(rewardsPool);
         }
 
         // if amount to release is 0, no-op
@@ -90,14 +86,10 @@ contract LockedStakingRewardsPool is OwnableUpgradeable, ERC165StorageUpgradeabl
         }
 
         // Send tokens to the Staking Rewards Pool
-        StakingRewardsPool(stakingRewardsPool).receiveFunds(releasedFunds);
-        _erc20().transfer(stakingRewardsPool, releasedFunds);
+        StakingRewardsPool(rewardsPool).receiveFunds(releasedFunds);
+        _erc20().transfer(rewardsPool, releasedFunds);
 
         emit FundsReleased(releasedFunds, lockedSupply, emissionRate, intervalsBeforeEmissionRateStabilization);
-    }
-    
-    function _erc20() internal view returns(IERC20Upgradeable) {
-        return IERC20Upgradeable(rawrToken);
     }
     
     uint256[50] private __gap;
