@@ -24,34 +24,34 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
 
     /***************** Stored Variables *****************/
     IStaking staking;
-    ILockedFundPool stakingPool;
+    ILockedFundPool lockedStakingPool;
     ILockedFundPool lockedExchangeFeePool;
     IExchangeFeePool exchangeFeePool;
-    uint256 stakingInterval;
+    uint256 public override stakingInterval;
 
     /******************** Public API ********************/
-    function __Staking_init(address _staking, address _stakingPool, address _lockedExchangeFeePool, address _exchangeFeePool) public initializer {
+    function __RewardsManager_init(address _staking, address _lockedStakingPool, address _lockedExchangeFeePool, address _exchangeFeePool) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ERC165_init_unchained();
         
         require(_staking.isContract() && 
             ERC165CheckerUpgradeable.supportsInterface(_staking, LibConstants._INTERFACE_ID_STAKING),
-            "Invalid locked funding contract interface.");
-        require(_stakingPool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_stakingPool, LibConstants._INTERFACE_ID_LOCKED_FUND),
-            "Invalid locked funding contract interface.");
+            "Invalid staking interface.");
+        require(_lockedStakingPool.isContract() && 
+            ERC165CheckerUpgradeable.supportsInterface(_lockedStakingPool, LibConstants._INTERFACE_ID_LOCKED_FUND),
+            "Invalid locked staking funding contract interface.");
         require(_lockedExchangeFeePool.isContract() && 
             ERC165CheckerUpgradeable.supportsInterface(_lockedExchangeFeePool, LibConstants._INTERFACE_ID_LOCKED_FUND),
-            "Invalid locked funding contract interface.");
+            "Invalid locked exchange funding contract interface.");
         require(_exchangeFeePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibConstants._INTERFACE_ID_LOCKED_FUND),
-            "Invalid locked funding contract interface.");
+            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibConstants._INTERFACE_ID_EXCHANGE_FEE_POOL),
+            "Invalid Exchange Fee Pool interface.");
 
         _registerInterface(LibConstants._INTERFACE_ID_REWARDS_MANAGER);
         stakingInterval = 0;
         staking = IStaking(_staking);
-        stakingPool = ILockedFundPool(_stakingPool);
+        lockedStakingPool = ILockedFundPool(_lockedStakingPool);
         lockedExchangeFeePool = ILockedFundPool(_lockedExchangeFeePool);
         exchangeFeePool = IExchangeFeePool(_exchangeFeePool);
     }
@@ -61,14 +61,14 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
 
         uint256 stakedTokens = staking.totalStakedTokens();
 
-        stakingPool.releaseFunds(stakedTokens);
+        lockedStakingPool.releaseFunds(stakedTokens);
         lockedExchangeFeePool.releaseFunds(stakedTokens);
     }
 
     function reloadStaking(uint256 _amount) external override onlyOwner {
         require(_amount > 0, "Invalid amount");
 
-        stakingPool.reloadFunds(_amount);
+        lockedStakingPool.reloadFunds(_amount);
     }
 
     function distributeExchangeFees() external override onlyOwner {
