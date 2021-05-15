@@ -23,10 +23,6 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
     IClaimable stakePool;
     IClaimable exchangeFeePool;
     
-    /*********************** Events *********************/
-    event FundPoolRegistered(address fundPool);
-    event FundPoolUnregistered(address fundPool);
-    
     /******************** Public API ********************/
     function __Staking_init(address _token, address _stakePool, address _exchangeFeePool) public initializer {
         __Context_init_unchained();
@@ -64,7 +60,7 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
 
     function withdraw(uint256 _amount) external override {
         require(_amount > 0, "Invalid withdraw amount.");
-        require(_amount >= stakedAmounts[_msgSender()], "Invalid staked amount to withdraw.");
+        require(_amount <= stakedAmounts[_msgSender()], "Invalid staked amount to withdraw.");
 
         stakedAmounts[_msgSender()] = stakedAmounts[_msgSender()].sub(_amount);
         totalStakedTokens = totalStakedTokens.sub(_amount);
@@ -79,8 +75,8 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
 
         uint256 stakedPercentage = getStakePercentage();
     
-        stakePool.claim(stakePool.supply().mul(stakedPercentage), _msgSender());
-        exchangeFeePool.claim(exchangeFeePool.supply().mul(stakedPercentage), _msgSender());
+        stakePool.claim(stakePool.supply().mul(stakedPercentage).div(1 ether), _msgSender());
+        exchangeFeePool.claim(exchangeFeePool.supply().mul(stakedPercentage).div(1 ether), _msgSender());
     }
 
     function getStakePercentage() public view override returns(uint256) {
