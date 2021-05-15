@@ -15,6 +15,8 @@ contract LockedExchangeRewardsPool is LockedFundBase {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
+    event FundsReleased(uint256 amount, uint256 lockedFundsLeft);
+
     /******************** Public API ********************/
     function __LockedExchangeRewardsPool_init(
         address _token,
@@ -39,8 +41,15 @@ contract LockedExchangeRewardsPool is LockedFundBase {
             return;
         }
 
+        uint256 rewardsPoolOwnedTokens = _erc20().balanceOf(address(this));
+        require(rewardsPoolOwnedTokens >= lockedSupply, "rewards pool doesn't hold enough tokens.");
+
         // calculate funds to release
         uint256 releasedFunds = lockedSupply;
+
+        if (rewardsPoolOwnedTokens > lockedSupply) {
+            releasedFunds = rewardsPoolOwnedTokens;
+        }
 
         // update lockedSupply
         lockedSupply = 0;

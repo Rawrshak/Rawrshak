@@ -59,7 +59,7 @@ contract LockedStakingRewardsPool is LockedFundBase {
         require(_stakedTokensAmount > 0, "Invalid Staking amount");
 
         // calculate funds to release
-        uint256 releasedFunds = _stakedTokensAmount.mul(emissionRate);
+        uint256 releasedFunds = _stakedTokensAmount.mul(emissionRate).div(1 ether);
 
         // update lockedSupply
         if (releasedFunds > lockedSupply) {
@@ -70,8 +70,8 @@ contract LockedStakingRewardsPool is LockedFundBase {
         }
 
         // if locked rewards is less than the funds to release, only release remaining amount
-        if (_erc20().balanceOf(rewardsPool) <= releasedFunds) {
-            releasedFunds = _erc20().balanceOf(rewardsPool);
+        if (_erc20().balanceOf(address(this)) <= releasedFunds) {
+            releasedFunds = _erc20().balanceOf(address(this));
         }
 
         // if amount to release is 0, no-op
