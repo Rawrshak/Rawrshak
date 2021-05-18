@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <0.9.0;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/introspection/ERC165.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "../utils/Constants.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "../utils/LibConstants.sol";
 
-contract TokenBase is ERC20, ERC165, AccessControl
-{
+abstract contract TokenBase is ERC20Upgradeable, ERC165StorageUpgradeable, AccessControlUpgradeable {
     // Create a new role identifier for the minter role. Limiting what each component of a system 
     // can do is known as "principle of least privilege" and is good security practice.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -26,17 +25,20 @@ contract TokenBase is ERC20, ERC165, AccessControl
     /******** Events ********/
     event TokenCreated(address addr, bytes32 id, string name, string symbol, uint256 supply);
 
-    constructor(string memory _name, string memory _symbol, uint256 _initialSupply) public ERC20(_name, _symbol)
-    {
+    function __TokenBase_init_unchained(uint256 _initialSupply) public initializer {
         // Contract Deployer is now the owner and can set roles
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
         // mint initial supply of tokens
         _mint(msg.sender, _initialSupply);
 
-        _registerInterface(Constants._INTERFACE_ID_TOKENBASE);
-        tokenId = keccak256(abi.encodePacked(_name, _symbol));
-        emit TokenCreated(address(this), tokenId, _name, _symbol, _initialSupply);
+        _registerInterface(LibConstants._INTERFACE_ID_TOKENBASE);
+        tokenId = keccak256(abi.encodePacked(name(), symbol()));
+        emit TokenCreated(address(this), tokenId, name(), symbol(), _initialSupply);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165StorageUpgradeable, AccessControlUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     function mint(address _to, uint256 _amount) public 
@@ -50,4 +52,6 @@ contract TokenBase is ERC20, ERC165, AccessControl
         require(hasRole(BURNER_ROLE, msg.sender), "Caller is not a burner");
         _burn(_from, _amount);
     }
+    
+    uint256[50] private __gap;
 }

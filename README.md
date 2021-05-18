@@ -5,50 +5,16 @@ This project will contain the implementation of the Rawrshak Smart Contracts
 Rawrshak Token are the platform currency that will be used for Governance and transactions.
 
 # Tasks
-## Christian's Tasks:
-- Fix 11_test_setup.js to correctly run tests
-- After committing the proof of concept, need to start properly writing the Unity Plugins
-
 ## Independent Tasks
-- Implement [Secondary Sales Fees](https://docs.opensea.io/docs/10-setting-fees-on-secondary-sales) - OpenSea has an interface for this. 
-    - Determine the best architecture for this (push vs pull models, immediately send tokens or accumulate and send weekly, etc)
 - Investigate [Gasless transactions](https://docs.openzeppelin.com/learn/sending-gasless-transactions)
 - Refactor Exchange, Lootbox, and Crafting Contracts. Separate out functionality and data into their own sub contracts
 - Investigate [Chainlink's VRF](https://docs.chain.link/docs/chainlink-vrf) for proper randomization for the Lootbox Contract
-- Investigate Matic (now Polygon) Network vs xDai Protocol for Layer 2 solution
-- Investigate how to make smart contracts upgradable without having to migrate data from older smart contracts. 
+- Investigate Best Rollup solution (Optimism, Abirtrum, ZkRollups via ImmutableX or Starkware)
 - Add a smart contract to lock RAWR tokens in on a Game Contract and add the Game Contract to a Public Access List. Game Contracts
     caught violating the rules for the Public Access List will have their locked tokens slashed and redistributed. The Game Contract
     is removed from the list. Make sure it's reflected in the Graph Node for easy query.
 - Add a Staking Contract that distributes from the locked Rawr staking pool and transaction fees accumulated.
-- Investigate how ERC721 assets can be wrapped into a Game Contract so that NFT art can be used onto our Ecosystem.
 
-### Game Contract
-    - Replace "Item" with "Asset"
-    - Make the Asset ID automatically generated on CreateItem() function.
-    - Implement Asset Types for the AssetStandards so they are easily queryable.
-    - Add ability for assets to be market Explicit. Make sure it's reflected in the Graph Node for easy query.
-
-### Lootbox Contract
-    - Make Lootbox Credits per Developer. Developers can create many lootboxes and dictate how many LC tokens are needed to 
-        generate a Lootbox. These lootboxes can be sent to anyone and can be opened for a chance for new NFTs.
-    
-### Exchange Contract
-    - Once Staking Contract is created, implement transaction fees to each transaction and sending the fees to the 
-        staking contract for distribution.
-    - Implement royalty fees to the asset creator for each transcation
-    - Modularize this contract into a BidModule, SellModule, and FulfillModule subcontracts.
-
-## Done Todo:
-- Infrastructure Smart Contracts
-    - Game Contract, Lootbox Contract, Crafting Contract, Exchange Contract
-- Graph Node
-    - Docker for local graph node
-    - Graph Node API which can be accessible via GraphQL api
-    - Set up demo data for testing
-- Set up a JSON server for querying game and asset data
-- Implement Unity Project that allows for Viewing Asset Information
-- Proof of concept for serving standardized cloud assets and loading them in a game during runtime
 
 # Tools
 ## Node JS and NPM
