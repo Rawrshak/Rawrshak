@@ -141,7 +141,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         require(_msgSender() == creator, "Invalid burn permissions.");
         require(contentContract != address(0), "Invalid Content Contract address");
         require(ownerOf(0) == _msgSender(), "Burner doesn't own this asset");
-        require(isMinted == true, "Unique Content is has already been burned");
+        require(isMinted == true, "Unique Content has already been burned");
         
         _burn(0);
         Content(contentContract).safeTransferFrom(_msgSender(), to, id, 1, "");

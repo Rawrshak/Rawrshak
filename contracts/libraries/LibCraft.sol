@@ -13,10 +13,9 @@ library LibCraft {
 
     enum SalvageType {
         Guarantee,
-        Random
+        Random,
+        Max
     }
-
-    uint256 constant NUM_SALVAGE_TYPE = 2;
 
     struct AssetData {
         address content;
@@ -49,7 +48,7 @@ library LibCraft {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
         // here, it means we've verified the asset and reward assets correctly.
         require(_asset.rewards.length > 0, "Invalid rewards length.");
-        require(_asset.salvageType < NUM_SALVAGE_TYPE, "Invalid Salvage Type");
+        require(_asset.salvageType < uint256(SalvageType.Max), "Invalid Salvage Type");
         for (uint256 i = 0; i < _asset.rewards.length; ++i) {
             require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 10000, "Invalid probability.");
             require(_asset.rewards[i].amount > 0, "Invalid reward amount.");

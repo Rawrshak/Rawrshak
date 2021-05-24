@@ -19,24 +19,24 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
     /***************** Stored Variables *****************/
     mapping(bytes4 => uint256) amounts;
-    uint256 public override bps;
+    uint256 public override rate;
     address[] funds;
     uint256[] percentages;
 
     /******************** Public API ********************/
-    function __ExchangeFeePool_init(uint256 _bps) public initializer {
+    function __ExchangeFeePool_init(uint256 _rate) public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
         _registerInterface(LibConstants._INTERFACE_ID_EXCHANGE_FEE_POOL);
-        bps = _bps;
+        rate = _rate;
     }
  
-    function setBps(uint256 _bps) public override checkPermissions(MANAGER_ROLE) {
-        require(_bps > 0 && _bps < 10000, "Invalid rate");
-        bps = _bps;
-        emit BpsUpdated(bps);
+    function setRate(uint256 _rate) public override checkPermissions(MANAGER_ROLE) {
+        require(_rate > 0 && _rate < 10000, "Invalid rate");
+        rate = _rate;
+        emit FeeUpdated(rate);
     }
 
     // gets the amount in the fee pool

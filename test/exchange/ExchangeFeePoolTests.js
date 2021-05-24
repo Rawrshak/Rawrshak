@@ -94,18 +94,18 @@ contract('Exchange Fee Pool Contract', (accounts) => {
             "royalties manager should have the manager role");
     });
     
-    it('Update Bps', async () => {
+    it('Update Rate', async () => {
         assert.equal(
-            await feePool.bps(),
+            await feePool.rate(),
             200, 
             "initial Exchange Fees rate is incorrect.");
 
         TruffleAssert.eventEmitted(
-            await feePool.setBps(300, {from:executionManagerAddress}),
-            'BpsUpdated'
+            await feePool.setRate(300, {from:executionManagerAddress}),
+            'FeeUpdated'
         );
         assert.equal(
-            await feePool.bps(),
+            await feePool.rate(),
             300, 
             "updated Exchange Fees rate is incorrect.");
     });

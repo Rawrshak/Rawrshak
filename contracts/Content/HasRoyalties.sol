@@ -14,7 +14,7 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
     bytes4 private constant _INTERFACE_ID_ROYALTIES = 0x0982790e;
 
     /***************** Stored Variables *****************/
-    // All assets sales on this contract will pay the contract royalties
+    // All asset sales on this contract will pay the contract royalties
     LibRoyalties.Fees[] public contractRoyalties;
 
     // Specific assets can also have their own royalties set

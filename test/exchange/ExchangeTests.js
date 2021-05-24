@@ -321,7 +321,7 @@ contract('Exchange Contract', (accounts)=> {
             'BuyOrdersFilled'
         );
         
-        // platform has 30bps and creator has 200bps from royalties so player2Address should only have
+        // platform has 30 basis points and creator has 200 basis points from royalties so player2Address should only have
         // 10000 (initial) + 977 from the sale of their asset
         assert.equal(
             (await rawrToken.balanceOf(player2Address)).toString(),

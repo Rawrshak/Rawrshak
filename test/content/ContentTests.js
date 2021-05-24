@@ -84,7 +84,7 @@ contract('Content Contract Tests', (accounts) => {
     //     [
     //         {
     //             account,
-    //             bps
+    //             rate
     //         }
     //     ]
     // }
@@ -106,7 +106,7 @@ contract('Content Contract Tests', (accounts) => {
         // test royalties
         var fees = await content.getRoyalties(1);
         assert.equal(
-            fees[0].account == deployerAddress && fees[0].bps == 200,
+            fees[0].account == deployerAddress && fees[0].rate == 200,
             true,
             "Token 1 royalties are incorrect");
 

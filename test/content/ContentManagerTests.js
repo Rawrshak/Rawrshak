@@ -152,9 +152,9 @@ contract('Content Contract Tests', (accounts) => {
         var royalties = await content.getRoyalties(2);
         assert.equal(royalties.length, 2, "Incorrect contract royalties length");
         assert.equal(royalties[0].account, deployerAddress, "Incorrect contract royalty account 1");
-        assert.equal(royalties[0].bps, 200, "Incorrect contract royalty bps 1");
+        assert.equal(royalties[0].rate, 200, "Incorrect contract royalty rate 1");
         assert.equal(royalties[1].account, deployerAltAddress, "Incorrect contract royalty account 2");
-        assert.equal(royalties[1].bps, 200, "Incorrect contract royalty bps 2");
+        assert.equal(royalties[1].rate, 200, "Incorrect contract royalty rate 2");
     });
 
     it('Set Token Royalties', async () => {
@@ -164,8 +164,8 @@ contract('Content Contract Tests', (accounts) => {
         var royalties = await content.getRoyalties(1);
         assert.equal(royalties.length, 2, "Incorrect royalties length");
         assert.equal(royalties[0].account, deployerAddress, "Incorrect royalty account 1");
-        assert.equal(royalties[0].bps, 200, "Incorrect royalty bps 1");
+        assert.equal(royalties[0].rate, 200, "Incorrect royalty rate 1");
         assert.equal(royalties[1].account, deployerAltAddress, "Incorrect royalty account 2");
-        assert.equal(royalties[1].bps, 200, "Incorrect royalty bps 2");
+        assert.equal(royalties[1].rate, 200, "Incorrect royalty rate 2");
     });
 });

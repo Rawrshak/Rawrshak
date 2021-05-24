@@ -47,7 +47,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         bytes4 _token,
         uint256 _total
     ) external override onlyOwner {
-        uint256 feeAmount = _total.mul(_exchangeFeePool().bps()).div(10000);
+        uint256 feeAmount = _total.mul(_exchangeFeePool().rate()).div(10000);
         _tokenEscrow(_token).depositPlatformRoyalty(_sender, address(_exchangeFeePool()), feeAmount);
         _exchangeFeePool().depositRoyalty(_token, _tokenEscrow(_token).token(), feeAmount);
     }
@@ -72,7 +72,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 _orderId,
         uint256 _total
     ) external override onlyOwner {
-        uint256 feeAmount = _total.mul(_exchangeFeePool().bps()).div(10000);
+        uint256 feeAmount = _total.mul(_exchangeFeePool().rate()).div(10000);
         _tokenEscrow(_token).transferPlatformRoyalty(_orderId, address(_exchangeFeePool()), feeAmount);
         _exchangeFeePool().depositRoyalty(_token, _tokenEscrow(_token).token(), feeAmount);
     }
@@ -91,14 +91,14 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 idx = 0;
         for (uint256 i = 0; i < fees.length; ++i) {
             // Get Royalties owed per fee
-            royalty = _total.mul(fees[i].bps).div(10000);
+            royalty = _total.mul(fees[i].rate).div(10000);
             accounts[idx] = fees[i].account;
             royaltyAmounts[idx] = royalty;
             remaining = remaining.sub(royalty);
             ++idx;
         }
 
-        royalty = _total.mul(_exchangeFeePool().bps()).div(10000);
+        royalty = _total.mul(_exchangeFeePool().rate()).div(10000);
         remaining = remaining.sub(royalty);
     }
 

@@ -31,9 +31,9 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             deployerAddress,
             "Royalty address should be the deployer.");
         assert.equal(
-            contractFees[0].bps,
+            contractFees[0].rate,
             100,
-            "Royalty bps is incorrect.");
+            "Royalty rate is incorrect.");
     });
 
     it('Set Mutliple Contract Royalties', async () => {
@@ -49,11 +49,11 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             "There should be multiple royalty fees");
 
         assert.equal(
-            contractFees[0].account == deployerAddress && contractFees[0].bps == 100,
+            contractFees[0].account == deployerAddress && contractFees[0].rate == 100,
             true,
             "First royalty fee should be the deployer.");
         assert.equal(
-            contractFees[1].account == deployerAltAddress && contractFees[1].bps == 200,
+            contractFees[1].account == deployerAltAddress && contractFees[1].rate == 200,
             true,
             "Second Royalty fee should be the deployer's alternate wallet.");
     });
@@ -96,14 +96,14 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             'ContractRoyaltiesUpdated',
             (ev) => {
                 return ev.fees[0].account == deployerAddress
-                    && ev.fees[0].bps == 200;
+                    && ev.fees[0].rate == 200;
             }
         );
 
         var tokenFees = await testContract.getRoyalties(0);
 
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].bps == 200,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 200,
             true,
             "Token Royalty should reflect new contract royalties.");
     });
@@ -117,7 +117,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
     //     [{
             
     //         account,
-    //         bps
+    //         rate
     //     }]
     // }
     it('Add royalty to Token ID 1', async () => {
@@ -129,19 +129,19 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].bps == 200;
+                    && ev.fees[0].rate == 200;
             }
         );
 
         var tokenFees = await testContract.getRoyalties(0);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].bps == 100,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 100,
             true,
             "Token 0 royalties should reflect the contract royalties.");
 
         tokenFees = await testContract.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].bps == 200,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 200,
             true,
             "Token 1 royalties should reflect the new Token 1 royalties.");
     });
@@ -158,7 +158,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].bps == 200;
+                    && ev.fees[0].rate == 200;
             }
         );
 
@@ -169,7 +169,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 2
                     && ev.fees[0].account == deployerAltAddress
-                    && ev.fees[0].bps == 200;
+                    && ev.fees[0].rate == 200;
             }
         );
     });
@@ -193,7 +193,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
         
         tokenFees = await testContract.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].bps == 100,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 100,
             true,
             "Token 1 royalties should reflect the contract royalties.");
     });

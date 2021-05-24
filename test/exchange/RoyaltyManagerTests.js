@@ -117,12 +117,12 @@ contract('Royalty Manager Contract', (accounts)=> {
     it('Set Platform Fees and check', async () => {
 
         TruffleAssert.eventEmitted(
-            await feePool.setBps(50, {from:testManagerAddress}),
-            'BpsUpdated'
+            await feePool.setRate(50, {from:testManagerAddress}),
+            'FeeUpdated'
         );
 
         assert.equal(
-            await feePool.bps(),
+            await feePool.rate(),
             50, 
             "updated Exchange Fees rate is incorrect.");
     });

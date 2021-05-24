@@ -1,5 +1,5 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const ContentStorage = artifacts.require("ContentStorage")
+const ContentStorage = artifacts.require("ContentStorage");
 const TruffleAssert = require("truffle-assertions");
 
 contract('ContentStorage Contract Tests', (accounts) => {
@@ -28,7 +28,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         // Check Contract Royalties
         var contractFees = await contentStorage.getRoyalties(0);
         assert.equal(
-            contractFees[0].account == deployerAddress && contractFees[0].bps == 100,
+            contractFees[0].account == deployerAddress && contractFees[0].rate == 100,
             true,
             "Royalty address should be the deployer.");
     });
@@ -86,7 +86,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
     //     [
     //         {
     //             account,
-    //             bps
+    //             rate
     //         }
     //     ]
     // }
@@ -101,7 +101,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].bps == 200;
+                    && ev.fees[0].rate == 200;
             }
         );
         
@@ -165,7 +165,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].bps == 200;
+                    && ev.fees[0].rate == 200;
             }
         );
     });
@@ -197,20 +197,20 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
         tokenFees = await contentStorage.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].bps == 200,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 200,
             true,
             "Token 1 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(2);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].bps == 100,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 100,
             true,
             "Token 2 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(3);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].bps == 200 &&
-            tokenFees[1].account == deployerAltAddress && tokenFees[1].bps == 300,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 200 &&
+            tokenFees[1].account == deployerAltAddress && tokenFees[1].rate == 300,
             true,
             "Token 3 incorrect royalties");
     });
