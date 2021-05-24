@@ -48,6 +48,7 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     
     Install:
         npm install @openzeppelin/contracts
+        npm install @openzeppelin/contracts-upgradeable
 
 ## Visual Studio Code
     This is lightweight IDE that I use.
