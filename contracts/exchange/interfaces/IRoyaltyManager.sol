@@ -36,7 +36,5 @@ interface IRoyaltyManager {
     function transferPlatformRoyalty(bytes4 _token, uint256 _orderId, uint256 _total) external;
 
     /*********************** Events *********************/
-    event PlatformFeesUpdated(LibRoyalties.Fees[] fees);
-    event RoyaltiesDistributed(uint256 orderId, address to, address tokenAddr, uint256 amount);
-    event RoyaltiesClaimed(address to, address tokenAddr, uint256 amountClaimed);
+    event RoyaltiesClaimed(address indexed to, address tokenAddr, uint256 amountClaimed);
 }

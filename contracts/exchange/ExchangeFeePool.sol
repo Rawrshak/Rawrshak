@@ -36,7 +36,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     function setRate(uint256 _rate) public override checkPermissions(MANAGER_ROLE) {
         require(_rate > 0 && _rate < 1 ether, "Invalid rate");
         rate = _rate;
-        emit FeeUpdated(rate);
+        emit FeeUpdated(_msgSender(), rate);
     }
 
     // gets the amount in the fee pool
@@ -58,7 +58,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         }
         require(totalPercentages == 1 ether, "Percentages do not sum to 1 ether.");
 
-        emit FundsUpdated(_funds, _percentages);
+        emit FundsUpdated(_msgSender(), _funds, _percentages);
     }
 
     function distributionRates() external view override returns(address[] memory _funds, uint256[] memory _percentages) {
@@ -85,7 +85,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
             IERC20Upgradeable(_tokenAddr).transfer(funds[i], distributions[i]);
         }
 
-        emit FundsDistributed(funds, distributions);
+        emit FundsDistributed(_msgSender(), funds, distributions);
     }
 
     uint256[50] private __gap;

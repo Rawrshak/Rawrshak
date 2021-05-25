@@ -20,8 +20,8 @@ interface IExchangeFeePool {
     function distribute(bytes4 _token, address _tokenAddr) external;
     
     /*********************** Events *********************/
-    event FeeUpdated(uint256 _rate);
-    event FundsUpdated(address[] _funds, uint256[] _percentages);
-    event FundsDistributed(address[] _funds, uint256[] _distributions);
-    event ExchangeFeesPaid(bytes4 _token, address _tokenAddr, uint256 _amount);
+    event FeeUpdated(address indexed operator, uint256 rate);
+    event FundsUpdated(address indexed operator, address[] funds, uint256[] percentages);
+    event FundsDistributed(address indexed operator, address[] funds, uint256[] distributions);
+    event ExchangeFeesPaid(bytes4 indexed token, address tokenAddr, uint256 amount);
 }
