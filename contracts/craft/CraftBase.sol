@@ -25,10 +25,6 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
     /***************** Stored Variables *****************/
     EnumerableSetUpgradeable.AddressSet internal contentContracts;
     uint256 internal seed;
-    
-    /*********************** Events *********************/
-    event ManagerRegistered(address _manager, address _storage);
-    event ContentRegistered(address _content);
         
     /********************* Modifiers ********************/
     modifier checkPermissions(bytes32 _role) {
@@ -45,7 +41,7 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
     
     function registerManager(address _manager) external override whenPaused() checkPermissions(DEFAULT_ADMIN_ROLE) {
         grantRole(MANAGER_ROLE, _manager);
-        emit ManagerRegistered(_manager, address(this));
+        emit ManagerRegistered(_msgSender(), _manager);
     }
     
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {
@@ -61,7 +57,7 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
         
         contentContracts.add(_content);
         
-        emit ContentRegistered(_content);
+        emit ContentRegistered(_msgSender(), _content);
     }
 
     function managerSetPause(bool _setPause) external override checkPermissions(MANAGER_ROLE) {

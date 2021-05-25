@@ -8,4 +8,8 @@ interface ICraftBase {
     function registerContent(address _content) external;
 
     function managerSetPause(bool _setPause) external;
+    
+    /*********************** Events *********************/
+    event ManagerRegistered(address indexed operator, address indexed manager);
+    event ContentRegistered(address indexed operator, address indexed content);
 }

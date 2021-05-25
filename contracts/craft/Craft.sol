@@ -70,14 +70,14 @@ contract Craft is ICraft, CraftBase {
             }
         }
 
-        emit RecipeUpdated(_recipes);
+        emit RecipeUpdated(_msgSender(), _recipes);
     }
 
     function setRecipeEnabled(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(exists(_id), "Recipe doesn't exist");
         recipes[_id].enabled = _enabled;
 
-        emit RecipeEnabled(_id, _enabled);
+        emit RecipeEnabled(_msgSender(), _id, _enabled);
     }
 
     function setRecipeCraftingRate(uint256 _id, uint256 _craftingRate) external override whenPaused() checkPermissions(MANAGER_ROLE) {
@@ -85,7 +85,7 @@ contract Craft is ICraft, CraftBase {
         require(_craftingRate > 0 && _craftingRate <= 1 ether, "Invalid crafting rate.");
         recipes[_id].craftingRate = _craftingRate;
         
-        emit RecipeCraftingRateUpdated(_id, _craftingRate);
+        emit RecipeCraftingRateUpdated(_msgSender(), _id, _craftingRate);
     }
 
     function craft(uint256 _id, uint256 _amount) external override whenNotPaused() {
@@ -112,7 +112,7 @@ contract Craft is ICraft, CraftBase {
             _mint(_id, _amount);
         }
         
-        emit AssetsCrafted(_id, _amount);
+        emit AssetsCrafted(_msgSender(), _id, _amount);
     }
 
     function recipe(uint256 _id) external view override returns(LibCraft.Recipe memory _recipe) {
