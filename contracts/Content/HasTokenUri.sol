@@ -5,8 +5,9 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "../libraries/LibAsset.sol";
+import "./ContentSubsystemBase.sol";
 
-abstract contract HasTokenUri is ERC165StorageUpgradeable {
+abstract contract HasTokenUri is ContentSubsystemBase {
     using StringsUpgradeable for uint256;
 
     /******************** Constants ********************/
@@ -24,8 +25,8 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
     mapping(uint256 => LibAsset.Asset) private tokenUris;
     
     /*********************** Events *********************/
-    event TokenUriPrefixUpdated(string uriPrefix);
-    event HiddenTokenUriUpdated(uint256 id, uint256 version, string uri);
+    event TokenUriPrefixUpdated(address indexed parent, string uriPrefix);
+    event HiddenTokenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version, string uri);
 
     /******************** Public API ********************/
     function __HasTokenUri_init_unchained(string memory _tokenUriPrefix) internal initializer {
@@ -84,7 +85,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
             tokenUris[_tokenId].version++;
         }
         tokenUris[_tokenId].dataUri.push(_uri);
-        emit HiddenTokenUriUpdated(_tokenId, tokenUris[_tokenId].version, _uri);
+        emit HiddenTokenUriUpdated(_parent(), _tokenId, tokenUris[_tokenId].version, _uri);
     }
 
     /**
@@ -93,7 +94,7 @@ abstract contract HasTokenUri is ERC165StorageUpgradeable {
      */
     function _setTokenUriPrefix(string memory _tokenUriPrefix) internal {
         tokenUriPrefix = _tokenUriPrefix;
-        emit TokenUriPrefixUpdated(_tokenUriPrefix);
+        emit TokenUriPrefixUpdated(_parent(), _tokenUriPrefix);
     }
     
     uint256[50] private __gap;

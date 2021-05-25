@@ -3,6 +3,7 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import "./IRoyaltyProvider.sol";
+import "../../libraries/LibAsset.sol";
 
 interface IUniqueContent is IERC721Upgradeable, IRoyaltyProvider {
 
@@ -21,4 +22,7 @@ interface IUniqueContent is IERC721Upgradeable, IRoyaltyProvider {
     function mint(address to) external;
 
     function burn(address to) external;
+    
+    /*********************** Events *********************/
+    event UniqueContentCreated(address indexed from, string indexed name, string indexed symbol, LibAsset.UniqueContentData mintData);
 }

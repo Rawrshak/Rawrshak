@@ -43,8 +43,8 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'RegisteredSystemsUpdated',
             (ev) => {
-                return ev[0][0].operator == craftingSystemAddress
-                    && ev[0][0].approved == true;
+                return ev[1][0].operator == craftingSystemAddress
+                    && ev[1][0].approved == true;
             }
         );
 
@@ -69,8 +69,8 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'RegisteredSystemsUpdated',
             (ev) => {
-                return ev[0][0].operator == craftingSystemAddress
-                    && ev[0][0].approved == true;
+                return ev[1][0].operator == craftingSystemAddress
+                    && ev[1][0].approved == true;
             }
         );
         
@@ -86,10 +86,10 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'RegisteredSystemsUpdated',
             (ev) => {
-                return ev[0][0].operator == craftingSystemAddress
-                    && ev[0][0].approved == true
-                    && ev[0][1].operator == lootboxSystemAddress
-                    && ev[0][1].approved == true;
+                return ev[1][0].operator == craftingSystemAddress
+                    && ev[1][0].approved == true
+                    && ev[1][1].operator == lootboxSystemAddress
+                    && ev[1][1].approved == true;
             }
         );
         
@@ -112,10 +112,10 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'RegisteredSystemsUpdated',
             (ev) => {
-                return ev[0][0].operator == craftingSystemAddress
-                    && ev[0][0].approved == true
-                    && ev[0][1].operator == lootboxSystemAddress
-                    && ev[0][1].approved == false;
+                return ev[1][0].operator == craftingSystemAddress
+                    && ev[1][0].approved == true
+                    && ev[1][1].operator == lootboxSystemAddress
+                    && ev[1][1].approved == false;
             }
         );
         
@@ -140,10 +140,10 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
             await testContract.registerSystems(approvalPair, {from: deployerAddress}),
             'RegisteredSystemsUpdated',
             (ev) => {
-                return ev[0][0].operator == craftingSystemAddress
-                    && ev[0][0].approved == false
-                    && ev[0][1].operator == lootboxSystemAddress
-                    && ev[0][1].approved == false;
+                return ev[1][0].operator == craftingSystemAddress
+                    && ev[1][0].approved == false
+                    && ev[1][1].operator == lootboxSystemAddress
+                    && ev[1][1].approved == false;
             }
         );
         

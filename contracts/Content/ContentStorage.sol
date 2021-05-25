@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
+import "./ContentSubsystemBase.sol";
 import "../libraries/LibAsset.sol";
 import "./SystemsRegistry.sol";
 import "../utils/LibConstants.sol";
@@ -24,7 +25,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     /***************** Stored Variables *****************/
-    address public override parent;
     mapping(uint256 => bool) public override ids;
     mapping(uint256 => uint256) public override maxSupply;
     mapping(uint256 => uint256) public override supply;
@@ -44,18 +44,19 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         __ERC165Storage_init_unchained();
         __HasTokenUri_init_unchained(_tokenUriPrefix);
         __HasRoyalties_init_unchained(_contractFees);
+        __ContentSubsystemBase_init_unchained();
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(OWNER_ROLE, _msgSender());
     }
 
-    function setParent(address _parent) external override checkPermissions(OWNER_ROLE) {
-        require(_parent.isContract(), "Address is not a contract.");
-        require(_parent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
-        parent = _parent;
-        grantRole(OWNER_ROLE, parent);
+    function setParent(address _contentParent) external override checkPermissions(OWNER_ROLE) {
+        require(_contentParent.isContract(), "Address is not a contract.");
+        require(_contentParent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
+        _setParent(_contentParent);
+        grantRole(OWNER_ROLE, _contentParent);
         
-        emit ParentSet(_parent);
+        emit ParentSet(_contentParent);
     }
 
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override checkPermissions(OWNER_ROLE) {
@@ -73,7 +74,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
             }
         }
 
-        emit AssetsAdded(_assets);
+        emit AssetsAdded(_parent(), _assets);
     }
 
     function updateSupply(uint256 _tokenId, uint256 _supply) external override checkPermissions(OWNER_ROLE) {
