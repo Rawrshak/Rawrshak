@@ -25,7 +25,7 @@ contract('Exchange Fee Pool Contract', (accounts) => {
         rawrToken = await RawrToken.new();
         await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
         feePool = await ExchangeFeePool.new();
-        await feePool.__ExchangeFeePool_init(200, {from: deployerAddress});
+        await feePool.__ExchangeFeePool_init(web3.utils.toWei('0.02', 'ether'), {from: deployerAddress});
 
         manager_role = await feePool.MANAGER_ROLE();
         default_admin_role = await feePool.DEFAULT_ADMIN_ROLE();
@@ -34,7 +34,7 @@ contract('Exchange Fee Pool Contract', (accounts) => {
         await feePool.registerManager(executionManagerAddress, {from:deployerAddress})
 
         // add funds
-        await feePool.updateDistributionFunds([stakingFund, daoFund], [5000, 5000], {from:executionManagerAddress});
+        await feePool.updateDistributionFunds([stakingFund, daoFund], [web3.utils.toWei('0.5', 'ether'), web3.utils.toWei('0.5', 'ether')], {from:executionManagerAddress});
 
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
@@ -97,16 +97,16 @@ contract('Exchange Fee Pool Contract', (accounts) => {
     it('Update Rate', async () => {
         assert.equal(
             await feePool.rate(),
-            200, 
+            web3.utils.toWei('0.02', 'ether'), 
             "initial Exchange Fees rate is incorrect.");
 
         TruffleAssert.eventEmitted(
-            await feePool.setRate(300, {from:executionManagerAddress}),
+            await feePool.setRate(web3.utils.toWei('0.03', 'ether'), {from:executionManagerAddress}),
             'FeeUpdated'
         );
         assert.equal(
             await feePool.rate(),
-            300, 
+            web3.utils.toWei('0.03', 'ether'), 
             "updated Exchange Fees rate is incorrect.");
     });
     
@@ -115,11 +115,11 @@ contract('Exchange Fee Pool Contract', (accounts) => {
 
         assert.equal(currentRates[0][0], stakingFund, "staking fund address missing");
         assert.equal(currentRates[0][1], daoFund, "dao fund address missing");
-        assert.equal(currentRates[1][0], 5000, "staking fund rate incorrect");
-        assert.equal(currentRates[1][1], 5000, "dao fund rate incorrect");
+        assert.equal(currentRates[1][0], web3.utils.toWei('0.5', 'ether'), "staking fund rate incorrect");
+        assert.equal(currentRates[1][1], web3.utils.toWei('0.5', 'ether'), "dao fund rate incorrect");
 
         TruffleAssert.eventEmitted(
-            await feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [3000, 3000, 4000], {from:executionManagerAddress}),
+            await feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.4', 'ether')], {from:executionManagerAddress}),
             'FundsUpdated'
         );
         
@@ -127,9 +127,9 @@ contract('Exchange Fee Pool Contract', (accounts) => {
         assert.equal(currentRates[0][0], stakingFund, "staking fund address missing");
         assert.equal(currentRates[0][1], daoFund, "dao fund address missing");
         assert.equal(currentRates[0][2], charityFund, "charity fund address missing");
-        assert.equal(currentRates[1][0], 3000, "staking fund rate incorrect");
-        assert.equal(currentRates[1][1], 3000, "dao fund rate incorrect");
-        assert.equal(currentRates[1][2], 4000, "dao fund rate incorrect");
+        assert.equal(currentRates[1][0], web3.utils.toWei('0.3', 'ether'), "staking fund rate incorrect");
+        assert.equal(currentRates[1][1], web3.utils.toWei('0.3', 'ether'), "dao fund rate incorrect");
+        assert.equal(currentRates[1][2], web3.utils.toWei('0.4', 'ether'), "dao fund rate incorrect");
     });
     
     it('Invalid update funds', async () => {
@@ -140,22 +140,22 @@ contract('Exchange Fee Pool Contract', (accounts) => {
         );
 
         await TruffleAssert.fails(
-            feePool.updateDistributionFunds([stakingFund, daoFund], [3000, 3000, 4000], {from:executionManagerAddress}),
+            feePool.updateDistributionFunds([stakingFund, daoFund], [web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.4', 'ether')], {from:executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
         await TruffleAssert.fails(
-            feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [3000, 3000], {from:executionManagerAddress}),
+            feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.3', 'ether')], {from:executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         await TruffleAssert.fails(
-            feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [3000, 3000, 5000], {from:executionManagerAddress}),
+            feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.5', 'ether')], {from:executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         await TruffleAssert.fails(
-            feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [3000, 3000, 3000], {from:executionManagerAddress}),
+            feePool.updateDistributionFunds([stakingFund, daoFund, charityFund], [web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.3', 'ether'), web3.utils.toWei('0.3', 'ether')], {from:executionManagerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });

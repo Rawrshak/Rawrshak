@@ -40,7 +40,7 @@ contract Craft is ICraft, CraftBase {
             require(_recipes[i].materials.length > 0 && _recipes[i].materials.length == _recipes[i].materialAmounts.length, "Invalid materials length");
             require(_recipes[i].rewards.length > 0 && _recipes[i].rewards.length == _recipes[i].rewardAmounts.length, "Invalid rewards length");
             require(_recipes[i].id != 0, "Invalid id");
-            require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 10000, "Invalid crafting rate.");
+            require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 1 ether, "Invalid crafting rate.");
 
             LibCraft.Recipe storage recipeData = recipes[_recipes[i].id];
             recipeData.id = _recipes[i].id;
@@ -82,7 +82,7 @@ contract Craft is ICraft, CraftBase {
 
     function setRecipeCraftingRate(uint256 _id, uint256 _craftingRate) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(exists(_id), "Recipe doesn't exist");
-        require(_craftingRate > 0 && _craftingRate <= 10000, "Invalid crafting rate.");
+        require(_craftingRate > 0 && _craftingRate <= 1 ether, "Invalid crafting rate.");
         recipes[_id].craftingRate = _craftingRate;
         
         emit RecipeCraftingRateUpdated(_id, _craftingRate);
@@ -98,10 +98,10 @@ contract Craft is ICraft, CraftBase {
         
         // check crafting rate if it's less than 100%, then get a random number
         
-        if (recipes[_id].craftingRate < 10000) {
+        if (recipes[_id].craftingRate < 1 ether) {
             for (uint256 i = 0; i < _amount; ++i) {
                 seed = LibCraft.random(_msgSender(), seed);
-                if (seed.mod(10000) > recipes[_id].craftingRate) {
+                if (seed.mod(1 ether) > recipes[_id].craftingRate) {
                     // if crafting fails, deduct the number of rolls that failed
                     --_amount;
                 }

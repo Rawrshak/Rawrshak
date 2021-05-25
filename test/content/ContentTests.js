@@ -18,7 +18,7 @@ contract('Content Contract Tests', (accounts) => {
     var contentStorage;
     var systemsRegistry;
     var asset = [
-        [1, "ipfs:/CID-1", 0, [[deployerAddress, 200]]],
+        [1, "ipfs:/CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
         [2, "ipfs:/CID-2", 100, []],
     ];
 
@@ -26,7 +26,7 @@ contract('Content Contract Tests', (accounts) => {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -106,7 +106,7 @@ contract('Content Contract Tests', (accounts) => {
         // test royalties
         var fees = await content.getRoyalties(1);
         assert.equal(
-            fees[0].account == deployerAddress && fees[0].rate == 200,
+            fees[0].account == deployerAddress && fees[0].rate == web3.utils.toWei('0.02', 'ether'),
             true,
             "Token 1 royalties are incorrect");
 

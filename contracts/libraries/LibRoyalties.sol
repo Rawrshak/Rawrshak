@@ -11,7 +11,7 @@ library LibRoyalties {
     function validateFees(LibRoyalties.Fees[] memory _fees) internal pure {
         for (uint256 i = 0; i < _fees.length; ++i) {
             require(_fees[i].account != address(0), "Invalid Account Address");
-            require(_fees[i].rate != 0, "Invalid Fee Rate");
+            require(_fees[i].rate != 0 && _fees[i].rate <= 1 ether, "Invalid Fee Rate");
         }
     }
 }

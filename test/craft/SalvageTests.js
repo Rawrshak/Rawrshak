@@ -48,7 +48,7 @@ contract('Salvage Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -86,7 +86,7 @@ contract('Salvage Contract', (accounts)=> {
         await contentManager.mintBatch(mintData, {from: deployerAddress});
 
         // Set contract royalties
-        var assetRoyalty = [[creatorAddress, 200]];
+        var assetRoyalty = [[creatorAddress, web3.utils.toWei('0.02', 'ether')]];
         await contentManager.setContractRoyalties(assetRoyalty, {from: deployerAddress});
 
         salvage = await TestSalvage.new();
@@ -111,12 +111,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         2
                     ],
                     [
                         [content.address, 4],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         1
                     ]
                 ]
@@ -156,7 +156,7 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(rewardsData.length, 2, "rewards length incorrect");
         for (var i = 0; i < rewardsData.length; ++i) {
             assert.equal(rewardsData[i].asset.content, content.address, "Invalid Reward Address");
-            assert.equal(rewardsData[i].probability, 10000, "Invalid Reward probability");
+            assert.equal(rewardsData[i].probability, web3.utils.toWei('1', 'ether'), "Invalid Reward probability");
         }
     });
     
@@ -168,12 +168,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         2
                     ],
                     [
                         [content.address, 4],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         1
                     ]
                 ]
@@ -184,12 +184,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        5000,
+                        web3.utils.toWei('0.5', 'ether'),
                         2
                     ],
                     [
                         [content.address, 5],
-                        5000,
+                        web3.utils.toWei('0.5', 'ether'),
                         3
                     ]
                 ]
@@ -213,7 +213,7 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(rewardsData.length, 2, "rewards length incorrect");
         for (var i = 0; i < rewardsData.length; ++i) {
             assert.equal(rewardsData[i].asset.content, content.address, "Invalid Reward Address");
-            assert.equal(rewardsData[i].probability, 10000, "Invalid Reward probability");
+            assert.equal(rewardsData[i].probability, web3.utils.toWei('1', 'ether'), "Invalid Reward probability");
         }
         
         // Test Asset 2
@@ -226,7 +226,7 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(rewardsData.length, 2, "rewards length incorrect");
         for (var i = 0; i < rewardsData.length; ++i) {
             assert.equal(rewardsData[i].asset.content, content.address, "Invalid Reward Address");
-            assert.equal(rewardsData[i].probability, 5000, "Invalid Reward probability");
+            assert.equal(rewardsData[i].probability, web3.utils.toWei('0.5', 'ether'), "Invalid Reward probability");
         }
     });
 
@@ -241,7 +241,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 5],
-                        1000,
+                        web3.utils.toWei('0.1', 'ether'),
                         1
                     ]
                 ]
@@ -258,7 +258,7 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(storedSalvageableAssetData.salvageType.toString(), 1, "Salvage Type not updated");
         assert.equal(rewardsData.length, 1, "rewards length not updated");
         assert.equal(rewardsData[0].asset.tokenId, 5, "Invalid reward updated");
-        assert.equal(rewardsData[0].probability, 1000, "Invalid Reward probability updated");
+        assert.equal(rewardsData[0].probability, web3.utils.toWei('0.1', 'ether'), "Invalid Reward probability updated");
         assert.equal(rewardsData[0].amount, 1, "Invalid Reward probability updated");
     });
 
@@ -279,7 +279,7 @@ contract('Salvage Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         var contentStorage2 = await ContentStorage.new();
-        await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         var content2 = await Content.new();
         await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address, systemsRegistry.address);
         contentStorage2.setParent(content2.address);
@@ -292,7 +292,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 5],
-                        1000,
+                        web3.utils.toWei('0.1', 'ether'),
                         1
                     ]
                 ]
@@ -312,7 +312,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 5],
-                        1000,
+                        web3.utils.toWei('0.1', 'ether'),
                         1
                     ]
                 ]
@@ -344,7 +344,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content2.address, 5],
-                        1000,
+                        web3.utils.toWei('0.1', 'ether'),
                         1
                     ]
                 ]
@@ -363,7 +363,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content2.address, 5],
-                        10001,
+                        web3.utils.toWei('1.001', 'ether'),
                         1
                     ]
                 ]
@@ -399,7 +399,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content2.address, 5],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         0
                     ]
                 ]
@@ -464,12 +464,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         2
                     ],
                     [
                         [content.address, 4],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         1
                     ]
                 ]
@@ -480,12 +480,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         2
                     ],
                     [
                         [content.address, 5],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         3
                     ]
                 ]
@@ -526,12 +526,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         2
                     ],
                     [
                         [content.address, 4],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         1
                     ]
                 ]
@@ -542,12 +542,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         2
                     ],
                     [
                         [content.address, 5],
-                        10000,
+                        web3.utils.toWei('1', 'ether'),
                         3
                     ]
                 ]

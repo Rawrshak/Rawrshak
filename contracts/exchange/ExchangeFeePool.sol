@@ -34,7 +34,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     }
  
     function setRate(uint256 _rate) public override checkPermissions(MANAGER_ROLE) {
-        require(_rate > 0 && _rate < 10000, "Invalid rate");
+        require(_rate > 0 && _rate < 1 ether, "Invalid rate");
         rate = _rate;
         emit FeeUpdated(rate);
     }
@@ -56,7 +56,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
             percentages.push(_percentages[i]);
             totalPercentages = totalPercentages.add(_percentages[i]);
         }
-        require(totalPercentages == 10000, "Percentages do not sum to 10000.");
+        require(totalPercentages == 1 ether, "Percentages do not sum to 1 ether.");
 
         emit FundsUpdated(_funds, _percentages);
     }
@@ -81,7 +81,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
         uint256[] memory distributions = new uint256[](funds.length);
         for (uint256 i = 0; i < funds.length; ++i) {
-            distributions[i] = balance.mul(percentages[i]).div(10000);
+            distributions[i] = balance.mul(percentages[i]).div(1 ether);
             IERC20Upgradeable(_tokenAddr).transfer(funds[i], distributions[i]);
         }
 

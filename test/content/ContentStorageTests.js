@@ -15,7 +15,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     beforeEach(async () => {
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
     });
 
     it('Check Content Storage proper deployment', async () => {
@@ -28,7 +28,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         // Check Contract Royalties
         var contractFees = await contentStorage.getRoyalties(0);
         assert.equal(
-            contractFees[0].account == deployerAddress && contractFees[0].rate == 100,
+            contractFees[0].account == deployerAddress && contractFees[0].rate == web3.utils.toWei('0.01', 'ether'),
             true,
             "Royalty address should be the deployer.");
     });
@@ -92,7 +92,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
     // }
 
     it('Add single asset', async () => {
-        var asset = [[1, "CID-1", 100, [[deployerAddress, 200]]]];
+        var asset = [[1, "CID-1", 100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
         var results = await contentStorage.addAssetBatch(asset);
 
         TruffleAssert.eventEmitted(
@@ -101,7 +101,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].rate == 200;
+                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
             }
         );
         
@@ -133,7 +133,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     it('Add multiple assets', async () => {
         var asset = [
-            [1, "CID-1", 0, [[deployerAddress, 200]]],
+            [1, "CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
             [2, "CID-2", 10, []]
         ];
         var results = await contentStorage.addAssetBatch(asset);
@@ -165,13 +165,13 @@ contract('ContentStorage Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].rate == 200;
+                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
             }
         );
     });
 
     it('Update the current asset supply', async () => {
-        var asset = [[1, "CID-1", 100, [[deployerAddress, 200]]]];
+        var asset = [[1, "CID-1", 100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
         await contentStorage.addAssetBatch(asset);
 
         assert.equal(
@@ -189,35 +189,35 @@ contract('ContentStorage Contract Tests', (accounts) => {
     
     it('Basic Royalties tests', async () => {
         var asset = [
-            [1, "CID-1", 0, [[deployerAddress, 200]]],
+            [1, "CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
             [2, "CID-2", 10, []],
-            [3, "CID-3", 10, [[deployerAddress, 200], [deployerAltAddress, 300]]]
+            [3, "CID-3", 10, [[deployerAddress, web3.utils.toWei('0.02', 'ether')], [deployerAltAddress, web3.utils.toWei('0.03', 'ether')]]]
         ];
         await contentStorage.addAssetBatch(asset);
 
         tokenFees = await contentStorage.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 200,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.02', 'ether'),
             true,
             "Token 1 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(2);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 100,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.01', 'ether'),
             true,
             "Token 2 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(3);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 200 &&
-            tokenFees[1].account == deployerAltAddress && tokenFees[1].rate == 300,
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.02', 'ether') &&
+            tokenFees[1].account == deployerAltAddress && tokenFees[1].rate == web3.utils.toWei('0.03', 'ether'),
             true,
             "Token 3 incorrect royalties");
     });
 
     it('Basic Uri tests', async () => {
         var asset = [
-            [1, "ipfs:/CID-1", 0, [[deployerAddress, 200]]],
+            [1, "ipfs:/CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
             [2, "", 10, []],
             [3, "ipfs:/CID-3", 10, []]
         ];
