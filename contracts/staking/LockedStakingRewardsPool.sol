@@ -51,7 +51,7 @@ contract LockedStakingRewardsPool is LockedFundBase {
         // Note: LockedStakingRewardsPool must have minter role
         TokenBase(token).mint(address(this), _amount);
 
-        emit FundsReloaded(_amount, lockedSupply);
+        emit FundsReloaded(_msgSender(), _amount, lockedSupply);
     }
 
     // _staking amount received from the staking contract

@@ -11,6 +11,6 @@ interface IFundPool is IClaimable {
     function registerManager(address _manager) external;
 
     /*********************** Events *********************/
-    event FundsReceived(uint256 amount, uint256 rewardPoolSupply);
+    event FundsReceived(address indexed from, uint256 amount, uint256 rewardPoolSupply);
     event ManagerRegistered(address manager);
 }

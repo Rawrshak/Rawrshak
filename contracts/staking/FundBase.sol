@@ -51,7 +51,7 @@ abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165Storage
         supply = remaining.add(_amount);
         remaining = supply;
 
-        emit FundsReceived(_amount, supply);
+        emit FundsReceived(_msgSender(), _amount, supply);
     }
 
     function claim(uint256 _amount, address _recepient) external override checkPermissions(MANAGER_ROLE) {

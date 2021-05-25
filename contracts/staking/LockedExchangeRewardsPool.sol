@@ -32,7 +32,7 @@ contract LockedExchangeRewardsPool is LockedFundBase {
         require(_amount > 0, "Invalid amount");
 
         lockedSupply = lockedSupply.add(_amount);
-        emit FundsReloaded(_amount, lockedSupply);
+        emit FundsReloaded(_msgSender(), _amount, lockedSupply);
     }
 
     // _staking amount received from the staking contract
