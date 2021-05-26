@@ -11,8 +11,9 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "../libraries/LibAsset.sol";
 import "./interfaces/ISystemsRegistry.sol";
 import "../utils/LibConstants.sol";
+import "./ContentSubsystemBase.sol";
 
-contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165StorageUpgradeable, EIP712Upgradeable {
+contract SystemsRegistry is ISystemsRegistry, ContentSubsystemBase, AccessControlUpgradeable, EIP712Upgradeable {
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
     using ECDSAUpgradeable for bytes32;
@@ -27,16 +28,10 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     /***************** Stored Variables *****************/
-    address public override parent;
-
     // Rawrshak system addresses that are approved to interact with this contract
     EnumerableSetUpgradeable.AddressSet private operators;
     EnumerableSetUpgradeable.AddressSet private users;
     mapping(address => uint256) public override userMintNonce;
-
-    /*********************** Events *********************/
-    event UserApproved(address user, bool approved);
-    event RegisteredSystemsUpdated(LibAsset.SystemApprovalPair[] operators);
 
     /********************* Modifiers ********************/
     modifier checkPermissions(bytes32 _role) {
@@ -54,13 +49,13 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
         _setupRole(OWNER_ROLE, _msgSender());
     }
 
-    function setParent(address _parent) external override checkPermissions(OWNER_ROLE) {
-        require(_parent.isContract(), "Address is not a contract.");
-        require(_parent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
-        parent = _parent;
-        grantRole(OWNER_ROLE, parent);
+    function setParent(address _contentParent) external override checkPermissions(OWNER_ROLE) {
+        require(_contentParent.isContract(), "Address is not a contract.");
+        require(_contentParent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
+        _setParent(_contentParent);
+        grantRole(OWNER_ROLE, _contentParent);
 
-        emit ParentSet(_parent);
+        emit ParentSet(_contentParent);
     }
     
     function isOperatorApproved(address _user, address _operator) external view override returns (bool) {
@@ -102,7 +97,7 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
             }
         }
 
-        emit RegisteredSystemsUpdated(_operators);
+        emit RegisteredSystemsUpdated(_parent(), _operators);
     }
     
     function userApprove(address _user, bool _approved) external override checkPermissions(OWNER_ROLE) {
@@ -112,7 +107,7 @@ contract SystemsRegistry is ISystemsRegistry, AccessControlUpgradeable, ERC165St
             users.remove(_user);
         }
 
-        emit UserApproved(_user, _approved);
+        emit UserApproved(_parent(), _user, _approved);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {

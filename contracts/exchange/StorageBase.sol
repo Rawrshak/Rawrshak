@@ -12,7 +12,7 @@ abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradea
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     /*********************** Events *********************/
-    event ManagerRegistered(address _manager, address _storage);
+    event ManagerRegistered(address indexed _manager);
 
     /********************* Modifiers ********************/
     modifier checkPermissions(bytes32 _role) {
@@ -27,7 +27,7 @@ abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradea
 
     function registerManager(address _manager) external checkPermissions(DEFAULT_ADMIN_ROLE) {
         grantRole(MANAGER_ROLE, _manager);
-        emit ManagerRegistered(_manager, address(this));
+        emit ManagerRegistered(_manager);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {

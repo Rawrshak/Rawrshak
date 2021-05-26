@@ -12,5 +12,5 @@ interface ILockedFundPool {
     function releaseFunds(uint256 _stakedTokensAmount) external;
 
     /*********************** Events *********************/
-    event FundsReloaded(uint256 amount, uint256 rewardPoolSupply);
+    event FundsReloaded(address indexed from, uint256 amount, uint256 rewardPoolSupply);
 }

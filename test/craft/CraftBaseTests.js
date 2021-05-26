@@ -25,7 +25,7 @@ contract('Craft Base Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);

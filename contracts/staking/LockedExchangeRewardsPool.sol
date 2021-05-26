@@ -15,7 +15,7 @@ contract LockedExchangeRewardsPool is LockedFundBase {
     using AddressUpgradeable for address;
     using SafeMathUpgradeable for uint256;
 
-    event FundsReleased(uint256 amount, uint256 lockedFundsLeft);
+    event FundsReleased(address indexed operator, uint256 amount, uint256 lockedFundsLeft);
 
     /******************** Public API ********************/
     function __LockedExchangeRewardsPool_init(
@@ -32,7 +32,7 @@ contract LockedExchangeRewardsPool is LockedFundBase {
         require(_amount > 0, "Invalid amount");
 
         lockedSupply = lockedSupply.add(_amount);
-        emit FundsReloaded(_amount, lockedSupply);
+        emit FundsReloaded(_msgSender(), _amount, lockedSupply);
     }
 
     // _staking amount received from the staking contract
@@ -58,7 +58,7 @@ contract LockedExchangeRewardsPool is LockedFundBase {
         ExchangeRewardsPool(rewardsPool).receiveFunds(releasedFunds);
         _erc20().transfer(rewardsPool, releasedFunds);
 
-        emit FundsReleased(releasedFunds, lockedSupply);
+        emit FundsReleased(_msgSender(), releasedFunds, lockedSupply);
     }
     
     uint256[50] private __gap;

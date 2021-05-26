@@ -32,7 +32,7 @@ contract('Exchange Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "CID-1", 0, [[creator1Address, 200]]],
+        [1, "CID-1", 0, [[creator1Address, web3.utils.toWei('0.02', 'ether')]]],
         [2, "CID-2", 100, []],
     ];
 
@@ -64,7 +64,7 @@ contract('Exchange Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -96,7 +96,7 @@ contract('Exchange Contract', (accounts)=> {
         escrowRawr = await EscrowERC20.new();
         await escrowRawr.__EscrowERC20_init(rawrToken.address, {from: deployerAddress});
         feePool = await ExchangeFeePool.new();
-        await feePool.__ExchangeFeePool_init(30, {from: deployerAddress});
+        await feePool.__ExchangeFeePool_init(web3.utils.toWei('0.003', 'ether'), {from: deployerAddress});
 
         // Setup Orderbook Storage
         orderbookStorage = await OrderbookStorage.new();
@@ -136,7 +136,7 @@ contract('Exchange Contract', (accounts)=> {
         await feePool.registerManager(deployerAddress, {from:deployerAddress});
 
         // add funds
-        await feePool.updateDistributionFunds([stakingFund], [10000], {from:deployerAddress});
+        await feePool.updateDistributionFunds([stakingFund], [web3.utils.toWei('1', 'ether')], {from:deployerAddress});
 
         // Create the exchange contract
         exchange = await Exchange.new();
@@ -165,7 +165,7 @@ contract('Exchange Contract', (accounts)=> {
         await contentManager.mintBatch(mintData, {from: deployerAddress});
 
         // Set contract royalties
-        var assetRoyalty = [[creator2Address, 200]];
+        var assetRoyalty = [[creator2Address, web3.utils.toWei('0.02', 'ether')]];
         await contentManager.setContractRoyalties(assetRoyalty);
     });
 
@@ -321,7 +321,7 @@ contract('Exchange Contract', (accounts)=> {
             'BuyOrdersFilled'
         );
         
-        // platform has 30bps and creator has 200bps from royalties so player2Address should only have
+        // platform has 30 basis points and creator has 200 basis points from royalties so player2Address should only have
         // 10000 (initial) + 977 from the sale of their asset
         assert.equal(
             (await rawrToken.balanceOf(player2Address)).toString(),

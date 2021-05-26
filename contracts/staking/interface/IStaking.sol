@@ -24,6 +24,6 @@ interface IStaking {
     function claim() external;
 
     /*********************** Events *********************/
-    event Deposit(address sender, uint256 amount, uint256 totalStaked);
-    event Withdraw(address sender, uint256 amount, uint256 remainingStaked);
+    event Deposit(address indexed sender, uint256 amount, uint256 totalStaked);
+    event Withdraw(address indexed sender, uint256 amount, uint256 remainingStaked);
 }

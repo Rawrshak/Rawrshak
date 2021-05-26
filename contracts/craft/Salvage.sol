@@ -56,7 +56,7 @@ contract Salvage is ISalvage, CraftBase {
             ids[i] = id;
         }
 
-        emit SalvageableAssetsUpdated(_assets, ids);
+        emit SalvageableAssetsUpdated(_msgSender(), _assets, ids);
     }
 
     function salvage(LibCraft.AssetData memory _asset, uint256 _amount) external override whenNotPaused() {
@@ -69,7 +69,7 @@ contract Salvage is ISalvage, CraftBase {
 
         _mint(materials, amounts);
 
-        emit AssetSalvaged(_asset, _amount);
+        emit AssetSalvaged(_msgSender(), _asset, _amount);
     }
     
 
@@ -87,7 +87,7 @@ contract Salvage is ISalvage, CraftBase {
             _mint(materials, materialAmounts);
         }
         
-        emit AssetSalvagedBatch(_assets, _amounts);
+        emit AssetSalvagedBatch(_msgSender(), _assets, _amounts);
     }
 
     function getId(LibCraft.AssetData calldata _asset) external pure override returns(uint256) {

@@ -6,10 +6,10 @@ import "../../libraries/LibAsset.sol";
 import "./IRoyaltyProvider.sol";
 import "./IContentSubsystemBase.sol";
 
-interface IContentStorage is IRoyaltyProvider, IContentSubsystemBase {
+interface IContentStorage is IRoyaltyProvider {
 
     /*********************** Events *********************/
-    event AssetsAdded(LibAsset.CreateData[] assets);
+    event AssetsAdded(address indexed parent, LibAsset.CreateData[] assets);
 
     /******** View Functions ********/
     function ids(uint256 _tokenId) external view returns (bool);

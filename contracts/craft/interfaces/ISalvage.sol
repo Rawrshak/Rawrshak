@@ -17,7 +17,7 @@ interface ISalvage {
     function salvageBatch(LibCraft.AssetData[] memory _assets, uint256[] memory _amounts) external;
 
     /*********************** Events *********************/
-    event SalvageableAssetsUpdated(LibCraft.SalvageableAsset[] assets, uint256[] ids);
-    event AssetSalvaged(LibCraft.AssetData asset, uint256 amount);
-    event AssetSalvagedBatch(LibCraft.AssetData[] assets, uint256[] amounts);
+    event SalvageableAssetsUpdated(address indexed operator, LibCraft.SalvageableAsset[] assets, uint256[] ids);
+    event AssetSalvaged(address indexed user, LibCraft.AssetData asset, uint256 amount);
+    event AssetSalvagedBatch(address indexed user, LibCraft.AssetData[] assets, uint256[] amounts);
 }

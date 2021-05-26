@@ -35,9 +35,6 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
     address public override contentContract;
     uint256 public override id;
     bool private isMinted = false;
-    
-    /*********************** Events *********************/
-    event UniqueContentCreated(string name, string symbol, LibAsset.UniqueContentData mintData);
 
     /******************** Public API ********************/
     function __UniqueContent_init(
@@ -63,9 +60,11 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         creator = _mintData.creator;
         id = _mintData.id;
 
+        _setParent(address(this));
+
         _setContractUri(_contractUri);
 
-        emit UniqueContentCreated(_name, _symbol, _mintData);
+        emit UniqueContentCreated(_mintData.creator, _name, _symbol, _mintData);
     }
 
     function getRoyalties(uint256) external view override returns (LibRoyalties.Fees[] memory) {
@@ -141,7 +140,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         require(_msgSender() == creator, "Invalid burn permissions.");
         require(contentContract != address(0), "Invalid Content Contract address");
         require(ownerOf(0) == _msgSender(), "Burner doesn't own this asset");
-        require(isMinted == true, "Unique Content is has already been burned");
+        require(isMinted == true, "Unique Content has already been burned");
         
         _burn(0);
         Content(contentContract).safeTransferFrom(_msgSender(), to, id, 1, "");

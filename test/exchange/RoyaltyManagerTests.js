@@ -25,7 +25,7 @@ contract('Royalty Manager Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "CID-1", 0, [[deployerAddress, 200]]],
+        [1, "CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
         [2, "CID-2", 100, []],
     ];
 
@@ -42,7 +42,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -59,7 +59,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         await contentManager.addAssetBatch(asset);
         
         // Setup Content Contract Royalty
-        var assetRoyalty = [[creator1Address, 200], [creator2Address, 100]];
+        var assetRoyalty = [[creator1Address, web3.utils.toWei('0.02', 'ether')], [creator2Address, web3.utils.toWei('0.01', 'ether')]];
         await contentManager.setContractRoyalties(assetRoyalty);
 
         assetData = [content.address, 2];
@@ -70,7 +70,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         escrow = await EscrowERC20.new();
         await escrow.__EscrowERC20_init(rawrToken.address, {from: deployerAddress});
         feePool = await ExchangeFeePool.new();
-        await feePool.__ExchangeFeePool_init(30, {from: deployerAddress});
+        await feePool.__ExchangeFeePool_init(web3.utils.toWei('0.003', 'ether'), {from: deployerAddress});
 
         manager_role = await escrow.MANAGER_ROLE();
         default_admin_role = await escrow.DEFAULT_ADMIN_ROLE();
@@ -93,7 +93,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         await feePool.registerManager(testManagerAddress, {from:deployerAddress});
 
         // add funds
-        await feePool.updateDistributionFunds([stakingFund], [10000], {from:testManagerAddress});
+        await feePool.updateDistributionFunds([stakingFund], [web3.utils.toWei('1', 'ether')], {from:testManagerAddress});
         
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
@@ -117,13 +117,13 @@ contract('Royalty Manager Contract', (accounts)=> {
     it('Set Platform Fees and check', async () => {
 
         TruffleAssert.eventEmitted(
-            await feePool.setBps(50, {from:testManagerAddress}),
-            'BpsUpdated'
+            await feePool.setRate(web3.utils.toWei('0.005', 'ether'), {from:testManagerAddress}),
+            'FeeUpdated'
         );
 
         assert.equal(
-            await feePool.bps(),
-            50, 
+            await feePool.rate(),
+            web3.utils.toWei('0.005', 'ether'), 
             "updated Exchange Fees rate is incorrect.");
     });
 

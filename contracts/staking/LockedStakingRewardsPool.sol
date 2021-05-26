@@ -21,7 +21,7 @@ contract LockedStakingRewardsPool is LockedFundBase {
     uint256 public intervalsBeforeEmissionRateStabilization;    // 260 - 5 years (260 weeks)
 
     /*********************** Events *********************/
-    event FundsReleased(uint256 amount, uint256 lockedFundsLeft, uint256 newEmissionsRate, uint256 intervalsLeft);
+    event FundsReleased(address indexed operator, uint256 amount, uint256 lockedFundsLeft, uint256 newEmissionsRate, uint256 intervalsLeft);
     
     /******************** Public API ********************/
     function __LockedStakingRewardsPool_init(
@@ -51,7 +51,7 @@ contract LockedStakingRewardsPool is LockedFundBase {
         // Note: LockedStakingRewardsPool must have minter role
         TokenBase(token).mint(address(this), _amount);
 
-        emit FundsReloaded(_amount, lockedSupply);
+        emit FundsReloaded(_msgSender(), _amount, lockedSupply);
     }
 
     // _staking amount received from the staking contract
@@ -89,7 +89,7 @@ contract LockedStakingRewardsPool is LockedFundBase {
         StakingRewardsPool(rewardsPool).receiveFunds(releasedFunds);
         _erc20().transfer(rewardsPool, releasedFunds);
 
-        emit FundsReleased(releasedFunds, lockedSupply, emissionRate, intervalsBeforeEmissionRateStabilization);
+        emit FundsReleased(_msgSender(), releasedFunds, lockedSupply, emissionRate, intervalsBeforeEmissionRateStabilization);
     }
     
     uint256[50] private __gap;

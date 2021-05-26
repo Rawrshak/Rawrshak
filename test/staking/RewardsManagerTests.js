@@ -79,9 +79,9 @@ contract('Rewards Manager Contract Tests', (accounts) => {
 
         // Set up exchange fee pool and deposit 1,000,000 tokens
         feePool = await ExchangeFeePool.new();
-        await feePool.__ExchangeFeePool_init(200, {from: deployerAddress});
+        await feePool.__ExchangeFeePool_init(web3.utils.toWei('0.02', 'ether'), {from: deployerAddress});
         await feePool.registerManager(deployerAddress, {from:deployerAddress});
-        await feePool.updateDistributionFunds([lockedExchangeRewardsPool.address], [10000]);
+        await feePool.updateDistributionFunds([lockedExchangeRewardsPool.address], [web3.utils.toWei('1', 'ether')]);
         await rawrToken.transfer(feePool.address, web3.utils.toWei('500000', 'ether'), {from: deployerAddress});
         await feePool.depositRoyalty(rawrId, rawrToken.address, web3.utils.toWei('500000', 'ether'), {from: deployerAddress});
 

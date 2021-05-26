@@ -12,5 +12,5 @@ interface IClaimable {
     function claim(uint256 _amount, address _recepient) external;
 
     /*********************** Events *********************/
-    event Claimed(address receipent, uint256 amount, uint256 remaining);
+    event Claimed(address indexed receipent, uint256 amount, uint256 remaining);
 }

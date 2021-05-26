@@ -4,8 +4,9 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../libraries/LibRoyalties.sol";
+import "./ContentSubsystemBase.sol";
 
-abstract contract HasRoyalties is ERC165StorageUpgradeable {
+abstract contract HasRoyalties is ContentSubsystemBase {
 
     /******************** Constants ********************/
     /*
@@ -14,15 +15,15 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
     bytes4 private constant _INTERFACE_ID_ROYALTIES = 0x0982790e;
 
     /***************** Stored Variables *****************/
-    // All assets sales on this contract will pay the contract royalties
+    // All asset sales on this contract will pay the contract royalties
     LibRoyalties.Fees[] public contractRoyalties;
 
     // Specific assets can also have their own royalties set
     mapping (uint256 => LibRoyalties.Fees[]) tokenRoyalties;
     
     /*********************** Events *********************/
-    event TokenRoyaltiesUpdated(uint256 tokenId, LibRoyalties.Fees[] fees);
-    event ContractRoyaltiesUpdated(LibRoyalties.Fees[] fees);
+    event TokenRoyaltiesUpdated(address indexed parent, uint256 indexed tokenId, LibRoyalties.Fees[] fees);
+    event ContractRoyaltiesUpdated(address indexed parent, LibRoyalties.Fees[] fees);
 
     /******************** Public API ********************/
     function __HasRoyalties_init_unchained(LibRoyalties.Fees[] memory _fees) internal initializer {
@@ -42,7 +43,7 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
         for (uint256 i = 0; i < _fees.length; ++i) {
             contractRoyalties.push(_fees[i]);
         }
-        emit ContractRoyaltiesUpdated(_fees);
+        emit ContractRoyaltiesUpdated(_parent(), _fees);
     }
 
     /**
@@ -57,7 +58,7 @@ abstract contract HasRoyalties is ERC165StorageUpgradeable {
         for (uint256 i = 0; i < _fees.length; ++i) {
             tokenRoyalties[_tokenId].push(_fees[i]);
         }
-        emit TokenRoyaltiesUpdated(_tokenId, _fees);
+        emit TokenRoyaltiesUpdated(_parent(), _tokenId, _fees);
     }
 
     /**

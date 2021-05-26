@@ -19,24 +19,24 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
     /***************** Stored Variables *****************/
     mapping(bytes4 => uint256) amounts;
-    uint256 public override bps;
+    uint256 public override rate;
     address[] funds;
     uint256[] percentages;
 
     /******************** Public API ********************/
-    function __ExchangeFeePool_init(uint256 _bps) public initializer {
+    function __ExchangeFeePool_init(uint256 _rate) public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
         _registerInterface(LibConstants._INTERFACE_ID_EXCHANGE_FEE_POOL);
-        bps = _bps;
+        rate = _rate;
     }
  
-    function setBps(uint256 _bps) public override checkPermissions(MANAGER_ROLE) {
-        require(_bps > 0 && _bps < 10000, "Invalid rate");
-        bps = _bps;
-        emit BpsUpdated(bps);
+    function setRate(uint256 _rate) public override checkPermissions(MANAGER_ROLE) {
+        require(_rate > 0 && _rate < 1 ether, "Invalid rate");
+        rate = _rate;
+        emit FeeUpdated(_msgSender(), rate);
     }
 
     // gets the amount in the fee pool
@@ -56,9 +56,9 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
             percentages.push(_percentages[i]);
             totalPercentages = totalPercentages.add(_percentages[i]);
         }
-        require(totalPercentages == 10000, "Percentages do not sum to 10000.");
+        require(totalPercentages == 1 ether, "Percentages do not sum to 1 ether.");
 
-        emit FundsUpdated(_funds, _percentages);
+        emit FundsUpdated(_msgSender(), _funds, _percentages);
     }
 
     function distributionRates() external view override returns(address[] memory _funds, uint256[] memory _percentages) {
@@ -81,11 +81,11 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
         uint256[] memory distributions = new uint256[](funds.length);
         for (uint256 i = 0; i < funds.length; ++i) {
-            distributions[i] = balance.mul(percentages[i]).div(10000);
+            distributions[i] = balance.mul(percentages[i]).div(1 ether);
             IERC20Upgradeable(_tokenAddr).transfer(funds[i], distributions[i]);
         }
 
-        emit FundsDistributed(funds, distributions);
+        emit FundsDistributed(_msgSender(), funds, distributions);
     }
 
     uint256[50] private __gap;

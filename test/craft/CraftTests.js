@@ -40,7 +40,7 @@ contract('Craft Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -85,7 +85,7 @@ contract('Craft Contract', (accounts)=> {
         initialRecipe = [
             [
                 1, // id
-                10000, // crafting rate
+                web3.utils.toWei('1', 'ether'), // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3]
@@ -111,7 +111,7 @@ contract('Craft Contract', (accounts)=> {
         var newRecipe = [
             [
                 recipeId, // id
-                10000, // crafting rate
+                web3.utils.toWei('1', 'ether'), // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -130,7 +130,7 @@ contract('Craft Contract', (accounts)=> {
         var storedRecipeData = await craft.recipe(recipeId.toString());
         
         assert.equal(storedRecipeData.id, recipeId, "recipe id incorrect");
-        assert.equal(storedRecipeData.craftingRate, 10000, "crafting rate incorrect");
+        assert.equal(storedRecipeData.craftingRate, web3.utils.toWei('1', 'ether'), "crafting rate incorrect");
         assert.equal(storedRecipeData.enabled, true, "recipe enabled incorrect");
         assert.equal(storedRecipeData.materials.length, 2, "materials length incorrect");
         assert.equal(storedRecipeData.materialAmounts.length, 2, "materials amounts length incorrect");
@@ -144,7 +144,7 @@ contract('Craft Contract', (accounts)=> {
         var newRecipe = [
             [
                 recipeId1, // id
-                10000, // crafting rate
+                web3.utils.toWei('1', 'ether'), // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -158,7 +158,7 @@ contract('Craft Contract', (accounts)=> {
             ],
             [
                 recipeId2, // id
-                5000, // crafting rate
+                web3.utils.toWei('0.5', 'ether'), // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -178,7 +178,7 @@ contract('Craft Contract', (accounts)=> {
         
         // check recipe 1
         assert.equal(storedRecipeData.id, recipeId1, "recipe id incorrect");
-        assert.equal(storedRecipeData.craftingRate, 10000, "crafting rate incorrect");
+        assert.equal(storedRecipeData.craftingRate, web3.utils.toWei('1', 'ether'), "crafting rate incorrect");
         assert.equal(storedRecipeData.enabled, true, "recipe enabled incorrect");
         assert.equal(storedRecipeData.materials.length, 2, "materials length incorrect");
         assert.equal(storedRecipeData.materialAmounts.length, 2, "materials amounts length incorrect");
@@ -189,7 +189,7 @@ contract('Craft Contract', (accounts)=> {
         var storedRecipeData = await craft.recipe(recipeId2.toString());
         
         assert.equal(storedRecipeData.id, recipeId2, "recipe id incorrect");
-        assert.equal(storedRecipeData.craftingRate, 5000, "crafting rate incorrect");
+        assert.equal(storedRecipeData.craftingRate, web3.utils.toWei('0.5', 'ether'), "crafting rate incorrect");
         assert.equal(storedRecipeData.enabled, false, "recipe enabled incorrect");
         assert.equal(storedRecipeData.materials.length, 2, "materials length incorrect");
         assert.equal(storedRecipeData.materials[0].content, content.address, "material 1 content contract incorrect");
@@ -214,7 +214,7 @@ contract('Craft Contract', (accounts)=> {
         var updateRecipe = [
             [
                 recipeId, // id
-                5000, // crafting rate
+                web3.utils.toWei('0.5', 'ether'), // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -233,7 +233,7 @@ contract('Craft Contract', (accounts)=> {
         var storedRecipeData = await craft.recipe(recipeId.toString());
         
         assert.equal(storedRecipeData.id, recipeId, "recipe id incorrect");
-        assert.equal(storedRecipeData.craftingRate, 5000, "crafting rate incorrect");
+        assert.equal(storedRecipeData.craftingRate, web3.utils.toWei('0.5', 'ether'), "crafting rate incorrect");
         assert.equal(storedRecipeData.enabled, false, "recipe enabled incorrect");
         assert.equal(storedRecipeData.materials.length, 2, "materials length incorrect");
         assert.equal(storedRecipeData.materialAmounts.length, 2, "materials amounts length incorrect");
@@ -280,7 +280,7 @@ contract('Craft Contract', (accounts)=> {
         var invalidRecipe = [
             [
                 1, // id
-                5000, // crafting rate
+                web3.utils.toWei('0.5', 'ether'), // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -302,7 +302,7 @@ contract('Craft Contract', (accounts)=> {
         var invalidRecipe = [
             [
                 0, // id
-                5000, // crafting rate
+                web3.utils.toWei('0.5', 'ether'), // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -324,7 +324,7 @@ contract('Craft Contract', (accounts)=> {
         var invalidRecipe = [
             [
                 0, // id
-                10001, // crafting rate
+                web3.utils.toWei('1.01', 'ether'), // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -347,7 +347,7 @@ contract('Craft Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         var contentStorage2 = await ContentStorage.new();
-        await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, 100]]);
+        await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         var content2 = await Content.new();
         await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address, systemsRegistry.address);
         contentStorage2.setParent(content2.address);
@@ -356,7 +356,7 @@ contract('Craft Contract', (accounts)=> {
         var invalidRecipe = [
             [
                 1, // id
-                10000, // crafting rate
+                web3.utils.toWei('1', 'ether'), // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content2.address, 3],
@@ -378,7 +378,7 @@ contract('Craft Contract', (accounts)=> {
         var invalidRecipe = [
             [
                 1, // id
-                10000, // crafting rate
+                web3.utils.toWei('1', 'ether'), // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -419,7 +419,7 @@ contract('Craft Contract', (accounts)=> {
         var newRecipe = [
             [
                 recipeId1, // id
-                10000, // crafting rate
+                web3.utils.toWei('1', 'ether'), // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -433,7 +433,7 @@ contract('Craft Contract', (accounts)=> {
             ],
             [
                 recipeId2, // id
-                10000, // crafting rate
+                web3.utils.toWei('1', 'ether'), // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],

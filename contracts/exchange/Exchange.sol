@@ -23,21 +23,23 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
     IExecutionManager executionManager;
 
     /*********************** Events *********************/
-    event OrderPlaced(uint256 orderId, LibOrder.OrderData order);
+    event OrderPlaced(address indexed from, uint256 indexed orderId, LibOrder.OrderData order);
     event BuyOrdersFilled(
-        uint256[] _orderIds,
-        uint256[] _amounts,
-        LibOrder.AssetData _asset,
-        bytes4 _token,
+        address indexed from,
+        uint256[] orderIds,
+        uint256[] amounts,
+        LibOrder.AssetData asset,
+        bytes4 token,
         uint256 amountOfAssetsSold);
     event SellOrdersFilled(
-        uint256[] _orderIds,
-        uint256[] _amounts,
-        LibOrder.AssetData _asset,
-        bytes4 _token,
+        address indexed from,
+        uint256[] orderIds,
+        uint256[] amounts,
+        LibOrder.AssetData asset,
+        bytes4 token,
         uint256 amountPaid);
-    event OrderDeleted(uint256 orderId);
-    event FilledOrdersClaimed(uint256[] orderIds);
+    event OrderDeleted(address indexed owner, uint256 orderId);
+    event FilledOrdersClaimed(address indexed owner, uint256[] orderIds);
 
     /******************** Public API ********************/
     function __Exchange_init(address _royaltyManager, address _orderbookManager, address _executionManager) public initializer {
@@ -74,7 +76,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
             executionManager.placeSellOrder(id, _msgSender(), _order.asset, _order.amount);            
         }
 
-        emit OrderPlaced(id, _order);
+        emit OrderPlaced(_msgSender(), id, _order);
     }
 
     function fillBuyOrder(
@@ -121,7 +123,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         // Update Escrow records for the orders
         executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _asset, _token);
 
-        emit BuyOrdersFilled(_orderIds, _amounts, _asset, _token, totalAssetsToSell);
+        emit BuyOrdersFilled(_msgSender(), _orderIds, _amounts, _asset, _token, totalAssetsToSell);
     }
 
     function fillSellOrder(
@@ -169,7 +171,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         // Execute trade
         executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _token);
 
-        emit SellOrdersFilled(_orderIds, _amounts, _asset, _token, amountDue);
+        emit SellOrdersFilled(_msgSender(), _orderIds, _amounts, _asset, _token, amountDue);
     }
 
     function deleteOrders(uint256 _orderId) external {
@@ -184,7 +186,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
             _msgSender(),
             order);
 
-        emit OrderDeleted(_orderId);
+        emit OrderDeleted(_msgSender(), _orderId);
     }
 
     function getOrder(uint256 id) external view returns (LibOrder.OrderData memory) {
@@ -196,7 +198,7 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
         
         executionManager.claimOrders(_msgSender(), orderIds);
         
-        emit FilledOrdersClaimed(orderIds);
+        emit FilledOrdersClaimed(_msgSender(), orderIds);
     }
 
     function tokenEscrow(bytes4 _token) external view returns(address) {
