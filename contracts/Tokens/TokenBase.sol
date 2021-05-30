@@ -23,7 +23,7 @@ abstract contract TokenBase is ERC20Upgradeable, ERC165StorageUpgradeable, Acces
     bytes32 public tokenId;
 
     /******** Events ********/
-    event TokenCreated(address indexed addr, bytes32 id, string indexed name, string indexed symbol, uint256 supply);
+    event TokenCreated(address indexed addr, string name, string symbol, bytes32 id, uint256 supply);
 
     function __TokenBase_init_unchained(uint256 _initialSupply) public initializer {
         // Contract Deployer is now the owner and can set roles
@@ -34,7 +34,7 @@ abstract contract TokenBase is ERC20Upgradeable, ERC165StorageUpgradeable, Acces
 
         _registerInterface(LibConstants._INTERFACE_ID_TOKENBASE);
         tokenId = keccak256(abi.encodePacked(name(), symbol()));
-        emit TokenCreated(address(this), tokenId, name(), symbol(), _initialSupply);
+        emit TokenCreated(address(this), name(), symbol(), tokenId, _initialSupply);
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC165StorageUpgradeable, AccessControlUpgradeable) returns (bool) {

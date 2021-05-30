@@ -19,10 +19,6 @@ module.exports = async function(deployer, networks, accounts) {
         player3Address              // Player 3 test address
     ] = accounts;
 
-    // // deploy RAWR token with 1,000,000,000 initial supply.
-    // const rawrToken = await deployProxy(RawrshakTokenContract, [ web3.utils.toWei('1000000000', 'ether') ], {deployer, initializer: '__RawrToken_init'});
-    // console.log('Deployed', rawrToken.address);
-
     // // Deploy Libraries
     // await deployer.deploy(Utils);
 
