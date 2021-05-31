@@ -7,10 +7,10 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./ContentSubsystemBase.sol";
-import "../libraries/LibAsset.sol";
 import "./SystemsRegistry.sol";
-import "../utils/LibConstants.sol";
 import "./interfaces/IContentStorage.sol";
+import "../libraries/LibAsset.sol";
+import "../utils/LibConstants.sol";
 
 contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasTokenUri {
     using AddressUpgradeable for address;
