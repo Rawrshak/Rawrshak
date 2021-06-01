@@ -79,7 +79,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
             await testContract.setHiddenTokenUri(tokenUris),
             'HiddenTokenUriUpdated',
             (ev) => {
-                return ev.uri == "ipfs:/testCID-1";
+                return ev.id == 1;
             }
         );
         assert.equal(
@@ -94,14 +94,14 @@ contract('HasTokenUri Contract Tests', (accounts) => {
             await testContract.setHiddenTokenUri(tokenUris),
             'HiddenTokenUriUpdated',
             (ev) => {
-                return ev.id == 1 && ev.uri == "ipfs:/testCID-1";
+                return ev.id == 1;
             }
         );
         TruffleAssert.eventEmitted(
             await testContract.setHiddenTokenUri(tokenUris),
             'HiddenTokenUriUpdated',
             (ev) => {
-                return ev.id == 2 && ev.uri == "ipfs:/testCID-2";
+                return ev.id == 2;
             }
         );
     });
@@ -115,8 +115,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
             'HiddenTokenUriUpdated',
             (ev) => {
                 return ev.id == 1 
-                && ev.version == 0
-                && ev.uri == "ipfs:/testCID-1";
+                && ev.version == 0;
             }
         );
         TruffleAssert.eventEmitted(
@@ -124,8 +123,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
             'HiddenTokenUriUpdated',
             (ev) => {
                 return ev.id == 1
-                    && ev.version == 1
-                    && ev.uri == "ipfs:/testCID-1v2";
+                    && ev.version == 1;
             }
         );
         

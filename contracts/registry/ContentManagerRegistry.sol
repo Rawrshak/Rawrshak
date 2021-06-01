@@ -16,7 +16,7 @@ contract ContentManagerRegistry is OwnableUpgradeable, ERC165StorageUpgradeable 
     mapping(address => address[]) public contentManagers;
     address[] test;
 
-    event ContentManagerRegistered(address indexed owner, address indexed content);
+    event ContentManagerRegistered(address indexed owner, address indexed contentManager);
 
     /******************** Public API ********************/
     function __ContentManagerRegistry_init()
