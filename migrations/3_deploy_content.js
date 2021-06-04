@@ -17,9 +17,6 @@ module.exports = async function(deployer, networks, accounts) {
     [
         deployerAddress,            // Address that deployed contracts
         deployerWalletAddress,      // Developer wallet address
-        player1Address,             // Player 1 test address
-        player2Address,             // Player 2 test address
-        player3Address              // Player 3 test address
     ] = accounts;
 
     // Deploy Libraries
@@ -68,6 +65,11 @@ module.exports = async function(deployer, networks, accounts) {
 
     // Register the Content Manager
     await registry.registerContentManager(contentManager.address, {from: deployerAddress});
+
+
+    // give deployerAddress system access
+    var approvalPair = [[deployerAddress, true]];
+    await contentManager.registerSystem(approvalPair);
 
     console.log('Content Deployed: ', content.address);
     console.log('Content Storage Deployed: ', contentStorage.address);
