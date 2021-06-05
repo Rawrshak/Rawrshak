@@ -9,6 +9,11 @@ import "./ISystemsRegistry.sol";
 
 
 interface IContent is IRoyaltyProvider, IERC1155Upgradeable {
+
+    /*********************** Events *********************/
+    event Mint(address operator, LibAsset.MintData data);
+    
+    event Burn(address operator, LibAsset.BurnData data);
     
     /******** View Functions ********/
     function name() external view returns (string memory);

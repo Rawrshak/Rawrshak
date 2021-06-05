@@ -123,6 +123,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
             _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]).add(_data.amounts[i]));
         }
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
+        emit Mint(_msgSender(), _data);
     }
 
     // Asset Burning
@@ -135,6 +136,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         }
 
         _burnBatch(_data.account, _data.tokenIds, _data.amounts);
+        emit Burn(_msgSender(), _data);
     }
 
     // Interface support
