@@ -500,6 +500,15 @@ contract('Craft Contract', (accounts)=> {
             craft.craft(1, 11, {from: playerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
+
+        // disable the recipe
+        await craft.managerSetPause(true, {from: managerAddress});
+        await craft.setRecipeEnabled(1, false, {from: managerAddress});
+        await craft.managerSetPause(false, {from: managerAddress});
+        TruffleAssert.fails(
+            craft.craft(1, 1, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
     });
 
 });

@@ -11,7 +11,7 @@ const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const SystemsRegistry = artifacts.require("SystemsRegistry");
-const ContentManagerRegistry = artifacts.require("ContentManagerRegistry");
+const ContractRegistry = artifacts.require("ContractRegistry");
 
 module.exports = async function(deployer, networks, accounts) {
     [
@@ -29,7 +29,7 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.link(Royalties, [Content, ContentStorage, ContentManager]);
 
     // Deploy the Content Manager Registry
-    const registry = await deployProxy(ContentManagerRegistry, [], {deployer, initializer: '__ContentManagerRegistry_init'});
+    const registry = await deployProxy(ContractRegistry, [], {deployer, initializer: '__ContractRegistry_init'});
 
     // Deploy ERC1155 Content Contracts
     const systemsRegistry = await deployProxy(SystemsRegistry, [], {deployer, initializer: '__SystemsRegistry_init'});
