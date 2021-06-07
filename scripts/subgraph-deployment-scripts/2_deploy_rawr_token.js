@@ -17,5 +17,9 @@ module.exports = async function(deployer, networks, accounts) {
     const rawrToken = await deployProxy(RawrshakTokenContract, [ web3.utils.toWei('1000000000', 'ether') ], {deployer, initializer: '__RawrToken_init'});
     console.log('Deployed', rawrToken.address);
 
+    await rawrToken.transfer(player1Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+    await rawrToken.transfer(player2Address, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
+    await rawrToken.transfer(player3Address, web3.utils.toWei('500000', 'ether'), {from: deployerAddress});
+
     // Note: TransparentUpgradeProxy is the address we talk to.
 };
