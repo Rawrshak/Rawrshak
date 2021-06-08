@@ -90,6 +90,7 @@ contract Craft is ICraft, CraftBase {
 
     function craft(uint256 _id, uint256 _amount) external override whenNotPaused() {
         require(exists(_id) && _amount > 0, "Invalid input");
+        require(recipes[_id].enabled, "Recipe disabled");
         
         // Verify user has all the materials
         _verifyUserAssets(_id, _amount);
@@ -154,7 +155,7 @@ contract Craft is ICraft, CraftBase {
         uint256 requiredAmount = 0;
         for (uint256 i = 0; i < recipes[_id].materials.length && noMissingAsset; ++i) {
             requiredAmount = recipes[_id].materialAmounts[i].mul(_amount);
-            noMissingAsset = IContent(recipes[_id].materials[i].content).balanceOf(_msgSender(), recipes[_id].materials[i].tokenId) > requiredAmount;
+            noMissingAsset = IContent(recipes[_id].materials[i].content).balanceOf(_msgSender(), recipes[_id].materials[i].tokenId) >= requiredAmount;
         }
 
         require(noMissingAsset, "Not enough assets");

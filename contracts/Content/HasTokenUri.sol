@@ -26,7 +26,7 @@ abstract contract HasTokenUri is ContentSubsystemBase {
     
     /*********************** Events *********************/
     event TokenUriPrefixUpdated(address indexed parent, string uriPrefix);
-    event HiddenTokenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version, string uri);
+    event HiddenTokenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
 
     /******************** Public API ********************/
     function __HasTokenUri_init_unchained(string memory _tokenUriPrefix) internal initializer {
@@ -85,7 +85,7 @@ abstract contract HasTokenUri is ContentSubsystemBase {
             tokenUris[_tokenId].version++;
         }
         tokenUris[_tokenId].dataUri.push(_uri);
-        emit HiddenTokenUriUpdated(_parent(), _tokenId, tokenUris[_tokenId].version, _uri);
+        emit HiddenTokenUriUpdated(_parent(), _tokenId, tokenUris[_tokenId].version);
     }
 
     /**

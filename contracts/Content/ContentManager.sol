@@ -58,7 +58,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         contentStorage = IContentStorage(_contentStorage);
         systemsRegistry = ISystemsRegistry(_systemsRegistry);
 
-        emit ContentContractCreated(_msgSender(), _content, _contentStorage, _systemsRegistry);
+        // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _systemsRegistry);
     }
     
     function addAssetBatch(

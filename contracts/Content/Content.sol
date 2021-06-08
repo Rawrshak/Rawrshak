@@ -78,8 +78,9 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
 
     function hiddenTokenUri(uint256 _tokenId) external view override returns (string memory) {
-        // Hidden Token Uri can only be accessed if the user owns the token
-        if (balanceOf(_msgSender(), _tokenId) == 0) {
+        // Hidden Token Uri can only be accessed if the user owns the token or the caller is a registered system address
+        // which is used for token management and development
+        if (balanceOf(_msgSender(), _tokenId) == 0 && !systemsRegistry.isOperatorRegistered(_msgSender())) {
             return "";
         }
         uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId);
@@ -87,8 +88,9 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     }
     
     function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
-        // Hidden Token Uri can only be accessed if the user owns the token
-        if (balanceOf(_msgSender(), _tokenId) == 0) {
+        // Hidden Token Uri can only be accessed if the user owns the token or the caller is a registered system address
+        // which is used for token management and development
+        if (balanceOf(_msgSender(), _tokenId) == 0 && !systemsRegistry.isOperatorRegistered(_msgSender())) {
             return "";
         }
         return dataStorage.hiddenTokenUri(_tokenId, _version);
@@ -121,6 +123,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
             _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]).add(_data.amounts[i]));
         }
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
+        emit Mint(_msgSender(), _data);
     }
 
     // Asset Burning
@@ -133,6 +136,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         }
 
         _burnBatch(_data.account, _data.tokenIds, _data.amounts);
+        emit Burn(_msgSender(), _data);
     }
 
     // Interface support

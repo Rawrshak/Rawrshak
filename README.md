@@ -136,24 +136,7 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
         words.
     
 ## To set up the local graph node:
-    1. open a new terminal/powershell/command prompt and run the deterministic Ganache instruction above
-    2. open a new terminal/powershell/command prompt and "cd B44\docker && docker-compose up"
-        - make sure docker is installed
-        - delete **B44\docker\data** folder if it exists before running "docker-compose up"
-    3. After installing the graph-cli (instructions above), make sure you've created an account on [the graph](https://thegraph.com/)
-       using your github account
-    4. graph init --from-example <github_username>/rawrshak
-    5. truffle compile && truffle migrate --reset
-        Note: make sure the addresses that the smart contracts were deployed to correspond correctly to the addresses in 
-        rawrshak\subgraph.yaml (and rawrshak\src\game.ts).
-    6. copy the updated ABIs from build\contracts\ to rawrshak\abis if these smart contracts were updated after 
-        compiling
-    6. cd rawrshak && yarn && yarn codegen
-    7. yarn create-local (if it hasn't already been created)
-    8. yarn deploy-local (deploy the local graph node)
-        - the powershell running the ganache and docker service should be doing stuff
-    9. confirm that the ethereum data is being parsed properly
-        http://localhost:8000/subgraphs/name/<github_account>/rawrshak/
+    1. refer to the [Rawrshak Graph Node project](https://github.com/gcbsumid/rawrshak-graphnode) for instructions
 
 ## Running Tests
     truffle develop

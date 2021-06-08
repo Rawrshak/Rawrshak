@@ -110,8 +110,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             'HiddenTokenUriUpdated',
             (ev) => {
                 return ev.id == 1
-                    && ev.version == 0
-                    && ev.uri == "CID-1";
+                    && ev.version == 0;
             }
         );
         
@@ -144,8 +143,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             'HiddenTokenUriUpdated',
             (ev) => {
                 return ev.id == 1
-                    && ev.version == 0
-                    && ev.uri == "CID-1";
+                    && ev.version == 0;
             }
         );
         
@@ -154,8 +152,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             'HiddenTokenUriUpdated',
             (ev) => {
                 return ev.id == 2
-                    && ev.version == 0
-                    && ev.uri == "CID-2";
+                    && ev.version == 0;
             }
         );
 

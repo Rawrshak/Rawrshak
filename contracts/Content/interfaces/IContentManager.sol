@@ -10,7 +10,7 @@ import "./ISystemsRegistry.sol";
 interface IContentManager {
 
     /*********************** Events *********************/
-    event ContentContractCreated(address indexed owner, address content, address contentStorage, address systemsRegistry);
+    // event ContentManagerCreated(address indexed owner, address content, address contentStorage, address systemsRegistry);
     
     /******** View Functions ********/
     function content() external view returns(IContent);
