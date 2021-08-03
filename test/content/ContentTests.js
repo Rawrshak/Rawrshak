@@ -18,15 +18,15 @@ contract('Content Contract Tests', (accounts) => {
     var contentStorage;
     var systemsRegistry;
     var asset = [
-        [1, "ipfs:/CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "ipfs:/CID-2", 100, []],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
     ];
 
     beforeEach(async () => {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -100,7 +100,7 @@ contract('Content Contract Tests', (accounts) => {
 
         assert.equal(
             await content.methods['hiddenTokenUri(uint256,uint256)'](1, 0, {from: playerAddress}),
-            "ipfs:/CID-1",
+            "arweave.net/tx/private-uri-1",
             "Token 1 uri is incorrect.");
         
         // test royalties
@@ -128,7 +128,7 @@ contract('Content Contract Tests', (accounts) => {
     it('Add Assets', async () => {
         // invalid add because asset already exists
         var newAssets = [
-            [3, "CID-3", 1000, []]
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, []]
         ];
         
         TruffleAssert.eventEmitted(await contentStorage.addAssetBatch(newAssets), 'AssetsAdded');

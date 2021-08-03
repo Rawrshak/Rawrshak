@@ -24,7 +24,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     
     /******************** Constants ********************/
     /*
-     * Todo: this
+    // Todo: Fix this
      * ERC1155 interface == 0xd9b67a26
      * bytes4(keccak256('name()')) == 0x06fdde03
      * bytes4(keccak256('symbol()')) == 0x95d89b41
@@ -74,17 +74,19 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
 
     // TOKEN URIS
     function tokenUri(uint256 _tokenId) external view override returns (string memory) {
-        return dataStorage.uri(_tokenId);
+        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId, true);
+        return this.tokenUri(_tokenId, version);
+    }
+
+    function tokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
+        return dataStorage.uri(_tokenId, _version);
     }
 
     function hiddenTokenUri(uint256 _tokenId) external view override returns (string memory) {
         // Hidden Token Uri can only be accessed if the user owns the token or the caller is a registered system address
         // which is used for token management and development
-        if (balanceOf(_msgSender(), _tokenId) == 0 && !systemsRegistry.isOperatorRegistered(_msgSender())) {
-            return "";
-        }
-        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId);
-        return dataStorage.hiddenTokenUri(_tokenId, version);
+        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId, false);
+        return this.hiddenTokenUri(_tokenId, version);
     }
     
     function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {

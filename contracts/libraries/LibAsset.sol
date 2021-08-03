@@ -11,7 +11,8 @@ library LibAsset {
         
     struct CreateData {
         uint256 tokenId;
-        string dataUri;
+        string publicDataUri;
+        string hiddenDataUri;
         uint256 maxSupply;
         LibRoyalties.Fees[] fees;
     }

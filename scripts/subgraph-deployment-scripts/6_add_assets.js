@@ -16,8 +16,8 @@ module.exports = async function(deployer, networks, accounts) {
     console.log("Content Manager: ", contentManager.address);
 
     var asset = [
-        [1, "ipfs:/CID-1", 0, [[deployerWalletAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "ipfs:/CID-2", 100, []]
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerWalletAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []]
     ];
     await contentManager.addAssetBatch(asset);
     const content = await Content.deployed();

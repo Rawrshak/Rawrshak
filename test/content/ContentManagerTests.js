@@ -6,7 +6,7 @@ const SystemsRegistry = artifacts.require("SystemsRegistry");
 const TruffleAssert = require("truffle-assertions");
 // const { sign } = require("../mint");
 
-contract('Content Contract Tests', (accounts) => {
+contract('Content Manager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
         deployerAltAddress,         // Alternate deployer address
@@ -19,8 +19,8 @@ contract('Content Contract Tests', (accounts) => {
     var content;
     var contentStorage;
     var asset = [
-        [1, "ipfs:/CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "ipfs:/CID-2", 100, []]
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []]
     ];
     const zeroAddress = "0x0000000000000000000000000000000000000000";
 
@@ -28,7 +28,7 @@ contract('Content Contract Tests', (accounts) => {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -70,7 +70,7 @@ contract('Content Contract Tests', (accounts) => {
     it('Add Assets', async () => {
         // Add 1 asset
         var newAssets = [
-            [3, "ipfs:/CID-3", 1000, []]
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, []]
         ];
         
         await contentManager.addAssetBatch(newAssets);
@@ -81,11 +81,11 @@ contract('Content Contract Tests', (accounts) => {
 
         assert.equal(
             await content.tokenUri(3),
-            "ipfs:/3", 
+            "arweave.net/tx/public-uri-3", 
             "New asset wasn't added.");
         assert.equal(
             await content.methods['hiddenTokenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
-            "ipfs:/CID-3", 
+            "arweave.net/tx/private-uri-3", 
             "New asset wasn't added.");
     });
 
@@ -106,23 +106,9 @@ contract('Content Contract Tests', (accounts) => {
             "lootbox system should be approved.");
     });
 
-    it('Set Token Prefix', async () => {
-        assert.equal(
-            await content.tokenUri(1),
-            "ipfs:/1", 
-            "Token Uri Prefix wasn't set properly.");
-
-        await contentManager.setTokenUriPrefix("ipns:/");
-        
-        assert.equal(
-            await content.tokenUri(1),
-            "ipns:/1", 
-            "Token Uri Prefix wasn't set properly.");
-    });
-
     it('Set Token URI', async () => {
         var assetUri = [
-            [2, "ipfs:/CID-2-v1"]
+            [2, "arweave.net/tx/private-uri-2-v1"]
         ];
         await contentManager.setHiddenTokenUriBatch(assetUri);
 
@@ -131,17 +117,17 @@ contract('Content Contract Tests', (accounts) => {
 
         assert.equal(
             await content.methods['hiddenTokenUri(uint256,uint256)'](2, 0, {from: playerAddress}),
-            "ipfs:/CID-2",
+            "arweave.net/tx/private-uri-2",
             "Token 2 incorrect uri for previous version.");
         
         assert.equal(
             await content.methods['hiddenTokenUri(uint256,uint256)'](2, 1, {from: playerAddress}),
-            "ipfs:/CID-2-v1",
+            "arweave.net/tx/private-uri-2-v1",
             "Token 2 incorrect uri for latest version.");
         
         assert.equal(
             await content.methods['hiddenTokenUri(uint256,uint256)'](2, 2, {from: playerAddress}),
-            "ipfs:/CID-2-v1",
+            "arweave.net/tx/private-uri-2-v1",
             "Token 2 invalid version returns uri for latest version.");
     });
 

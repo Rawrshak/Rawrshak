@@ -27,10 +27,9 @@ contract('Execution Manager Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "CID-2", 100, []],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
     ];
-
     // Rawr Token 
     var rawrId = "0xd4df6855";
     var rawrToken;
@@ -51,7 +50,7 @@ contract('Execution Manager Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
