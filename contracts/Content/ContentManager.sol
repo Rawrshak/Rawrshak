@@ -18,7 +18,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     
     /******************** Constants ********************/
     /*
-     * Todo: this
+    // Todo: Fix this
      * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0xFFFFFFFF
      */
     // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0x00000003;
@@ -70,13 +70,13 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
         systemsRegistry.registerSystems(_operators);
     }
-    
-    function setTokenUriPrefix(string memory _tokenUriPrefix) external override onlyOwner {
-        contentStorage.setTokenUriPrefix(_tokenUriPrefix);
-    }
 
     function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
         contentStorage.setHiddenTokenUriBatch(_assets);
+    }
+    
+    function setPublicTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
+        contentStorage.setPublicTokenUriBatch(_assets);
     }
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external override onlyOwner {

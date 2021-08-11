@@ -18,7 +18,7 @@ interface IContentStorage is IRoyaltyProvider {
 
     function maxSupply(uint256 _tokenId) external view returns (uint256);
 
-    function uri(uint256 _tokenId) external view returns (string memory);
+    function uri(uint256 _tokenId, uint256 _version) external view returns (string memory);
 
     function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view  returns (string memory);
 
@@ -27,9 +27,9 @@ interface IContentStorage is IRoyaltyProvider {
     
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
 
-    function setTokenUriPrefix(string memory _tokenUriPrefix) external;
-
     function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+
+    function setPublicTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
 

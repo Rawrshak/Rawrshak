@@ -19,13 +19,13 @@ contract('Craft Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "SalvageItem-1", 0, []],
-        [2, "SalvageItem-2", 100, []],
-        [3, "Material-1", 10000, []],
-        [4, "Material-2", 10000, []],
-        [5, "Material-3", 10000, []],
-        [6, "Reward-1", 0, []],
-        [7, "Reward-2", 0, []],
+        [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, []],
+        [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, []],
+        [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1",10000, []],
+        [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, []],
+        [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, []],
+        [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, []],
+        [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, []],
     ];
 
     var craft;
@@ -40,7 +40,7 @@ contract('Craft Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
@@ -347,7 +347,7 @@ contract('Craft Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         var contentStorage2 = await ContentStorage.new();
-        await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage2.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
         var content2 = await Content.new();
         await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address, systemsRegistry.address);
         contentStorage2.setParent(content2.address);

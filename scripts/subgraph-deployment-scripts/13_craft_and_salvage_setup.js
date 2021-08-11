@@ -36,7 +36,7 @@ module.exports = async function(deployer, networks, accounts) {
 
     // Deploy ERC1155 Content Contracts
     const systemsRegistry = await deployProxy(SystemsRegistry, [], {deployer, initializer: '__SystemsRegistry_init'});
-    const contentStorage = await deployProxy(ContentStorage, ["ipfs:/", [[deployerWalletAddress, web3.utils.toWei('0.01', 'ether')]]], {deployer, initializer: '__ContentStorage_init'});
+    const contentStorage = await deployProxy(ContentStorage, [[[deployerWalletAddress, web3.utils.toWei('0.01', 'ether')]]], {deployer, initializer: '__ContentStorage_init'});
     const content = await deployProxy(
         Content,
         [
@@ -75,14 +75,14 @@ module.exports = async function(deployer, networks, accounts) {
     
     // Add Assets
     var asset = [
-        [1, "ipfs:/CID-1", 0, []],
-        [2, "ipfs:/CID-2", 0, []],
-        [3, "ipfs:/CID-3", 0, []],
-        [4, "ipfs:/CID-4", 0, []],
-        [5, "ipfs:/CID-5", 0, []],
-        [6, "ipfs:/CID-6", 0, []],
-        [7, "ipfs:/CID-7", 0, []],
-        [8, "ipfs:/CID-8", 0, []],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, []],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 0, []],
+        [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 0, []],
+        [4, "arweave.net/tx/public-uri-4", "arweave.net/tx/private-uri-4", 0, []],
+        [5, "arweave.net/tx/public-uri-5", "arweave.net/tx/private-uri-5", 0, []],
+        [6, "arweave.net/tx/public-uri-6", "arweave.net/tx/private-uri-6", 0, []],
+        [7, "arweave.net/tx/public-uri-7", "arweave.net/tx/private-uri-7", 0, []],
+        [8, "arweave.net/tx/public-uri-8", "arweave.net/tx/private-uri-8", 0, []],
     ];
     await contentManager.addAssetBatch(asset);
 

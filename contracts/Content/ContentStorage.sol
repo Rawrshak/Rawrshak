@@ -18,7 +18,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     
     /******************** Constants ********************/
     /*
-     * Todo: this
+    // Todo: Fix this
      * bytes4(keccak256('contractRoyalties()')) == 0xFFFFFFFF
      */
     // bytes4 private constant _INTERFACE_ID_CONTENT_STORAGE = 0x00000001;
@@ -37,12 +37,11 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
 
     /******************** Public API ********************/
     function __ContentStorage_init(
-        string memory _tokenUriPrefix,
         LibRoyalties.Fees[] memory _contractFees
     ) public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
-        __HasTokenUri_init_unchained(_tokenUriPrefix);
+        __HasTokenUri_init_unchained();
         __HasRoyalties_init_unchained(_contractFees);
         __ContentSubsystemBase_init_unchained();
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
@@ -66,7 +65,8 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
             supply[_assets[i].tokenId] = 0;
             maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
 
-            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].dataUri);
+            _setPublicTokenUri(_assets[i].tokenId, _assets[i].publicDataUri);
+            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].hiddenDataUri);
             
             // if this specific token has a different royalty fees than the contract
             if (_assets[i].fees.length != 0) {
@@ -82,24 +82,26 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     }
 
     // returns the token uri for public token info
-    function uri(uint256 _tokenId) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
-        return _tokenUri(_tokenId);
+    function uri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
+        return _tokenUri(_tokenId, _version, true);
     }
 
     // returns the token uri for private token info
     function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
-        return _hiddenTokenUri(_tokenId, _version);
-    }
-
-    function setTokenUriPrefix(string memory _tokenUriPrefix) external override checkPermissions(OWNER_ROLE) {
-        // this can be set to nothing.
-        _setTokenUriPrefix(_tokenUriPrefix);
+        return _tokenUri(_tokenId, _version, false);
     }
 
     function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setHiddenTokenUri(_assets[i].tokenId, _assets[i].uri);
+        }
+    }
+
+    function setPublicTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            require(ids[_assets[i].tokenId], "Invalid Token Id");
+            _setPublicTokenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
     

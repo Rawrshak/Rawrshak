@@ -23,10 +23,10 @@ interface IContentManager {
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
     
     function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) external;
-    
-    function setTokenUriPrefix(string memory _tokenUriPrefix) external;
 
     function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+
+    function setPublicTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
     

@@ -27,6 +27,8 @@ interface IContent is IRoyaltyProvider, IERC1155Upgradeable {
     function maxSupply(uint256 _tokenId) external view returns (uint256);
 
     function tokenUri(uint256 _tokenId) external view returns (string memory);
+
+    function tokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory);
     
     function hiddenTokenUri(uint256 _tokenId) external view returns (string memory);
     
