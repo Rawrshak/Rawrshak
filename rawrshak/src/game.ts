@@ -1,6 +1,6 @@
 import { ByteArray, BigInt, crypto } from "@graphprotocol/graph-ts"
 import { GameContractCreated } from "../generated/GameFactory/GameFactory"
-import { GameManager } from "../generated/templates/GameManager/GameManager"
+import { GameManager } from "../generated/GameFactory/GameManager"
 
 import {
   Game,
