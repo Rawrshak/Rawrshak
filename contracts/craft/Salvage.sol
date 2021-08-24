@@ -131,8 +131,8 @@ contract Salvage is ISalvage, CraftBase {
         for (uint i = 0; i < _materials.length; ++i) {
             mintData.tokenIds = new uint256[](1);
             mintData.amounts = new uint256[](1);
-            mintData.tokenIds[0] = _materials[i].asset.tokenId;
-            mintData.amounts[0] = _materialAmounts[i];
+            mintData.tokenIds[i] = _materials[i].asset.tokenId;
+            mintData.amounts[i] = _materialAmounts[i];
             IContent(_materials[i].asset.content).mintBatch(mintData);
         }
     }

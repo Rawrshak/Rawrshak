@@ -58,6 +58,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
                 _mintData.contentContract.supportsInterface(LibConstants._INTERFACE_ID_CONTENT),
                 "Invalid Address");
         creator = _mintData.creator;
+        contentContract = _mintData.contentContract;
         id = _mintData.id;
 
         _setParent(address(this));

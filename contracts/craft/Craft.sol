@@ -132,8 +132,8 @@ contract Craft is ICraft, CraftBase {
         for (uint i = 0; i < recipes[_id].materials.length; ++i) {
             burnData.tokenIds = new uint256[](1);
             burnData.amounts = new uint256[](1);
-            burnData.tokenIds[0] = recipes[_id].materials[i].tokenId;
-            burnData.amounts[0] = recipes[_id].materialAmounts[i].mul(_burnAmount);
+            burnData.tokenIds[i] = recipes[_id].materials[i].tokenId;
+            burnData.amounts[i] = recipes[_id].materialAmounts[i].mul(_burnAmount);
             IContent(recipes[_id].materials[i].content).burnBatch(burnData);
         }
     }
@@ -144,8 +144,8 @@ contract Craft is ICraft, CraftBase {
         for (uint i = 0; i < recipes[_id].rewards.length; ++i) {
             mintData.tokenIds = new uint256[](1);
             mintData.amounts = new uint256[](1);
-            mintData.tokenIds[0] = recipes[_id].rewards[i].tokenId;
-            mintData.amounts[0] = recipes[_id].rewardAmounts[i].mul(_rolls);
+            mintData.tokenIds[i] = recipes[_id].rewards[i].tokenId;
+            mintData.amounts[i] = recipes[_id].rewardAmounts[i].mul(_rolls);
             IContent(recipes[_id].rewards[i].content).mintBatch(mintData);
         }
     }
