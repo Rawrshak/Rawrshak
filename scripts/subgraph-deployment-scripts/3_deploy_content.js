@@ -33,13 +33,12 @@ module.exports = async function(deployer, networks, accounts) {
 
     // Deploy ERC1155 Content Contracts
     const systemsRegistry = await deployProxy(SystemsRegistry, [], {deployer, initializer: '__SystemsRegistry_init'});
-    const contentStorage = await deployProxy(ContentStorage, [[[deployerWalletAddress, web3.utils.toWei('0.01', 'ether')]]], {deployer, initializer: '__ContentStorage_init'});
+    const contentStorage = await deployProxy(ContentStorage, [[[deployerWalletAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri"], {deployer, initializer: '__ContentStorage_init'});
     const content = await deployProxy(
         Content,
         [
             "RawrContent",
             "RCONT",
-            "ipfs:/contract-uri",
             contentStorage.address,
             systemsRegistry.address
         ],

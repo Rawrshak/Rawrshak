@@ -11,13 +11,10 @@ const ExecutionManager = artifacts.require("ExecutionManager");
 const AddressRegistry = artifacts.require("AddressRegistry");
 const TruffleAssert = require("truffle-assertions");
 
-contract('Execution Manager Contract', (accounts)=> {
+contract('Execution Manager Contract Buy Tests', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
-        platformAddress,            // platform address fees
         testManagerAddress,         // Only for putting in data for testing
-        creator1Address,             // content nft Address
-        creator2Address,             // creator Address
         playerAddress,              // player 1 address
         player2Address,              // player 2 address
     ] = accounts;
@@ -50,9 +47,9 @@ contract('Execution Manager Contract', (accounts)=> {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
         systemsRegistry.setParent(content.address);
         
@@ -176,27 +173,6 @@ contract('Execution Manager Contract', (accounts)=> {
             "Tokens were not escrowed."
         )
     });
-    
-    it('Place Sell Order', async () => {
-
-        var sellOrderData = [ 
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            2,
-            true
-        ];
-
-        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
-        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
-        
-        assert.equal(
-            await escrowContent.escrowedAssetsByOrder(1),
-            2,
-            "Tokens were not escrowed."
-        )
-    });
 
     it('Execute Buy Order', async () => {
         await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
@@ -246,91 +222,6 @@ contract('Execution Manager Contract', (accounts)=> {
         );
     });
 
-    it('Execute Sell Order', async () => {
-        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
-        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
-
-        var orders = [1];
-        var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
-        var amounts = [1];
-
-        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('1000', 'ether'), {from:player2Address});
-        await executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress});
-
-        assert.equal(
-            await escrowRawr.escrowedTokensByOrder(1),
-            web3.utils.toWei('1000', 'ether').toString(),
-            "Tokens were not sent to escrow."
-        )
-    });
-
-    it('Invalid Execute Sell Order', async () => {
-        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
-        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
-
-        var orders = [1, 2];
-        var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
-        var amounts = [1];
-        var asset = [content.address, 1];
-
-        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('1000', 'ether'), {from:player2Address});
-        await TruffleAssert.fails(
-            executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:player2Address});
-        paymentPerOrder = [web3.utils.toWei('1000', 'ether'), web3.utils.toWei('1000', 'ether')];
-        await TruffleAssert.fails(
-            executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-    });
-
-    it('Delete Order', async () => {
-        var sellOrderData = [ 
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            2,
-            false
-        ];
-
-        await orderbookStorage.placeOrder(1, sellOrderData, {from: testManagerAddress});
-        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
-        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
-        
-        await executionManager.deleteOrder(1, playerAddress, sellOrderData, {from: deployerAddress});
-
-        assert.equal(
-            await escrowContent.escrowedAssetsByOrder(1),
-            0,
-            "Assets are still escrowed."
-        );
-        
-        var buyOrderData = [ 
-            [content.address, 2],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            2,
-            true
-        ];
-
-        await orderbookStorage.placeOrder(2, buyOrderData, {from: testManagerAddress});
-        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
-        await executionManager.placeBuyOrder(2, rawrId, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
-        
-        await executionManager.deleteOrder(2, playerAddress, buyOrderData, {from: deployerAddress});
-
-        assert.equal(
-            await escrowRawr.escrowedTokensByOrder(1),
-            0,
-            "Tokens are still escrowed."
-        )
-    });
-
     it('Claim Assets from Filled Buy Order', async () => {
         // Create and fill a buy order
         var buyOrderData = [ 
@@ -361,55 +252,4 @@ contract('Execution Manager Contract', (accounts)=> {
             "Asset was not claimed properly."
         )
     });
-
-    it('Claim Tokens from Filled Sell Order', async () => {
-        // Create and fill a sell order
-        var sellOrderData = [ 
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            2,
-            false
-        ];
-
-        await orderbookStorage.placeOrder(1, sellOrderData, {from: testManagerAddress});
-        await content.setApprovalForAll(escrowContent.address, true, {from:playerAddress});
-        await executionManager.placeSellOrder(1, playerAddress, [content.address, 1], 2, {from: deployerAddress});
-
-        var orders = [1];
-        var paymentPerOrder = [web3.utils.toWei('1000', 'ether')];
-        var amounts = [2];
-
-        await rawrToken.approve(escrowRawr.address, web3.utils.toWei('2000', 'ether'), {from:player2Address});
-        await executionManager.executeSellOrder(player2Address, orders, paymentPerOrder, amounts, rawrId, {from:deployerAddress});
-
-        await executionManager.claimOrders(playerAddress, orders, {from:deployerAddress});
-
-        assert.equal(
-            await escrowRawr.escrowedTokensByOrder(1),
-            0,
-            "Tokens are still escrowed."
-        )
-    });
-
-    it('Verify User Token Balance', async () => {
-        assert.equal(
-            await executionManager.verifyUserBalance(playerAddress, rawrId, web3.utils.toWei('15000', 'ether')),
-            true,
-            "Player doesn't have the necessary token balance");
-    });
-
-    it('Verify Token is supported', async () => {
-        assert.equal(
-            await executionManager.verifyToken(rawrId),
-            true,
-            "Token should be supported.");
-            
-        assert.equal(
-            await executionManager.verifyToken("0xda3f6852"),
-            false,
-            "Token should not be supported");
-    });
-    
 });

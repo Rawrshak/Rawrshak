@@ -15,7 +15,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     beforeEach(async () => {
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
     });
 
     it('Check Content Storage proper deployment', async () => {
@@ -34,6 +34,12 @@ contract('ContentStorage Contract Tests', (accounts) => {
             true, 
             "the token doesn't support the ContentStorage interface");
             
+        // HasContractUri interface
+        assert.equal(
+            await contentStorage.supportsInterface("0xe8a3d485"),
+            true, 
+            "the token doesn't support the HasContractUri interface");
+
         // HasTokenUri interface
         assert.equal(
             await contentStorage.supportsInterface("0xcac843cb"),
@@ -101,7 +107,16 @@ contract('ContentStorage Contract Tests', (accounts) => {
         
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'PublicUriUpdated',
+            (ev) => {
+                return ev.id == 1
+                    && ev.version == 0;
+            }
+        );
+        
+        TruffleAssert.eventEmitted(
+            results,
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 0;
@@ -134,7 +149,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         // Check the token URIs
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 0;
@@ -143,7 +158,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'PublicUriUpdated',
             (ev) => {
                 return ev.id == 2
                     && ev.version == 0;
@@ -214,20 +229,37 @@ contract('ContentStorage Contract Tests', (accounts) => {
         ];
         await contentStorage.addAssetBatch(asset);
 
+        // Test Public Uri
         assert.equal(
-            await contentStorage.hiddenTokenUri(1, 0),
-            "arweave.net/tx/private-uri-1",
+            await contentStorage.uri(1, 0),
+            "arweave.net/tx/public-uri-1",
             "Token 1 incorrect uri");
 
         assert.equal(
-            await contentStorage.hiddenTokenUri(2, 0),
-            "arweave.net/tx/private-uri-2",
+            await contentStorage.uri(2, 0),
+            "arweave.net/tx/public-uri-2",
             "Token 2 incorrect uri");
 
         assert.equal(
-            await contentStorage.hiddenTokenUri(3, 0),
-            "arweave.net/tx/private-uri-3",
+            await contentStorage.uri(3, 0),
+            "arweave.net/tx/public-uri-3",
             "Token 3 incorrect uri");
+            
+        // Test Hidden Uri
+        assert.equal(
+            await contentStorage.hiddenUri(1, 0),
+            "arweave.net/tx/private-uri-1",
+            "Token 1 incorrect hidden uri");
+
+        assert.equal(
+            await contentStorage.hiddenUri(2, 0),
+            "arweave.net/tx/private-uri-2",
+            "Token 2 incorrect hidden uri");
+
+        assert.equal(
+            await contentStorage.hiddenUri(3, 0),
+            "arweave.net/tx/private-uri-3",
+            "Token 3 incorrect hidden uri");
             
         // Update Asset 2
         var assetUri = [
@@ -235,30 +267,28 @@ contract('ContentStorage Contract Tests', (accounts) => {
         ];
         
         TruffleAssert.eventEmitted(
-            await contentStorage.setHiddenTokenUriBatch(assetUri),
-            'HiddenTokenUriUpdated'
+            await contentStorage.setHiddenUriBatch(assetUri),
+            'HiddenUriUpdated'
         );
         
         assert.equal(
-            await contentStorage.hiddenTokenUri(2, 1),
+            await contentStorage.hiddenUri(2, 1),
             "arweave.net/tx/private-uri-2v1",
-            "Token 2 incorrect uri");
-
-        // Test token uri
+            "Token 2 incorrect hidden uri");
+            
+        // Update Asset 3
+        var assetUri = [
+            [3, "arweave.net/tx/public-uri-3v1"]
+        ];
+        
+        TruffleAssert.eventEmitted(
+            await contentStorage.setPublicUriBatch(assetUri),
+            'PublicUriUpdated'
+        );
         
         assert.equal(
-            await contentStorage.uri(1, 0),
-            "arweave.net/tx/public-uri-1",
-            "Token 2 incorrect uri");
-        
-        assert.equal(
-            await contentStorage.uri(2, 0),
-            "arweave.net/tx/public-uri-2",
-            "Token 2 incorrect uri");
-    
-        assert.equal(
-            await contentStorage.uri(3, 0),
-            "arweave.net/tx/public-uri-3",
-            "Token 2 incorrect uri");
+            await contentStorage.uri(3, 1),
+            "arweave.net/tx/public-uri-3v1",
+            "Token 3 incorrect uri");
     });
 });

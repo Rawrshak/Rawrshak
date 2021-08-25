@@ -28,9 +28,9 @@ contract('Content Manager Contract Tests', (accounts) => {
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, systemsRegistry.address);
         contentStorage.setParent(content.address);
         systemsRegistry.setParent(content.address);
 
@@ -80,13 +80,15 @@ contract('Content Manager Contract Tests', (accounts) => {
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(
-            await content.tokenUri(3),
+            await content.uri(3),
             "arweave.net/tx/public-uri-3", 
             "New asset wasn't added.");
-        assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
-            "arweave.net/tx/private-uri-3", 
-            "New asset wasn't added.");
+        
+        // Todo: Move this hiddenUri() test to the ContentWithHiddenData contract tests once added
+        // assert.equal(
+        //     await content.methods['hiddenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
+        //     "arweave.net/tx/private-uri-3", 
+        //     "New asset wasn't added.");
     });
 
     it('Set operators for System Approval', async () => {        
@@ -108,26 +110,26 @@ contract('Content Manager Contract Tests', (accounts) => {
 
     it('Set Token URI', async () => {
         var assetUri = [
-            [2, "arweave.net/tx/private-uri-2-v1"]
+            [2, "arweave.net/tx/public-uri-2-v1"]
         ];
-        await contentManager.setHiddenTokenUriBatch(assetUri);
+        await contentManager.setPublicUriBatch(assetUri);
 
         var mintData = [playerAddress, [2], [1], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 0, {from: playerAddress}),
-            "arweave.net/tx/private-uri-2",
+            await content.methods['uri(uint256,uint256)'](2, 0, {from: playerAddress}),
+            "arweave.net/tx/public-uri-2",
             "Token 2 incorrect uri for previous version.");
         
         assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 1, {from: playerAddress}),
-            "arweave.net/tx/private-uri-2-v1",
+            await content.methods['uri(uint256,uint256)'](2, 1, {from: playerAddress}),
+            "arweave.net/tx/public-uri-2-v1",
             "Token 2 incorrect uri for latest version.");
         
         assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 2, {from: playerAddress}),
-            "arweave.net/tx/private-uri-2-v1",
+            await content.methods['uri(uint256,uint256)'](2, 2, {from: playerAddress}),
+            "arweave.net/tx/public-uri-2-v1",
             "Token 2 invalid version returns uri for latest version.");
     });
 
