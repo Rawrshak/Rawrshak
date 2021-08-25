@@ -24,9 +24,9 @@ interface IContentManager {
     
     function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) external;
 
-    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
-    function setPublicTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
     

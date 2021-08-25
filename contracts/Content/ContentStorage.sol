@@ -6,13 +6,14 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
+import "./HasContractUri.sol";
 import "./ContentSubsystemBase.sol";
 import "./SystemsRegistry.sol";
 import "./interfaces/IContentStorage.sol";
 import "../libraries/LibAsset.sol";
 import "../utils/LibConstants.sol";
 
-contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasTokenUri {
+contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasContractUri, HasTokenUri {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -37,12 +38,14 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
 
     /******************** Public API ********************/
     function __ContentStorage_init(
-        LibRoyalties.Fees[] memory _contractFees
+        LibRoyalties.Fees[] memory _contractFees,
+        string memory _contractUri
     ) public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __HasTokenUri_init_unchained();
         __HasRoyalties_init_unchained(_contractFees);
+        __HasContractUri_init_unchained(_contractUri);
         __ContentSubsystemBase_init_unchained();
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -65,8 +68,8 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
             supply[_assets[i].tokenId] = 0;
             maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
 
-            _setPublicTokenUri(_assets[i].tokenId, _assets[i].publicDataUri);
-            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].hiddenDataUri);
+            _setPublicUri(_assets[i].tokenId, _assets[i].publicDataUri);
+            _setHiddenUri(_assets[i].tokenId, _assets[i].hiddenDataUri);
             
             // if this specific token has a different royalty fees than the contract
             if (_assets[i].fees.length != 0) {
@@ -87,21 +90,21 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     }
 
     // returns the token uri for private token info
-    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
+    function hiddenUri(uint256 _tokenId, uint256 _version) external view override checkPermissions(OWNER_ROLE) returns (string memory) {
         return _tokenUri(_tokenId, _version, false);
     }
 
-    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
+    function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
-            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].uri);
+            _setHiddenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
 
-    function setPublicTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
+    function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external override checkPermissions(OWNER_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
-            _setPublicTokenUri(_assets[i].tokenId, _assets[i].uri);
+            _setPublicUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
     
