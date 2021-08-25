@@ -56,7 +56,6 @@ library LibAsset {
         address creator;
         address contentContract;
         uint256 id;
-        string contractUri;
         LibRoyalties.Fees[] contractFees;
     }
 

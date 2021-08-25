@@ -19,12 +19,12 @@ abstract contract HasTokenUri is ContentSubsystemBase {
 
     /***************** Stored Variables *****************/
     // Optional mapping for token URIs
-    mapping(uint256 => LibAsset.Asset) private publicTokenUris;
-    mapping(uint256 => LibAsset.Asset) private hiddenTokenUris;
+    mapping(uint256 => LibAsset.Asset) private publicUris;
+    mapping(uint256 => LibAsset.Asset) private hiddenUris;
     
     /*********************** Events *********************/
-    event PublicTokenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
-    event HiddenTokenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
+    event PublicUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
+    event HiddenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
 
     /******************** Public API ********************/
     function __HasTokenUri_init_unchained() internal initializer {
@@ -38,9 +38,9 @@ abstract contract HasTokenUri is ContentSubsystemBase {
      */
     function getLatestUriVersion(uint256 _tokenId, bool _isPublic) public view returns (uint256) {
         if (_isPublic) {
-            return publicTokenUris[_tokenId].version;
+            return publicUris[_tokenId].version;
         }
-        return hiddenTokenUris[_tokenId].version;
+        return hiddenUris[_tokenId].version;
     }
 
     /**************** Internal Functions ****************/
@@ -53,16 +53,16 @@ abstract contract HasTokenUri is ContentSubsystemBase {
     function _tokenUri(uint256 _tokenId, uint256 _version, bool _isPublic) internal view returns (string memory) {
         if (_isPublic) {
             // if they're requesting a version that doesn't exist, return latest version
-            if (_version > publicTokenUris[_tokenId].version) {
-                _version = publicTokenUris[_tokenId].version;
+            if (_version > publicUris[_tokenId].version) {
+                _version = publicUris[_tokenId].version;
             }
-            return publicTokenUris[_tokenId].dataUri[_version];
+            return publicUris[_tokenId].dataUri[_version];
         }
         // if they're requesting a version that doesn't exist, return latest version
-        if (_version > hiddenTokenUris[_tokenId].version) {
-            _version = hiddenTokenUris[_tokenId].version;
+        if (_version > hiddenUris[_tokenId].version) {
+            _version = hiddenUris[_tokenId].version;
         }
-        return hiddenTokenUris[_tokenId].dataUri[_version];
+        return hiddenUris[_tokenId].dataUri[_version];
     }
 
     /**
@@ -71,17 +71,25 @@ abstract contract HasTokenUri is ContentSubsystemBase {
      * @param _tokenId uint256 ID of the token to set its URI
      * @param _uri string URI to assign
      */
-    function _setHiddenTokenUri(uint256 _tokenId, string memory _uri) internal {
+    function _setHiddenUri(uint256 _tokenId, string memory _uri) internal {
         // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
         // we introduce a versioning system. As game assets can break and get updated, asset owners can
         // opt to use older versions of assets.
-        if (hiddenTokenUris[_tokenId].dataUri.length == 0) {
-            hiddenTokenUris[_tokenId].version = 0;
-        } else {
-            hiddenTokenUris[_tokenId].version++;
+
+        // Check if _uri is an empty string. If it is, return early and don't add anything. This means that
+        // the developer cannot delete a uri that has been set.
+        bytes memory tempEmptyStringTest = bytes(_uri); // Uses memory
+        if (tempEmptyStringTest.length == 0) {
+            return;
         }
-        hiddenTokenUris[_tokenId].dataUri.push(_uri);
-        emit HiddenTokenUriUpdated(_parent(), _tokenId, hiddenTokenUris[_tokenId].version);
+
+        if (hiddenUris[_tokenId].dataUri.length == 0) {
+            hiddenUris[_tokenId].version = 0;
+        } else {
+            hiddenUris[_tokenId].version++;
+        }
+        hiddenUris[_tokenId].dataUri.push(_uri);
+        emit HiddenUriUpdated(_parent(), _tokenId, hiddenUris[_tokenId].version);
     }
 
     /**
@@ -89,17 +97,17 @@ abstract contract HasTokenUri is ContentSubsystemBase {
      * @param _tokenId uint256 ID of the token to set its URI
      * @param _uri string URI to assign
      */
-    function _setPublicTokenUri(uint256 _tokenId, string memory _uri) internal {
+    function _setPublicUri(uint256 _tokenId, string memory _uri) internal {
         // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
         // we introduce a versioning system. As game assets can break and get updated, asset owners can
         // opt to use older versions of assets.
-        if (publicTokenUris[_tokenId].dataUri.length == 0) {
-            publicTokenUris[_tokenId].version = 0;
+        if (publicUris[_tokenId].dataUri.length == 0) {
+            publicUris[_tokenId].version = 0;
         } else {
-            publicTokenUris[_tokenId].version++;
+            publicUris[_tokenId].version++;
         }
-        publicTokenUris[_tokenId].dataUri.push(_uri);
-        emit PublicTokenUriUpdated(_parent(), _tokenId, publicTokenUris[_tokenId].version);
+        publicUris[_tokenId].dataUri.push(_uri);
+        emit PublicUriUpdated(_parent(), _tokenId, publicUris[_tokenId].version);
     }
     
     uint256[50] private __gap;

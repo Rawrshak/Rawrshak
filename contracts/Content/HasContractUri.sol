@@ -3,8 +3,9 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "./ContentSubsystemBase.sol";
+import "./interfaces/IContractUri.sol";
 
-abstract contract HasContractUri is ContentSubsystemBase {
+abstract contract HasContractUri is IContractUri, ContentSubsystemBase {
 
     /******************** Constants ********************/
     /*
@@ -14,26 +15,26 @@ abstract contract HasContractUri is ContentSubsystemBase {
 
     /***************** Stored Variables *****************/
     // Contract Information Uri
-    string internal contractUri;
+    string public override contractUri;
 
     /*********************** Events *********************/
     event ContractUriUpdated(address indexed parent, string uriPrefix);
 
     /******************** Public API ********************/
-    function __HasContractUri_init_unchained(string memory _contractUri) internal initializer {
-        contractUri = _contractUri;
+    function __HasContractUri_init_unchained(string memory _uri) internal initializer {
+        contractUri = _uri;
         _registerInterface(_INTERFACE_ID_CONTRACT_URI);
     }
 
     /**************** Internal Functions ****************/
     /**
      * @dev Internal function to set the contract Uri
-     * @param _contractUri string Uri prefix to assign
+     * @param _uri string Uri prefix to assign
      */
-    function _setContractUri(string memory _contractUri) internal {
-        contractUri = _contractUri;
+    function _setContractUri(string memory _uri) internal {
+        contractUri = _uri;
 
-        emit ContractUriUpdated(_parent(), _contractUri);
+        emit ContractUriUpdated(_parent(), _uri);
     }
     
     uint256[50] private __gap;

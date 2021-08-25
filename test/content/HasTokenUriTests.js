@@ -40,8 +40,8 @@ contract('HasTokenUri Contract Tests', (accounts) => {
     it('Set Token 1 with proper uri', async () => {
         var tokenUris = [[1, "arweave.net/tx/hiddentoken"]];
         TruffleAssert.eventEmitted(
-            await testContract.setHiddenTokenUri(tokenUris),
-            'HiddenTokenUriUpdated',
+            await testContract.setHiddenUri(tokenUris),
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1;
             }
@@ -49,8 +49,8 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         
         tokenUris = [[1, "arweave.net/tx/publictoken"]];
         TruffleAssert.eventEmitted(
-            await testContract.setPublicTokenUri(tokenUris),
-            'PublicTokenUriUpdated',
+            await testContract.setPublicUri(tokenUris),
+            'PublicUriUpdated',
             (ev) => {
                 return ev.id == 1;
             }
@@ -69,15 +69,15 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         // Set Private Token Uri
         var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [2, "arweave.net/tx/hiddentoken-2"]];
         TruffleAssert.eventEmitted(
-            await testContract.setHiddenTokenUri(tokenUris),
-            'HiddenTokenUriUpdated',
+            await testContract.setHiddenUri(tokenUris),
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1;
             }
         );
         TruffleAssert.eventEmitted(
-            await testContract.setHiddenTokenUri(tokenUris),
-            'HiddenTokenUriUpdated',
+            await testContract.setHiddenUri(tokenUris),
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 2;
             }
@@ -94,15 +94,15 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         // Set Public Token Uri
         var tokenUris = [[1, "arweave.net/tx/publictoken-1"], [2, "arweave.net/tx/publictoken-2"]];
         TruffleAssert.eventEmitted(
-            await testContract.setPublicTokenUri(tokenUris),
-            'PublicTokenUriUpdated',
+            await testContract.setPublicUri(tokenUris),
+            'PublicUriUpdated',
             (ev) => {
                 return ev.id == 1;
             }
         );
         TruffleAssert.eventEmitted(
-            await testContract.setPublicTokenUri(tokenUris),
-            'PublicTokenUriUpdated',
+            await testContract.setPublicUri(tokenUris),
+            'PublicUriUpdated',
             (ev) => {
                 return ev.id == 2;
             }
@@ -119,11 +119,11 @@ contract('HasTokenUri Contract Tests', (accounts) => {
 
     it('Set Multiple tokens with the same id', async () => {
         var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
-        var results = await testContract.setHiddenTokenUri(tokenUris);
+        var results = await testContract.setHiddenUri(tokenUris);
 
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1 
                 && ev.version == 0;
@@ -131,7 +131,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
         );
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 1;
@@ -152,7 +152,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
 
     it('Token Uri with invalid version', async () => {
         var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
-        await testContract.setHiddenTokenUri(tokenUris);
+        await testContract.setHiddenUri(tokenUris);
 
         // check latest version
         assert.equal(
@@ -169,7 +169,7 @@ contract('HasTokenUri Contract Tests', (accounts) => {
 
     it('Get Latest version', async () => {
         var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
-        await testContract.setHiddenTokenUri(tokenUris);
+        await testContract.setHiddenUri(tokenUris);
 
         // check latest version for hidden token uri
         assert.equal(

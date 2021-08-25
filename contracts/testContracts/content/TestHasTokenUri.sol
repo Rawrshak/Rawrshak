@@ -13,15 +13,15 @@ contract TestHasTokenUri is HasTokenUri {
         return _tokenUri(_tokenId, _version, _isPublic);
     }
 
-    function setPublicTokenUri(LibAsset.AssetUri[] memory _assets) external {
+    function setPublicUri(LibAsset.AssetUri[] memory _assets) external {
         for (uint256 i = 0; i < _assets.length; ++i) {
-            _setPublicTokenUri(_assets[i].tokenId, _assets[i].uri);
+            _setPublicUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
 
-    function setHiddenTokenUri(LibAsset.AssetUri[] memory _assets) external {
+    function setHiddenUri(LibAsset.AssetUri[] memory _assets) external {
         for (uint256 i = 0; i < _assets.length; ++i) {
-            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].uri);
+            _setHiddenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
 }

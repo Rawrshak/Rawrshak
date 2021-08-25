@@ -32,8 +32,6 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
      * bytes4(keccak256('supply(uint256)')) == 0x35403023
      * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
      * bytes4(keccak256('tokenUri(uint256)')) == 0x1675f455
-     * bytes4(keccak256('hiddenTokenUri(uint256)')) == 0x58a71a09
-     * bytes4(keccak256('hiddenTokenUri(uint256,uint256)')) == 0x37282594
      * bytes4(keccak256('approveAllSystems(bool)')) == 0x04a90ad5
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
      * bytes4(keccak256('burnBatch(LibAsset.BurnData memory)')) == 0xa0a862d5
@@ -50,7 +48,6 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     function __Content_init(
         string memory _name,
         string memory _symbol,
-        string memory _contractUri,
         IContentStorage _dataStorage,
         ISystemsRegistry _systemsRegistry)
         public initializer
@@ -58,7 +55,17 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         __Ownable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
-        __ERC1155_init_unchained(_contractUri);
+        __ERC1155_init_unchained("");
+        __Content_init_unchained(_name, _symbol, _dataStorage, _systemsRegistry);
+    }
+
+    function __Content_init_unchained(
+        string memory _name,
+        string memory _symbol,
+        IContentStorage _dataStorage,
+        ISystemsRegistry _systemsRegistry)
+        internal initializer
+    {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
         name = _name;
         symbol = _symbol;
@@ -72,32 +79,22 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         return systemsRegistry.userApprove(_msgSender(), _approve);
     }
 
-    // TOKEN URIS
-    function tokenUri(uint256 _tokenId) external view override returns (string memory) {
-        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId, true);
-        return this.tokenUri(_tokenId, version);
+    // CONTRACT URI
+    function contractUri() external view override returns (string memory) {
+        return dataStorage.contractUri();
     }
 
-    function tokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
+    // TOKEN URIS
+    function uri(uint256 _tokenId) public view override returns (string memory) {
+        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId, true);
+        return this.uri(_tokenId, version);
+    }
+
+    function uri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
         return dataStorage.uri(_tokenId, _version);
     }
-
-    function hiddenTokenUri(uint256 _tokenId) external view override returns (string memory) {
-        // Hidden Token Uri can only be accessed if the user owns the token or the caller is a registered system address
-        // which is used for token management and development
-        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId, false);
-        return this.hiddenTokenUri(_tokenId, version);
-    }
     
-    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
-        // Hidden Token Uri can only be accessed if the user owns the token or the caller is a registered system address
-        // which is used for token management and development
-        if (balanceOf(_msgSender(), _tokenId) == 0 && !systemsRegistry.isOperatorRegistered(_msgSender())) {
-            return "";
-        }
-        return dataStorage.hiddenTokenUri(_tokenId, _version);
-    }
-        // Royalties
+    // Royalties
     function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
         return dataStorage.getRoyalties(_tokenId);
     }

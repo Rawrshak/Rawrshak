@@ -1,4 +1,3 @@
-
 // Library Contracts
 const Constants = artifacts.require("LibConstants");
 const Asset = artifacts.require("LibAsset");
