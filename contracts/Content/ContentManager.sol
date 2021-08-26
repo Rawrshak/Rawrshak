@@ -111,21 +111,21 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     }
 
     function addContractTags(string[] memory _tags) external override onlyOwner {
-        tagsManager.addContractTags(address(this), _tags);
+        tagsManager.addContractTags(address(content), _tags);
     }
 
     function removeContractTags(string[] memory _tags) external override onlyOwner {
-        tagsManager.removeContractTags(address(this), _tags);
+        tagsManager.removeContractTags(address(content), _tags);
     }
 
     function addAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
         require(contentStorage.ids(_id), "token id doesn't exist.");
-        tagsManager.addAssetTags(address(this), _id, _tags);
+        tagsManager.addAssetTags(address(content), _id, _tags);
     }
     
     function removeAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
         require(contentStorage.ids(_id), "token id doesn't exist.");
-        tagsManager.removeAssetTags(address(this), _id, _tags);
+        tagsManager.removeAssetTags(address(content), _id, _tags);
     }
     
     uint256[50] private __gap;

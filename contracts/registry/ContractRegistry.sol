@@ -8,12 +8,10 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import "../utils/LibConstants.sol";
-import "../content/ContentManager.sol";
-import "../content/TagsManager.sol";
+import "../content/interfaces/ITagsManager.sol";
 import "../craft/Craft.sol";
 import "../craft/Salvage.sol";
 
-// Todo: Create a Contract Registry Test
 contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
@@ -24,7 +22,7 @@ contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
     EnumerableSetUpgradeable.AddressSet contentManagers;
     EnumerableSetUpgradeable.AddressSet craft;
     EnumerableSetUpgradeable.AddressSet salvage;
-    TagsManager public tagsManager;
+    ITagsManager public tagsManager;
 
     event ContentManagerRegistered(address indexed owner, address indexed contentManager);
     event CraftRegistered(address indexed manager, address indexed craft);
@@ -38,37 +36,41 @@ contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
         __Ownable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
-        _registerInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER_REGISTRY);
+        __ContractRegistry_init_unchained();
+    }
+    
+    function __ContractRegistry_init_unchained() internal initializer {
+        _registerInterface(LibConstants._INTERFACE_ID_CONTRACT_REGISTRY);
     }
 
-    function registerContentManager(Content _contentManager) external {
-        require(address(_contentManager) != address(0) && address(_contentManager).isContract(), "Invalid Address");
-        require(_contentManager.owner() == _msgSender(), "Sender is not owner");
+    function registerContentManager(address _contentManager) external {
+        require(_contentManager != address(0) && _contentManager.isContract(), "Invalid Address");
+        require(OwnableUpgradeable(_contentManager).owner() == _msgSender(), "Sender is not owner");
         require(_contentManager.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER), "Invalid input interface");
 
-        owners[_msgSender()].add(address(_contentManager));
-        contentManagers.add(address(_contentManager));
-        emit ContentManagerRegistered(_msgSender(), address(_contentManager));
+        owners[_msgSender()].add(_contentManager);
+        contentManagers.add(_contentManager);
+        emit ContentManagerRegistered(_msgSender(), _contentManager);
     }
 
-    function registerCraft(Craft _craft) external {
-        require(address(_craft) != address(0) && address(_craft).isContract(), "Invalid Address");
-        require(_craft.hasRole(_craft.MANAGER_ROLE(), msg.sender), "Invalid permissions.");
+    function registerCraft(address _craft) external {
+        require(_craft != address(0) && _craft.isContract(), "Invalid Address");
         require(_craft.supportsInterface(LibConstants._INTERFACE_ID_CRAFT), "Invalid input interface");
+        require(Craft(_craft).hasRole(Craft(_craft).MANAGER_ROLE(), msg.sender), "Invalid permissions.");
 
-        owners[_msgSender()].add(address(_craft));
-        craft.add(address(_craft));
-        emit CraftRegistered(_msgSender(), address(_craft));
+        owners[_msgSender()].add(_craft);
+        craft.add(_craft);
+        emit CraftRegistered(_msgSender(), _craft);
     }
 
-    function registerSalvage(Salvage _salvage) external {
-        require(address(_salvage) != address(0) && address(_salvage).isContract(), "Invalid Address");
-        require(_salvage.hasRole(_salvage.MANAGER_ROLE(), msg.sender), "Invalid permissions.");
+    function registerSalvage(address _salvage) external {
+        require(_salvage != address(0) && _salvage.isContract(), "Invalid Address");
         require(_salvage.supportsInterface(LibConstants._INTERFACE_ID_SALVAGE), "Invalid input interface");
+        require(Salvage(_salvage).hasRole(Salvage(_salvage).MANAGER_ROLE(), msg.sender), "Invalid permissions.");
 
-        owners[_msgSender()].add(address(_salvage));
-        salvage.add(address(_salvage));
-        emit SalvageRegistered(_msgSender(), address(_salvage));
+        owners[_msgSender()].add(_salvage);
+        salvage.add(_salvage);
+        emit SalvageRegistered(_msgSender(), _salvage);
     }
 
     function isRegistered(address _contractAddress) external view returns(bool) {
@@ -85,12 +87,12 @@ contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
         return false;
     }
 
-    function setTagsManager(TagsManager _manager) external onlyOwner {
-        require(address(_manager) != address(0) && address(_manager).isContract(), "Invalid Address");
+    function setTagsManager(address _manager) external onlyOwner {
+        require(_manager != address(0) && _manager.isContract(), "Invalid Address");
         require(_manager.supportsInterface(LibConstants._INTERFACE_ID_TAGS_MANAGER), "Invalid input interface");
 
-        tagsManager = _manager;
+        tagsManager = ITagsManager(_manager);
 
-        emit TagsManagerSet(address(_manager));
+        emit TagsManagerSet(_manager);
     }
 }

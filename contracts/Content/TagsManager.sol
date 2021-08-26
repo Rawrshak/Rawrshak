@@ -10,8 +10,8 @@ import "../utils/LibConstants.sol";
 import "../registry/ContractRegistry.sol";
 import "./interfaces/ITagsManager.sol";
 
-// Todo: Update Tags Manager tests
 contract TagsManager is ITagsManager, OwnableUpgradeable, ERC165StorageUpgradeable {
+    using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
 
     // Todo: Fix this
@@ -50,7 +50,6 @@ contract TagsManager is ITagsManager, OwnableUpgradeable, ERC165StorageUpgradeab
         __TagsManager_init_unchained(_contractRegistry);
     }
 
-    /******************** Public API ********************/
     function __TagsManager_init_unchained(address _contractRegistry) internal initializer {
         _registerInterface(LibConstants._INTERFACE_ID_TAGS_MANAGER);
         contractRegistry = ContractRegistry(_contractRegistry);
