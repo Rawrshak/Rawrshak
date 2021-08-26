@@ -36,7 +36,7 @@ contract('Content Contract Tests', (accounts) => {
         var approvalPair = [[deployerAddress, true], [craftingSystemAddress, true]];
         await systemsRegistry.registerSystems(approvalPair);
 
-        // Add 1 asset        
+        // Add 1 asset
         await contentStorage.addAssetBatch(asset);
     });
 

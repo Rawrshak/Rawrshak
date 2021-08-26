@@ -9,6 +9,8 @@ const EscrowNFTs = artifacts.require("EscrowNFTs");
 const OrderbookStorage = artifacts.require("OrderbookStorage");
 const ExecutionManager = artifacts.require("ExecutionManager");
 const AddressRegistry = artifacts.require("AddressRegistry");
+const ContractRegistry = artifacts.require("ContractRegistry");
+const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Execution Manager Contract Sell Tests', (accounts)=> {
@@ -46,6 +48,11 @@ contract('Execution Manager Contract Sell Tests', (accounts)=> {
     var assetData;
 
     beforeEach(async () => {
+        registry = await ContractRegistry.new();
+        await registry.__ContractRegistry_init();
+        tagsManager = await TagsManager.new();
+        await tagsManager.__TagsManager_init(registry.address);
+
         // Set up NFT Contract
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
@@ -58,7 +65,7 @@ contract('Execution Manager Contract Sell Tests', (accounts)=> {
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address, tagsManager.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});

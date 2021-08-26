@@ -12,6 +12,7 @@ const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const SystemsRegistry = artifacts.require("SystemsRegistry");
 const ContractRegistry = artifacts.require("ContractRegistry");
+const TagsManager = artifacts.require("TagsManager");
 
 module.exports = async function(deployer, networks, accounts) {
     [
@@ -28,8 +29,12 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.link(Asset, [Content, ContentStorage, ContentManager, SystemsRegistry]);
     await deployer.link(Royalties, [Content, ContentStorage, ContentManager]);
 
-    // Deploy the Content Manager Registry
+    // Deploy the Contracts Registry
     const registry = await deployProxy(ContractRegistry, [], {deployer, initializer: '__ContractRegistry_init'});
+
+    // Deploy the Tags Manager Registry
+    const tagsManager = await deployProxy(TagsManager, [registry.address], {deployer, initializer: '__TagsManager_init'});
+    await registry.setTagsManager(tagsManager.address, {from: deployerAddress});
 
     // Deploy ERC1155 Content Contracts
     const systemsRegistry = await deployProxy(SystemsRegistry, [], {deployer, initializer: '__SystemsRegistry_init'});
@@ -54,7 +59,8 @@ module.exports = async function(deployer, networks, accounts) {
         [
             content.address,
             contentStorage.address,
-            systemsRegistry.address
+            systemsRegistry.address,
+            tagsManager.address
         ],
         {deployer, initializer: '__ContentManager_init'});
 

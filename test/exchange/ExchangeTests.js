@@ -13,6 +13,8 @@ const ExecutionManager = artifacts.require("ExecutionManager");
 const RoyaltyManager = artifacts.require("RoyaltyManager");
 const Exchange = artifacts.require("Exchange");
 const AddressRegistry = artifacts.require("AddressRegistry");
+const ContractRegistry = artifacts.require("ContractRegistry");
+const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Exchange Contract', (accounts)=> {
@@ -60,6 +62,11 @@ contract('Exchange Contract', (accounts)=> {
     const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     beforeEach(async () => {
+        registry = await ContractRegistry.new();
+        await registry.__ContractRegistry_init();
+        tagsManager = await TagsManager.new();
+        await tagsManager.__TagsManager_init(registry.address);
+        
         // Set up NFT Contract
         systemsRegistry = await SystemsRegistry.new();
         await systemsRegistry.__SystemsRegistry_init();
@@ -72,7 +79,7 @@ contract('Exchange Contract', (accounts)=> {
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address, tagsManager.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});

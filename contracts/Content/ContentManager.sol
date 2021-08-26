@@ -13,7 +13,6 @@ import "./interfaces/ISystemsRegistry.sol";
 import "./interfaces/IUniqueContent.sol";
 import "./interfaces/ITagsManager.sol";
 
-// Todo: Need to fix all the tests to account for the adding tagsManager to the init function
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
