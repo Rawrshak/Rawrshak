@@ -10,7 +10,7 @@ import "../libraries/LibTags.sol";
 // import "../utils/StringEnumerableMaps.sol";
 import "../utils/LibConstants.sol";
 
-abstract contract TagsManager is OwnableUpgradeable, ERC165StorageUpgradeable {
+contract TagsManager is OwnableUpgradeable, ERC165StorageUpgradeable {
     // using StringsUpgradeable for uint256;
     // using StringEnumerableMaps for *;
     using EnumerableSetUpgradeable for *;
@@ -37,7 +37,7 @@ abstract contract TagsManager is OwnableUpgradeable, ERC165StorageUpgradeable {
     //       investigation, but will probably work. Will leave as a Todo for now.
 
     /******************** Public API ********************/
-    function __TagsManager_init() internal initializer {
+    function __TagsManager_init() public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __TagsManager_init_unchained();
@@ -48,6 +48,7 @@ abstract contract TagsManager is OwnableUpgradeable, ERC165StorageUpgradeable {
         _registerInterface(LibConstants._INTERFACE_ID_TAGS_MANAGER);
     }
 
+    // Todo: check if the caller is a registered Content Manager
     function addContractTags(address _addr, string[] memory _tags) external {
         for (uint256 i = 0; i < _tags.length; ++i) {
             LibTags.TagData storage tagData = tags[bytes4(keccak256(abi.encodePacked(_tags[i])))];
