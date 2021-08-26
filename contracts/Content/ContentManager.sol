@@ -11,7 +11,9 @@ import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
 import "./interfaces/ISystemsRegistry.sol";
 import "./interfaces/IUniqueContent.sol";
+import "./interfaces/ITagsManager.sol";
 
+// Todo: Need to fix all the tests to account for the adding tagsManager to the init function
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
@@ -27,19 +29,15 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     IContent public override content;
     IContentStorage public override contentStorage;
     ISystemsRegistry public override systemsRegistry;
-
-    /********************* Modifiers ********************/
-    modifier addressExists(address addr) {
-        require(addr != address(0), "Invalid permissions.");
-        _;
-    }
+    ITagsManager private tagsManager;
 
     /******************** Public API ********************/
     
     function __ContentManager_init(
         address _content,
         address _contentStorage,
-        address _systemsRegistry
+        address _systemsRegistry,
+        address _tagsManager
     )
         public initializer
     {
@@ -53,10 +51,12 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         require(_contentStorage != address(0) && _contentStorage.isContract() && 
                 _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
                 "Invalid Address");
+        require(_tagsManager != address(0) && _tagsManager.isContract(),"Invalid Address");
 
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
         systemsRegistry = ISystemsRegistry(_systemsRegistry);
+        tagsManager = ITagsManager(_tagsManager);
 
         // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _systemsRegistry);
     }
@@ -108,6 +108,24 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         
         content.mintBatch(_data);
         IUniqueContent(_uniqueContentContract).mint(to);
+    }
+
+    function addContractTags(string[] memory _tags) external override onlyOwner {
+        tagsManager.addContractTags(address(this), _tags);
+    }
+
+    function removeContractTags(string[] memory _tags) external override onlyOwner {
+        tagsManager.removeContractTags(address(this), _tags);
+    }
+
+    function addAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
+        require(contentStorage.ids(_id), "token id doesn't exist.");
+        tagsManager.addAssetTags(address(this), _id, _tags);
+    }
+    
+    function removeAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
+        require(contentStorage.ids(_id), "token id doesn't exist.");
+        tagsManager.removeAssetTags(address(this), _id, _tags);
     }
     
     uint256[50] private __gap;

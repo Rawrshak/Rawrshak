@@ -39,4 +39,12 @@ interface IContentManager {
         address _uniqueContentContract,
         address to
     ) external;
+
+    function addContractTags(string[] memory _tags) external;
+
+    function removeContractTags(string[] memory _tags) external;
+
+    function addAssetTags(uint256 _id, string[] memory _tags) external;
+    
+    function removeAssetTags(uint256 _id, string[] memory _tags) external;
 }
