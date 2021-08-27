@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/introspection/ERC165.sol";
@@ -7,11 +7,10 @@ import "@openzeppelin/contracts/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/ICrafting.sol";
-import "./Crafting.sol";
+import "../factory/CraftingFactory.sol";
 import "../interfaces/ICraftingManager.sol";
 import "../interfaces/IGlobalItemRegistry.sol";
 import "../tokens/TokenBase.sol";
-import "../factory/CraftingFactory.sol";
 import "../utils/Constants.sol";
 
 // Todo: Single Game Crafting Contract: more efficient for single game contracts
