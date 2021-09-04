@@ -67,15 +67,15 @@ module.exports = async function(deployer, networks, accounts) {
     
 
     // Mint Default assets for players
-    // Player 3
+    // Player 2
     itemIds = [3,4,5,6,7,8,9,18,19];
     mintAmounts = [1,1,1,1,1,1,1,1,1];
-    await battlefield3Manager.mintBatch(player3Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
+    await battlefield3Manager.mintBatch(player2Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
     
-    // Player 5
+    // Player 4
     itemIds = [3,4,5,6,7,8,9,18,19];
     mintAmounts = [1,1,1,1,1,1,1,1,1];
-    await battlefield3Manager.mintBatch(player5Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
+    await battlefield3Manager.mintBatch(player4Address, itemIds, mintAmounts, {from:nintendoAddress, gasPrice: 1});
 
     // // Todo: Update this for Marketplace demo
     // // Approve developer address for sales
