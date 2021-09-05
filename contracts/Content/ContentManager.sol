@@ -9,7 +9,7 @@ import "./UniqueContent.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
-import "./interfaces/ISystemsRegistry.sol";
+import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IUniqueContent.sol";
 import "./interfaces/ITagsManager.sol";
 
@@ -27,7 +27,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     /***************** Stored Variables *****************/
     IContent public override content;
     IContentStorage public override contentStorage;
-    ISystemsRegistry public override systemsRegistry;
+    IAccessControlManager public override accessControlManager;
     ITagsManager private tagsManager;
 
     /******************** Public API ********************/
@@ -35,7 +35,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     function __ContentManager_init(
         address _content,
         address _contentStorage,
-        address _systemsRegistry,
+        address _accessControlManager,
         address _tagsManager
     )
         public initializer
@@ -54,10 +54,10 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
 
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
-        systemsRegistry = ISystemsRegistry(_systemsRegistry);
+        accessControlManager = IAccessControlManager(_accessControlManager);
         tagsManager = ITagsManager(_tagsManager);
 
-        // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _systemsRegistry);
+        // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _accessControlManager);
     }
     
     function addAssetBatch(
@@ -69,9 +69,9 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     function registerOperators(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
         for (uint256 i = 0; i < _operators.length; ++i) {
             if (_operators[i].approved) {
-                IAccessControlUpgradeable(address(systemsRegistry)).grantRole(systemsRegistry.MINTER_ROLE(), _operators[i].operator);
+                IAccessControlUpgradeable(address(accessControlManager)).grantRole(accessControlManager.MINTER_ROLE(), _operators[i].operator);
             } else {
-                IAccessControlUpgradeable(address(systemsRegistry)).revokeRole(systemsRegistry.MINTER_ROLE(), _operators[i].operator);
+                IAccessControlUpgradeable(address(accessControlManager)).revokeRole(accessControlManager.MINTER_ROLE(), _operators[i].operator);
             }
         }
     }

@@ -5,7 +5,7 @@ pragma solidity >=0.6.0 <0.9.0;
 import "../../libraries/LibAsset.sol";
 import "./IContentSubsystemBase.sol";
 
-interface ISystemsRegistry {
+interface IAccessControlManager {
 
     /******** View Functions ********/
     function MINTER_ROLE() external view returns(bytes32);

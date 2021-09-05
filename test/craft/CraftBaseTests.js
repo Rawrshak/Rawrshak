@@ -2,7 +2,7 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const TestCraftBase = artifacts.require("TestCraftBase");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
@@ -29,21 +29,21 @@ contract('Craft Base Contract', (accounts)=> {
         await tagsManager.__TagsManager_init(registry.address);
 
         // Set up NFT Contract
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, systemsRegistry.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
         contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        accessControlManager.setParent(content.address);
 
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address, tagsManager.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         craftBase = await TestCraftBase.new();
         await craftBase.__TestCraftBase_init(1000);

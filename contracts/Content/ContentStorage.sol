@@ -8,7 +8,6 @@ import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./HasContractUri.sol";
 import "./ContentSubsystemBase.sol";
-import "./SystemsRegistry.sol";
 import "./interfaces/IContentStorage.sol";
 import "../libraries/LibAsset.sol";
 import "../utils/LibConstants.sol";

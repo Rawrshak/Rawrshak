@@ -2,7 +2,7 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
@@ -33,20 +33,20 @@ contract('Content Manager Contract Tests', (accounts) => {
         tagsManager = await TagsManager.new();
         await tagsManager.__TagsManager_init(registry.address);
 
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, systemsRegistry.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
         contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        accessControlManager.setParent(content.address);
 
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address, tagsManager.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
         var approvalPair = [[craftingSystemAddress, true]];
@@ -83,7 +83,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         
         await contentManager.addAssetBatch(newAssets);
 
-        // const signature = await sign(playerAddress, [1], [1], 1, null, await content.systemsRegistry());
+        // const signature = await sign(playerAddress, [1], [1], 1, null, await content.accessControlManager());
         var mintData = [playerAddress, [3], [10], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
@@ -103,7 +103,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         await content.approveAllSystems(true, {from: playerAddress});
 
         assert.equal(
-            await systemsRegistry.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
+            await accessControlManager.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
             false,
             "lootbox system not should be approved yet.");
 
@@ -111,7 +111,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         await contentManager.registerSystem(lootboxApprovalPair);
 
         assert.equal(
-            await systemsRegistry.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
+            await accessControlManager.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
             true,
             "lootbox system should be approved.");
     });

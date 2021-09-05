@@ -2,7 +2,7 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const TestCraft = artifacts.require("TestCraft");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
@@ -45,21 +45,21 @@ contract('Craft Contract', (accounts)=> {
         await tagsManager.__TagsManager_init(registry.address);
 
         // Set up NFT Contract
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, systemsRegistry.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
         contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        accessControlManager.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address, tagsManager.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
         // give crafting system approval
         var approvalPair = [[creatorAddress, true]];
@@ -352,14 +352,14 @@ contract('Craft Contract', (accounts)=> {
 
         // materials invalid content permission
         // test invalid contract asset
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlRegistry_init();
         var contentStorage2 = await ContentStorage.new();
         await contentStorage2.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         var content2 = await Content.new();
-        await content2.__Content_init("Test Content Contract", "TEST2", contentStorage2.address, systemsRegistry.address);
+        await content2.__Content_init("Test Content Contract", "TEST2", contentStorage2.address, accessControlManager.address);
         contentStorage2.setParent(content2.address);
-        systemsRegistry.setParent(content2.address);
+        accessControlManager.setParent(content2.address);
         
         var invalidRecipe = [
             [

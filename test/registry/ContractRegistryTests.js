@@ -4,7 +4,7 @@ const ContractRegistry = artifacts.require("ContractRegistry");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const Craft = artifacts.require("Craft");
 const Salvage = artifacts.require("Salvage");
 const TruffleAssert = require("truffle-assertions");
@@ -20,7 +20,7 @@ contract('Contract Registry Tests', (accounts) => {
 
     var registry;
     var tagsManager;  
-    var systemsRegistry;  
+    var accessControlManager;  
     var contentStorage;  
     var content;
     var contentManager;
@@ -38,20 +38,20 @@ contract('Contract Registry Tests', (accounts) => {
         await tagsManager.__TagsManager_init(registry.address);
 
         // Content Contracts are next (Especially ContentManager)
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlRegistry_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, systemsRegistry.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
         contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        accessControlManager.setParent(content.address);
 
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address, tagsManager.address, {from: deployerAddress});
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address, {from: deployerAddress});
         await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         
         craft = await Craft.new();
         await craft.__Craft_init(1000);

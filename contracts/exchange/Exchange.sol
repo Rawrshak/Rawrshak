@@ -3,6 +3,7 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./EscrowERC20.sol";
@@ -12,7 +13,7 @@ import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IOrderbookManager.sol";
 import "./interfaces/IExecutionManager.sol";
 
-contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
+contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -44,7 +45,6 @@ contract Exchange is OwnableUpgradeable, ERC165StorageUpgradeable {
     /******************** Public API ********************/
     function __Exchange_init(address _royaltyManager, address _orderbookManager, address _executionManager) public initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
         require(
             _royaltyManager != address(0) && _orderbookManager != address(0) && _executionManager != address(0),
             "Address cannot be empty."

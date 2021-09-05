@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-import "../../content/SystemsRegistry.sol";
+import "../../content/AccessControlManager.sol";
 
-contract TestSystemsRegistry is SystemsRegistry {
+contract TestAccessControlManager is AccessControlManager {
     using ECDSAUpgradeable for bytes32;
 
-    function __TestSystemsRegistry_init() external initializer {
-        __SystemsRegistry_init();
+    function __TestAccessControlManager_init() external initializer {
+        __AccessControlManager_init();
     }
 
     function recover(LibAsset.MintData memory _data) external view returns(address) {

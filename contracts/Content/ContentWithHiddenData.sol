@@ -15,14 +15,14 @@ abstract contract ContentWithHiddenData is IHiddenData, Content {
         string memory _symbol,
         string memory _contractUri,
         IContentStorage _dataStorage,
-        ISystemsRegistry _systemsRegistry)
+        IAccessControlManager _accessControlManager)
         public initializer
     {
-        __Ownable_init_unchained();
+        // __Ownable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC1155_init_unchained(_contractUri);
-        __Content_init_unchained(_name, _symbol, _dataStorage, _systemsRegistry);
+        __Content_init_unchained(_name, _symbol, _dataStorage, _accessControlManager);
         __ContentWithHiddenData_init_unchained();
     }
 
@@ -40,10 +40,10 @@ abstract contract ContentWithHiddenData is IHiddenData, Content {
     function hiddenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
         // Hidden Token Uri can only be accessed if the user owns the token or the caller is the contract owner or 
         // a minter address which is used for token management and development
-        AccessControlUpgradeable accessControlRegistry = AccessControlUpgradeable(address(systemsRegistry));
+        AccessControlUpgradeable accessControlRegistry = AccessControlUpgradeable(address(accessControlManager));
         if (balanceOf(_msgSender(), _tokenId) == 0 && 
             !accessControlRegistry.hasRole(accessControlRegistry.DEFAULT_ADMIN_ROLE(), _msgSender()) && 
-            !accessControlRegistry.hasRole(systemsRegistry.MINTER_ROLE(), _msgSender())) {
+            !accessControlRegistry.hasRole(accessControlManager.MINTER_ROLE(), _msgSender())) {
             return "";
         }
         return dataStorage.hiddenUri(_tokenId, _version);

@@ -10,7 +10,7 @@ const Royalties = artifacts.require("LibRoyalties");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
 
@@ -25,8 +25,8 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.deploy(Asset);
     await deployer.deploy(Royalties);
 
-    await deployer.link(Constants, [Content, ContentStorage, ContentManager, SystemsRegistry]);
-    await deployer.link(Asset, [Content, ContentStorage, ContentManager, SystemsRegistry]);
+    await deployer.link(Constants, [Content, ContentStorage, ContentManager, AccessControlManager]);
+    await deployer.link(Asset, [Content, ContentStorage, ContentManager, AccessControlManager]);
     await deployer.link(Royalties, [Content, ContentStorage, ContentManager]);
 
     // Deploy the Contracts Registry
@@ -37,7 +37,7 @@ module.exports = async function(deployer, networks, accounts) {
     await registry.setTagsManager(tagsManager.address, {from: deployerAddress});
 
     // Deploy ERC1155 Content Contracts
-    const systemsRegistry = await deployProxy(SystemsRegistry, [], {deployer, initializer: '__SystemsRegistry_init'});
+    const accessControlManager = await deployProxy(AccessControlManager, [], {deployer, initializer: '__AccessControlRegistry_init'});
     const contentStorage = await deployProxy(ContentStorage, [[[deployerWalletAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri"], {deployer, initializer: '__ContentStorage_init'});
     const content = await deployProxy(
         Content,
@@ -45,13 +45,13 @@ module.exports = async function(deployer, networks, accounts) {
             "RawrContent",
             "RCONT",
             contentStorage.address,
-            systemsRegistry.address
+            accessControlManager.address
         ],
         {deployer, initializer: '__Content_init'});
 
     // set content as for the subsystems Parent 
     await contentStorage.setParent(content.address, {from: deployerAddress});
-    await systemsRegistry.setParent(content.address, {from: deployerAddress});
+    await accessControlManager.setParent(content.address, {from: deployerAddress});
 
     // Deploy Content Contract Manager
     const contentManager = await deployProxy(
@@ -59,14 +59,14 @@ module.exports = async function(deployer, networks, accounts) {
         [
             content.address,
             contentStorage.address,
-            systemsRegistry.address,
+            accessControlManager.address,
             tagsManager.address
         ],
         {deployer, initializer: '__ContentManager_init'});
 
     await content.transferOwnership(contentManager.address, {from: deployerAddress});
     await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-    await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+    await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 
     // Register the Content Manager
     await registry.registerContentManager(contentManager.address, {from: deployerAddress});
@@ -79,6 +79,6 @@ module.exports = async function(deployer, networks, accounts) {
     console.log('Content Deployed: ', content.address);
     console.log('Content Storage Deployed: ', contentStorage.address);
     console.log('Content Manager Deployed: ', contentManager.address);
-    console.log('Systems Registry Deployed: ', systemsRegistry.address);
+    console.log('Systems Registry Deployed: ', accessControlManager.address);
     console.log('Content Manager Registry Deployed: ', registry.address);
 };

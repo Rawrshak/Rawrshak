@@ -9,11 +9,11 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "../libraries/LibAsset.sol";
-import "./interfaces/ISystemsRegistry.sol";
+import "./interfaces/IAccessControlManager.sol";
 import "../utils/LibConstants.sol";
 import "./ContentSubsystemBase.sol";
 
-contract SystemsRegistry is ISystemsRegistry, ContentSubsystemBase, AccessControlUpgradeable, EIP712Upgradeable {
+contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, AccessControlUpgradeable, EIP712Upgradeable {
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
     using ECDSAUpgradeable for bytes32;
@@ -38,10 +38,15 @@ contract SystemsRegistry is ISystemsRegistry, ContentSubsystemBase, AccessContro
     }
 
     /******************** Public API ********************/
-    function __SystemsRegistry_init() public initializer {
+    function __AccessControlManager_init() public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __EIP712_init_unchained("MintData", "1");
+        __AccessControlManager_init_unchained();
+    }
+    
+    function __AccessControlManager_init_unchained() internal initializer
+    {
         _registerInterface(LibConstants._INTERFACE_ID_SYSTEMS_REGISTRY);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }

@@ -4,7 +4,6 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
@@ -14,10 +13,10 @@ import "./HasTokenUri.sol";
 import "../libraries/LibRoyalties.sol";
 import "../utils/LibConstants.sol";
 import "./interfaces/IContent.sol";
-import "./interfaces/ISystemsRegistry.sol";
+import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";
 
-contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
+contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     using SafeMathUpgradeable for uint256;
@@ -28,7 +27,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
      * ERC1155 interface == 0xd9b67a26
      * bytes4(keccak256('name()')) == 0x06fdde03
      * bytes4(keccak256('symbol()')) == 0x95d89b41
-     * bytes4(keccak256('systemsRegistry()')) == 0x2795ea5a
+     * bytes4(keccak256('accessControlManager()')) == 0x2795ea5a
      * bytes4(keccak256('supply(uint256)')) == 0x35403023
      * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
      * bytes4(keccak256('tokenUri(uint256)')) == 0x1675f455
@@ -42,28 +41,28 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
     string public override name;
     string public override symbol;
     IContentStorage dataStorage;
-    ISystemsRegistry public override systemsRegistry;
+    IAccessControlManager public override accessControlManager;
 
     /******************** Public API ********************/
     function __Content_init(
         string memory _name,
         string memory _symbol,
         IContentStorage _dataStorage,
-        ISystemsRegistry _systemsRegistry)
+        IAccessControlManager _accessControlManager)
         public initializer
     {
-        __Ownable_init_unchained();
+        // __Ownable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC1155_init_unchained("");
-        __Content_init_unchained(_name, _symbol, _dataStorage, _systemsRegistry);
+        __Content_init_unchained(_name, _symbol, _dataStorage, _accessControlManager);
     }
 
     function __Content_init_unchained(
         string memory _name,
         string memory _symbol,
         IContentStorage _dataStorage,
-        ISystemsRegistry _systemsRegistry)
+        IAccessControlManager _accessControlManager)
         internal initializer
     {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
@@ -71,7 +70,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         symbol = _symbol;
 
         dataStorage = _dataStorage;
-        systemsRegistry = _systemsRegistry;
+        accessControlManager = _accessControlManager;
     }
 
     // CONTRACT URI
@@ -104,7 +103,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
 
     // Asset Minting
     function mintBatch(LibAsset.MintData memory _data) external override {
-        systemsRegistry.verifyMint(_data, _msgSender());
+        accessControlManager.verifyMint(_data, _msgSender());
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             
             require(_tokenExists(_data.tokenIds[i]), "token id missing");

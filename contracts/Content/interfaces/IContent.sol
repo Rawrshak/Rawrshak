@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.so
 import "../../libraries/LibRoyalties.sol";
 import "./IRoyaltyProvider.sol";
 import "../../libraries/LibAsset.sol";
-import "./ISystemsRegistry.sol";
+import "./IAccessControlManager.sol";
 import "./IContractUri.sol";
 
 interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
@@ -20,7 +20,7 @@ interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
     
     function symbol() external view returns (string memory);
     
-    function systemsRegistry() external view returns (ISystemsRegistry);
+    function accessControlManager() external view returns (IAccessControlManager);
 
     function supply(uint256 _tokenId) external view returns (uint256);
     

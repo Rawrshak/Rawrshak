@@ -1,10 +1,10 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const TruffleAssert = require("truffle-assertions");
 const { sign } = require("../mint");
 
 // Todo: Update this test
-contract('SystemsRegistry Contract Tests', (accounts) => {
+contract('AccessControlManager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
         craftingSystemAddress,      // crafting system address
@@ -14,8 +14,8 @@ contract('SystemsRegistry Contract Tests', (accounts) => {
     var testContract;
 
     beforeEach(async () => {
-        testContract = await SystemsRegistry.new();
-        await testContract.__SystemsRegistry_init();
+        testContract = await AccessControlManager.new();
+        await testContract.__AccessControlRegistry_init();
     });
 
     it('Check that deployer is not approved yet', async () => {
