@@ -47,17 +47,17 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     
     function __AccessControlManager_init_unchained() internal initializer
     {
-        _registerInterface(LibConstants._INTERFACE_ID_SYSTEMS_REGISTRY);
+        _registerInterface(LibConstants._INTERFACE_ID_ACCESS_CONTROL_MANAGER);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     function setParent(address _newParent) external override checkPermissions(DEFAULT_ADMIN_ROLE) {
         require(_newParent.isContract(), "Address is not a contract.");
         require(_newParent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
-        address previousParent = _parent();
+
         _setParent(_newParent);
         grantRole(DEFAULT_ADMIN_ROLE, _newParent);
-        renounceRole(DEFAULT_ADMIN_ROLE, previousParent);
+        renounceRole(DEFAULT_ADMIN_ROLE, _msgSender());
 
         emit ParentSet(_newParent);
     }

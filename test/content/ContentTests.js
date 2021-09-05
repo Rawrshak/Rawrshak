@@ -25,7 +25,7 @@ contract('Content Contract Tests', (accounts) => {
 
     beforeEach(async () => {
         accessControlManager = await AccessControlManager.new();
-        await accessControlManager.__AccessControlRegistry_init();
+        await accessControlManager.__AccessControlManager_init();
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();

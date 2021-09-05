@@ -40,10 +40,10 @@ abstract contract ContentWithHiddenData is IHiddenData, Content {
     function hiddenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
         // Hidden Token Uri can only be accessed if the user owns the token or the caller is the contract owner or 
         // a minter address which is used for token management and development
-        AccessControlUpgradeable accessControlRegistry = AccessControlUpgradeable(address(accessControlManager));
+        AccessControlUpgradeable accessControl = AccessControlUpgradeable(address(accessControlManager));
         if (balanceOf(_msgSender(), _tokenId) == 0 && 
-            !accessControlRegistry.hasRole(accessControlRegistry.DEFAULT_ADMIN_ROLE(), _msgSender()) && 
-            !accessControlRegistry.hasRole(accessControlManager.MINTER_ROLE(), _msgSender())) {
+            !accessControl.hasRole(accessControl.DEFAULT_ADMIN_ROLE(), _msgSender()) && 
+            !accessControl.hasRole(accessControlManager.MINTER_ROLE(), _msgSender())) {
             return "";
         }
         return dataStorage.hiddenUri(_tokenId, _version);
