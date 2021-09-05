@@ -22,7 +22,7 @@ interface IContentManager {
     /******** Mutative Functions ********/
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
     
-    function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) external;
+    function registerOperators(LibAsset.SystemApprovalPair[] memory _operators) external;
 
     function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external;
 

@@ -8,6 +8,7 @@ const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
 // const { sign } = require("../mint");
 
+// Todo: Update this test
 contract('Content Manager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts

@@ -29,7 +29,6 @@ interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
     function uri(uint256 _tokenId, uint256 _version) external view returns (string memory);
 
     /******** Mutative Functions ********/
-    function approveAllSystems(bool _approve) external;
 
     function mintBatch(LibAsset.MintData memory _data) external;
 

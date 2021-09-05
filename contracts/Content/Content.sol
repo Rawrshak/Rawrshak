@@ -74,11 +74,6 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
         systemsRegistry = _systemsRegistry;
     }
 
-    // SYSTEMS APPROVAL
-    function approveAllSystems(bool _approve) external override {
-        return systemsRegistry.userApprove(_msgSender(), _approve);
-    }
-
     // CONTRACT URI
     function contractUri() external view override returns (string memory) {
         return dataStorage.contractUri();
@@ -127,7 +122,7 @@ contract Content is IContent, OwnableUpgradeable, ERC1155Upgradeable, ERC165Stor
 
     // Asset Burning
     function burnBatch(LibAsset.BurnData memory _data) external override {
-        require(_data.account == _msgSender() || systemsRegistry.isOperatorApproved(_data.account, _msgSender()), "Caller is not approved.");
+        require(_data.account == _msgSender() || isApprovedForAll(_data.account, _msgSender()), "Caller is not approved.");
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             require(_tokenExists(_data.tokenIds[i]), "token id missing");

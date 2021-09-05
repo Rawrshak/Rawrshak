@@ -66,8 +66,14 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         contentStorage.addAssetBatch(_assets);
     }
     
-    function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
-        systemsRegistry.registerSystems(_operators);
+    function registerOperators(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
+        for (uint256 i = 0; i < _operators.length; ++i) {
+            if (_operators[i].approved) {
+                IAccessControlUpgradeable(address(systemsRegistry)).grantRole(systemsRegistry.MINTER_ROLE(), _operators[i].operator);
+            } else {
+                IAccessControlUpgradeable(address(systemsRegistry)).revokeRole(systemsRegistry.MINTER_ROLE(), _operators[i].operator);
+            }
+        }
     }
 
     function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {

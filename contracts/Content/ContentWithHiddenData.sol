@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./interfaces/IHiddenData.sol";
 import "./Content.sol";
 
@@ -37,9 +38,12 @@ abstract contract ContentWithHiddenData is IHiddenData, Content {
     }
     
     function hiddenUri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
-        // Hidden Token Uri can only be accessed if the user owns the token or the caller is a registered system address
-        // which is used for token management and development
-        if (balanceOf(_msgSender(), _tokenId) == 0 && !systemsRegistry.isOperatorRegistered(_msgSender())) {
+        // Hidden Token Uri can only be accessed if the user owns the token or the caller is the contract owner or 
+        // a minter address which is used for token management and development
+        AccessControlUpgradeable accessControlRegistry = AccessControlUpgradeable(address(systemsRegistry));
+        if (balanceOf(_msgSender(), _tokenId) == 0 && 
+            !accessControlRegistry.hasRole(accessControlRegistry.DEFAULT_ADMIN_ROLE(), _msgSender()) && 
+            !accessControlRegistry.hasRole(systemsRegistry.MINTER_ROLE(), _msgSender())) {
             return "";
         }
         return dataStorage.hiddenUri(_tokenId, _version);

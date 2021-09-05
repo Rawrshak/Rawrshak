@@ -5,6 +5,7 @@ const SystemsRegistry = artifacts.require("SystemsRegistry");
 const TruffleAssert = require("truffle-assertions");
 const { sign } = require("../mint");
 
+// Todo: Update this test
 contract('Content Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
