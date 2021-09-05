@@ -32,12 +32,13 @@ contract Salvage is ISalvage, CraftBase {
         _registerInterface(LibConstants._INTERFACE_ID_SALVAGE);
     }
 
-    function setSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _assets) external override whenPaused() checkPermissions(MANAGER_ROLE) {
+    function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _assets) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(_assets.length > 0, "Invalid input length.");
 
         uint256[] memory ids = new uint256[](_assets.length);
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(contentContracts.contains(_assets[i].asset.content), "Invalid Content Contract permissions");
+            require(_assets[i].asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Asset's Contract is not a Content Contract");
+
             _assets[i].verifySalvageableAsset();
             uint256 id = _getId(_assets[i].asset.content, _assets[i].asset.tokenId);
 
@@ -50,7 +51,8 @@ contract Salvage is ISalvage, CraftBase {
             }
 
             for (uint256 j = 0; j < _assets[i].rewards.length; ++j) {
-                require(contentContracts.contains(_assets[i].rewards[j].asset.content), "Invalid Content Contract permissions - rewards");
+                require(_assets[i].rewards[j].asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Reward's Contract is not a Content Contract");
+
                 salvageableAssets[id].rewards.push(_assets[i].rewards[j]);
             }
             ids[i] = id;
@@ -69,6 +71,7 @@ contract Salvage is ISalvage, CraftBase {
 
         _mint(materials, amounts);
 
+        // Todo: update this to include the salvage rewards
         emit AssetSalvaged(_msgSender(), _asset, _amount);
     }
     
@@ -87,15 +90,12 @@ contract Salvage is ISalvage, CraftBase {
             _mint(materials, materialAmounts);
         }
         
+        // Todo: update this to include the salvage rewards
         emit AssetSalvagedBatch(_msgSender(), _assets, _amounts);
     }
 
-    function getId(LibCraft.AssetData calldata _asset) external pure override returns(uint256) {
-        return _getId(_asset.content, _asset.tokenId);
-    } 
-
-    function getSalvageRewards(uint256 _id) external view override returns(LibCraft.SalvageReward[] memory rewards) {
-        rewards = salvageableAssets[_id].rewards;
+    function getSalvageRewards(LibCraft.AssetData calldata _asset) external view override returns(LibCraft.SalvageReward[] memory rewards) {
+        rewards = salvageableAssets[_getId(_asset.content, _asset.tokenId)].rewards;
     }
 
     /**************** Internal Functions ****************/
@@ -108,8 +108,6 @@ contract Salvage is ISalvage, CraftBase {
         require(salvageableAssets[_getId(_asset.content, _asset.tokenId)].rewards.length > 0, "Item not salvageable");
         // 2. Check amount > 0
         require(_amount > 0, "Invalid amount");
-        // 3. check if sender has the asset and the amount
-        require(IContent(_asset.content).balanceOf(_msgSender(), _asset.tokenId) >= _amount, "Not enough owned asset");
     }
 
     function _burn(LibCraft.AssetData memory _asset, uint256 _burnAmount) internal {
