@@ -35,15 +35,15 @@ contract('Craft Base Contract', (accounts)=> {
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
-        contentStorage.setParent(content.address);
-        accessControlManager.setParent(content.address);
+        await contentStorage.setParent(content.address);
 
         // Setup content manager
         contentManager = await ContentManager.new();
         await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-
+        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.setParent(content.address);
+        
         craftBase = await TestCraftBase.new();
         await craftBase.__TestCraftBase_init(1000);
         
@@ -51,7 +51,7 @@ contract('Craft Base Contract', (accounts)=> {
         
         // Register the craftbase as a system on the content contract
         var approvalPair = [[craftBase.address, true]];
-        await contentManager.registerSystem(approvalPair, {from: deployerAddress});
+        await contentManager.registerOperators(approvalPair, {from: deployerAddress});
 
         // registered manager
         await craftBase.registerManager(managerAddress, {from: deployerAddress});
@@ -99,45 +99,6 @@ contract('Craft Base Contract', (accounts)=> {
             await craftBase.paused(),
             true, 
             "Craft Base contract should be paused.");
-    });
-
-    it('Register Content Address', async () => {
-        TruffleAssert.eventEmitted(
-            await craftBase.registerContent(await contentManager.content(), {from: managerAddress}),
-            'ContentRegistered'
-        );
-
-        // Todo: Fix these tests
-        // assert.equal(
-        //     await craftBase.isContentRegistered(await contentManager.content()),
-        //     true, 
-        //     "Content Contract was ot registered correctly");
-
-        assert.equal(
-            await craftBase.hasRole(
-                manager_role,
-                managerAddress),
-            true, 
-            "manager address should have the manager role");
-    });
-
-    it('Invalid Content Address', async () => {
-        TruffleAssert.fails(
-            craftBase.registerContent(contentStorage.address, {from: managerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        TruffleAssert.fails(
-            craftBase.registerContent(testManagerAddress, {from: managerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        await craftBase.managerSetPause(false, {from: managerAddress});
-
-        TruffleAssert.fails(
-            craftBase.registerContent((await contentManager.content()).address, {from: managerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
     });
 
 });
