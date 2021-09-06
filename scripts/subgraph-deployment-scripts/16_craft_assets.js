@@ -19,8 +19,8 @@ module.exports = async function(deployer, networks, accounts) {
     const salvage = await Salvage.deployed();
 
 
-    // approve the systems
-    // await content.approveAllSystems(true, {from: player1Address});
+    // approve the salvage contract
+    await content.setApprovalForAll(craft, true, {from: player1Address});
     
     var asset1 = await content.balanceOf(player1Address, 1);
     var asset3 = await content.balanceOf(player1Address, 3);

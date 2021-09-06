@@ -16,7 +16,6 @@ module.exports = async function(deployer, networks, accounts) {
     const content = await Content.deployed();
     console.log("Content: ", content.address);
 
-
     // var assetRoyalty = [[deployerWalletAddress, web3.utils.toWei('0.03', 'ether')]];
-    await content.approveAllSystems(true, {from: player1Address});
+    // await content.approveAllSystems(true, {from: player1Address});
 };

@@ -43,24 +43,17 @@ contract('Escrow NFTs Contract', (accounts) => {
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
-        contentStorage.setParent(content.address);
-        accessControlManager.setParent(content.address);
+        await contentStorage.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
         await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-
-        // give crafting system approval
-        var approvalPair = [[executionManagerAddress, true]];
-        await contentManager.registerSystem(approvalPair);
+        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.setParent(content.address);
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
-        
-        // approve systems for player address
-        await content.approveAllSystems(true, {from:playerAddress});
 
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 1], 0, zeroAddress, []];

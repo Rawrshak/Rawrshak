@@ -51,7 +51,6 @@ module.exports = async function(deployer, networks, accounts) {
 
     // set content as for the subsystems Parent 
     await contentStorage.setParent(content.address, {from: deployerAddress});
-    await accessControlManager.setParent(content.address, {from: deployerAddress});
 
     // Deploy Content Contract Manager
     const contentManager = await deployProxy(
@@ -65,7 +64,8 @@ module.exports = async function(deployer, networks, accounts) {
         {deployer, initializer: '__ContentManager_init'});
 
     await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-    await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+    await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+    await accessControlManager.setParent(content.address, {from: deployerAddress});
 
     // Register the Content Manager
     await registry.registerContentManager(contentManager.address, {from: deployerAddress});
@@ -73,7 +73,7 @@ module.exports = async function(deployer, networks, accounts) {
 
     // give deployerAddress system access
     var approvalPair = [[deployerAddress, true]];
-    await contentManager.registerSystem(approvalPair);
+    await contentManager.registerOperators(approvalPair);
 
     console.log('Content Deployed: ', content.address);
     console.log('Content Storage Deployed: ', contentStorage.address);

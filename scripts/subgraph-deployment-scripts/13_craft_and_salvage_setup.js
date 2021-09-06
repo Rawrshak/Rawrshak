@@ -54,7 +54,6 @@ module.exports = async function(deployer, networks, accounts) {
 
     // set content as for the subsystems Parent 
     await contentStorage.setParent(content.address, {from: deployerAddress});
-    await accessControlManager.setParent(content.address, {from: deployerAddress});
 
     // Deploy Content Contract Manager
     const contentManager = await deployProxy(
@@ -68,14 +67,11 @@ module.exports = async function(deployer, networks, accounts) {
         {deployer, initializer: '__ContentManager_init'});
 
     await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-    await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+    await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+    await accessControlManager.setParent(content.address, {from: deployerAddress});
 
     // Register the Content Manager
     await registry.registerContentManager(contentManager.address, {from: deployerAddress});
-
-    // give deployerAddress system access
-    var approvalPair = [[deployerAddress, true]];
-    await contentManager.registerSystem(approvalPair);
     
     // Add Assets
     var asset = [
@@ -95,8 +91,8 @@ module.exports = async function(deployer, networks, accounts) {
     const salvage = await deployProxy(Salvage, [1000], {deployer, initializer: '__Salvage_init'});
     
     // Register the craft and salvage as a system on the content contract
-    var approvalPairs = [[craft.address, true], [salvage.address, true]];
-    await contentManager.registerSystem(approvalPairs, {from: deployerAddress});
+    var approvalPairs = [[deployerAddress, true], [craft.address, true], [salvage.address, true]];
+    await contentManager.registerOperators(approvalPairs, {from: deployerAddress});
 
     // registered manager
     await craft.registerManager(deployerAddress, {from: deployerAddress});
