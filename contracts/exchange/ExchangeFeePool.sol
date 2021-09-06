@@ -4,17 +4,14 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./StorageBase.sol";
-import "../utils/ExtendedEnumerableMaps.sol";
 import "./interfaces/IExchangeFeePool.sol";
 
 contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
-    using EnumerableSetUpgradeable for *;
     using SafeMathUpgradeable for uint256;
 
     /***************** Stored Variables *****************/

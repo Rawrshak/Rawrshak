@@ -2,10 +2,12 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
-const TruffleAssert = require("truffle-assertions");
+const AccessControlManager = artifacts.require("AccessControlManager");
+const ContractRegistry = artifacts.require("ContractRegistry");
+const TagsManager = artifacts.require("TagsManager");
 // const { sign } = require("../mint");
 
+// Todo: Update this test
 contract('Content Manager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -25,24 +27,28 @@ contract('Content Manager Contract Tests', (accounts) => {
     const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     beforeEach(async () => {
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        registry = await ContractRegistry.new();
+        await registry.__ContractRegistry_init();
+        tagsManager = await TagsManager.new();
+        await tagsManager.__TagsManager_init(registry.address);
+
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlManager_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
-        contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await contentStorage.setParent(content.address);
 
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
-        await content.transferOwnership(contentManager.address, {from: deployerAddress});
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.setParent(content.address);
 
         // give crafting system approval
         var approvalPair = [[craftingSystemAddress, true]];
-        await contentManager.registerSystem(approvalPair);
+        await contentManager.registerOperators(approvalPair);
 
         // Add 1 asset
         await contentManager.addAssetBatch(asset);
@@ -51,7 +57,6 @@ contract('Content Manager Contract Tests', (accounts) => {
     it('Check Content Manager proper deployment', async () => {
         assert.equal(await contentManager.content(), content.address, "content contract is incorrect");
 
-        assert.equal(await content.owner(), contentManager.address, "Content Manager doesn't own the content contract.")
         assert.equal(
             await contentStorage.hasRole(await contentStorage.OWNER_ROLE(), deployerAddress),
             true,
@@ -75,59 +80,44 @@ contract('Content Manager Contract Tests', (accounts) => {
         
         await contentManager.addAssetBatch(newAssets);
 
-        // const signature = await sign(playerAddress, [1], [1], 1, null, await content.systemsRegistry());
+        // const signature = await sign(playerAddress, [1], [1], 1, null, await content.accessControlManager());
         var mintData = [playerAddress, [3], [10], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(
-            await content.tokenUri(3),
+            await content.uri(3),
             "arweave.net/tx/public-uri-3", 
             "New asset wasn't added.");
-        assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
-            "arweave.net/tx/private-uri-3", 
-            "New asset wasn't added.");
-    });
-
-    it('Set operators for System Approval', async () => {        
-        await content.approveAllSystems(true, {from: playerAddress});
-
-        assert.equal(
-            await systemsRegistry.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
-            false,
-            "lootbox system not should be approved yet.");
-
-        var lootboxApprovalPair = [[lootboxSystemAddress, true]];
-        await contentManager.registerSystem(lootboxApprovalPair);
-
-        assert.equal(
-            await systemsRegistry.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
-            true,
-            "lootbox system should be approved.");
+        
+        // Todo: Move this hiddenUri() test to the ContentWithHiddenData contract tests once added
+        // assert.equal(
+        //     await content.methods['hiddenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
+        //     "arweave.net/tx/private-uri-3", 
+        //     "New asset wasn't added.");
     });
 
     it('Set Token URI', async () => {
         var assetUri = [
-            [2, "arweave.net/tx/private-uri-2-v1"]
+            [2, "arweave.net/tx/public-uri-2-v1"]
         ];
-        await contentManager.setHiddenTokenUriBatch(assetUri);
+        await contentManager.setPublicUriBatch(assetUri);
 
         var mintData = [playerAddress, [2], [1], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 0, {from: playerAddress}),
-            "arweave.net/tx/private-uri-2",
+            await content.methods['uri(uint256,uint256)'](2, 0, {from: playerAddress}),
+            "arweave.net/tx/public-uri-2",
             "Token 2 incorrect uri for previous version.");
         
         assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 1, {from: playerAddress}),
-            "arweave.net/tx/private-uri-2-v1",
+            await content.methods['uri(uint256,uint256)'](2, 1, {from: playerAddress}),
+            "arweave.net/tx/public-uri-2-v1",
             "Token 2 incorrect uri for latest version.");
         
         assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](2, 2, {from: playerAddress}),
-            "arweave.net/tx/private-uri-2-v1",
+            await content.methods['uri(uint256,uint256)'](2, 2, {from: playerAddress}),
+            "arweave.net/tx/public-uri-2-v1",
             "Token 2 invalid version returns uri for latest version.");
     });
 

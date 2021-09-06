@@ -23,6 +23,7 @@ contract Craft is ICraft, CraftBase {
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibCraft.Recipe) recipes;
+    uint256 public override recipesLength = 0;
 
     /******************** Public API ********************/
     function __Craft_init(uint256 _seed) public initializer {
@@ -33,72 +34,60 @@ contract Craft is ICraft, CraftBase {
         _registerInterface(LibConstants._INTERFACE_ID_CRAFT);
     }
 
-    function setRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
+    function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(_recipes.length > 0, "Invalid input length.");
- 
+
+        uint256[] memory ids = new uint256[](_recipes.length);
+
         for (uint256 i = 0; i < _recipes.length; ++i) {
             require(_recipes[i].materials.length > 0 && _recipes[i].materials.length == _recipes[i].materialAmounts.length, "Invalid materials length");
             require(_recipes[i].rewards.length > 0 && _recipes[i].rewards.length == _recipes[i].rewardAmounts.length, "Invalid rewards length");
-            require(_recipes[i].id != 0, "Invalid id");
             require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 1 ether, "Invalid crafting rate.");
 
-            LibCraft.Recipe storage recipeData = recipes[_recipes[i].id];
-            recipeData.id = _recipes[i].id;
+            LibCraft.Recipe storage recipeData = recipes[recipesLength];
+            ids[i] = recipesLength;
             recipeData.enabled = _recipes[i].enabled;
             recipeData.craftingRate = _recipes[i].craftingRate;
 
-            // If recipe already exists, delete it first before updating
-            if (recipeData.materials.length > 0) {
-                delete recipeData.materials;
-                delete recipeData.materialAmounts;
-                delete recipeData.rewards;
-                delete recipeData.rewardAmounts;
-            }
-
             for (uint256 j = 0; j < _recipes[i].materials.length; ++j) {
-                require(contentContracts.contains(_recipes[i].materials[j].content), "Invalid Content Contract permissions");
+                // Todo: Should we assume that these are content/ERC1155 contracts by default? Can we move
+                //       this check to the UI side?
+                require(_recipes[i].materials[j].content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Contract is not a Content Contract");
 
                 recipeData.materials.push(_recipes[i].materials[j]);
                 recipeData.materialAmounts.push(_recipes[i].materialAmounts[j]);
             }
 
             for (uint256 j = 0; j < _recipes[i].rewards.length; ++j) {
-                require(contentContracts.contains(_recipes[i].rewards[j].content), "Invalid Content Contract permissions");
+                // Todo: Should we assume that these are content/ERC1155 contracts by default? Can we move
+                //       this check to the UI side?
+                require(_recipes[i].rewards[j].content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Contract is not a Content Contract");
 
                 recipeData.rewards.push(_recipes[i].rewards[j]);
                 recipeData.rewardAmounts.push(_recipes[i].rewardAmounts[j]);
             }
+
+            recipesLength++;
         }
 
-        emit RecipeUpdated(_msgSender(), _recipes);
+        emit RecipeUpdated(_msgSender(), ids, _recipes);
     }
 
-    function setRecipeEnabled(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
-        require(exists(_id), "Recipe doesn't exist");
+    function enableRecipe(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
+        require(_id < recipesLength, "Recipe doesn't exist");
         recipes[_id].enabled = _enabled;
 
         emit RecipeEnabled(_msgSender(), _id, _enabled);
     }
 
-    function setRecipeCraftingRate(uint256 _id, uint256 _craftingRate) external override whenPaused() checkPermissions(MANAGER_ROLE) {
-        require(exists(_id), "Recipe doesn't exist");
-        require(_craftingRate > 0 && _craftingRate <= 1 ether, "Invalid crafting rate.");
-        recipes[_id].craftingRate = _craftingRate;
-        
-        emit RecipeCraftingRateUpdated(_msgSender(), _id, _craftingRate);
-    }
-
     function craft(uint256 _id, uint256 _amount) external override whenNotPaused() {
-        require(exists(_id) && _amount > 0, "Invalid input");
+        require(_id < recipesLength && _amount > 0, "Invalid input");
         require(recipes[_id].enabled, "Recipe disabled");
         
-        // Verify user has all the materials
-        _verifyUserAssets(_id, _amount);
-
+        // User should call setApprovalForAll() with the craft contract as the operator before calling craft()
         _burn(_id, _amount);
         
         // check crafting rate if it's less than 100%, then get a random number
-        
         if (recipes[_id].craftingRate < 1 ether) {
             for (uint256 i = 0; i < _amount; ++i) {
                 seed = LibCraft.random(_msgSender(), seed);
@@ -119,10 +108,6 @@ contract Craft is ICraft, CraftBase {
     function recipe(uint256 _id) external view override returns(LibCraft.Recipe memory _recipe) {
         // will return empty if it doesn't exist
         return recipes[_id];
-    }
-
-    function exists(uint256 _id) public view override returns(bool) {
-        return recipes[_id].id != 0;
     }
 
     /**************** Internal Functions ****************/
@@ -148,17 +133,6 @@ contract Craft is ICraft, CraftBase {
             mintData.amounts[0] = recipes[_id].rewardAmounts[i].mul(_rolls);
             IContent(recipes[_id].rewards[i].content).mintBatch(mintData);
         }
-    }
-
-    function _verifyUserAssets(uint256 _id, uint256 _amount) internal view {
-        bool noMissingAsset = true;
-        uint256 requiredAmount = 0;
-        for (uint256 i = 0; i < recipes[_id].materials.length && noMissingAsset; ++i) {
-            requiredAmount = recipes[_id].materialAmounts[i].mul(_amount);
-            noMissingAsset = IContent(recipes[_id].materials[i].content).balanceOf(_msgSender(), recipes[_id].materials[i].tokenId) >= requiredAmount;
-        }
-
-        require(noMissingAsset, "Not enough assets");
     }
 
     uint256[50] private __gap;

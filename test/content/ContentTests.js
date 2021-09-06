@@ -1,10 +1,11 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const TruffleAssert = require("truffle-assertions");
 const { sign } = require("../mint");
 
+// Todo: Update this test
 contract('Content Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -16,30 +17,34 @@ contract('Content Contract Tests', (accounts) => {
     ] = accounts;
     var content;
     var contentStorage;
-    var systemsRegistry;
+    var accessControlManager;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
+        [1, "arweave.net/tx/public-uri-1", "", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [2, "arweave.net/tx/public-uri-2", "", 100, []],
     ];
 
     beforeEach(async () => {
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlManager_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
-        contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await contentStorage.setParent(content.address);
 
-        // give crafting system approval
-        var approvalPair = [[deployerAddress, true], [craftingSystemAddress, true]];
-        await systemsRegistry.registerSystems(approvalPair);
+        // give deployer address and crafting system approval; This would normally be done through the ContentManager
+        minter_role = await accessControlManager.MINTER_ROLE();
+        await accessControlManager.grantRole(minter_role, deployerAddress, {from: deployerAddress});
+        await accessControlManager.grantRole(minter_role, craftingSystemAddress, {from: deployerAddress});
 
-        // Add 1 asset        
+        // Set the content contract as the new parent
+        await accessControlManager.setParent(content.address);
+
+        // Add 1 asset
         await contentStorage.addAssetBatch(asset);
     });
 
+    // Todo: Create ContentWithHiddenData tests and move this there
     it('Check Content proper deployment', async () => {
         // Check initializer parameters
         assert.equal(
@@ -51,12 +56,12 @@ contract('Content Contract Tests', (accounts) => {
             "TEST",
             "Contract symbol is incorrect.");
         assert.equal(
-            await content.uri(0),
-            "ipfs:/contract-uri",
+            await content.contractUri(),
+            "arweave.net/tx-contract-uri",
             "Contract uri is incorrect.");
         assert.equal(
-            await content.systemsRegistry(),
-            systemsRegistry.address,
+            await content.accessControlManager(),
+            accessControlManager.address,
             "System Registry address is incorrect.");
     });
     
@@ -91,16 +96,16 @@ contract('Content Contract Tests', (accounts) => {
 
     it('Trigger Content Storage and Systems Register Functions', async () => {
         // Test token uri
-        // Note: we use content.methods['function()']() below because it hiddenTokenUri() is an
+        // Note: we use content.methods['function()']() below because it hiddenUri() is an
         //       overloaded function
         
-        const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1], [1], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
         assert.equal(
-            await content.methods['hiddenTokenUri(uint256,uint256)'](1, 0, {from: playerAddress}),
-            "arweave.net/tx/private-uri-1",
+            await content.methods['uri(uint256,uint256)'](1, 0, {from: playerAddress}),
+            "arweave.net/tx/public-uri-1",
             "Token 1 uri is incorrect.");
         
         // test royalties
@@ -109,26 +114,12 @@ contract('Content Contract Tests', (accounts) => {
             fees[0].account == deployerAddress && fees[0].rate == web3.utils.toWei('0.02', 'ether'),
             true,
             "Token 1 royalties are incorrect");
-
-        // test not approved 
-        assert.equal(
-            await systemsRegistry.isOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
-            false,
-            "Crafting System Address does not have the correct permissions.");
-
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        // test approval 
-        assert.equal(
-            await systemsRegistry.isOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
-            true,
-            "Crafting System Address does not have the correct permissions.");
     });
 
     it('Add Assets', async () => {
         // invalid add because asset already exists
         var newAssets = [
-            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, []]
+            [3, "arweave.net/tx/public-uri-3", "", 1000, []]
         ];
         
         TruffleAssert.eventEmitted(await contentStorage.addAssetBatch(newAssets), 'AssetsAdded');
@@ -151,7 +142,7 @@ contract('Content Contract Tests', (accounts) => {
     // }
 
     it('Mint Assets', async () => {
-        const signature = await sign(playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
         
@@ -163,7 +154,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Mint data length input mismatch', async () => {
-        const signature = await sign(playerAddress, [1, 2], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [1, 2], [10], 1, craftingSystemAddress, await content.accessControlManager());
         var invalidLengthData = [playerAddress, [1, 2], [10], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
             content.mintBatch(invalidLengthData, {from: playerAddress}),
@@ -172,7 +163,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Mint invalid token id', async () => {
-        const signature = await sign(playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, await content.accessControlManager());
         var invalidTokenIdData = [playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
             content.mintBatch(invalidTokenIdData, {from: playerAddress}),
@@ -181,7 +172,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Mint invalid supply', async () => {
-        const signature = await sign(playerAddress, [2], [300], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [2], [300], 1, craftingSystemAddress, await content.accessControlManager());
         var invalidSupplyData = [playerAddress, [2], [300], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
             content.mintBatch(invalidSupplyData, {from: playerAddress}),
@@ -190,9 +181,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Burn Assets', async () => {
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
@@ -201,6 +190,7 @@ contract('Content Contract Tests', (accounts) => {
                 
         assert.equal(await content.supply(1, {from: playerAddress}), 5, "Asset 1 incorrect supply");
 
+        await content.setApprovalForAll(craftingSystemAddress, true, {from: playerAddress});
         await content.burnBatch(burnData, {from: craftingSystemAddress});
         assert.equal(await content.supply(1, {from: playerAddress}), 0, "Asset 1 incorrect supply");
         
@@ -209,9 +199,7 @@ contract('Content Contract Tests', (accounts) => {
     });
     
     it('Invalid burns', async () => {
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
@@ -231,7 +219,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Transfer Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
@@ -242,7 +230,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Invalid Transfer Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.systemsRegistry());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
         

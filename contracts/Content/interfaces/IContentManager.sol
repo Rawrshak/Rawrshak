@@ -5,28 +5,28 @@ import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 import "./IContent.sol";
 import "./IContentStorage.sol";
-import "./ISystemsRegistry.sol";
+import "./IAccessControlManager.sol";
 
 interface IContentManager {
 
     /*********************** Events *********************/
-    // event ContentManagerCreated(address indexed owner, address content, address contentStorage, address systemsRegistry);
+    // event ContentManagerCreated(address indexed owner, address content, address contentStorage, address accessControlManager);
     
     /******** View Functions ********/
     function content() external view returns(IContent);
     
     function contentStorage() external view returns(IContentStorage);
     
-    function systemsRegistry() external view returns(ISystemsRegistry);
+    function accessControlManager() external view returns(IAccessControlManager);
 
     /******** Mutative Functions ********/
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
     
-    function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) external;
+    function registerOperators(LibAsset.SystemApprovalPair[] memory _operators) external;
 
-    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
-    function setPublicTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
     
@@ -39,4 +39,12 @@ interface IContentManager {
         address _uniqueContentContract,
         address to
     ) external;
+
+    function addContractTags(string[] memory _tags) external;
+
+    function removeContractTags(string[] memory _tags) external;
+
+    function addAssetTags(uint256 _id, string[] memory _tags) external;
+    
+    function removeAssetTags(uint256 _id, string[] memory _tags) external;
 }
