@@ -8,7 +8,7 @@ const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
 
-// Todo: Update this test
+// Todo: Update this test for burn fees
 contract('Craft Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts

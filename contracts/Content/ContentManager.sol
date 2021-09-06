@@ -92,6 +92,14 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         contentStorage.setTokenRoyaltiesBatch(_assets);
     }
 
+    function setContractBurnFees(LibAsset.Fee[] memory _fee) external override onlyOwner {
+        contentStorage.setContractBurnFees(_fee);
+    }
+
+    function setTokenBurnFeesBatch(LibAsset.AssetBurnFees[] memory _assets) external override onlyOwner {
+        contentStorage.setTokenBurnFeesBatch(_assets);
+    }
+
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }

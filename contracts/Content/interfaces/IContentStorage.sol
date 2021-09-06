@@ -22,6 +22,8 @@ interface IContentStorage is IRoyaltyProvider, IContractUri {
     function uri(uint256 _tokenId, uint256 _version) external view returns (string memory);
 
     function hiddenUri(uint256 _tokenId, uint256 _version) external view  returns (string memory);
+    
+    function getBurnFee(uint256 _tokenId) external view returns(LibAsset.Fee[] memory fees);
 
     /******** Mutative Functions ********/
     function updateSupply(uint256 _tokenId, uint256 _supply) external;
@@ -35,4 +37,8 @@ interface IContentStorage is IRoyaltyProvider, IContractUri {
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
 
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external;
+
+    function setContractBurnFees(LibAsset.Fee[] memory _fee) external;
+
+    function setTokenBurnFeesBatch(LibAsset.AssetBurnFees[] memory _assets) external;
 }

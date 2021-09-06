@@ -5,6 +5,7 @@ const Content = artifacts.require("Content");
 const TruffleAssert = require("truffle-assertions");
 const { sign } = require("../mint");
 
+// Todo: Update test for IsElevatedCaller()
 contract('AccessControlManager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts

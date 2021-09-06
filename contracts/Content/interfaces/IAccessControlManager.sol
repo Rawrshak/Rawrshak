@@ -12,6 +12,8 @@ interface IAccessControlManager {
 
     function userMintNonce(address _user) external view returns (uint256);
 
+    function isElevatedCaller(address _caller) external view returns (bool);
+
     /******** Mutative Functions ********/    
     function verifyMint(LibAsset.MintData memory _data, address _caller) external;
 

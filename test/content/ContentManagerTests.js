@@ -7,7 +7,7 @@ const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
 // const { sign } = require("../mint");
 
-// Todo: Update this test
+// Todo: Update this test for burn fees
 contract('Content Manager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts

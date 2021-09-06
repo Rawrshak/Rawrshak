@@ -32,6 +32,7 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_CONTRACT_REGISTRY = 0x00000019;
     bytes4 constant _INTERFACE_ID_CONTENT_WITH_HIDDEN_DATA = 0x0000001A;
     bytes4 constant _INTERFACE_ID_TAGS_MANAGER = 0x0000001B;
+    bytes4 constant _INTERFACE_ID_CONTENT_WITH_BURN_FEES = 0x0000001C;
 
     // Exchange Interfaces
     bytes4 constant _INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;

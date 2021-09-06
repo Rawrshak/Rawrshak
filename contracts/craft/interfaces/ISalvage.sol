@@ -7,6 +7,8 @@ interface ISalvage {
     /******** View Functions ********/
     function getSalvageRewards(LibCraft.AssetData calldata _asset) external view returns(LibCraft.SalvageReward[] memory rewards);
 
+    function getAssetBurnFees(LibCraft.AssetData calldata _asset) external view returns (uint256);
+
     /******** Mutative Functions ********/
     function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _asset) external;
 

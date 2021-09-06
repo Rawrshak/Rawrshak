@@ -59,6 +59,16 @@ library LibAsset {
         LibRoyalties.Fees[] contractFees;
     }
 
+    struct Fee {
+        address payable account;
+        uint256 amount;
+    }
+    
+    struct AssetBurnFees {
+        uint256 tokenId;
+        Fee[] fees;
+    }
+
     // Validate functions below are used to check the input to a function. This is to reduce 
     // contract size for the contracts that use them.
     function validateTokenId(
@@ -104,6 +114,13 @@ library LibAsset {
                 _data.nonce,
                 _data.signer
             ));
+    }
+
+    function validateFees(LibAsset.Fee[] memory _fees) internal pure {
+        for (uint256 i = 0; i < _fees.length; ++i) {
+            require(_fees[i].account != address(0), "Invalid Account Address");
+            require(_fees[i].amount > 0, "Invalid Burn Fee");
+        }
     }
 
     // function validateMintSignatures(MintData memory _data) internal view {

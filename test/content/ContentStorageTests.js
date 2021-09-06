@@ -2,6 +2,7 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const ContentStorage = artifacts.require("ContentStorage");
 const TruffleAssert = require("truffle-assertions");
 
+// Todo: Update This for Burn Fees
 contract('ContentStorage Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts

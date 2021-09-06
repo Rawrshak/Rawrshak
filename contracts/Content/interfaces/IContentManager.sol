@@ -31,6 +31,10 @@ interface IContentManager {
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
     
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external;
+
+    function setContractBurnFees(LibAsset.Fee[] memory _fee) external;
+
+    function setTokenBurnFeesBatch(LibAsset.AssetBurnFees[] memory _assets) external;
     
     function mintBatch(LibAsset.MintData memory _data) external;
     

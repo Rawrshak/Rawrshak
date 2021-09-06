@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "./interfaces/ICraft.sol";
 import "./CraftBase.sol";
 import "../content/interfaces/IContent.sol";
+import "../content/extensions/interfaces/IBurnFees.sol";
 import "../utils/LibConstants.sol";
 import "../libraries/LibCraft.sol";
 
@@ -108,6 +109,20 @@ contract Craft is ICraft, CraftBase {
     function recipe(uint256 _id) external view override returns(LibCraft.Recipe memory _recipe) {
         // will return empty if it doesn't exist
         return recipes[_id];
+    }
+
+    // For non-developer created craft contracts, players will need to call allowance() on the RAWR token contract to 
+    // to allow for burn fees to get transfered. 
+    function getRecipeBurnFees(uint256 _id) external view override returns (uint256 total) {
+        total = 0;
+        for (uint i = 0; i < recipes[_id].materials.length; ++i) {
+            if (recipes[_id].materials[i].content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_WITH_BURN_FEES) && !IBurnFees(recipes[_id].materials[i].content).isElevatedCaller(address(this))) {
+                LibAsset.Fee[] memory tokenBurnFee = IBurnFees(recipes[_id].materials[i].content).getBurnFees(recipes[_id].materials[i].tokenId);
+                for (uint j = 0; j < tokenBurnFee.length; ++j) {
+                    total += tokenBurnFee[j].amount;
+                }
+            }
+        }
     }
 
     /**************** Internal Functions ****************/

@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity >=0.6.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "./interfaces/IHiddenData.sol";
-import "./Content.sol";
+import "./../interfaces/IHiddenData.sol";
+import "./../Content.sol";
 
 /**
  * @dev ERC721 token with storage based token URI management.
+ * Todo: Create Tests for ContentWithBurnFees
  */
-abstract contract ContentWithHiddenData is IHiddenData, Content {
+contract ContentWithHiddenData is IHiddenData, Content {
     function __ContentWithHiddenData_init(
         string memory _name,
         string memory _symbol,

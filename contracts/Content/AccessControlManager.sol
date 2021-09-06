@@ -65,8 +65,8 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     function verifyMint(LibAsset.MintData memory _data, address _caller) external override checkPermissions(DEFAULT_ADMIN_ROLE) {
         require(_data.tokenIds.length == _data.amounts.length, "Invalid token input");
 
-        // if the caller is the owner address or has a minter role (granted by the owner), continue on.
-        if (hasRole(MINTER_ROLE, _caller) || hasRole(DEFAULT_ADMIN_ROLE, _caller)) {
+        // if the caller is the owner address or has a minter role (granted by the owner), early return
+        if (isElevatedCaller(_caller)) {
             return;
         }
 
@@ -79,10 +79,14 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         require(hashData.recover(_data.signature) == _data.signer, "Invalid Signature");
 
         // Check if signer has the correct role
-        require(hasRole(MINTER_ROLE, _data.signer) || hasRole(DEFAULT_ADMIN_ROLE, _data.signer), "Invalid Signer");
+        require(isElevatedCaller(_data.signer), "Invalid Signer");
         
         // Increment user nonce
         userMintNonce[_caller]++;
+    }
+
+    function isElevatedCaller(address _caller) public view override returns (bool) {
+        return hasRole(MINTER_ROLE, _caller) || hasRole(DEFAULT_ADMIN_ROLE, _caller);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {

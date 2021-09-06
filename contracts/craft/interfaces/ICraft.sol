@@ -9,6 +9,8 @@ interface ICraft {
 
     function recipe(uint256 _id) external view returns(LibCraft.Recipe memory _recipe);
 
+    function getRecipeBurnFees(uint256 _id) external view returns (uint256);
+
     /******** Mutative Functions ********/
     function addRecipeBatch(LibCraft.Recipe[] memory _asset) external;
 

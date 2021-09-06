@@ -7,12 +7,13 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./HasContractUri.sol";
+import "./HasBurnFees.sol";
 import "./ContentSubsystemBase.sol";
 import "./interfaces/IContentStorage.sol";
 import "../libraries/LibAsset.sol";
 import "../utils/LibConstants.sol";
 
-contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasContractUri, HasTokenUri {
+contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasBurnFees, HasRoyalties, HasContractUri, HasTokenUri {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -45,7 +46,12 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         __HasTokenUri_init_unchained();
         __HasRoyalties_init_unchained(_contractFees);
         __HasContractUri_init_unchained(_contractUri);
+        __HasBurnFees_init_unchained();
         __ContentSubsystemBase_init_unchained();
+        __ContentStorage_init_unchained();
+    }
+
+    function __ContentStorage_init_unchained() internal initializer {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(OWNER_ROLE, _msgSender());
@@ -125,6 +131,23 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setTokenRoyalties(_assets[i].tokenId, _assets[i].fees);
+        }
+    }
+
+    // Burn Fees
+    function getBurnFee(uint256 _tokenId) external view override returns(LibAsset.Fee[] memory fees) {
+        return _getBurnFee(_tokenId);
+    }
+
+    function setContractBurnFees(LibAsset.Fee[] memory _fee) external override {
+        _setContractBurnFees(_fee);
+    }
+
+    function setTokenBurnFeesBatch(LibAsset.AssetBurnFees[] memory _assets) external override {
+        // This overwrites the existing array of the token's burn fees.
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            require(ids[_assets[i].tokenId], "Invalid Token Id");
+            _setTokenBurnFees(_assets[i].tokenId, _assets[i].fees);
         }
     }
 

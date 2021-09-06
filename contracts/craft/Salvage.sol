@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "./interfaces/ISalvage.sol";
 import "./CraftBase.sol";
 import "../content/interfaces/IContent.sol";
+import "../content/extensions/interfaces/IBurnFees.sol";
 import "../utils/LibConstants.sol";
 import "../libraries/LibCraft.sol";
 
@@ -94,8 +95,20 @@ contract Salvage is ISalvage, CraftBase {
         emit AssetSalvagedBatch(_msgSender(), _assets, _amounts);
     }
 
-    function getSalvageRewards(LibCraft.AssetData calldata _asset) external view override returns(LibCraft.SalvageReward[] memory rewards) {
-        rewards = salvageableAssets[_getId(_asset.content, _asset.tokenId)].rewards;
+    function getSalvageRewards(LibCraft.AssetData calldata _asset) external view override returns(LibCraft.SalvageReward[] memory) {
+        return salvageableAssets[_getId(_asset.content, _asset.tokenId)].rewards;
+    }
+
+    // For non-developer created salvage contracts, players will need to call allowance() on the RAWR token contract to 
+    // to allow for burn fees to get transfered. 
+    function getAssetBurnFees(LibCraft.AssetData calldata _asset) external view override returns (uint256 total) {
+        total = 0;
+        if (_asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_WITH_BURN_FEES) && !IBurnFees(_asset.content).isElevatedCaller(address(this))) {
+            LibAsset.Fee[] memory tokenBurnFee = IBurnFees(_asset.content).getBurnFees(_asset.tokenId);
+            for (uint i = 0; i < tokenBurnFee.length; ++i) {
+                total += tokenBurnFee[i].amount;
+            }
+        }
     }
 
     /**************** Internal Functions ****************/

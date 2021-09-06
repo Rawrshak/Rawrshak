@@ -120,7 +120,7 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
     }
 
     // Asset Burning
-    function burnBatch(LibAsset.BurnData memory _data) external override {
+    function burnBatch(LibAsset.BurnData memory _data) external override virtual {
         require(_data.account == _msgSender() || isApprovedForAll(_data.account, _msgSender()), "Caller is not approved.");
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
