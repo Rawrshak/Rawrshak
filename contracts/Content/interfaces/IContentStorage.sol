@@ -5,8 +5,9 @@ import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 import "./IRoyaltyProvider.sol";
 import "./IContentSubsystemBase.sol";
+import "./IContractUri.sol";
 
-interface IContentStorage is IRoyaltyProvider {
+interface IContentStorage is IRoyaltyProvider, IContractUri {
 
     /*********************** Events *********************/
     event AssetsAdded(address indexed parent, LibAsset.CreateData[] assets);
@@ -18,18 +19,18 @@ interface IContentStorage is IRoyaltyProvider {
 
     function maxSupply(uint256 _tokenId) external view returns (uint256);
 
-    function uri(uint256 _tokenId) external view returns (string memory);
+    function uri(uint256 _tokenId, uint256 _version) external view returns (string memory);
 
-    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view  returns (string memory);
+    function hiddenUri(uint256 _tokenId, uint256 _version) external view  returns (string memory);
 
     /******** Mutative Functions ********/
     function updateSupply(uint256 _tokenId, uint256 _supply) external;
     
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
 
-    function setTokenUriPrefix(string memory _tokenUriPrefix) external;
+    function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
-    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external;
+    function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
 

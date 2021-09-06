@@ -13,6 +13,7 @@ import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "../utils/LibConstants.sol";
 import "./interfaces/IUniqueContent.sol";
+import "./interfaces/IHiddenData.sol";
 
 contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableUpgradeable, ERC721Upgradeable, ERC1155HolderUpgradeable {
     using AddressUpgradeable for address;
@@ -44,7 +45,6 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         LibAsset.UniqueContentData memory _mintData)
         public initializer
     {
-        __HasContractUri_init_unchained(_mintData.contractUri);
         __Ownable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
@@ -52,6 +52,7 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         __ERC1155Receiver_init_unchained();
         __ERC1155Holder_init_unchained();
         __HasRoyalties_init_unchained(_mintData.contractFees);
+        __HasContractUri_init_unchained(_contractUri);
         _registerInterface(LibConstants._INTERFACE_ID_UNIQUE_CONTENT);
 
         require(_mintData.contentContract.isContract() && 
@@ -60,10 +61,9 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         creator = _mintData.creator;
         contentContract = _mintData.contentContract;
         id = _mintData.id;
+        contentContract = _mintData.contentContract;
 
         _setParent(address(this));
-
-        _setContractUri(_contractUri);
 
         emit UniqueContentCreated(_mintData.creator, _name, _symbol, _mintData);
     }
@@ -112,20 +112,16 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
         return super.getApproved(0);
     }
 
-    function uri() external view override returns (string memory) {
-        return contractUri;
-    }
-
     function tokenURI(uint256) public view override returns (string memory) {
-        return Content(contentContract).tokenUri(id);
+        return Content(contentContract).uri(id);
     }
 
-    function tokenDataURI(uint256) external view override returns (string memory) {
+    function hiddenUri(uint256) external view override returns (string memory) {
         // only owner of the token can open the token's data uri
-        if (ownerOf(0) == _msgSender()) {
+        if (ownerOf(0) == _msgSender() || !IERC165Upgradeable(contentContract).supportsInterface(LibConstants._INTERFACE_ID_CONTENT_WITH_HIDDEN_DATA)) {
             return "";
         }
-        return Content(contentContract).hiddenTokenUri(id);
+        return IHiddenData(contentContract).hiddenUri(id);
     }
 
     function mint(address to) external override onlyOwner {

@@ -2,8 +2,10 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
+const ContractRegistry = artifacts.require("ContractRegistry");
+const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Escrow NFTs Contract', (accounts) => {
@@ -18,8 +20,8 @@ contract('Escrow NFTs Contract', (accounts) => {
     var content;
     var contentStorage;
     var asset = [
-        [1, "CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "CID-2", 100, []],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
     ];
     var approvalPair = [[executionManagerAddress, true]];
     const zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -29,32 +31,29 @@ contract('Escrow NFTs Contract', (accounts) => {
     var default_admin_role;
 
     beforeEach(async () => {
+        registry = await ContractRegistry.new();
+        await registry.__ContractRegistry_init();
+        tagsManager = await TagsManager.new();
+        await tagsManager.__TagsManager_init(registry.address);
+
         // Set up NFT Contract
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlManager_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
-        contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await contentStorage.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
-        await content.transferOwnership(contentManager.address, {from: deployerAddress});
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-
-        // give crafting system approval
-        var approvalPair = [[executionManagerAddress, true]];
-        await contentManager.registerSystem(approvalPair);
+        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.setParent(content.address);
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
-        
-        // approve systems for player address
-        await content.approveAllSystems(true, {from:playerAddress});
 
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 1], 0, zeroAddress, []];

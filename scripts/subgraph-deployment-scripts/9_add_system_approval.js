@@ -18,5 +18,5 @@ module.exports = async function(deployer, networks, accounts) {
     var approvalPair = [[deployerAddress, true]];
 
     // var assetRoyalty = [[deployerWalletAddress, web3.utils.toWei('0.03', 'ether')]];
-    await contentManager.registerSystem(approvalPair);
+    await contentManager.registerOperators(approvalPair);
 };

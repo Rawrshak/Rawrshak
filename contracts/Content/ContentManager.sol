@@ -9,8 +9,9 @@ import "./UniqueContent.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
-import "./interfaces/ISystemsRegistry.sol";
+import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IUniqueContent.sol";
+import "./interfaces/ITagsManager.sol";
 
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
@@ -18,7 +19,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     
     /******************** Constants ********************/
     /*
-     * Todo: this
+    // Todo: Fix this
      * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0xFFFFFFFF
      */
     // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0x00000003;
@@ -26,20 +27,16 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     /***************** Stored Variables *****************/
     IContent public override content;
     IContentStorage public override contentStorage;
-    ISystemsRegistry public override systemsRegistry;
-
-    /********************* Modifiers ********************/
-    modifier addressExists(address addr) {
-        require(addr != address(0), "Invalid permissions.");
-        _;
-    }
+    IAccessControlManager public override accessControlManager;
+    ITagsManager private tagsManager;
 
     /******************** Public API ********************/
     
     function __ContentManager_init(
         address _content,
         address _contentStorage,
-        address _systemsRegistry
+        address _accessControlManager,
+        address _tagsManager
     )
         public initializer
     {
@@ -53,12 +50,14 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         require(_contentStorage != address(0) && _contentStorage.isContract() && 
                 _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
                 "Invalid Address");
+        require(_tagsManager != address(0) && _tagsManager.isContract(),"Invalid Address");
 
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
-        systemsRegistry = ISystemsRegistry(_systemsRegistry);
+        accessControlManager = IAccessControlManager(_accessControlManager);
+        tagsManager = ITagsManager(_tagsManager);
 
-        // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _systemsRegistry);
+        // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _accessControlManager);
     }
     
     function addAssetBatch(
@@ -67,16 +66,22 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         contentStorage.addAssetBatch(_assets);
     }
     
-    function registerSystem(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
-        systemsRegistry.registerSystems(_operators);
-    }
-    
-    function setTokenUriPrefix(string memory _tokenUriPrefix) external override onlyOwner {
-        contentStorage.setTokenUriPrefix(_tokenUriPrefix);
+    function registerOperators(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
+        for (uint256 i = 0; i < _operators.length; ++i) {
+            if (_operators[i].approved) {
+                IAccessControlUpgradeable(address(accessControlManager)).grantRole(accessControlManager.MINTER_ROLE(), _operators[i].operator);
+            } else {
+                IAccessControlUpgradeable(address(accessControlManager)).revokeRole(accessControlManager.MINTER_ROLE(), _operators[i].operator);
+            }
+        }
     }
 
-    function setHiddenTokenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
-        contentStorage.setHiddenTokenUriBatch(_assets);
+    function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
+        contentStorage.setHiddenUriBatch(_assets);
+    }
+    
+    function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
+        contentStorage.setPublicUriBatch(_assets);
     }
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external override onlyOwner {
@@ -108,6 +113,24 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         
         content.mintBatch(_data);
         IUniqueContent(_uniqueContentContract).mint(to);
+    }
+
+    function addContractTags(string[] memory _tags) external override onlyOwner {
+        tagsManager.addContractTags(address(content), _tags);
+    }
+
+    function removeContractTags(string[] memory _tags) external override onlyOwner {
+        tagsManager.removeContractTags(address(content), _tags);
+    }
+
+    function addAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
+        require(contentStorage.ids(_id), "token id doesn't exist.");
+        tagsManager.addAssetTags(address(content), _id, _tags);
+    }
+    
+    function removeAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
+        require(contentStorage.ids(_id), "token id doesn't exist.");
+        tagsManager.removeAssetTags(address(content), _id, _tags);
     }
     
     uint256[50] private __gap;

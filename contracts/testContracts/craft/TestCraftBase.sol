@@ -12,8 +12,4 @@ contract TestCraftBase is CraftBase {
         __ERC165Storage_init_unchained();
         __CraftBase_init_unchained(_seed);
     }
-
-    function isContentRegistered(address _content) external view returns(bool) {
-        return(contentContracts.contains(_content));
-    }
 }

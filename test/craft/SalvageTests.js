@@ -3,17 +3,18 @@ const RawrToken = artifacts.require("RawrToken");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
-const SystemsRegistry = artifacts.require("SystemsRegistry");
+const AccessControlManager = artifacts.require("AccessControlManager");
 const TestSalvage = artifacts.require("TestSalvage");
+const ContractRegistry = artifacts.require("ContractRegistry");
+const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
 
+// Todo: Update this test
 contract('Salvage Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
         managerAddress,            // platform address fees
-        testManagerAddress,         // Only for putting in data for testing
         creatorAddress,             // content nft Address
-        creator2Address,             // creator Address
         playerAddress,              // player 1 address
         player2Address,              // player 2 address
     ] = accounts;
@@ -23,13 +24,13 @@ contract('Salvage Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "SalvageItem-1", 0, []],
-        [2, "SalvageItem-2", 100, []],
-        [3, "Material-1", 10000, []],
-        [4, "Material-2", 10000, []],
-        [5, "Material-3", 10000, []],
-        [6, "Reward-1", 0, []],
-        [7, "Reward-2", 0, []],
+        [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, []],
+        [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, []],
+        [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1",10000, []],
+        [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, []],
+        [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, []],
+        [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, []],
+        [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, []],
     ];
 
     // Rawr Token 
@@ -45,27 +46,27 @@ contract('Salvage Contract', (accounts)=> {
     var initialSalvageableAssetData;
 
     beforeEach(async () => {
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
+        registry = await ContractRegistry.new();
+        await registry.__ContractRegistry_init();
+        tagsManager = await TagsManager.new();
+        await tagsManager.__TagsManager_init(registry.address);
+
+        accessControlManager = await AccessControlManager.new();
+        await accessControlManager.__AccessControlManager_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", "ipfs:/contract-uri", contentStorage.address, systemsRegistry.address);
-        contentStorage.setParent(content.address);
-        systemsRegistry.setParent(content.address);
+        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await contentStorage.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, systemsRegistry.address);
-        await content.transferOwnership(contentManager.address, {from: deployerAddress});
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await systemsRegistry.grantRole(await systemsRegistry.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.setParent(content.address);
 
-        // give crafting system approval
-        var approvalPair = [[creatorAddress, true]];
-        await contentManager.registerSystem(approvalPair);
-
-        // Add 2 assets
+        // Add 7 assets
         await contentManager.addAssetBatch(asset);
         
         nftAssetData = [content.address, 1];
@@ -77,9 +78,6 @@ contract('Salvage Contract', (accounts)=> {
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
         await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
-        // approve systems for player address
-        await content.approveAllSystems(true, {from:playerAddress});
 
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 10], 1, zeroAddress, []];
@@ -95,14 +93,11 @@ contract('Salvage Contract', (accounts)=> {
         manager_role = await salvage.MANAGER_ROLE();
         
         // Register the salvage as a system on the content contract
-        var approvalPair = [[salvage.address, true]];
-        await contentManager.registerSystem(approvalPair, {from: deployerAddress});
+        var approvalPair = [[salvage.address, true], [creatorAddress, true]];
+        await contentManager.registerOperators(approvalPair, {from: deployerAddress});
 
         // registered manager
         await salvage.registerManager(managerAddress, {from: deployerAddress});
-
-        // Register the content contract
-        await salvage.registerContent(await contentManager.content(), {from: managerAddress});
         
         initialSalvageableAssetData = [
             [
@@ -131,14 +126,8 @@ contract('Salvage Contract', (accounts)=> {
             "Salvage Contract was not deployed properly.");
     });
 
-    it('Asset ID calculation', async () => {
-        var assetId = await salvage.getId(nftAssetData, {from: playerAddress});
-
-        assert.notEqual(assetId.toString(), 0x0, "Id is empty");
-    });
-
     it('Add Salvageable Assets', async () => {
-        var results = await salvage.setSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
         TruffleAssert.eventEmitted(results, 'SalvageableAssetsUpdated');
 
         var assetId = results.logs[0].args.ids[0];
@@ -146,7 +135,7 @@ contract('Salvage Contract', (accounts)=> {
         // assert.notEqual(results.logs[0].args[1].toString(), 0x0, "Id is empty");
 
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId.toString());
-        var rewardsData = await salvage.getSalvageRewards(assetId.toString());
+        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
 
         // console.log(storedSalvageableAssetData);
 
@@ -196,7 +185,7 @@ contract('Salvage Contract', (accounts)=> {
             ]
         ];
 
-        var results = await salvage.setSalvageableAssetBatch(salvageableAssets, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(salvageableAssets, {from: managerAddress});
         TruffleAssert.eventEmitted(results, 'SalvageableAssetsUpdated');
         
         // console.log(results.logs[0].args)
@@ -205,7 +194,7 @@ contract('Salvage Contract', (accounts)=> {
         
         // Test Asset 1
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId1.toString());
-        var rewardsData = await salvage.getSalvageRewards(assetId1.toString());
+        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
 
         assert.equal(storedSalvageableAssetData.asset.content, content.address, "asset content address incorrect");
         assert.equal(storedSalvageableAssetData.asset.tokenId, 1, "asset id incorrect");
@@ -218,7 +207,7 @@ contract('Salvage Contract', (accounts)=> {
         
         // Test Asset 2
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId2.toString());
-        var rewardsData = await salvage.getSalvageRewards(assetId2.toString());
+        var rewardsData = await salvage.getSalvageRewards([content.address, 2]);
 
         assert.equal(storedSalvageableAssetData.asset.content, content.address, "asset content address incorrect");
         assert.equal(storedSalvageableAssetData.asset.tokenId, 2, "asset id incorrect");
@@ -231,7 +220,7 @@ contract('Salvage Contract', (accounts)=> {
     });
 
     it('Update Salvageable Assets', async () => {
-        var results = await salvage.setSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
         var assetId = results.logs[0].args.ids[0];
 
         var updatedData = [
@@ -248,10 +237,10 @@ contract('Salvage Contract', (accounts)=> {
             ]
         ];
 
-        results = await salvage.setSalvageableAssetBatch(updatedData, {from: managerAddress});
+        results = await salvage.addSalvageableAssetBatch(updatedData, {from: managerAddress});
         
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId.toString());
-        var rewardsData = await salvage.getSalvageRewards(assetId.toString());
+        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
 
         assert.equal(storedSalvageableAssetData.asset.content, content.address, "asset content address incorrect");
         assert.equal(storedSalvageableAssetData.asset.tokenId, 1, "asset id incorrect");
@@ -264,43 +253,14 @@ contract('Salvage Contract', (accounts)=> {
 
     it('Failing to Add Salvageable Assets', async () => {
         // test invalid permission
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(initialSalvageableAssetData, {from: deployerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
         // test empty input
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch([], {from: managerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        // test invalid contract asset
-        systemsRegistry = await SystemsRegistry.new();
-        await systemsRegistry.__SystemsRegistry_init();
-        var contentStorage2 = await ContentStorage.new();
-        await contentStorage2.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
-        var content2 = await Content.new();
-        await content2.__Content_init("Test Content Contract", "TEST2", "ipfs:/contract-uri", contentStorage2.address, systemsRegistry.address);
-        contentStorage2.setParent(content2.address);
-        systemsRegistry.setParent(content2.address);
-        
-        var invalidData = [
-            [
-                [content2.address, 1],
-                0,
-                [ // array
-                    [   // salvageableasset
-                        [content.address, 5],
-                        web3.utils.toWei('0.1', 'ether'),
-                        1
-                    ]
-                ]
-            ]
-        ];
-
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(invalidData, {from: managerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch([], {from: managerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
@@ -318,8 +278,8 @@ contract('Salvage Contract', (accounts)=> {
                 ]
             ]
         ];
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(invalidData, {from: managerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(invalidData, {from: managerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
@@ -331,27 +291,8 @@ contract('Salvage Contract', (accounts)=> {
                 []
             ]
         ];
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(invalidData, {from: managerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-
-        // test invalid reward asset contract
-        invalidData = [
-            [
-                [content.address, 1],
-                1,
-                [ // array
-                    [   // salvageableasset
-                        [content2.address, 5],
-                        web3.utils.toWei('0.1', 'ether'),
-                        1
-                    ]
-                ]
-            ]
-        ];
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(invalidData, {from: managerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(invalidData, {from: managerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
@@ -362,15 +303,15 @@ contract('Salvage Contract', (accounts)=> {
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content2.address, 5],
+                        [content.address, 5],
                         web3.utils.toWei('1.001', 'ether'),
                         1
                     ]
                 ]
             ]
         ];
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(invalidData, {from: managerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(invalidData, {from: managerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         invalidData = [
@@ -379,15 +320,15 @@ contract('Salvage Contract', (accounts)=> {
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content2.address, 5],
+                        [content.address, 5],
                         0,
                         1
                     ]
                 ]
             ]
         ];
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(invalidData, {from: managerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(invalidData, {from: managerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
@@ -398,32 +339,35 @@ contract('Salvage Contract', (accounts)=> {
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content2.address, 5],
+                        [content.address, 5],
                         web3.utils.toWei('1', 'ether'),
                         0
                     ]
                 ]
             ]
         ];
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(invalidData, {from: managerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(invalidData, {from: managerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         // test not paused
         await salvage.managerSetPause(false, {from: managerAddress});
-        TruffleAssert.fails(
-            salvage.setSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress}),
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
 
     it('Salvage Asset', async () => {
-        var results = await salvage.setSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
         var assetId = results.logs[0].args.ids[0];
 
         // unpause the salvage contract so we can start salvaging assets
         await salvage.managerSetPause(false, {from: managerAddress});
+        
+        // Approve salvage contract as an operator
+        await content.setApprovalForAll(salvage.address, true, {from: playerAddress});
 
         var results = await salvage.salvage([content.address, 1], 1, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetSalvaged');
@@ -438,11 +382,14 @@ contract('Salvage Contract', (accounts)=> {
     });
 
     it('Salvage multiple instances of the same asset', async () => {
-        var results = await salvage.setSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
         var assetId = results.logs[0].args.ids[0];
 
         // unpause the salvage contract so we can start salvaging assets
         await salvage.managerSetPause(false, {from: managerAddress});
+        
+        // Approve salvage contract as an operator
+        await content.setApprovalForAll(salvage.address, true, {from: playerAddress});
 
         var results = await salvage.salvage([content.address, 1], 5, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetSalvaged');
@@ -491,11 +438,14 @@ contract('Salvage Contract', (accounts)=> {
                 ]
             ]
         ];
-        var results = await salvage.setSalvageableAssetBatch(salvageableAssets, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(salvageableAssets, {from: managerAddress});
         var assetId = results.logs[0].args.ids[0];
 
         // unpause the salvage contract so we can start salvaging assets
         await salvage.managerSetPause(false, {from: managerAddress});
+        
+        // Approve salvage contract as an operator
+        await content.setApprovalForAll(salvage.address, true, {from: playerAddress});
 
         var assetsToSalvage = [
             [content.address, 1],
@@ -553,11 +503,14 @@ contract('Salvage Contract', (accounts)=> {
                 ]
             ]
         ];
-        var results = await salvage.setSalvageableAssetBatch(salvageableAssets, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(salvageableAssets, {from: managerAddress});
         var assetId = results.logs[0].args.ids[0];
 
         // unpause the salvage contract so we can start salvaging assets
         await salvage.managerSetPause(false, {from: managerAddress});
+
+        // Approve salvage contract as an operator
+        await content.setApprovalForAll(salvage.address, true, {from: playerAddress});
 
         var assetsToSalvage = [
             [content.address, 1],
@@ -581,34 +534,44 @@ contract('Salvage Contract', (accounts)=> {
     });
 
     it('Invalid Salvage Asset', async () => {
-        var results = await salvage.setSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
+        var results = await salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
         var assetId = results.logs[0].args.ids[0];
         
         // unpause the salvage contract so we can start salvaging assets
         await salvage.managerSetPause(false, {from: managerAddress});
 
+        // no content contract approval for the salvage contract
+        var assetData = [content.address, 1];
+        await TruffleAssert.fails(
+            salvage.salvage(assetData, 1, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+        
+        // Approve salvage contract as an operator
+        await content.setApprovalForAll(salvage.address, true, {from: playerAddress});
+        
         // Invalid amount
         var assetData = [content.address, 1];
-        TruffleAssert.fails(
+        await TruffleAssert.fails(
             salvage.salvage(assetData, 0, {from: playerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
         // invalid user balance
-        TruffleAssert.fails(
+        await TruffleAssert.fails(
             salvage.salvage(assetData, 15, {from: playerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         // item not salvageable
         var assetData = [content.address, 3];
-        TruffleAssert.fails(
+        await TruffleAssert.fails(
             salvage.salvage(assetData, 0, {from: playerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
 
-    // it('Salvage Asset with Random Salvage Type', async () => {
-    // });
+    // // it('Salvage Asset with Random Salvage Type', async () => {
+    // // });
 
 });

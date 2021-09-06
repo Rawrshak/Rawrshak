@@ -35,7 +35,6 @@ library LibCraft {
     }
 
     struct Recipe {
-        uint256 id;
         uint256 craftingRate;
         bool enabled;
         AssetData[] materials;

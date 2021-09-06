@@ -15,16 +15,10 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     beforeEach(async () => {
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init("ipfs:/", [[deployerAddress, web3.utils.toWei('0.01', 'ether')]]);
+        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
     });
 
     it('Check Content Storage proper deployment', async () => {
-        // Check Token Prefix
-        assert.equal(
-            await contentStorage.tokenUriPrefix(),
-            "ipfs:/",
-            "Token Uri Prefix isn't set properly.");
-
         // Check Contract Royalties
         var contractFees = await contentStorage.getRoyalties(0);
         assert.equal(
@@ -40,6 +34,12 @@ contract('ContentStorage Contract Tests', (accounts) => {
             true, 
             "the token doesn't support the ContentStorage interface");
             
+        // HasContractUri interface
+        assert.equal(
+            await contentStorage.supportsInterface("0xe8a3d485"),
+            true, 
+            "the token doesn't support the HasContractUri interface");
+
         // HasTokenUri interface
         assert.equal(
             await contentStorage.supportsInterface("0xcac843cb"),
@@ -92,7 +92,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
     // }
 
     it('Add single asset', async () => {
-        var asset = [[1, "CID-1", 100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
+        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1",  100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
         var results = await contentStorage.addAssetBatch(asset);
 
         TruffleAssert.eventEmitted(
@@ -107,7 +107,16 @@ contract('ContentStorage Contract Tests', (accounts) => {
         
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'PublicUriUpdated',
+            (ev) => {
+                return ev.id == 1
+                    && ev.version == 0;
+            }
+        );
+        
+        TruffleAssert.eventEmitted(
+            results,
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 0;
@@ -132,15 +141,15 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     it('Add multiple assets', async () => {
         var asset = [
-            [1, "CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-            [2, "CID-2", 10, []]
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2",  10, []]
         ];
         var results = await contentStorage.addAssetBatch(asset);
 
         // Check the token URIs
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'HiddenUriUpdated',
             (ev) => {
                 return ev.id == 1
                     && ev.version == 0;
@@ -149,7 +158,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         
         TruffleAssert.eventEmitted(
             results,
-            'HiddenTokenUriUpdated',
+            'PublicUriUpdated',
             (ev) => {
                 return ev.id == 2
                     && ev.version == 0;
@@ -168,7 +177,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
     });
 
     it('Update the current asset supply', async () => {
-        var asset = [[1, "CID-1", 100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
+        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
         await contentStorage.addAssetBatch(asset);
 
         assert.equal(
@@ -186,9 +195,9 @@ contract('ContentStorage Contract Tests', (accounts) => {
     
     it('Basic Royalties tests', async () => {
         var asset = [
-            [1, "CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-            [2, "CID-2", 10, []],
-            [3, "CID-3", 10, [[deployerAddress, web3.utils.toWei('0.02', 'ether')], [deployerAltAddress, web3.utils.toWei('0.03', 'ether')]]]
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, [[deployerAddress, web3.utils.toWei('0.02', 'ether')], [deployerAltAddress, web3.utils.toWei('0.03', 'ether')]]]
         ];
         await contentStorage.addAssetBatch(asset);
 
@@ -214,57 +223,72 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     it('Basic Uri tests', async () => {
         var asset = [
-            [1, "ipfs:/CID-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-            [2, "", 10, []],
-            [3, "ipfs:/CID-3", 10, []]
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, []]
         ];
         await contentStorage.addAssetBatch(asset);
 
+        // Test Public Uri
         assert.equal(
-            await contentStorage.hiddenTokenUri(1, 0),
-            "ipfs:/CID-1",
+            await contentStorage.uri(1, 0),
+            "arweave.net/tx/public-uri-1",
             "Token 1 incorrect uri");
 
         assert.equal(
-            await contentStorage.hiddenTokenUri(2, 0),
-            "",
+            await contentStorage.uri(2, 0),
+            "arweave.net/tx/public-uri-2",
             "Token 2 incorrect uri");
 
         assert.equal(
-            await contentStorage.hiddenTokenUri(3, 0),
-            "ipfs:/CID-3",
+            await contentStorage.uri(3, 0),
+            "arweave.net/tx/public-uri-3",
             "Token 3 incorrect uri");
+            
+        // Test Hidden Uri
+        assert.equal(
+            await contentStorage.hiddenUri(1, 0),
+            "arweave.net/tx/private-uri-1",
+            "Token 1 incorrect hidden uri");
+
+        assert.equal(
+            await contentStorage.hiddenUri(2, 0),
+            "arweave.net/tx/private-uri-2",
+            "Token 2 incorrect hidden uri");
+
+        assert.equal(
+            await contentStorage.hiddenUri(3, 0),
+            "arweave.net/tx/private-uri-3",
+            "Token 3 incorrect hidden uri");
             
         // Update Asset 2
         var assetUri = [
-            [2, "ipfs:/CID-2"]
+            [2, "arweave.net/tx/private-uri-2v1"]
         ];
         
         TruffleAssert.eventEmitted(
-            await contentStorage.setHiddenTokenUriBatch(assetUri),
-            'HiddenTokenUriUpdated'
+            await contentStorage.setHiddenUriBatch(assetUri),
+            'HiddenUriUpdated'
         );
         
         assert.equal(
-            await contentStorage.hiddenTokenUri(2, 1),
-            "ipfs:/CID-2",
-            "Token 2 incorrect uri");
-
-        // Test token uri
+            await contentStorage.hiddenUri(2, 1),
+            "arweave.net/tx/private-uri-2v1",
+            "Token 2 incorrect hidden uri");
+            
+        // Update Asset 3
+        var assetUri = [
+            [3, "arweave.net/tx/public-uri-3v1"]
+        ];
+        
+        TruffleAssert.eventEmitted(
+            await contentStorage.setPublicUriBatch(assetUri),
+            'PublicUriUpdated'
+        );
         
         assert.equal(
-            await contentStorage.uri(1),
-            "ipfs:/1",
-            "Token 2 incorrect uri");
-        
-        assert.equal(
-            await contentStorage.uri(2),
-            "ipfs:/2",
-            "Token 2 incorrect uri");
-    
-        assert.equal(
-            await contentStorage.uri(3),
-            "ipfs:/3",
-            "Token 2 incorrect uri");
+            await contentStorage.uri(3, 1),
+            "arweave.net/tx/public-uri-3v1",
+            "Token 3 incorrect uri");
     });
 });

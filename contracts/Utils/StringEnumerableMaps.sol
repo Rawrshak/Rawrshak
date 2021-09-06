@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-library ExtendedEnumerableMaps {
+library StringEnumerableMaps {
 
     struct MapEntry {
-        address _key;
-        uint256 _value;
+        bytes32 _key;
+        string _value;
     }
 
-    struct AddressToUintMap {
+    struct Bytes32ToStringMap {
         // Storage of map keys and values
         MapEntry[] _entries;
 
         // Position of the entry defined by a key in the `entries` array, plus 1
         // because index 0 means a key is not in the map.
-        mapping (address => uint256) _indexes;
+        mapping (bytes32 => uint256) _indexes;
     }
     
     /**
@@ -24,7 +24,7 @@ library ExtendedEnumerableMaps {
      * Returns true if the key was added to the map, that is if it was not
      * already present.
      */
-    function set(AddressToUintMap storage map, address key, uint256 value) internal returns (bool) {
+    function set(Bytes32ToStringMap storage map, bytes32 key, string memory value) internal returns (bool) {
         // We read and store the key's index to prevent multiple reads from the same storage slot
         uint256 keyIndex = map._indexes[key];
 
@@ -45,7 +45,7 @@ library ExtendedEnumerableMaps {
      *
      * Returns true if the key was removed from the map, that is if it was present.
      */
-    function remove(AddressToUintMap storage map, address key) internal returns (bool) {
+    function remove(Bytes32ToStringMap storage map, bytes32 key) internal returns (bool) {
         // We read and store the key's index to prevent multiple reads from the same storage slot
         uint256 keyIndex = map._indexes[key];
 
@@ -82,14 +82,14 @@ library ExtendedEnumerableMaps {
     /**
      * @dev Returns true if the key is in the map. O(1).
      */
-    function contains(AddressToUintMap storage map, address key) internal view returns (bool) {
+    function contains(Bytes32ToStringMap storage map, bytes32 key) internal view returns (bool) {
         return map._indexes[key] != 0;
     }
 
     /**
      * @dev Returns the number of elements in the map. O(1).
      */
-    function length(AddressToUintMap storage map) internal view returns (uint256) {
+    function length(Bytes32ToStringMap storage map) internal view returns (uint256) {
         return map._entries.length;
     }
 
@@ -102,7 +102,7 @@ library ExtendedEnumerableMaps {
     *
     * - `index` must be strictly less than {length}.
     */
-    function at(AddressToUintMap storage map, uint256 index) internal view returns (address, uint256) {
+    function at(Bytes32ToStringMap storage map, uint256 index) internal view returns (bytes32, string memory) {
         require(map._entries.length > index, "EnumerableMap: index out of bounds");
 
         MapEntry storage entry = map._entries[index];
@@ -116,14 +116,14 @@ library ExtendedEnumerableMaps {
      *
      * - `key` must be in the map.
      */
-    function get(AddressToUintMap storage map, address key) internal view returns (uint256) {
+    function get(Bytes32ToStringMap storage map, bytes32 key) internal view returns (string memory) {
         return get(map, key, "EnumerableMap: nonexistent key");
     }
 
     /**
      * @dev Same as {get}, with a custom error message when `key` is not in the map.
      */
-    function get(AddressToUintMap storage map, address key, string memory errorMessage) internal view returns (uint256) {
+    function get(Bytes32ToStringMap storage map, bytes32 key, string memory errorMessage) internal view returns (string memory) {
         uint256 keyIndex = map._indexes[key];
         require(keyIndex != 0, errorMessage); // Equivalent to contains(map, key)
         return map._entries[keyIndex - 1]._value; // All indexes are 1-based

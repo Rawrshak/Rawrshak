@@ -5,12 +5,10 @@ import "../../libraries/LibCraft.sol";
 
 interface ISalvage {
     /******** View Functions ********/
-    function getId(LibCraft.AssetData calldata _asset) external pure returns(uint256);
-
-    function getSalvageRewards(uint256 _id) external view returns(LibCraft.SalvageReward[] memory rewards);
+    function getSalvageRewards(LibCraft.AssetData calldata _asset) external view returns(LibCraft.SalvageReward[] memory rewards);
 
     /******** Mutative Functions ********/
-    function setSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _asset) external;
+    function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _asset) external;
 
     function salvage(LibCraft.AssetData memory _asset, uint256 _amount) external;
 

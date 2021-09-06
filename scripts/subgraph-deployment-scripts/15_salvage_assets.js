@@ -27,8 +27,8 @@ module.exports = async function(deployer, networks, accounts) {
     // console.log("Asset 4: ", asset4.toString());
     // console.log("Asset 3: ", asset3.toString());
 
-    // approve the systems
-    await content.approveAllSystems(true, {from: player1Address});
+    // approve the salvage contract
+    await content.setApprovalForAll(salvage, true, {from: player1Address});
 
     // Salvage
     await salvage.salvage([content.address, 4], 2, {from: player1Address});

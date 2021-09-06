@@ -10,63 +10,59 @@ import "./ContentSubsystemBase.sol";
 abstract contract HasTokenUri is ContentSubsystemBase {
     using StringsUpgradeable for uint256;
 
+    // Todo: Fix this
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('tokenUriPrefix()')) == 0xc0ac9983
      * bytes4(keccak256('getLatestUriVersion(uint256)')) == 0x0a64da48
      */
     bytes4 private constant _INTERFACE_ID_TOKEN_URI = 0xcac843cb;
 
     /***************** Stored Variables *****************/
-    // Token URI prefix
-    string public tokenUriPrefix;
-
     // Optional mapping for token URIs
-    mapping(uint256 => LibAsset.Asset) private tokenUris;
+    mapping(uint256 => LibAsset.Asset) private publicUris;
+    mapping(uint256 => LibAsset.Asset) private hiddenUris;
     
     /*********************** Events *********************/
-    event TokenUriPrefixUpdated(address indexed parent, string uriPrefix);
-    event HiddenTokenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
+    event PublicUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
+    event HiddenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
 
     /******************** Public API ********************/
-    function __HasTokenUri_init_unchained(string memory _tokenUriPrefix) internal initializer {
-        tokenUriPrefix = _tokenUriPrefix;
+    function __HasTokenUri_init_unchained() internal initializer {
         _registerInterface(_INTERFACE_ID_TOKEN_URI);
     }
 
     /**
      * @dev Returns the latest version of a token uri
      * @param _tokenId uint256 ID of the token to query
+     * @param _isPublic bool get the private or public token id
      */
-    function getLatestUriVersion(uint256 _tokenId) public view returns (uint256) {
-        return tokenUris[_tokenId].version;
+    function getLatestUriVersion(uint256 _tokenId, bool _isPublic) public view returns (uint256) {
+        if (_isPublic) {
+            return publicUris[_tokenId].version;
+        }
+        return hiddenUris[_tokenId].version;
     }
 
     /**************** Internal Functions ****************/
     /**
-     * @dev Returns an URI for a given token ID.
-     * @param _tokenId uint256 ID of the token to query
-     */
-    function _tokenUri(uint256 _tokenId) internal view returns (string memory) {
-        // if prefix don't exist, return "";
-        if (bytes(tokenUriPrefix).length == 0) {
-            return "";
-        }
-        return string(abi.encodePacked(tokenUriPrefix, _tokenId.toString()));
-    }
-
-    /**
-     * @dev Returns an Data URI for a given token ID.
-     * Throws if the token ID does not exist. May return an empty string.
+     * @dev Returns an URI for a given token ID. Throws if token id doesn't exist
      * @param _tokenId uint256 ID of the token to query
      * @param _version uint256 uri version to query
+     * @param _isPublic bool get the private or public token id
      */
-    function _hiddenTokenUri(uint256 _tokenId, uint256 _version) internal view returns (string memory) {
-        // if they're requesting a version that doesn't exist, return latest version
-        if (_version > tokenUris[_tokenId].version) {
-            _version = tokenUris[_tokenId].version;
+    function _tokenUri(uint256 _tokenId, uint256 _version, bool _isPublic) internal view returns (string memory) {
+        if (_isPublic) {
+            // if they're requesting a version that doesn't exist, return latest version
+            if (_version > publicUris[_tokenId].version) {
+                _version = publicUris[_tokenId].version;
+            }
+            return publicUris[_tokenId].dataUri[_version];
         }
-        return tokenUris[_tokenId].dataUri[_version];
+        // if they're requesting a version that doesn't exist, return latest version
+        if (_version > hiddenUris[_tokenId].version) {
+            _version = hiddenUris[_tokenId].version;
+        }
+        return hiddenUris[_tokenId].dataUri[_version];
     }
 
     /**
@@ -75,26 +71,43 @@ abstract contract HasTokenUri is ContentSubsystemBase {
      * @param _tokenId uint256 ID of the token to set its URI
      * @param _uri string URI to assign
      */
-    function _setHiddenTokenUri(uint256 _tokenId, string memory _uri) internal {
+    function _setHiddenUri(uint256 _tokenId, string memory _uri) internal {
         // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
         // we introduce a versioning system. As game assets can break and get updated, asset owners can
         // opt to use older versions of assets.
-        if (tokenUris[_tokenId].dataUri.length == 0) {
-            tokenUris[_tokenId].version = 0;
-        } else {
-            tokenUris[_tokenId].version++;
+
+        // Check if _uri is an empty string. If it is, return early and don't add anything. This means that
+        // the developer cannot delete a uri that has been set.
+        bytes memory tempEmptyStringTest = bytes(_uri); // Uses memory
+        if (tempEmptyStringTest.length == 0) {
+            return;
         }
-        tokenUris[_tokenId].dataUri.push(_uri);
-        emit HiddenTokenUriUpdated(_parent(), _tokenId, tokenUris[_tokenId].version);
+
+        if (hiddenUris[_tokenId].dataUri.length == 0) {
+            hiddenUris[_tokenId].version = 0;
+        } else {
+            hiddenUris[_tokenId].version++;
+        }
+        hiddenUris[_tokenId].dataUri.push(_uri);
+        emit HiddenUriUpdated(_parent(), _tokenId, hiddenUris[_tokenId].version);
     }
 
     /**
-     * @dev Internal function to set the token Uri prefix.
-     * @param _tokenUriPrefix string Uri prefix to assign
+     * @dev Internal function to set the Public Token Uri prefix.
+     * @param _tokenId uint256 ID of the token to set its URI
+     * @param _uri string URI to assign
      */
-    function _setTokenUriPrefix(string memory _tokenUriPrefix) internal {
-        tokenUriPrefix = _tokenUriPrefix;
-        emit TokenUriPrefixUpdated(_parent(), _tokenUriPrefix);
+    function _setPublicUri(uint256 _tokenId, string memory _uri) internal {
+        // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
+        // we introduce a versioning system. As game assets can break and get updated, asset owners can
+        // opt to use older versions of assets.
+        if (publicUris[_tokenId].dataUri.length == 0) {
+            publicUris[_tokenId].version = 0;
+        } else {
+            publicUris[_tokenId].version++;
+        }
+        publicUris[_tokenId].dataUri.push(_uri);
+        emit PublicUriUpdated(_parent(), _tokenId, publicUris[_tokenId].version);
     }
     
     uint256[50] private __gap;

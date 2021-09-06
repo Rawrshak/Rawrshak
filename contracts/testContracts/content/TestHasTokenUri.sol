@@ -4,27 +4,24 @@ pragma solidity >=0.6.0 <0.9.0;
 import "../../content/HasTokenUri.sol";
 
 contract TestHasTokenUri is HasTokenUri {
-    function __TestHasTokenUri_init(string memory _tokenUriPrefix) external initializer {
-        __HasTokenUri_init_unchained(_tokenUriPrefix);
+    function __TestHasTokenUri_init() external initializer {
+        __HasTokenUri_init_unchained();
         __ERC165Storage_init_unchained();
     }
 
-    function tokenUri(uint256 _tokenId) external view returns (string memory) {
-        return _tokenUri(_tokenId);
+    function tokenUri(uint256 _tokenId, uint256 _version, bool _isPublic) external view returns (string memory) {
+        return _tokenUri(_tokenId, _version, _isPublic);
     }
 
-    function hiddenTokenUri(uint256 _tokenId, uint256 _version) external view returns (string memory) {
-        return _hiddenTokenUri(_tokenId, _version);
-    }
-
-    function setTokenUriPrefix(string memory _tokenUriPrefix) external {
-        // this can be set to nothing.
-        _setTokenUriPrefix(_tokenUriPrefix);
-    }
-
-    function setHiddenTokenUri(LibAsset.AssetUri[] memory _assets) external {
+    function setPublicUri(LibAsset.AssetUri[] memory _assets) external {
         for (uint256 i = 0; i < _assets.length; ++i) {
-            _setHiddenTokenUri(_assets[i].tokenId, _assets[i].uri);
+            _setPublicUri(_assets[i].tokenId, _assets[i].uri);
+        }
+    }
+
+    function setHiddenUri(LibAsset.AssetUri[] memory _assets) external {
+        for (uint256 i = 0; i < _assets.length; ++i) {
+            _setHiddenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
 }
