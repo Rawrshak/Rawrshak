@@ -4,18 +4,6 @@ This project will contain the implementation of the Rawrshak Smart Contracts
 # Token: Rawrshak Token [RAWR]
 Rawrshak Token are the platform currency that will be used for Governance and transactions.
 
-# Tasks
-## Independent Tasks
-- Investigate [Gasless transactions](https://docs.openzeppelin.com/learn/sending-gasless-transactions)
-- Refactor Exchange, Lootbox, and Crafting Contracts. Separate out functionality and data into their own sub contracts
-- Investigate [Chainlink's VRF](https://docs.chain.link/docs/chainlink-vrf) for proper randomization for the Lootbox Contract
-- Investigate Best Rollup solution (Optimism, Abirtrum, ZkRollups via ImmutableX or Starkware)
-- Add a smart contract to lock RAWR tokens in on a Game Contract and add the Game Contract to a Public Access List. Game Contracts
-    caught violating the rules for the Public Access List will have their locked tokens slashed and redistributed. The Game Contract
-    is removed from the list. Make sure it's reflected in the Graph Node for easy query.
-- Add a Staking Contract that distributes from the locked Rawr staking pool and transaction fees accumulated.
-
-
 # Tools
 ## Node JS and NPM
     Install [Node JS and NPM](https://nodejs.org/en/)
