@@ -30,12 +30,15 @@ contract('Content Contract Tests', (accounts) => {
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
-        contentStorage.setParent(content.address);
-        accessControlManager.setParent(content.address);
+        await contentStorage.setParent(content.address);
 
-        // give crafting system approval
-        var approvalPair = [[deployerAddress, true], [craftingSystemAddress, true]];
-        await accessControlManager.registerSystems(approvalPair);
+        // give deployer address and crafting system approval; This would normally be done through the ContentManager
+        minter_role = await accessControlManager.MINTER_ROLE();
+        await accessControlManager.grantRole(minter_role, deployerAddress, {from: deployerAddress});
+        await accessControlManager.grantRole(minter_role, craftingSystemAddress, {from: deployerAddress});
+
+        // Set the content contract as the new parent
+        await accessControlManager.setParent(content.address);
 
         // Add 1 asset
         await contentStorage.addAssetBatch(asset);
@@ -111,20 +114,6 @@ contract('Content Contract Tests', (accounts) => {
             fees[0].account == deployerAddress && fees[0].rate == web3.utils.toWei('0.02', 'ether'),
             true,
             "Token 1 royalties are incorrect");
-
-        // test not approved 
-        assert.equal(
-            await accessControlManager.isOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
-            false,
-            "Crafting System Address does not have the correct permissions.");
-
-        await content.approveAllSystems(true, {from:playerAddress});
-
-        // test approval 
-        assert.equal(
-            await accessControlManager.isOperatorApproved(playerAddress, craftingSystemAddress, {from: playerAddress}),
-            true,
-            "Crafting System Address does not have the correct permissions.");
     });
 
     it('Add Assets', async () => {
@@ -192,8 +181,6 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Burn Assets', async () => {
-        await content.approveAllSystems(true, {from:playerAddress});
-
         const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
@@ -203,6 +190,7 @@ contract('Content Contract Tests', (accounts) => {
                 
         assert.equal(await content.supply(1, {from: playerAddress}), 5, "Asset 1 incorrect supply");
 
+        await content.setApprovalForAll(craftingSystemAddress, true, {from: playerAddress});
         await content.burnBatch(burnData, {from: craftingSystemAddress});
         assert.equal(await content.supply(1, {from: playerAddress}), 0, "Asset 1 incorrect supply");
         
@@ -211,8 +199,6 @@ contract('Content Contract Tests', (accounts) => {
     });
     
     it('Invalid burns', async () => {
-        await content.approveAllSystems(true, {from:playerAddress});
-
         const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});

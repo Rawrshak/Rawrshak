@@ -67,7 +67,6 @@ module.exports = async function(deployer, networks, accounts) {
         ],
         {deployer, initializer: '__ContentManager_init'});
 
-    await content.transferOwnership(contentManager.address, {from: deployerAddress});
     await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
     await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 

@@ -41,7 +41,6 @@ contract('Craft Base Contract', (accounts)=> {
         // Setup content manager
         contentManager = await ContentManager.new();
         await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
-        await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
 

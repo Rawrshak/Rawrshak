@@ -5,7 +5,6 @@ const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
-const TruffleAssert = require("truffle-assertions");
 // const { sign } = require("../mint");
 
 // Todo: Update this test
@@ -39,18 +38,17 @@ contract('Content Manager Contract Tests', (accounts) => {
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
-        contentStorage.setParent(content.address);
-        accessControlManager.setParent(content.address);
+        await contentStorage.setParent(content.address);
 
         contentManager = await ContentManager.new();
         await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
-        await content.transferOwnership(contentManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.grantRole(await accessControlManager.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+        await accessControlManager.setParent(content.address);
 
         // give crafting system approval
         var approvalPair = [[craftingSystemAddress, true]];
-        await contentManager.registerSystem(approvalPair);
+        await contentManager.registerOperators(approvalPair);
 
         // Add 1 asset
         await contentManager.addAssetBatch(asset);
@@ -59,7 +57,6 @@ contract('Content Manager Contract Tests', (accounts) => {
     it('Check Content Manager proper deployment', async () => {
         assert.equal(await contentManager.content(), content.address, "content contract is incorrect");
 
-        assert.equal(await content.owner(), contentManager.address, "Content Manager doesn't own the content contract.")
         assert.equal(
             await contentStorage.hasRole(await contentStorage.OWNER_ROLE(), deployerAddress),
             true,
@@ -97,23 +94,6 @@ contract('Content Manager Contract Tests', (accounts) => {
         //     await content.methods['hiddenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
         //     "arweave.net/tx/private-uri-3", 
         //     "New asset wasn't added.");
-    });
-
-    it('Set operators for System Approval', async () => {        
-        await content.approveAllSystems(true, {from: playerAddress});
-
-        assert.equal(
-            await accessControlManager.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
-            false,
-            "lootbox system not should be approved yet.");
-
-        var lootboxApprovalPair = [[lootboxSystemAddress, true]];
-        await contentManager.registerSystem(lootboxApprovalPair);
-
-        assert.equal(
-            await accessControlManager.isOperatorApproved(playerAddress, lootboxSystemAddress, {from: playerAddress}),
-            true,
-            "lootbox system should be approved.");
     });
 
     it('Set Token URI', async () => {
