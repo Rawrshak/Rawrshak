@@ -5,7 +5,6 @@ const Content = artifacts.require("Content");
 const TruffleAssert = require("truffle-assertions");
 const { sign } = require("../mint");
 
-// Todo: Update test for IsElevatedCaller()
 contract('AccessControlManager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -85,6 +84,28 @@ contract('AccessControlManager Contract Tests', (accounts) => {
             false,
             "minter address should not have the minter role");
     });
+
+    it('Test isElevatedCaller()', async () => {
+        // Deployer Address has the Default Admin Role
+        assert.equal(
+            await manager.isElevatedCaller(deployerAddress),
+            true,
+            "deployer should be the default admin");
+            
+        assert.equal(
+            await manager.isElevatedCaller(minterAddress),
+            false,
+            "minter address should not be the default admin or minter yet");
+
+        minter_role = await manager.MINTER_ROLE();
+        await manager.grantRole(minter_role, minterAddress, {from: deployerAddress});
+
+        assert.equal(
+            await manager.isElevatedCaller(minterAddress),
+            true,
+            "minter address should have a minter role now");
+    });
+
 
     it('VerifyMint() for owner', async () => {
         const signature = await sign(playerAddress, [1], [1], 0, craftingSystemAddress, manager.address);

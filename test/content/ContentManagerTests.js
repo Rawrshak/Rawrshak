@@ -5,9 +5,7 @@ const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
-// const { sign } = require("../mint");
 
-// Todo: Update this test for burn fees
 contract('Content Manager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -143,5 +141,27 @@ contract('Content Manager Contract Tests', (accounts) => {
         assert.equal(royalties[0].rate, web3.utils.toWei('0.02', 'ether'), "Incorrect royalty rate 1");
         assert.equal(royalties[1].account, deployerAltAddress, "Incorrect royalty account 2");
         assert.equal(royalties[1].rate, web3.utils.toWei('0.02', 'ether'), "Incorrect royalty rate 2");
+    });
+
+    it('Set Contract Burn Fees', async () => {
+        var fee = [[deployerAddress, web3.utils.toWei('1', 'ether')]];
+        await contentManager.setContractBurnFees(fee);
+        
+        contractFees = await contentStorage.getBurnFee(1);
+        assert.equal(contractFees.length, 1, "There should be 1 contract burn fee.");
+        assert.equal(contractFees[0].amount, web3.utils.toWei('1', 'ether'), "Fee amount is incorrect.");
+        assert.equal(contractFees[0].account, deployerAddress, "Receiver address is incorrect.");
+    });
+
+    it('Set Token Burn Fees', async () => {
+        var assetBurnFees = [
+            [2, [[deployerAltAddress, web3.utils.toWei('2', 'ether')]]]
+        ];
+        await contentManager.setTokenBurnFeesBatch(assetBurnFees);
+        
+        tokenBurnFee = await contentStorage.getBurnFee(2);
+        assert.equal(tokenBurnFee.length, 1, "There should be 1 contract burn fee.");1
+        assert.equal(tokenBurnFee[0].amount, web3.utils.toWei('2', 'ether'), "Fee amount is incorrect.");
+        assert.equal(tokenBurnFee[0].account, deployerAltAddress, "Receiver address is incorrect.");
     });
 });

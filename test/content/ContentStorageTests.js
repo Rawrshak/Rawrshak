@@ -2,7 +2,6 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const ContentStorage = artifacts.require("ContentStorage");
 const TruffleAssert = require("truffle-assertions");
 
-// Todo: Update This for Burn Fees
 contract('ContentStorage Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -220,6 +219,43 @@ contract('ContentStorage Contract Tests', (accounts) => {
             tokenFees[1].account == deployerAltAddress && tokenFees[1].rate == web3.utils.toWei('0.03', 'ether'),
             true,
             "Token 3 incorrect royalties");
+    });
+    
+    it('Basic Burn Fee tests', async () => {
+        var asset = [
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2",  10, []]
+        ];
+        var results = await contentStorage.addAssetBatch(asset);
+
+        // No Contract Burn Fee
+        var contractFees = await contentStorage.getBurnFee(0);
+        assert.equal(contractFees.length, 0, "There should be 0 burn fees by default.");
+
+        // test set contract burn fees
+        var fee = [[deployerAddress, web3.utils.toWei('1', 'ether')]];
+        await contentStorage.setContractBurnFees(fee);
+        
+        contractFees = await contentStorage.getBurnFee(1);
+        assert.equal(contractFees.length, 1, "There should be 1 contract burn fee.");
+
+        // test settokenburn fees batch
+        var assetBurnFees = [
+            [2, [[deployerAltAddress, web3.utils.toWei('2', 'ether')]]]
+        ];
+        await contentStorage.setTokenBurnFeesBatch(assetBurnFees);
+        
+        // Test token with Contract burn fee
+        tokenBurnFee = await contentStorage.getBurnFee(1);
+        assert.equal(tokenBurnFee.length, 1, "There should be 1 contract burn fee.");
+        assert.equal(tokenBurnFee[0].amount, web3.utils.toWei('1', 'ether'), "Fee amount is incorrect.");
+        assert.equal(tokenBurnFee[0].account, deployerAddress, "Receiver address is incorrect.");
+        
+        // Test token with Unique burn fee
+        tokenBurnFee = await contentStorage.getBurnFee(2);
+        assert.equal(tokenBurnFee.length, 1, "There should be 1 contract burn fee.");1
+        assert.equal(tokenBurnFee[0].amount, web3.utils.toWei('2', 'ether'), "Fee amount is incorrect.");
+        assert.equal(tokenBurnFee[0].account, deployerAltAddress, "Receiver address is incorrect.");
     });
 
     it('Basic Uri tests', async () => {

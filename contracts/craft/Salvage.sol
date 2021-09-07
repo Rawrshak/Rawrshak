@@ -104,7 +104,7 @@ contract Salvage is ISalvage, CraftBase {
     function getAssetBurnFees(LibCraft.AssetData calldata _asset) external view override returns (uint256 total) {
         total = 0;
         if (_asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_WITH_BURN_FEES) && !IBurnFees(_asset.content).isElevatedCaller(address(this))) {
-            LibAsset.Fee[] memory tokenBurnFee = IBurnFees(_asset.content).getBurnFees(_asset.tokenId);
+            LibAsset.Fee[] memory tokenBurnFee = IBurnFees(_asset.content).getBurnFee(_asset.tokenId);
             for (uint i = 0; i < tokenBurnFee.length; ++i) {
                 total += tokenBurnFee[i].amount;
             }

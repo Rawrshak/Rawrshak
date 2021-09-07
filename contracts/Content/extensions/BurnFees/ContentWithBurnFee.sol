@@ -21,16 +21,14 @@ contract ContentWithBurnFees is IBurnFees, Content {
     function __ContentWithBurnFees_init(
         string memory _name,
         string memory _symbol,
-        string memory _contractUri,
         IContentStorage _dataStorage,
         IAccessControlManager _accessControlManager,
         address _rawrToken)
         public initializer
     {
-        // __Ownable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
-        __ERC1155_init_unchained(_contractUri);
+        __ERC1155_init_unchained("");
         __Content_init_unchained(_name, _symbol, _dataStorage, _accessControlManager);
         __ContentWithBurnFees_init_unchained(_rawrToken);
     }
@@ -40,7 +38,7 @@ contract ContentWithBurnFees is IBurnFees, Content {
         rawrToken = _rawrToken;
     }
 
-    function getBurnFees(uint256 _tokenId) external view override returns(LibAsset.Fee[] memory fees) {
+    function getBurnFee(uint256 _tokenId) external view override returns(LibAsset.Fee[] memory fees) {
         return dataStorage.getBurnFee(_tokenId);
     }
 

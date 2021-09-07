@@ -1,14 +1,15 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
+const ContentWithBurnFees = artifacts.require("ContentWithBurnFees");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
-const TestCraft = artifacts.require("TestCraft");
+const Craft = artifacts.require("Craft");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
+const RawrToken = artifacts.require("RawrToken");
 const TruffleAssert = require("truffle-assertions");
 
-// Todo: Update this test for burn fees
 contract('Craft Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -67,8 +68,8 @@ contract('Craft Contract', (accounts)=> {
         var mintData = [playerAddress, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10], 1, zeroAddress, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
 
-        craft = await TestCraft.new();
-        await craft.__TestCraft_init(1000);
+        craft = await Craft.new();
+        await craft.__Craft_init(1000);
         
         manager_role = await craft.MANAGER_ROLE();
         
@@ -396,4 +397,55 @@ contract('Craft Contract', (accounts)=> {
         );
     });
 
+    it('Non-elevated Craft contract burn fees test', async () => {
+        // Create Rawr token
+        rawrToken = await RawrToken.new();
+        await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
+        
+        // Create Second Content Contract
+        // Set up NFT Contract
+        accessControlManager2 = await AccessControlManager.new();
+        await accessControlManager2.__AccessControlManager_init();
+        contentStorage2 = await ContentStorage.new();
+        await contentStorage2.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
+        content2 = await ContentWithBurnFees.new();
+        await content2.__ContentWithBurnFees_init("Test Content Contract", "TEST", contentStorage2.address, accessControlManager2.address, rawrToken.address);
+        await contentStorage2.setParent(content2.address);
+        
+        // Setup content manager
+        contentManager2 = await ContentManager.new();
+        await contentManager2.__ContentManager_init(content2.address, contentStorage2.address, accessControlManager2.address, tagsManager.address);
+        await contentStorage2.grantRole(await contentStorage2.OWNER_ROLE(), contentManager2.address, {from: deployerAddress});
+        await accessControlManager2.grantRole(await accessControlManager2.DEFAULT_ADMIN_ROLE(), contentManager2.address, {from: deployerAddress});
+        await accessControlManager2.setParent(content2.address);
+        
+        // Add the same items in Contract 2
+        await contentManager2.addAssetBatch(asset);
+
+        // Add Contract Burn Fee
+        var fee = [[deployerAddress, web3.utils.toWei('1', 'ether')]];
+        await contentManager2.setContractBurnFees(fee);
+
+        // add recipe using 2nd content contract
+        var newRecipe = [
+            [
+                web3.utils.toWei('1', 'ether'), // crafting rate
+                true, // enabled
+                [   // array of material asset data
+                    [content2.address, 1],
+                    [content2.address, 2]
+                ],
+                [1, 3], // array of material amounts
+                [   // array of reward asset data
+                    [content.address, 6]
+                ],
+                [1] // array of reward amounts
+            ]
+        ];
+        await craft.addRecipeBatch(newRecipe, {from: managerAddress});
+
+        // Call getRecipeBurnFees()
+        var totalBurnFee = await craft.getRecipeBurnFees(0, {from: playerAddress});
+        assert.equal(totalBurnFee, web3.utils.toWei('4', 'ether'), "Total Burn fee is incorrect");
+    });
 });

@@ -7,9 +7,9 @@ const AccessControlManager = artifacts.require("AccessControlManager");
 const TestSalvage = artifacts.require("TestSalvage");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TagsManager = artifacts.require("TagsManager");
+const ContentWithBurnFees = artifacts.require("ContentWithBurnFees");
 const TruffleAssert = require("truffle-assertions");
 
-// Todo: Update this test for Burn fees
 contract('Salvage Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -131,13 +131,9 @@ contract('Salvage Contract', (accounts)=> {
         TruffleAssert.eventEmitted(results, 'SalvageableAssetsUpdated');
 
         var assetId = results.logs[0].args.ids[0];
-        // console.log(assetId)
-        // assert.notEqual(results.logs[0].args[1].toString(), 0x0, "Id is empty");
 
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId.toString());
         var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
-
-        // console.log(storedSalvageableAssetData);
 
         assert.equal(storedSalvageableAssetData.asset.content, content.address, "asset content address incorrect");
         assert.equal(storedSalvageableAssetData.asset.tokenId, 1, "asset id incorrect");
@@ -571,7 +567,45 @@ contract('Salvage Contract', (accounts)=> {
         );
     });
 
-    // // it('Salvage Asset with Random Salvage Type', async () => {
-    // // });
+    // it('Salvage Asset with Random Salvage Type', async () => {
+    // });
+    
+
+    it('Non-elevated Salvage contract burn fees test', async () => {
+        // Create Rawr token
+        rawrToken = await RawrToken.new();
+        await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
+        
+        // Create Second Content Contract
+        // Set up NFT Contract
+        accessControlManager2 = await AccessControlManager.new();
+        await accessControlManager2.__AccessControlManager_init();
+        contentStorage2 = await ContentStorage.new();
+        await contentStorage2.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
+        content2 = await ContentWithBurnFees.new();
+        await content2.__ContentWithBurnFees_init("Test Content Contract", "TEST", contentStorage2.address, accessControlManager2.address, rawrToken.address);
+        await contentStorage2.setParent(content2.address);
+        
+        // Setup content manager
+        contentManager2 = await ContentManager.new();
+        await contentManager2.__ContentManager_init(content2.address, contentStorage2.address, accessControlManager2.address, tagsManager.address);
+        await contentStorage2.grantRole(await contentStorage2.OWNER_ROLE(), contentManager2.address, {from: deployerAddress});
+        await accessControlManager2.grantRole(await accessControlManager2.DEFAULT_ADMIN_ROLE(), contentManager2.address, {from: deployerAddress});
+        await accessControlManager2.setParent(content2.address);
+        
+        // Add the same items in Contract 2
+        await contentManager2.addAssetBatch(asset);
+
+        // Add Contract Burn Fee
+        var fee = [[deployerAddress, web3.utils.toWei('1', 'ether')]];
+        await contentManager2.setContractBurnFees(fee);
+
+        // add recipe using 2nd content contract
+        await salvage.addSalvageableAssetBatch(initialSalvageableAssetData, {from: managerAddress});
+
+        // Call getAssetBurnFees()
+        var totalBurnFee = await salvage.getAssetBurnFees([content2.address, 1], {from: playerAddress});
+        assert.equal(totalBurnFee, web3.utils.toWei('1', 'ether'), "Total Burn fee is incorrect");
+    });
 
 });

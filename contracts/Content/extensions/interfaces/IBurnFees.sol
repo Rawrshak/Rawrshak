@@ -5,5 +5,5 @@ import "../../../libraries/LibAsset.sol";
 interface IBurnFees {
     function isElevatedCaller(address _caller) external view returns (bool);
     
-    function getBurnFees(uint256 _tokenId) external view returns(LibAsset.Fee[] memory fees);
+    function getBurnFee(uint256 _tokenId) external view returns(LibAsset.Fee[] memory fees);
 }

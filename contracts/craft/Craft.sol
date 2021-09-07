@@ -117,9 +117,9 @@ contract Craft is ICraft, CraftBase {
         total = 0;
         for (uint i = 0; i < recipes[_id].materials.length; ++i) {
             if (recipes[_id].materials[i].content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_WITH_BURN_FEES) && !IBurnFees(recipes[_id].materials[i].content).isElevatedCaller(address(this))) {
-                LibAsset.Fee[] memory tokenBurnFee = IBurnFees(recipes[_id].materials[i].content).getBurnFees(recipes[_id].materials[i].tokenId);
+                LibAsset.Fee[] memory tokenBurnFee = IBurnFees(recipes[_id].materials[i].content).getBurnFee(recipes[_id].materials[i].tokenId);
                 for (uint j = 0; j < tokenBurnFee.length; ++j) {
-                    total += tokenBurnFee[j].amount;
+                    total += tokenBurnFee[j].amount.mul(recipes[_id].materialAmounts[i]);
                 }
             }
         }
