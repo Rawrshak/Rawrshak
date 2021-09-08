@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "../utils/LibConstants.sol";
+import "./LibLootbox.sol";
 
 library LibCraft {
     using SafeMathUpgradeable for uint256;
@@ -30,8 +31,9 @@ library LibCraft {
 
     struct SalvageableAsset {
         AssetData asset;
-        uint256 salvageType; // Todo: maybe make this an enum
-        SalvageReward[] rewards;
+        uint256 salvageType;                            // Todo: maybe make this an enum
+        SalvageReward[] rewards;                        // ERC1155 rewards to potentially be minted (based on probability).
+        LibLootbox.LootboxCreditReward lootboxCredits;  // This needs to be separate from the rewards because the rewards are ERC1155 and credit is ERC20.
     }
 
     struct Recipe {
@@ -46,11 +48,17 @@ library LibCraft {
     function verifySalvageableAsset(SalvageableAsset memory _asset) internal pure {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
         // here, it means we've verified the asset and reward assets correctly.
-        require(_asset.rewards.length > 0, "Invalid rewards length.");
         require(_asset.salvageType < uint256(SalvageType.Max), "Invalid Salvage Type");
+        require(_asset.rewards.length > 0, "Invalid rewards length.");
         for (uint256 i = 0; i < _asset.rewards.length; ++i) {
             require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 1 ether, "Invalid probability.");
             require(_asset.rewards[i].amount > 0, "Invalid reward amount.");
+        }
+
+        // Check validity of the lootbox credit asset. If it was set as this is optional.
+        if(_asset.lootboxCredits.tokenAddress != address(0))
+        {
+            LibLootbox.verifyLootboxCreditReward(_asset.lootboxCredits);
         }
     }
 

@@ -1,5 +1,6 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const RawrToken = artifacts.require("RawrToken");
+const LootboxCredit = artifacts.require("LootboxCredit");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
@@ -36,6 +37,9 @@ contract('Salvage Contract', (accounts)=> {
     // Rawr Token 
     var rawrId = "0xd4df6855";
     var rawrToken;
+
+    // Lootbox Credit Token 
+    var lootboxCreditToken;
 
     var salvage;
     var manager_role;
@@ -75,9 +79,16 @@ contract('Salvage Contract', (accounts)=> {
         rawrToken = await RawrToken.new();
         await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
 
-        // Give player 1 20000 RAWR tokens
+        // Give player 1 20000 RAWR tokens and player 2 10000 tokens
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
         await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+
+        // Setup Lootbox Credit Token
+        lootboxCreditToken = await LootboxCredit.new();
+        await lootboxCreditToken.__LootboxCredit_init(web3.utils.toWei('1000000000', 'ether'), "Rawrshak Lootbox Credit", "RAWRLOOT", {from: deployerAddress});
+
+        // Give player 1 10000 Credit tokens
+        await lootboxCreditToken.transfer(playerAddress, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         // Mint an assets
         var mintData = [playerAddress, [1, 2], [10, 10], 1, zeroAddress, []];
@@ -91,6 +102,9 @@ contract('Salvage Contract', (accounts)=> {
         await salvage.__TestSalvage_init(1000);
         
         manager_role = await salvage.MANAGER_ROLE();
+
+        // Allow the salvage contract to be able to mint on the lootbox credit token contract.
+        await lootboxCreditToken.grantRole(await lootboxCreditToken.MINTER_ROLE(), salvage.address, {from: deployerAddress});
         
         // Register the salvage as a system on the content contract
         var approvalPair = [[salvage.address, true], [creatorAddress, true]];
@@ -114,6 +128,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1', 'ether'),
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -165,6 +184,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1', 'ether'),
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ],
             [
@@ -181,6 +205,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('0.5', 'ether'),
                         3
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -233,6 +262,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('0.1', 'ether'),
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -264,6 +298,30 @@ contract('Salvage Contract', (accounts)=> {
             TruffleAssert.ErrorType.REVERT
         );
         
+        var invalidData = [
+            [
+                [content.address, 1],
+                3,
+                [ // array
+                    [   // salvageableasset
+                        [content.address, 5],
+                        web3.utils.toWei('0.1', 'ether'),
+                        1
+                    ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
+                ]
+            ]
+        ];
+
+        await TruffleAssert.fails(
+            salvage.addSalvageableAssetBatch(invalidData, {from: managerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+        
         // invalid salvage type
         invalidData = [
             [
@@ -275,6 +333,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('0.1', 'ether'),
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -288,7 +351,12 @@ contract('Salvage Contract', (accounts)=> {
             [
                 [content.address, 1],
                 1,
-                []
+                [],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
+                ]
             ]
         ];
         await TruffleAssert.fails(
@@ -307,6 +375,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1.001', 'ether'),
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -324,6 +397,11 @@ contract('Salvage Contract', (accounts)=> {
                         0,
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -343,6 +421,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1', 'ether'),
                         0
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -419,6 +502,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1', 'ether'),
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ],
             [
@@ -435,6 +523,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1', 'ether'),
                         3
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -484,6 +577,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1', 'ether'),
                         1
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ],
             [
@@ -500,6 +598,11 @@ contract('Salvage Contract', (accounts)=> {
                         web3.utils.toWei('1', 'ether'),
                         3
                     ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    1
                 ]
             ]
         ];
@@ -573,5 +676,48 @@ contract('Salvage Contract', (accounts)=> {
 
     // // it('Salvage Asset with Random Salvage Type', async () => {
     // // });
+
+    it('Salvage asset w/ Lootbox Credit reward', async () => {
+        var salvageableAssets = [
+            [
+                [content.address, 1],
+                0,
+                [ // array
+                    [   // salvageableasset
+                        [content.address, 3],
+                        web3.utils.toWei('1', 'ether'),
+                        2
+                    ]
+                ],
+                [   // LibLootbox.LootboxCreditReward
+                    lootboxCreditToken.address,
+                    web3.utils.toWei('1', 'ether'),
+                    web3.utils.toWei('1', 'ether')
+                ]
+            ]
+        ];
+
+        var results = await salvage.addSalvageableAssetBatch(salvageableAssets, {from: managerAddress});
+        var assetId = results.logs[0].args.ids[0];
+
+        // unpause the salvage contract so we can start salvaging assets
+        await salvage.managerSetPause(false, {from: managerAddress});
+
+        // Approve salvage contract as an operator
+        await content.setApprovalForAll(salvage.address, true, {from: playerAddress});
+
+        var assetsToSalvage = [
+            [content.address, 1]
+        ];
+        var amounts = [1];
+        var results = await salvage.salvageBatch(assetsToSalvage, amounts, {from: playerAddress});
+        TruffleAssert.eventEmitted(results, 'AssetSalvagedBatch');
+
+        var balance = await lootboxCreditToken.balanceOf(playerAddress);
+        assert.equal(
+            balance.valueOf().toString(),
+            web3.utils.toWei('10001', 'ether').toString(),
+            "Player was not minted Lootbox Credit.");
+    });
 
 });

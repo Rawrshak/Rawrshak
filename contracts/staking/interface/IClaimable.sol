@@ -9,8 +9,8 @@ interface IClaimable {
     function remaining() external view returns(uint256);
 
     /******** Mutative Functions ********/
-    function claim(uint256 _amount, address _recepient) external;
+    function claim(uint256 _amount, address _recipient) external;
 
     /*********************** Events *********************/
-    event Claimed(address indexed receipent, uint256 amount, uint256 remaining);
+    event Claimed(address indexed recipient, uint256 amount, uint256 remaining);
 }

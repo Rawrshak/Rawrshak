@@ -18,4 +18,5 @@ interface ISalvage {
     event SalvageableAssetsUpdated(address indexed operator, LibCraft.SalvageableAsset[] assets, uint256[] ids);
     event AssetSalvaged(address indexed user, LibCraft.AssetData asset, uint256 amount);
     event AssetSalvagedBatch(address indexed user, LibCraft.AssetData[] assets, uint256[] amounts);
+    event LootboxCreditEarned(address indexed user, uint256 amount);
 }
