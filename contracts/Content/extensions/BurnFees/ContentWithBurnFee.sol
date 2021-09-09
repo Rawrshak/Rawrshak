@@ -49,11 +49,13 @@ contract ContentWithBurnFees is IBurnFees, Content {
     function burnBatch(LibAsset.BurnData memory _data) external override {
         require(_data.account == _msgSender() || isApprovedForAll(_data.account, _msgSender()), "Caller is not approved.");
 
-        // If the caller does not have the correct access, request a burn fee to the developer.
-        // Note: the user must call allowance() with this contract as the spender
-        if (!accessControlManager.isElevatedCaller(_msgSender())) {
-            // Pay all fees for each item to be burnt
-            for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
+        bool isSenderElevated = accessControlManager.isElevatedCaller(_msgSender());
+        for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
+            require(_tokenExists(_data.tokenIds[i]), "token id missing");
+
+            // If the caller does not have the correct access, request a burn fee to the developer.
+            // Note: the user must call allowance() with this contract as the spender
+            if (!isSenderElevated) {
                 LibAsset.Fee[] memory fees = dataStorage.getBurnFee(_data.tokenIds[i]);
 
                 // transfer fee from user to payable address. If transferFrom fails, the entire burn fails.
@@ -61,10 +63,7 @@ contract ContentWithBurnFees is IBurnFees, Content {
                     IERC20Upgradeable(rawrToken).transferFrom(_data.account, fees[j].account, fees[j].amount);
                 }
             }
-        }
 
-        for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
-            require(_tokenExists(_data.tokenIds[i]), "token id missing");
             _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]).sub(_data.amounts[i], "amount is greater than supply"));
         }
 

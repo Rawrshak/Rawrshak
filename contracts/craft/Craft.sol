@@ -112,7 +112,7 @@ contract Craft is ICraft, CraftBase {
     }
 
     // For non-developer created craft contracts, players will need to call allowance() on the RAWR token contract to 
-    // to allow for burn fees to get transfered. 
+    // to allow for burn fees to get transferred. 
     function getRecipeBurnFees(uint256 _id) external view override returns (uint256 total) {
         total = 0;
         for (uint i = 0; i < recipes[_id].materials.length; ++i) {

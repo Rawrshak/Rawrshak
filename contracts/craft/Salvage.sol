@@ -100,7 +100,7 @@ contract Salvage is ISalvage, CraftBase {
     }
 
     // For non-developer created salvage contracts, players will need to call allowance() on the RAWR token contract to 
-    // to allow for burn fees to get transfered. 
+    // to allow for burn fees to get transferred. 
     function getAssetBurnFees(LibCraft.AssetData calldata _asset) external view override returns (uint256 total) {
         total = 0;
         if (_asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_WITH_BURN_FEES) && !IBurnFees(_asset.content).isElevatedCaller(address(this))) {
