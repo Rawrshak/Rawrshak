@@ -39,8 +39,6 @@ module.exports = async function(deployer, networks, accounts) {
     const content = await deployProxy(
         Content,
         [
-            "RawrContent",
-            "RCONT",
             contentStorage.address,
             accessControlManager.address
         ],
