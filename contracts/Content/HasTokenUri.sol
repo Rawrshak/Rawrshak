@@ -12,9 +12,9 @@ abstract contract HasTokenUri is ContentSubsystemBase {
 
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('getLatestUriVersion(uint256)')) == 0x0a64da48
+     * bytes4(keccak256('getLatestUriVersion(uint256)')) == 0x57eeb456
      */
-    bytes4 private constant _INTERFACE_ID_TOKEN_URI = 0xcac843cb;
+    bytes4 private constant _INTERFACE_ID_TOKEN_URI = 0x57eeb456;
 
     /***************** Stored Variables *****************/
     // Optional mapping for token URIs

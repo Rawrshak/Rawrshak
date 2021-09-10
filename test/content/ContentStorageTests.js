@@ -30,19 +30,19 @@ contract('ContentStorage Contract Tests', (accounts) => {
     it('Check StorageContract Interfaces', async () => {
         // Content Storage interface
         assert.equal(
-            await contentStorage.supportsInterface("0x00000002"),
+            await contentStorage.supportsInterface("0xA133AF9C"),
             true, 
             "the token doesn't support the ContentStorage interface");
             
         // HasContractUri interface
         assert.equal(
-            await contentStorage.supportsInterface("0xe8a3d485"),
+            await contentStorage.supportsInterface("0xc0e24d5e"),
             true, 
             "the token doesn't support the HasContractUri interface");
 
         // HasTokenUri interface
         assert.equal(
-            await contentStorage.supportsInterface("0xcac843cb"),
+            await contentStorage.supportsInterface("0x57eeb456"),
             true, 
             "the token doesn't support the HasTokenUri interface");
             

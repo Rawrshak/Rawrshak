@@ -58,7 +58,7 @@ contract('Tags Manager Contract Tests', (accounts) => {
     it('Verify TagsManager Interface Implementation', async () => {
         // TagsManager Interface
         assert.equal(
-            await tagsManager.supportsInterface("0x0000001B"),
+            await tagsManager.supportsInterface("0xB06D7CE6"),
             true, 
             "The tags manager contract isn't a TagsManager implementation");
     });

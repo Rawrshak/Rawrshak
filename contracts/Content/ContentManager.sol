@@ -58,7 +58,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     {
         __Ownable_init_unchained();
         __ERC165Storage_init_unchained();
-        __ContentManager_init_unchained(_content, _accessControlManager, _accessControlManager, _tagsManager);
+        __ContentManager_init_unchained(_content, _contentStorage, _accessControlManager, _tagsManager);
 
         // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _accessControlManager);
     }

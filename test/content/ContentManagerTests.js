@@ -67,7 +67,7 @@ contract('Content Manager Contract Tests', (accounts) => {
     it('Check Supported interfaces', async () => {
         // Content Storage interface
         assert.equal(
-            await contentManager.supportsInterface("0x00000003"),
+            await contentManager.supportsInterface("0x582136B7"),
             true, 
             "the contract doesn't support the ContentManager interface");
     });

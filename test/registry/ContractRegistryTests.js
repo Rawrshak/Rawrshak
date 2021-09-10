@@ -66,7 +66,7 @@ contract('Contract Registry Tests', (accounts) => {
     it('Verify ContractRegistry Interface Implementation', async () => {
         // Contract Registry Interface
         assert.equal(
-            await registry.supportsInterface("0x00000019"),
+            await registry.supportsInterface("0x6C0F49D2"),
             true, 
             "The contract isn't a ContractRegistry implementation");
     });
