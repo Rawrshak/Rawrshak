@@ -14,12 +14,20 @@ contract TagsManager is ITagsManager, OwnableUpgradeable, ERC165StorageUpgradeab
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
 
-    // Todo: Fix this
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('getLatestUriVersion(uint256)')) == 0x0a64da48
+     * bytes4(keccak256('owner()')) == 0x8da5cb5b
+     * bytes4(keccak256('renounceOwnership()')) == 0x715018a6
+     * bytes4(keccak256('transferOwnership()')) == 0x880ad0af
+     * bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
+     * bytes4(keccak256('hasContractTag(address,string memory)')) == 0xcf550f18
+     * bytes4(keccak256('hasAssetTag(address,uint256,string memory)')) == 0x538380ea
+     * bytes4(keccak256('addContractTags(address,string[] memory)')) == 0x28f89f01
+     * bytes4(keccak256('removeContractTags(address,string[] memory)')) == 0xbf4e0100
+     * bytes4(keccak256('addAssetTags(address,uint256,string[] memory)')) == 0x8c736996
+     * bytes4(keccak256('removeAssetTags(address,uint256,string[] memory)')) == 0x427ece76
      */
-    // bytes4 private constant _INTERFACE_ID_TAGS_MANAGER = 0x11111111;
+    // bytes4 private constant _INTERFACE_ID_TAGS_MANAGER = 0xB06D7CE6;
 
     /***************** Stored Variables *****************/
     mapping(bytes4 => LibTags.TagData) tags;

@@ -19,10 +19,26 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     
     /******************** Constants ********************/
     /*
-    // Todo: Fix this
-     * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0xFFFFFFFF
+     * bytes4(keccak256('owner()')) == 0x8da5cb5b
+     * bytes4(keccak256('renounceOwnership()')) == 0x715018a6
+     * bytes4(keccak256('transferOwnership()')) == 0x880ad0af
+     * bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
+     * bytes4(keccak256('content()')) == 0x8a4d5a67
+     * bytes4(keccak256('contentStorage()')) == 0xae95f3ca
+     * bytes4(keccak256('accessControlManager()')) == 0xb4a0bdf3
+     * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0x4c45670b
+     * bytes4(keccak256('registerOperators(LibAsset.SystemApprovalPair[] memory)')) == 0x6c728bc8
+     * bytes4(keccak256('setHiddenUriBatch(LibAsset.AssetUri[] memory)')) == 0x8c8e95fa
+     * bytes4(keccak256('setPublicUriBatch(LibAsset.AssetUri[] memory)')) == 0xc6c6617e
+     * bytes4(keccak256('setContractRoyalties(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
+     * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
+     * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
+     * bytes4(keccak256('addContractTags(string[] memory)')) == 0x28ec234f
+     * bytes4(keccak256('removeContractTags(string[] memory)')) == 0x9d94c8d0
+     * bytes4(keccak256('addAssetTags(uint256 _id, string[] memory)')) == 0xa4a2bcbf
+     * bytes4(keccak256('removeAssetTags(uint256 _id, string[] memory)')) == 0xa32340f0
      */
-    // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0x00000003;
+    // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0x582136B7;
 
     /***************** Stored Variables *****************/
     IContent public override content;
@@ -42,6 +58,18 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     {
         __Ownable_init_unchained();
         __ERC165Storage_init_unchained();
+        __ContentManager_init_unchained(_content, _accessControlManager, _accessControlManager, _tagsManager);
+
+        // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _accessControlManager);
+    }
+    
+
+    function __ContentManager_init_unchained(
+        address _content,
+        address _contentStorage,
+        address _accessControlManager,
+        address _tagsManager
+    ) internal initializer {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER);
     
         require(_content != address(0) && _content.isContract() && 
@@ -56,8 +84,6 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);
         tagsManager = ITagsManager(_tagsManager);
-
-        // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _accessControlManager);
     }
     
     function addAssetBatch(

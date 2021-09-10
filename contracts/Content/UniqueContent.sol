@@ -21,7 +21,6 @@ contract UniqueContent is IUniqueContent, HasContractUri, HasRoyalties, OwnableU
     
     /******************** Constants ********************/
     /*
-     * Todo: this
      * bytes4(keccak256('setContractUri(string memory)')) == 0x5b54d3f4
      * bytes4(keccak256('uri(uint256)')) == 0x0e89341c
      * bytes4(keccak256('setContractRoyalties(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe

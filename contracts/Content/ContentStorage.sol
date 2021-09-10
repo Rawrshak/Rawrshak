@@ -18,10 +18,21 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     
     /******************** Constants ********************/
     /*
-    // Todo: Fix this
-     * bytes4(keccak256('contractRoyalties()')) == 0xFFFFFFFF
+     * IContractUri == 0xc0e24d5e
+     * IRoyaltyProvider == 0xbb3bafd6
+     * bytes4(keccak256('ids(uint256)')) == 0xfac333ac
+     * bytes4(keccak256('supply(uint256)')) == 0x35403023
+     * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
+     * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
+     * bytes4(keccak256('hiddenUri(uint256,uint256)')) == 0x47bb1ace
+     * bytes4(keccak256('updateSupply(uint256,uint256)')) == 0x9e2dcbfd
+     * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0x4c45670b
+     * bytes4(keccak256('setHiddenUriBatch(LibAsset.AssetUri[] memory)')) == 0x8c8e95fa
+     * bytes4(keccak256('setPublicUriBatch(LibAsset.AssetUri[] memory)')) == 0xc6c6617e
+     * bytes4(keccak256('setContractRoyalties(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
+     * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
      */
-    // bytes4 private constant _INTERFACE_ID_CONTENT_STORAGE = 0x00000001;
+    // bytes4 private constant _INTERFACE_ID_CONTENT_STORAGE = A133AF9C;
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     /***************** Stored Variables *****************/
@@ -46,10 +57,15 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         __HasRoyalties_init_unchained(_contractFees);
         __HasContractUri_init_unchained(_contractUri);
         __ContentSubsystemBase_init_unchained();
+        __ContentStorage_init_unchained();
+    }
+
+    function __ContentStorage_init_unchained() internal initializer {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(OWNER_ROLE, _msgSender());
     }
+
 
     function setParent(address _contentParent) external override checkPermissions(OWNER_ROLE) {
         require(_contentParent.isContract(), "Address is not a contract.");

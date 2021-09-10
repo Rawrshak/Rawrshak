@@ -23,18 +23,18 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
     
     /******************** Constants ********************/
     /*
-    // Todo: Fix this
      * ERC1155 interface == 0xd9b67a26
+     * IContractUri == 0xc0e24d5e
+     * IRoyaltyProvider == 0xbb3bafd6
      * bytes4(keccak256('name()')) == 0x06fdde03
      * bytes4(keccak256('symbol()')) == 0x95d89b41
-     * bytes4(keccak256('accessControlManager()')) == 0x2795ea5a
+     * bytes4(keccak256('accessControlManager()')) == 0xb4a0bdf3
      * bytes4(keccak256('supply(uint256)')) == 0x35403023
      * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
-     * bytes4(keccak256('tokenUri(uint256)')) == 0x1675f455
-     * bytes4(keccak256('approveAllSystems(bool)')) == 0x04a90ad5
+     * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
      * bytes4(keccak256('burnBatch(LibAsset.BurnData memory)')) == 0xa0a862d5
-     *      => 0x94b3e03b
+     *      => BF2FD945
      */
 
     /***************** Stored Variables *****************/

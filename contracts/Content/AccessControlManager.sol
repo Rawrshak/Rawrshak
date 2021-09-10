@@ -21,10 +21,11 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     
     /******************** Constants ********************/
     /*
-     * Todo: this
-     * bytes4(keccak256('contractRoyalties()')) == 0xFFFFFFFF
+     * bytes4(keccak256('MINTER_ROLE()')) == 0xd5391393
+     * bytes4(keccak256('userMintNonce(adderess)')) == 0x0514a32b
+     * bytes4(keccak256('verifyMint(LibAsset.MintData memory,address)')) == 0x0c794dd6
      */
-    // bytes4 private constant _INTERFACE_ID_SYSTEMS_REGISTER = 0x00000001;
+    // bytes4 private constant _INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E;
     bytes32 public constant override MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /***************** Stored Variables *****************/

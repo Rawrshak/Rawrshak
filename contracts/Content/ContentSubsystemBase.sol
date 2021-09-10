@@ -7,6 +7,14 @@ import "../utils/LibConstants.sol";
 
 abstract contract ContentSubsystemBase is IContentSubsystemBase, ERC165StorageUpgradeable {
 
+    /******************** Constants ********************/
+    /*
+     * bytes4(keccak256('parent()')) == 0x60f96a8f
+     * bytes4(keccak256('setParent(address)')) == 0x1499c592
+     * bytes4(keccak256('transferOwnership()')) == 0x880ad0af
+     */
+    // bytes4 private constant _INTERFACE_ID_CONTENT_SUBSYSTEM_BASE = 0xFC6A7FB2;
+
     /***************** Stored Variables *****************/
     address contentParent;
 

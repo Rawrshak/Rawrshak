@@ -17,6 +17,20 @@ contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
     using ERC165CheckerUpgradeable for address;
     using EnumerableSetUpgradeable for *;
 
+    /******************** Constants ********************/
+    /*
+     * bytes4(keccak256('owner()')) == 0x8da5cb5b
+     * bytes4(keccak256('renounceOwnership()')) == 0x715018a6
+     * bytes4(keccak256('transferOwnership()')) == 0x880ad0af
+     * bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
+     * bytes4(keccak256('registerContentManager(address)')) == 0x8ff992d5
+     * bytes4(keccak256('registerCraft(address)')) == 0x4bffd907
+     * bytes4(keccak256('registerSalvage(address)')) == 0x3b4e68c2
+     * bytes4(keccak256('isRegistered(address)')) == 0xc3c5a547
+     * bytes4(keccak256('setTagsManager(address)')) == 0x25820570
+     */
+    // bytes4 private constant _INTERFACE_ID_CONTRACT_REGISTRY = 0x6C0F49D2;
+
     /***************** Stored Variables *****************/
     mapping(address => EnumerableSetUpgradeable.AddressSet) private owners;
     EnumerableSetUpgradeable.AddressSet contentManagers;

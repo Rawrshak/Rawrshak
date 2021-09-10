@@ -10,7 +10,6 @@ import "./ContentSubsystemBase.sol";
 abstract contract HasTokenUri is ContentSubsystemBase {
     using StringsUpgradeable for uint256;
 
-    // Todo: Fix this
     /******************** Constants ********************/
     /*
      * bytes4(keccak256('getLatestUriVersion(uint256)')) == 0x0a64da48

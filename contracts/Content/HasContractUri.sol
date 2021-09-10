@@ -9,9 +9,9 @@ abstract contract HasContractUri is IContractUri, ContentSubsystemBase {
 
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('contractUri()')) == 0xe8a3d485
+     * bytes4(keccak256('contractUri()')) == 0xc0e24d5e
      */
-    bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
+    bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xc0e24d5e;
 
     /***************** Stored Variables *****************/
     // Contract Information Uri
