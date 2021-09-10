@@ -32,12 +32,6 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     // Rawrshak system addresses that are approved to interact with this contract
     mapping(address => uint256) public override userMintNonce;
 
-    /********************* Modifiers ********************/
-    modifier checkPermissions(bytes32 _role) {
-        require(hasRole(_role, msg.sender), "Invalid permissions.");
-        _;
-    }
-
     /******************** Public API ********************/
     function __AccessControlManager_init() public initializer {
         __AccessControl_init_unchained();
@@ -52,7 +46,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
-    function setParent(address _newParent) external override checkPermissions(DEFAULT_ADMIN_ROLE) {
+    function setParent(address _newParent) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_newParent.isContract(), "Address is not a contract.");
         require(_newParent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
 
@@ -63,7 +57,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         emit ParentSet(_newParent);
     }
 
-    function verifyMint(LibAsset.MintData memory _data, address _caller) external override checkPermissions(DEFAULT_ADMIN_ROLE) {
+    function verifyMint(LibAsset.MintData memory _data, address _caller) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_data.tokenIds.length == _data.amounts.length, "Invalid token input");
 
         // if the caller is the owner address or has a minter role (granted by the owner), continue on.

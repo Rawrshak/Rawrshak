@@ -30,7 +30,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         rate = _rate;
     }
  
-    function setRate(uint256 _rate) public override checkPermissions(MANAGER_ROLE) {
+    function setRate(uint256 _rate) public override onlyRole(MANAGER_ROLE) {
         require(_rate > 0 && _rate < 1 ether, "Invalid rate");
         rate = _rate;
         emit FeeUpdated(_msgSender(), rate);
@@ -41,7 +41,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         return amounts[_token];
     }
 
-    function updateDistributionFunds(address[] memory _funds, uint256[] memory _percentages) external override checkPermissions(MANAGER_ROLE) {
+    function updateDistributionFunds(address[] memory _funds, uint256[] memory _percentages) external override onlyRole(MANAGER_ROLE) {
         require(_funds.length > 0 && _funds.length == _percentages.length, "Invalid input length");
 
         delete funds;
@@ -63,13 +63,13 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         _percentages = percentages;
     }
 
-    function depositRoyalty(bytes4 _token, address _tokenAddr, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+    function depositRoyalty(bytes4 _token, address _tokenAddr, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         amounts[_token] = amounts[_token].add(_amount);
 
         emit ExchangeFeesPaid(_token, _tokenAddr, _amount);
     }
 
-    function distribute(bytes4 _token, address _tokenAddr) external override checkPermissions(MANAGER_ROLE) {
+    function distribute(bytes4 _token, address _tokenAddr) external override onlyRole(MANAGER_ROLE) {
         require(funds.length > 0, "Invalid list of address for distribution");
         
         uint256 balance = IERC20Upgradeable(_tokenAddr).balanceOf(address(this));

@@ -20,13 +20,7 @@ abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165Storage
     address rawrToken;
     uint256 public override supply;
     uint256 public override remaining;
-        
-    /********************* Modifiers ********************/
-    modifier checkPermissions(bytes32 _role) {
-        require(hasRole(_role, msg.sender), "Invalid permissions.");
-        _;
-    }
-    
+
     /******************** Public API ********************/
     function __FundBase_init_unchained(address _token) public initializer {
         require(_token.isContract() && 
@@ -40,12 +34,12 @@ abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165Storage
         remaining = 0;
     }
     
-    function registerManager(address _manager) external override checkPermissions(DEFAULT_ADMIN_ROLE) {
+    function registerManager(address _manager) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MANAGER_ROLE, _manager);
         emit ManagerRegistered(_manager);
     }
 
-    function receiveFunds(uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+    function receiveFunds(uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         require(_amount > 0, "Invalid amount");
 
         supply = remaining.add(_amount);
@@ -54,7 +48,7 @@ abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165Storage
         emit FundsReceived(_msgSender(), _amount, supply);
     }
 
-    function claim(uint256 _amount, address _recepient) external override checkPermissions(MANAGER_ROLE) {
+    function claim(uint256 _amount, address _recepient) external override onlyRole(MANAGER_ROLE) {
         require(_amount > 0, "Invalid claim");
         require(_amount <= remaining, "amount to claim is invalid.");
         remaining = remaining.sub(_amount);

@@ -23,12 +23,6 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
     
     /***************** Stored Variables *****************/
     uint256 internal seed;
-        
-    /********************* Modifiers ********************/
-    modifier checkPermissions(bytes32 _role) {
-        require(hasRole(_role, msg.sender), "Invalid permissions.");
-        _;
-    }
 
     /******************** Public API ********************/
     function __CraftBase_init_unchained(uint256 _seed) public initializer {
@@ -37,7 +31,7 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
         seed = _seed;
     }
     
-    function registerManager(address _manager) external override whenPaused() checkPermissions(DEFAULT_ADMIN_ROLE) {
+    function registerManager(address _manager) external override whenPaused() onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MANAGER_ROLE, _manager);
         emit ManagerRegistered(_msgSender(), _manager);
     }
@@ -46,7 +40,7 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
         return super.supportsInterface(interfaceId);
     }
 
-    function managerSetPause(bool _setPause) external override checkPermissions(MANAGER_ROLE) {
+    function managerSetPause(bool _setPause) external override onlyRole(MANAGER_ROLE) {
         if (_setPause) {
             _pause();
         } else {

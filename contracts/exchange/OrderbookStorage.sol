@@ -41,11 +41,11 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         return true;
     }
 
-    function placeOrder(uint256 _id, LibOrder.OrderData memory _order) external override checkPermissions(MANAGER_ROLE) { 
+    function placeOrder(uint256 _id, LibOrder.OrderData memory _order) external override onlyRole(MANAGER_ROLE) { 
         orders[_id] = _order;
     }
 
-    function deleteOrder(uint256 _id) external override checkPermissions(MANAGER_ROLE) {
+    function deleteOrder(uint256 _id) external override onlyRole(MANAGER_ROLE) {
         // Deleting costs 5000, but returns a 15000 gas refund at the end of your call, which will make
         // the overall transaction cheaper, I think.
         delete orders[_id];
@@ -59,7 +59,7 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         return orders[_id].owner == _owner;
     }
 
-    function fillOrder(uint256 _id, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+    function fillOrder(uint256 _id, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         orders[_id].amount = orders[_id].amount.sub(_amount);
     }
 

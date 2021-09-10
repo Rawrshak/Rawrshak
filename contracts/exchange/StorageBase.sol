@@ -14,18 +14,12 @@ abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradea
     /*********************** Events *********************/
     event ManagerRegistered(address indexed _manager);
 
-    /********************* Modifiers ********************/
-    modifier checkPermissions(bytes32 _role) {
-        require(hasRole(_role, msg.sender), "Invalid permissions.");
-        _;
-    }
-
     /******************** Public API ********************/
     function __StorageBase_init_unchained() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
-    function registerManager(address _manager) external checkPermissions(DEFAULT_ADMIN_ROLE) {
+    function registerManager(address _manager) external onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MANAGER_ROLE, _manager);
         emit ManagerRegistered(_manager);
     }

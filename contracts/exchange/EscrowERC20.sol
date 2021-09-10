@@ -36,7 +36,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         uint256 _orderId,
         address _sender,
         uint256 _amount
-    ) external override checkPermissions(MANAGER_ROLE) {
+    ) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         escrowedTokensByOrder[_orderId] = escrowedTokensByOrder[_orderId].add(_amount);
         
@@ -45,7 +45,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     }
 
     // This is specificly used for royalties
-    function withdraw(uint256 _orderId, address _receiver, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+    function withdraw(uint256 _orderId, address _receiver, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid amount");
 
         escrowedTokensByOrder[_orderId] = escrowedTokensByOrder[_orderId].sub(_amount);
@@ -56,7 +56,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         address _sender,
         address _owner,
         uint256 _amount
-    ) external override checkPermissions(MANAGER_ROLE) {
+    ) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         claimableTokensByOwner[_owner] = claimableTokensByOwner[_owner].add(_amount);
         IERC20Upgradeable(token).transferFrom(_sender, address(this), _amount);
@@ -66,7 +66,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         uint256 _orderId,
         address _owner,
         uint256 _amount
-    ) external override checkPermissions(MANAGER_ROLE) {        
+    ) external override onlyRole(MANAGER_ROLE) {        
         require(escrowedTokensByOrder[_orderId] >= _amount, "Invalid amount");
 
         // No need to do checks. The exchange contracts will do the checks.
@@ -74,18 +74,18 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         claimableTokensByOwner[_owner] = claimableTokensByOwner[_owner].add(_amount);
     }
 
-    function depositPlatformRoyalty(address _sender, address _feePool, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+    function depositPlatformRoyalty(address _sender, address _feePool, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         IERC20Upgradeable(token).transferFrom(_sender, _feePool, _amount);
     }
 
-    function transferPlatformRoyalty(uint256 _orderId, address _feePool, uint256 _amount) external override checkPermissions(MANAGER_ROLE) {
+    function transferPlatformRoyalty(uint256 _orderId, address _feePool, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         escrowedTokensByOrder[_orderId] = escrowedTokensByOrder[_orderId].sub(_amount);
         IERC20Upgradeable(token).transfer(_feePool, _amount);
     }
 
-    function claim(address _owner) external override checkPermissions(MANAGER_ROLE) {
+    function claim(address _owner) external override onlyRole(MANAGER_ROLE) {
         require(claimableTokensByOwner[_owner] > 0, "Tokens were already claimed.");
 
         uint256 amount = claimableTokensByOwner[_owner];

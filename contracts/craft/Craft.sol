@@ -34,7 +34,7 @@ contract Craft is ICraft, CraftBase {
         _registerInterface(LibConstants._INTERFACE_ID_CRAFT);
     }
 
-    function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
+    function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() onlyRole(MANAGER_ROLE) {
         require(_recipes.length > 0, "Invalid input length.");
 
         uint256[] memory ids = new uint256[](_recipes.length);
@@ -73,7 +73,7 @@ contract Craft is ICraft, CraftBase {
         emit RecipeUpdated(_msgSender(), ids, _recipes);
     }
 
-    function enableRecipe(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
+    function enableRecipe(uint256 _id, bool _enabled) external override whenPaused() onlyRole(MANAGER_ROLE) {
         require(_id < recipesLength, "Recipe doesn't exist");
         recipes[_id].enabled = _enabled;
 

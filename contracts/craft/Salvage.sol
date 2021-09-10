@@ -32,7 +32,7 @@ contract Salvage is ISalvage, CraftBase {
         _registerInterface(LibConstants._INTERFACE_ID_SALVAGE);
     }
 
-    function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _assets) external override whenPaused() checkPermissions(MANAGER_ROLE) {
+    function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _assets) external override whenPaused() onlyRole(MANAGER_ROLE) {
         require(_assets.length > 0, "Invalid input length.");
 
         uint256[] memory ids = new uint256[](_assets.length);

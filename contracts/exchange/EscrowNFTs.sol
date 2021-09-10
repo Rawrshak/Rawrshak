@@ -38,7 +38,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         address _sender,
         uint256 _amount,
         LibOrder.AssetData memory _assetData
-    ) external override checkPermissions(MANAGER_ROLE) {
+    ) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         assetData[_orderId] = _assetData;
         escrowedAssetsByOrder[_orderId] = _amount;
@@ -52,7 +52,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         uint256 _orderId,
         address _receiver,
         uint256 _amount
-    ) external override checkPermissions(MANAGER_ROLE) {
+    ) external override onlyRole(MANAGER_ROLE) {
         require(escrowedAssetsByOrder[_orderId] >= _amount, "Incorrect order amount to withdraw");
         require(assetData[_orderId].contentAddress != address(0), "Invalid Order Data");
 
@@ -64,7 +64,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         uint256[] memory _orderIds,
         address _receiver,
         uint256[] memory _amounts
-    ) external override checkPermissions(MANAGER_ROLE) {
+    ) external override onlyRole(MANAGER_ROLE) {
         for (uint256 i = 0; i < _orderIds.length; ++i) {            
             require(escrowedAssetsByOrder[_orderIds[i]] > 0, "Asset was already sold.");
             require(assetData[_orderIds[i]].contentAddress != address(0), "Invalid Order Data");
