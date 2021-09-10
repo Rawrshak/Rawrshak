@@ -9,7 +9,7 @@ import "./Content.sol";
 /**
  * @dev ERC721 token with storage based token URI management.
  */
-abstract contract ContentWithHiddenData is IHiddenData, Content {
+contract ContentWithHiddenData is IHiddenData, Content {
     function __ContentWithHiddenData_init(
         string memory _name,
         string memory _symbol,
@@ -18,7 +18,6 @@ abstract contract ContentWithHiddenData is IHiddenData, Content {
         IAccessControlManager _accessControlManager)
         public initializer
     {
-        // __Ownable_init_unchained();
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC1155_init_unchained(_contractUri);

@@ -19,8 +19,6 @@ interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
     function name() external view returns (string memory);
     
     function symbol() external view returns (string memory);
-    
-    function accessControlManager() external view returns (IAccessControlManager);
 
     function supply(uint256 _tokenId) external view returns (uint256);
     

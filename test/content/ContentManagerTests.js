@@ -76,7 +76,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         
         await contentManager.addAssetBatch(newAssets);
 
-        // const signature = await sign(playerAddress, [1], [1], 1, null, await content.accessControlManager());
+        // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
         var mintData = [playerAddress, [3], [10], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 

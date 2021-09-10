@@ -66,10 +66,10 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     
         require(_content != address(0) && _content.isContract() && 
                 _content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT),
-                "Invalid Address");
+                "Invalid Content Address");
         require(_contentStorage != address(0) && _contentStorage.isContract() && 
                 _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
-                "Invalid Address");
+                "Invalid Storage Address");
 
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
