@@ -1,5 +1,4 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const TagsManager = artifacts.require("TagsManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
@@ -19,7 +18,6 @@ contract('Contract Registry Tests', (accounts) => {
     ] = accounts;
 
     var registry;
-    var tagsManager;  
     var accessControlManager;  
     var contentStorage;  
     var content;
@@ -32,10 +30,6 @@ contract('Contract Registry Tests', (accounts) => {
         // Contract Registry is first
         registry = await ContractRegistry.new();
         await registry.__ContractRegistry_init();
-        
-        // Tags Manager is next
-        tagsManager = await TagsManager.new();
-        await tagsManager.__TagsManager_init(registry.address);
 
         // Content Contracts are next (Especially ContentManager)
         accessControlManager = await AccessControlManager.new();
@@ -47,7 +41,7 @@ contract('Contract Registry Tests', (accounts) => {
         await contentStorage.setParent(content.address);
 
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address, {from: deployerAddress});
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, {from: deployerAddress});
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.setParent(content.address);
@@ -66,7 +60,7 @@ contract('Contract Registry Tests', (accounts) => {
     it('Verify ContractRegistry Interface Implementation', async () => {
         // Contract Registry Interface
         assert.equal(
-            await registry.supportsInterface("0x6C0F49D2"),
+            await registry.supportsInterface("0x498D4CA2"),
             true, 
             "The contract isn't a ContractRegistry implementation");
     });
@@ -87,16 +81,6 @@ contract('Contract Registry Tests', (accounts) => {
             true, 
             "Game Developer contracts were not registered properly");
             
-    });
-    
-    it('Register Tags Manager Contract', async () => {
-        await registry.setTagsManager(tagsManager.address, {from: deployerAddress});
-
-        // Test tags manager addresses
-        assert.equal(
-            await registry.tagsManager(),
-            tagsManager.address, 
-            "Tags Manager contract was not registered properly");    
     });
 
 });

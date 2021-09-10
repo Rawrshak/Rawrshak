@@ -11,7 +11,6 @@ import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IUniqueContent.sol";
-import "./interfaces/ITagsManager.sol";
 
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
@@ -33,32 +32,26 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
      * bytes4(keccak256('setContractRoyalties(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
      * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
-     * bytes4(keccak256('addContractTags(string[] memory)')) == 0x28ec234f
-     * bytes4(keccak256('removeContractTags(string[] memory)')) == 0x9d94c8d0
-     * bytes4(keccak256('addAssetTags(uint256 _id, string[] memory)')) == 0xa4a2bcbf
-     * bytes4(keccak256('removeAssetTags(uint256 _id, string[] memory)')) == 0xa32340f0
      */
-    // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0x582136B7;
+    // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0xEAD82167;
 
     /***************** Stored Variables *****************/
     IContent public override content;
     IContentStorage public override contentStorage;
     IAccessControlManager public override accessControlManager;
-    ITagsManager private tagsManager;
 
     /******************** Public API ********************/
     
     function __ContentManager_init(
         address _content,
         address _contentStorage,
-        address _accessControlManager,
-        address _tagsManager
+        address _accessControlManager
     )
         public initializer
     {
         __Ownable_init_unchained();
         __ERC165Storage_init_unchained();
-        __ContentManager_init_unchained(_content, _contentStorage, _accessControlManager, _tagsManager);
+        __ContentManager_init_unchained(_content, _contentStorage, _accessControlManager);
 
         // emit ContentManagerCreated(_msgSender(), _content, _contentStorage, _accessControlManager);
     }
@@ -67,8 +60,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     function __ContentManager_init_unchained(
         address _content,
         address _contentStorage,
-        address _accessControlManager,
-        address _tagsManager
+        address _accessControlManager
     ) internal initializer {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER);
     
@@ -78,12 +70,10 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         require(_contentStorage != address(0) && _contentStorage.isContract() && 
                 _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
                 "Invalid Address");
-        require(_tagsManager != address(0) && _tagsManager.isContract(),"Invalid Address");
 
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);
-        tagsManager = ITagsManager(_tagsManager);
     }
     
     function addAssetBatch(
@@ -139,24 +129,6 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         
         content.mintBatch(_data);
         IUniqueContent(_uniqueContentContract).mint(to);
-    }
-
-    function addContractTags(string[] memory _tags) external override onlyOwner {
-        tagsManager.addContractTags(address(content), _tags);
-    }
-
-    function removeContractTags(string[] memory _tags) external override onlyOwner {
-        tagsManager.removeContractTags(address(content), _tags);
-    }
-
-    function addAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
-        require(contentStorage.ids(_id), "token id doesn't exist.");
-        tagsManager.addAssetTags(address(content), _id, _tags);
-    }
-    
-    function removeAssetTags(uint256 _id, string[] memory _tags) external override onlyOwner {
-        require(contentStorage.ids(_id), "token id doesn't exist.");
-        tagsManager.removeAssetTags(address(content), _id, _tags);
     }
     
     uint256[50] private __gap;

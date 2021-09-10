@@ -4,8 +4,6 @@ const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
-const TagsManager = artifacts.require("TagsManager");
-// const { sign } = require("../mint");
 
 // Todo: Update this test
 contract('Content Manager Contract Tests', (accounts) => {
@@ -29,8 +27,6 @@ contract('Content Manager Contract Tests', (accounts) => {
     beforeEach(async () => {
         registry = await ContractRegistry.new();
         await registry.__ContractRegistry_init();
-        tagsManager = await TagsManager.new();
-        await tagsManager.__TagsManager_init(registry.address);
 
         accessControlManager = await AccessControlManager.new();
         await accessControlManager.__AccessControlManager_init();
@@ -41,7 +37,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         await contentStorage.setParent(content.address);
 
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address);
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.setParent(content.address);
@@ -67,7 +63,7 @@ contract('Content Manager Contract Tests', (accounts) => {
     it('Check Supported interfaces', async () => {
         // Content Storage interface
         assert.equal(
-            await contentManager.supportsInterface("0x582136B7"),
+            await contentManager.supportsInterface("0xEAD82167"),
             true, 
             "the contract doesn't support the ContentManager interface");
     });

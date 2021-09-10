@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 
 import "../utils/LibConstants.sol";
-import "../content/interfaces/ITagsManager.sol";
 import "../craft/Craft.sol";
 import "../craft/Salvage.sol";
 
@@ -27,21 +26,18 @@ contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
      * bytes4(keccak256('registerCraft(address)')) == 0x4bffd907
      * bytes4(keccak256('registerSalvage(address)')) == 0x3b4e68c2
      * bytes4(keccak256('isRegistered(address)')) == 0xc3c5a547
-     * bytes4(keccak256('setTagsManager(address)')) == 0x25820570
      */
-    // bytes4 private constant _INTERFACE_ID_CONTRACT_REGISTRY = 0x6C0F49D2;
+    // bytes4 private constant _INTERFACE_ID_CONTRACT_REGISTRY = 0x498D4CA2;
 
     /***************** Stored Variables *****************/
     mapping(address => EnumerableSetUpgradeable.AddressSet) private owners;
     EnumerableSetUpgradeable.AddressSet contentManagers;
     EnumerableSetUpgradeable.AddressSet craft;
     EnumerableSetUpgradeable.AddressSet salvage;
-    ITagsManager public tagsManager;
 
     event ContentManagerRegistered(address indexed owner, address indexed contentManager);
     event CraftRegistered(address indexed manager, address indexed craft);
     event SalvageRegistered(address indexed manager, address indexed salvage);
-    event TagsManagerSet(address indexed manager);
 
     /******************** Public API ********************/
     function __ContractRegistry_init()
@@ -99,14 +95,5 @@ contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
         }
 
         return false;
-    }
-
-    function setTagsManager(address _manager) external onlyOwner {
-        require(_manager != address(0) && _manager.isContract(), "Invalid Address");
-        require(_manager.supportsInterface(LibConstants._INTERFACE_ID_TAGS_MANAGER), "Invalid input interface");
-
-        tagsManager = ITagsManager(_manager);
-
-        emit TagsManagerSet(_manager);
     }
 }

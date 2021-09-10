@@ -5,7 +5,6 @@ const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
 const ContractRegistry = artifacts.require("ContractRegistry");
-const TagsManager = artifacts.require("TagsManager");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Escrow NFTs Contract', (accounts) => {
@@ -33,8 +32,6 @@ contract('Escrow NFTs Contract', (accounts) => {
     beforeEach(async () => {
         registry = await ContractRegistry.new();
         await registry.__ContractRegistry_init();
-        tagsManager = await TagsManager.new();
-        await tagsManager.__TagsManager_init(registry.address);
 
         // Set up NFT Contract
         accessControlManager = await AccessControlManager.new();
@@ -47,7 +44,7 @@ contract('Escrow NFTs Contract', (accounts) => {
         
         // Setup content manager
         contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
+        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address);
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.setParent(content.address);
