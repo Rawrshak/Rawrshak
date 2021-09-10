@@ -4,16 +4,16 @@ pragma solidity >=0.6.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "../utils/EIP712Extended.sol";
 import "../libraries/LibAsset.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "../utils/LibConstants.sol";
 import "./ContentSubsystemBase.sol";
 
-contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, AccessControlUpgradeable, EIP712Upgradeable {
+contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, AccessControlUpgradeable, EIP712Extended {
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
     using ECDSAUpgradeable for bytes32;
@@ -36,7 +36,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     function __AccessControlManager_init() public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
-        __EIP712_init_unchained("MintData", "1");
+        __EIP712Extended_init_unchained("MintData", "1");
         __AccessControlManager_init_unchained();
     }
     
@@ -70,7 +70,8 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         // this is to prevent minting replay attacks
         require(_data.nonce == userMintNonce[_caller] + 1, "Invalid caller nonce");
 
-        bytes32 hashData = _hashTypedDataV4(LibAsset.hashMintData(_data));
+        // Verifying Contract must be there content contract parent of this control manager
+        bytes32 hashData = _hashTypedDataV4(LibAsset.hashMintData(_data), _parent());
         require(hashData.recover(_data.signature) == _data.signer, "Invalid Signature");
 
         // Check if signer has the correct role

@@ -28,20 +28,19 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
      * IRoyaltyProvider == 0xbb3bafd6
      * bytes4(keccak256('name()')) == 0x06fdde03
      * bytes4(keccak256('symbol()')) == 0x95d89b41
-     * bytes4(keccak256('accessControlManager()')) == 0xb4a0bdf3
      * bytes4(keccak256('supply(uint256)')) == 0x35403023
      * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
      * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
      * bytes4(keccak256('burnBatch(LibAsset.BurnData memory)')) == 0xa0a862d5
-     *      => BF2FD945
+     *      => 0B8F64B6
      */
 
     /***************** Stored Variables *****************/
     string public override name;
     string public override symbol;
     IContentStorage dataStorage;
-    IAccessControlManager public override accessControlManager;
+    IAccessControlManager  accessControlManager;
 
     /******************** Public API ********************/
     function __Content_init(
