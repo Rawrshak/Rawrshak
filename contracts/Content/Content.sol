@@ -26,26 +26,20 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
      * ERC1155 interface == 0xd9b67a26
      * IContractUri == 0xc0e24d5e
      * IRoyaltyProvider == 0xbb3bafd6
-     * bytes4(keccak256('name()')) == 0x06fdde03
-     * bytes4(keccak256('symbol()')) == 0x95d89b41
      * bytes4(keccak256('supply(uint256)')) == 0x35403023
      * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
      * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
      * bytes4(keccak256('burnBatch(LibAsset.BurnData memory)')) == 0xa0a862d5
-     *      => 0B8F64B6
+     *      => 98AA21F4
      */
 
     /***************** Stored Variables *****************/
-    string public override name;
-    string public override symbol;
     IContentStorage dataStorage;
     IAccessControlManager  accessControlManager;
 
     /******************** Public API ********************/
     function __Content_init(
-        string memory _name,
-        string memory _symbol,
         IContentStorage _dataStorage,
         IAccessControlManager _accessControlManager)
         public initializer
@@ -54,19 +48,15 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC1155_init_unchained("");
-        __Content_init_unchained(_name, _symbol, _dataStorage, _accessControlManager);
+        __Content_init_unchained(_dataStorage, _accessControlManager);
     }
 
     function __Content_init_unchained(
-        string memory _name,
-        string memory _symbol,
         IContentStorage _dataStorage,
         IAccessControlManager _accessControlManager)
         internal initializer
     {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
-        name = _name;
-        symbol = _symbol;
 
         dataStorage = _dataStorage;
         accessControlManager = _accessControlManager;

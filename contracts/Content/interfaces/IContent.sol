@@ -16,10 +16,6 @@ interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
     event Burn(address operator, LibAsset.BurnData data);
     
     /******** View Functions ********/
-    function name() external view returns (string memory);
-    
-    function symbol() external view returns (string memory);
-
     function supply(uint256 _tokenId) external view returns (uint256);
     
     function maxSupply(uint256 _tokenId) external view returns (uint256);

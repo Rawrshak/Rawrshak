@@ -29,7 +29,7 @@ contract('Content Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await content.__Content_init(contentStorage.address, accessControlManager.address);
         await contentStorage.setParent(content.address);
 
         // give deployer address and crafting system approval; This would normally be done through the ContentManager
@@ -48,14 +48,6 @@ contract('Content Contract Tests', (accounts) => {
     it('Check Content proper deployment', async () => {
         // Check initializer parameters
         assert.equal(
-            await content.name(),
-            "Test Content Contract",
-            "Contract name is incorrect.");
-        assert.equal(
-            await content.symbol(),
-            "TEST",
-            "Contract symbol is incorrect.");
-        assert.equal(
             await content.contractUri(),
             "arweave.net/tx-contract-uri",
             "Contract uri is incorrect.");
@@ -70,7 +62,7 @@ contract('Content Contract Tests', (accounts) => {
             "The content contract isn't an ERC1155 implementation");
         // Content Interface
         assert.equal(
-            await content.supportsInterface("0x0B8F64B6"),
+            await content.supportsInterface("0x98AA21F4"),
             true, 
             "The contract isn't an Content interface implementation");
     });

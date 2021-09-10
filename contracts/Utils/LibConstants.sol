@@ -23,7 +23,7 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_TOKENBASE = 0x00000004;
 
     // Content Interfaces
-    bytes4 constant _INTERFACE_ID_CONTENT = 0x0B8F64B6; // 0x94b3e03b;
+    bytes4 constant _INTERFACE_ID_CONTENT = 0x98AA21F4; // 0x94b3e03b;
     bytes4 constant _INTERFACE_ID_CONTENT_STORAGE = 0xA133AF9C; // 0x00000002;
     bytes4 constant _INTERFACE_ID_CONTENT_MANAGER = 0xEAD82167; // 0x00000003;
     bytes4 constant _INTERFACE_ID_UNIQUE_CONTENT = 0x00000005;

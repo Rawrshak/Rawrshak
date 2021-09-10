@@ -33,7 +33,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, manager.address);
+        await content.__Content_init(contentStorage.address, manager.address);
         
         await manager.setParent(content.address);
 
@@ -59,7 +59,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, manager.address);
+        await content.__Content_init(contentStorage.address, manager.address);
         
         // caller doesn't have the default admin role
         await TruffleAssert.fails(
@@ -92,7 +92,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, manager.address);
+        await content.__Content_init(contentStorage.address, manager.address);
 
         // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
         await manager.setParent(content.address);
@@ -113,7 +113,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, manager.address);
+        await content.__Content_init(contentStorage.address, manager.address);
 
         // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
         await manager.setParent(content.address);
@@ -134,7 +134,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, manager.address);
+        await content.__Content_init(contentStorage.address, manager.address);
 
         // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
         await manager.setParent(content.address);
@@ -153,7 +153,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, manager.address);
+        await content.__Content_init(contentStorage.address, manager.address);
 
         // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
         await manager.setParent(content.address);
