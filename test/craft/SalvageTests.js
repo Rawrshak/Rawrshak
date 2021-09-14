@@ -9,7 +9,6 @@ const ContractRegistry = artifacts.require("ContractRegistry");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
-// Todo: Update this test
 contract('Salvage Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -103,12 +102,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         2
                     ],
                     [
                         [content.address, 4],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         1
                     ]
                 ]
@@ -142,7 +141,7 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(rewardsData.length, 2, "rewards length incorrect");
         for (var i = 0; i < rewardsData.length; ++i) {
             assert.equal(rewardsData[i].asset.content, content.address, "Invalid Reward Address");
-            assert.equal(rewardsData[i].probability, web3.utils.toWei('1', 'ether'), "Invalid Reward probability");
+            assert.equal(rewardsData[i].probability, 1000000, "Invalid Reward probability");
         }
     });
     
@@ -154,12 +153,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         2
                     ],
                     [
                         [content.address, 4],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         1
                     ]
                 ]
@@ -170,12 +169,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        web3.utils.toWei('0.5', 'ether'),
+                        500000,
                         2
                     ],
                     [
                         [content.address, 5],
-                        web3.utils.toWei('0.5', 'ether'),
+                        500000,
                         3
                     ]
                 ]
@@ -199,7 +198,7 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(rewardsData.length, 2, "rewards length incorrect");
         for (var i = 0; i < rewardsData.length; ++i) {
             assert.equal(rewardsData[i].asset.content, content.address, "Invalid Reward Address");
-            assert.equal(rewardsData[i].probability, web3.utils.toWei('1', 'ether'), "Invalid Reward probability");
+            assert.equal(rewardsData[i].probability, 1000000, "Invalid Reward probability");
         }
         
         // Test Asset 2
@@ -212,7 +211,7 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(rewardsData.length, 2, "rewards length incorrect");
         for (var i = 0; i < rewardsData.length; ++i) {
             assert.equal(rewardsData[i].asset.content, content.address, "Invalid Reward Address");
-            assert.equal(rewardsData[i].probability, web3.utils.toWei('0.5', 'ether'), "Invalid Reward probability");
+            assert.equal(rewardsData[i].probability, 500000, "Invalid Reward probability");
         }
     });
 
@@ -227,7 +226,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 5],
-                        web3.utils.toWei('0.1', 'ether'),
+                        100000,
                         1
                     ]
                 ]
@@ -244,8 +243,8 @@ contract('Salvage Contract', (accounts)=> {
         assert.equal(storedSalvageableAssetData.salvageType.toString(), 1, "Salvage Type not updated");
         assert.equal(rewardsData.length, 1, "rewards length not updated");
         assert.equal(rewardsData[0].asset.tokenId, 5, "Invalid reward updated");
-        assert.equal(rewardsData[0].probability, web3.utils.toWei('0.1', 'ether'), "Invalid Reward probability updated");
-        assert.equal(rewardsData[0].amount, 1, "Invalid Reward probability updated");
+        assert.equal(rewardsData[0].probability, 100000, "Invalid Reward probability updated");
+        assert.equal(rewardsData[0].amount, 1, "Invalid Reward amount updated");
     });
 
     it('Failing to Add Salvageable Assets', async () => {
@@ -269,7 +268,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 5],
-                        web3.utils.toWei('0.1', 'ether'),
+                        100000,
                         1
                     ]
                 ]
@@ -301,7 +300,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 5],
-                        web3.utils.toWei('1.001', 'ether'),
+                        1000001,
                         1
                     ]
                 ]
@@ -337,7 +336,7 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 5],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         0
                     ]
                 ]
@@ -408,12 +407,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         2
                     ],
                     [
                         [content.address, 4],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         1
                     ]
                 ]
@@ -424,12 +423,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         2
                     ],
                     [
                         [content.address, 5],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         3
                     ]
                 ]
@@ -473,12 +472,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         2
                     ],
                     [
                         [content.address, 4],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         1
                     ]
                 ]
@@ -489,12 +488,12 @@ contract('Salvage Contract', (accounts)=> {
                 [ // array
                     [   // salvageableasset
                         [content.address, 3],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         2
                     ],
                     [
                         [content.address, 5],
-                        web3.utils.toWei('1', 'ether'),
+                        1000000,
                         3
                     ]
                 ]

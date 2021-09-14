@@ -78,7 +78,7 @@ contract('Craft Contract', (accounts)=> {
         
         initialRecipe = [
             [
-                web3.utils.toWei('1', 'ether'), // crafting rate
+                1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3]
@@ -103,7 +103,7 @@ contract('Craft Contract', (accounts)=> {
         var recipeId = 0;
         var newRecipe = [
             [
-                web3.utils.toWei('1', 'ether'), // crafting rate
+                1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -118,10 +118,10 @@ contract('Craft Contract', (accounts)=> {
         ];
 
         var results = await craft.addRecipeBatch(newRecipe, {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'RecipeUpdated');
+        TruffleAssert.eventEmitted(results, 'RecipeAdded');
         var storedRecipeData = await craft.recipe(0);
         
-        assert.equal(storedRecipeData.craftingRate, web3.utils.toWei('1', 'ether'), "crafting rate incorrect");
+        assert.equal(storedRecipeData.craftingRate, 1000000, "crafting rate incorrect");
         assert.equal(storedRecipeData.enabled, true, "recipe enabled incorrect");
         assert.equal(storedRecipeData.materials.length, 2, "materials length incorrect");
         assert.equal(storedRecipeData.materialAmounts.length, 2, "materials amounts length incorrect");
@@ -132,7 +132,7 @@ contract('Craft Contract', (accounts)=> {
     it('Add Multiple Recipes', async () => {
         var newRecipe = [
             [
-                web3.utils.toWei('1', 'ether'), // crafting rate
+                1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -145,7 +145,7 @@ contract('Craft Contract', (accounts)=> {
                 [1] // array of reward amounts
             ],
             [
-                web3.utils.toWei('0.5', 'ether'), // crafting rate
+                500000, // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -160,11 +160,11 @@ contract('Craft Contract', (accounts)=> {
         ];
         
         var results = await craft.addRecipeBatch(newRecipe, {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'RecipeUpdated');
+        TruffleAssert.eventEmitted(results, 'RecipeAdded');
         var storedRecipeData = await craft.recipe(0);
         
         // check recipe 0
-        assert.equal(storedRecipeData.craftingRate, web3.utils.toWei('1', 'ether'), "crafting rate incorrect");
+        assert.equal(storedRecipeData.craftingRate, 1000000, "crafting rate incorrect");
         assert.equal(storedRecipeData.enabled, true, "recipe enabled incorrect");
         assert.equal(storedRecipeData.materials.length, 2, "materials length incorrect");
         assert.equal(storedRecipeData.materialAmounts.length, 2, "materials amounts length incorrect");
@@ -174,7 +174,7 @@ contract('Craft Contract', (accounts)=> {
         // check recipe 1
         var storedRecipeData = await craft.recipe(1);
         
-        assert.equal(storedRecipeData.craftingRate, web3.utils.toWei('0.5', 'ether'), "crafting rate incorrect");
+        assert.equal(storedRecipeData.craftingRate, 500000, "crafting rate incorrect");
         assert.equal(storedRecipeData.enabled, false, "recipe enabled incorrect");
         assert.equal(storedRecipeData.materials.length, 2, "materials length incorrect");
         assert.equal(storedRecipeData.materials[0].content, content.address, "material 1 content contract incorrect");
@@ -207,7 +207,7 @@ contract('Craft Contract', (accounts)=> {
         // materials length mismatch
         var invalidRecipe = [
             [
-                5000, // crafting rate
+                500000, // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -228,7 +228,7 @@ contract('Craft Contract', (accounts)=> {
         // rewards length mismatch
         var invalidRecipe = [
             [
-                web3.utils.toWei('0.5', 'ether'), // crafting rate
+               500000, // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -249,7 +249,7 @@ contract('Craft Contract', (accounts)=> {
         // invalid crafting rate
         var invalidRecipe = [
             [
-                web3.utils.toWei('1.01', 'ether'), // crafting rate
+                1000001, // crafting rate
                 false, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -270,7 +270,7 @@ contract('Craft Contract', (accounts)=> {
 
     it('Craft a recipe', async () => {
         var results = await craft.addRecipeBatch(initialRecipe, {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'RecipeUpdated');
+        TruffleAssert.eventEmitted(results, 'RecipeAdded');
 
         // unpause the salvage contract so we can start salvaging assets
         await craft.managerSetPause(false, {from: managerAddress});
@@ -290,7 +290,7 @@ contract('Craft Contract', (accounts)=> {
     it('Craft multiple instances of a recipe', async () => {
         var newRecipe = [
             [
-                web3.utils.toWei('1', 'ether'), // crafting rate
+                1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -303,7 +303,7 @@ contract('Craft Contract', (accounts)=> {
                 [1] // array of reward amounts
             ],
             [
-                web3.utils.toWei('1', 'ether'), // crafting rate
+                1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
                     [content.address, 3],
@@ -318,7 +318,7 @@ contract('Craft Contract', (accounts)=> {
         ];
 
         var results = await craft.addRecipeBatch(newRecipe, {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'RecipeUpdated');
+        TruffleAssert.eventEmitted(results, 'RecipeAdded');
 
         // unpause the salvage contract so we can start salvaging assets
         await craft.managerSetPause(false, {from: managerAddress});
@@ -351,7 +351,7 @@ contract('Craft Contract', (accounts)=> {
 
     it('Invalid Craft', async () => {
         var results = await craft.addRecipeBatch(initialRecipe, {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'RecipeUpdated');
+        TruffleAssert.eventEmitted(results, 'RecipeAdded');
 
         // player has not approved craft as an operator yet
         await TruffleAssert.fails(
