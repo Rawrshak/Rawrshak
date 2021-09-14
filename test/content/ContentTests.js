@@ -29,7 +29,7 @@ contract('Content Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await content.__Content_init(contentStorage.address, accessControlManager.address);
         await contentStorage.setParent(content.address);
 
         // give deployer address and crafting system approval; This would normally be done through the ContentManager
@@ -48,29 +48,23 @@ contract('Content Contract Tests', (accounts) => {
     it('Check Content proper deployment', async () => {
         // Check initializer parameters
         assert.equal(
-            await content.name(),
-            "Test Content Contract",
-            "Contract name is incorrect.");
-        assert.equal(
-            await content.symbol(),
-            "TEST",
-            "Contract symbol is incorrect.");
-        assert.equal(
             await content.contractUri(),
             "arweave.net/tx-contract-uri",
             "Contract uri is incorrect.");
-        assert.equal(
-            await content.accessControlManager(),
-            accessControlManager.address,
-            "System Registry address is incorrect.");
     });
     
     it('Verify ERC1155 Implementation', async () => {
+        
         // ERC1155 Interface
         assert.equal(
             await content.supportsInterface("0xd9b67a26"),
             true, 
             "The content contract isn't an ERC1155 implementation");
+        // Content Interface
+        assert.equal(
+            await content.supportsInterface("0x98AA21F4"),
+            true, 
+            "The contract isn't an Content interface implementation");
     });
 
     it('Check Supply', async () => {
@@ -99,7 +93,7 @@ contract('Content Contract Tests', (accounts) => {
         // Note: we use content.methods['function()']() below because it hiddenUri() is an
         //       overloaded function
         
-        const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, content.address);
         var mintData = [playerAddress, [1], [1], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
@@ -142,7 +136,7 @@ contract('Content Contract Tests', (accounts) => {
     // }
 
     it('Mint Assets', async () => {
-        const signature = await sign(playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, content.address);
         var mintData = [playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
         
@@ -154,7 +148,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Mint data length input mismatch', async () => {
-        const signature = await sign(playerAddress, [1, 2], [10], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [1, 2], [10], 1, craftingSystemAddress, content.address);
         var invalidLengthData = [playerAddress, [1, 2], [10], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
             content.mintBatch(invalidLengthData, {from: playerAddress}),
@@ -163,7 +157,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Mint invalid token id', async () => {
-        const signature = await sign(playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, content.address);
         var invalidTokenIdData = [playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
             content.mintBatch(invalidTokenIdData, {from: playerAddress}),
@@ -172,7 +166,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Mint invalid supply', async () => {
-        const signature = await sign(playerAddress, [2], [300], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [2], [300], 1, craftingSystemAddress, content.address);
         var invalidSupplyData = [playerAddress, [2], [300], 1, craftingSystemAddress, signature];
         await TruffleAssert.fails(
             content.mintBatch(invalidSupplyData, {from: playerAddress}),
@@ -181,7 +175,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Burn Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
@@ -199,7 +193,7 @@ contract('Content Contract Tests', (accounts) => {
     });
     
     it('Invalid burns', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
@@ -219,7 +213,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Transfer Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
 
@@ -230,7 +224,7 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Invalid Transfer Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, await content.accessControlManager());
+        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
         var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
         

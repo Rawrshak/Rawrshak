@@ -33,7 +33,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await content.__Content_init(contentStorage.address, accessControlManager.address);
         await contentStorage.setParent(content.address);
 
         contentManager = await ContentManager.new();
@@ -76,7 +76,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         
         await contentManager.addAssetBatch(newAssets);
 
-        // const signature = await sign(playerAddress, [1], [1], 1, null, await content.accessControlManager());
+        // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
         var mintData = [playerAddress, [3], [10], 1, zeroAddress, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 

@@ -48,7 +48,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
+        await content.__Content_init(contentStorage.address, accessControlManager.address);
         await contentStorage.setParent(content.address);
         
         // Setup content manager
