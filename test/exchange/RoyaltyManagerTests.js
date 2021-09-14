@@ -10,6 +10,7 @@ const RoyaltyManager = artifacts.require("RoyaltyManager");
 const AddressRegistry = artifacts.require("AddressRegistry");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TruffleAssert = require("truffle-assertions");
+const { constants } = require('@openzeppelin/test-helpers');
 
 contract('Royalty Manager Contract', (accounts)=> {
     const [
@@ -26,7 +27,7 @@ contract('Royalty Manager Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
         [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
     ];
 

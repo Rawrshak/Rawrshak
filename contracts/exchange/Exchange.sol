@@ -16,7 +16,6 @@ import "./interfaces/IExecutionManager.sol";
 contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     IRoyaltyManager royaltyManager;
@@ -69,7 +68,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
 
         if (_order.isBuyOrder) {
             // if it's a buy order, move tokens to ERC20 escrow.
-            uint256 tokenAmount = _order.amount.mul(_order.price);
+            uint256 tokenAmount = _order.amount * _order.price;
             executionManager.placeBuyOrder(id, _order.token, _msgSender(), tokenAmount);
         } else {
             // if it's a sell order, move NFT to escrow
@@ -100,7 +99,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         // Get Total Assets to sell
         uint256 totalAssetsToSell = 0;
         for (uint256 i = 0; i < _amounts.length; ++i) {
-            totalAssetsToSell = totalAssetsToSell.add(_amounts[i]);
+            totalAssetsToSell = totalAssetsToSell + _amounts[i];
         }
 
         // Verify that the buyer has these NFTs
@@ -150,7 +149,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         // Get Total Assets to buy
         uint256 totalAssetsToBuy = 0;
         for (uint256 i = 0; i < _amounts.length; ++i) {
-            totalAssetsToBuy = totalAssetsToBuy.add(_amounts[i]);
+            totalAssetsToBuy = totalAssetsToBuy + _amounts[i];
         }
 
         // Orderbook -> fill sell order

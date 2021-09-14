@@ -6,6 +6,7 @@ const AccessControlManager = artifacts.require("AccessControlManager");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TruffleAssert = require("truffle-assertions");
+const { constants } = require('@openzeppelin/test-helpers');
 
 contract('Escrow NFTs Contract', (accounts) => {
     const [
@@ -19,11 +20,10 @@ contract('Escrow NFTs Contract', (accounts) => {
     var content;
     var contentStorage;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
         [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
     ];
     var approvalPair = [[executionManagerAddress, true]];
-    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     var escrow;
     var manager_role;
@@ -53,7 +53,7 @@ contract('Escrow NFTs Contract', (accounts) => {
         await contentManager.addAssetBatch(asset);
 
         // Mint an assets
-        var mintData = [playerAddress, [1, 2], [10, 1], 0, zeroAddress, []];
+        var mintData = [playerAddress, [1, 2], [10, 1], 0, constants.ZERO_ADDRESS, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
 
         escrow = await EscrowNFTs.new();

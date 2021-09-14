@@ -3,6 +3,7 @@ const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const AccessControlManager = artifacts.require("AccessControlManager");
 const TruffleAssert = require("truffle-assertions");
+const { constants } = require('@openzeppelin/test-helpers');
 const { sign } = require("../mint");
 
 // Todo: Update this test
@@ -19,7 +20,7 @@ contract('Content Contract Tests', (accounts) => {
     var contentStorage;
     var accessControlManager;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [1, "arweave.net/tx/public-uri-1", "", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
         [2, "arweave.net/tx/public-uri-2", "", 100, []],
     ];
 
@@ -68,10 +69,10 @@ contract('Content Contract Tests', (accounts) => {
     });
 
     it('Check Supply', async () => {
-        assert.equal(await content.supply(1), 0, "Asset 1 incorrect supply");
-        assert.equal(await content.maxSupply(1), 0, "Asset 1 incorrect max supply");
+        assert.equal(await content.totalSupply(1), 0, "Asset 1 incorrect supply");
+        assert.equal((await content.maxSupply(1)).toString(), constants.MAX_UINT256.toString(), "Asset 1 incorrect max supply");
         
-        assert.equal(await content.supply(2), 0, "Asset 2 incorrect supply");
+        assert.equal(await content.totalSupply(2), 0, "Asset 2 incorrect supply");
         assert.equal(await content.maxSupply(2), 100, "Asset 2 incorrect max supply");
     });
 
@@ -118,7 +119,7 @@ contract('Content Contract Tests', (accounts) => {
         
         TruffleAssert.eventEmitted(await contentStorage.addAssetBatch(newAssets), 'AssetsAdded');
         
-        assert.equal(await content.supply(3, {from: playerAddress}), 0, "Asset 3 incorrect supply");
+        assert.equal(await content.totalSupply(3, {from: playerAddress}), 0, "Asset 3 incorrect supply");
         assert.equal(await content.maxSupply(3, {from: playerAddress}), 1000, "Asset 3 incorrect max supply");
     });
 
@@ -140,8 +141,8 @@ contract('Content Contract Tests', (accounts) => {
         var mintData = [playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, signature];
         await content.mintBatch(mintData, {from: playerAddress});
         
-        assert.equal(await content.supply(1, {from: playerAddress}), 10, "Asset 1 incorrect supply");
-        assert.equal(await content.supply(2, {from: playerAddress}), 1, "Asset 2 incorrect supply");
+        assert.equal(await content.totalSupply(1, {from: playerAddress}), 10, "Asset 1 incorrect supply");
+        assert.equal(await content.totalSupply(2, {from: playerAddress}), 1, "Asset 2 incorrect supply");
 
         var balance = await content.balanceOf(playerAddress, 1);
         assert.equal(balance.valueOf().toString(), "10", "Player doesn't have the minted assets.");
@@ -182,11 +183,11 @@ contract('Content Contract Tests', (accounts) => {
         var burnData = [playerAddress, [1], [5]];
         await content.burnBatch(burnData, {from: playerAddress});
                 
-        assert.equal(await content.supply(1, {from: playerAddress}), 5, "Asset 1 incorrect supply");
+        assert.equal(await content.totalSupply(1, {from: playerAddress}), 5, "Asset 1 incorrect supply");
 
         await content.setApprovalForAll(craftingSystemAddress, true, {from: playerAddress});
         await content.burnBatch(burnData, {from: craftingSystemAddress});
-        assert.equal(await content.supply(1, {from: playerAddress}), 0, "Asset 1 incorrect supply");
+        assert.equal(await content.totalSupply(1, {from: playerAddress}), 0, "Asset 1 incorrect supply");
         
         var balance = await content.balanceOf(playerAddress, 1);
         assert.equal(balance.valueOf().toString(), "0", "Player still has the burned assets.");

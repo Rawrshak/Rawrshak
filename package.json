@@ -26,6 +26,7 @@
   "homepage": "https://github.com/gcbsumid/Rawrshak#readme",
   "devDependencies": {
     "@openzeppelin/contracts-upgradeable": "^4.0.0",
+    "@openzeppelin/test-helpers": "^0.5.13",
     "@openzeppelin/truffle-upgrades": "^1.7.0",
     "ganache-cli": "^6.12.1",
     "truffle": "^5.1.53",

@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../tokens/RawrToken.sol";
 import "./StakingRewardsPool.sol";
 import "./interface/ILockedFundPool.sol";
@@ -13,7 +12,6 @@ import "./LockedFundBase.sol";
 
 contract LockedStakingRewardsPool is LockedFundBase {
     using AddressUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     uint256 public emissionRate;    // (1.2^(1/52))-1 at the start
@@ -46,7 +44,7 @@ contract LockedStakingRewardsPool is LockedFundBase {
     function reloadFunds(uint256 _amount) external override onlyOwner {
         require(_amount > 0, "Invalid amount");
 
-        lockedSupply = lockedSupply.add(_amount);
+        lockedSupply = lockedSupply + _amount;
 
         // Note: LockedStakingRewardsPool must have minter role
         TokenBase(token).mint(address(this), _amount);
@@ -59,14 +57,14 @@ contract LockedStakingRewardsPool is LockedFundBase {
         require(_stakedTokensAmount > 0, "Invalid Staking amount");
 
         // calculate funds to release
-        uint256 releasedFunds = _stakedTokensAmount.mul(emissionRate).div(1 ether);
+        uint256 releasedFunds = (_stakedTokensAmount * emissionRate) / (1 ether);
 
         // update lockedSupply
         if (releasedFunds > lockedSupply) {
             releasedFunds = lockedSupply;
             lockedSupply = 0;
         } else {
-            lockedSupply = lockedSupply.sub(releasedFunds);
+            lockedSupply = lockedSupply - releasedFunds;
         }
 
         // if locked rewards is less than the funds to release, only release remaining amount
@@ -81,7 +79,7 @@ contract LockedStakingRewardsPool is LockedFundBase {
         
         // update emission rate and interval subratction
         if (intervalsBeforeEmissionRateStabilization > 0) {
-            emissionRate = emissionRate.sub(emissionRateSlowdown);
+            emissionRate = emissionRate - emissionRateSlowdown;
             intervalsBeforeEmissionRateStabilization--;
         }
 

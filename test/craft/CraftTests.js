@@ -6,6 +6,7 @@ const AccessControlManager = artifacts.require("AccessControlManager");
 const TestCraft = artifacts.require("TestCraft");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TruffleAssert = require("truffle-assertions");
+const { constants } = require('@openzeppelin/test-helpers');
 
 // Todo: Update this test
 contract('Craft Contract', (accounts)=> {
@@ -21,13 +22,13 @@ contract('Craft Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, []],
+        [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", constants.MAX_UINT256, []],
         [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, []],
         [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1",10000, []],
         [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, []],
         [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, []],
-        [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, []],
-        [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, []],
+        [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", constants.MAX_UINT256, []],
+        [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", constants.MAX_UINT256, []],
     ];
 
     var craft;
@@ -35,7 +36,6 @@ contract('Craft Contract', (accounts)=> {
 
     // var nftAssetData;
     var initialRecipe;
-    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     beforeEach(async () => {
         registry = await ContractRegistry.new();
@@ -61,7 +61,7 @@ contract('Craft Contract', (accounts)=> {
         await contentManager.addAssetBatch(asset);
     
         // Mint an assets
-        var mintData = [playerAddress, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10], 1, zeroAddress, []];
+        var mintData = [playerAddress, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10], 1, constants.ZERO_ADDRESS, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
 
         craft = await TestCraft.new();
@@ -282,9 +282,9 @@ contract('Craft Contract', (accounts)=> {
         TruffleAssert.eventEmitted(results, 'AssetsCrafted');
         
         assert.equal(await content.balanceOf(playerAddress, 3), 9, "Material was not burned.");
-        assert.equal(await content.supply(3), 9, "Material supply is incorrect");
+        assert.equal(await content.totalSupply(3), 9, "Material supply is incorrect");
         assert.equal(await content.balanceOf(playerAddress, 6), 1, "Reward was not burned.");
-        assert.equal(await content.supply(6), 1, "Reward supply is incorrect");
+        assert.equal(await content.totalSupply(6), 1, "Reward supply is incorrect");
     });
 
     it('Craft multiple instances of a recipe', async () => {
@@ -331,22 +331,22 @@ contract('Craft Contract', (accounts)=> {
         TruffleAssert.eventEmitted(results, 'AssetsCrafted');
         
         assert.equal(await content.balanceOf(playerAddress, 3), 7, "Material 1 was not burned.");
-        assert.equal(await content.supply(3), 7, "Material 1 supply is incorrect.");
+        assert.equal(await content.totalSupply(3), 7, "Material 1 supply is incorrect.");
         assert.equal(await content.balanceOf(playerAddress, 4), 7, "Material 2 was not burned.");
-        assert.equal(await content.supply(4), 7, "Material 2 supply is incorrect.");
+        assert.equal(await content.totalSupply(4), 7, "Material 2 supply is incorrect.");
         assert.equal(await content.balanceOf(playerAddress, 6), 3, "Reward was not created.");
-        assert.equal(await content.supply(6), 3, "Reward supply is incorrect.");
+        assert.equal(await content.totalSupply(6), 3, "Reward supply is incorrect.");
         
         // Craft recipe 2
         var results = await craft.craft(1, 2, {from: playerAddress});
         TruffleAssert.eventEmitted(results, 'AssetsCrafted');
         
         assert.equal(await content.balanceOf(playerAddress, 3), 3, "Material 1 was not burned.");
-        assert.equal(await content.supply(3), 3, "Material 1 supply is incorrect.");
+        assert.equal(await content.totalSupply(3), 3, "Material 1 supply is incorrect.");
         assert.equal(await content.balanceOf(playerAddress, 5), 4, "Material 2 was not burned.");
-        assert.equal(await content.supply(5), 4, "Material 2 supply is incorrect.");
+        assert.equal(await content.totalSupply(5), 4, "Material 2 supply is incorrect.");
         assert.equal(await content.balanceOf(playerAddress, 7), 4, "Reward was not created.");
-        assert.equal(await content.supply(7), 4, "Reward supply is incorrect.");
+        assert.equal(await content.totalSupply(7), 4, "Reward supply is incorrect.");
     });
 
     it('Invalid Craft', async () => {
