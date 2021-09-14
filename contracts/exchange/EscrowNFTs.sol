@@ -10,7 +10,6 @@ import "./StorageBase.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IEscrowNFTs.sol";
 import "../content/interfaces/IContent.sol";
-import "../content/interfaces/IUniqueContent.sol";
 
 contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     using AddressUpgradeable for address;
@@ -79,12 +78,9 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
     /**************** Internal Functions ****************/
     function _transfer(uint256 _orderId, address _sender, address _receiver, uint256 amount) internal {
         if (ERC165CheckerUpgradeable.supportsInterface(assetData[_orderId].contentAddress, LibConstants._INTERFACE_ID_CONTENT)) {
-                IContent(assetData[_orderId].contentAddress)
-                    .safeTransferFrom(_sender, _receiver, assetData[_orderId].tokenId, amount, "");
-            } else {
-                IUniqueContent(assetData[_orderId].contentAddress)
-                    .safeTransferFrom(_sender, _receiver, assetData[_orderId].tokenId, "");
-            }
+            IContent(assetData[_orderId].contentAddress)
+                .safeTransferFrom(_sender, _receiver, assetData[_orderId].tokenId, amount, "");
+        }
     }
 
     uint256[50] private __gap;

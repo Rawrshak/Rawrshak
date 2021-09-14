@@ -36,8 +36,7 @@ library LibOrder {
         require(_asset.contentAddress != address(0),"Invalid Address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
         require(
-            (_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT)) || 
-            (_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_UNIQUE_CONTENT)),
+            _asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT),
             "Invalid contract interface.");
     }
 
@@ -54,5 +53,4 @@ library LibOrder {
             }
         return false;
     }
-
 }

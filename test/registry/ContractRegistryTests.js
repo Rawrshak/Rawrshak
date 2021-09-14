@@ -4,8 +4,6 @@ const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
-const Craft = artifacts.require("Craft");
-const Salvage = artifacts.require("Salvage");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Contract Registry Tests', (accounts) => {
@@ -22,8 +20,6 @@ contract('Contract Registry Tests', (accounts) => {
     var contentStorage;  
     var content;
     var contentManager;
-    var craft;
-    var salvage;
 
     beforeEach(async () => {
         // Create contracts in the correct order
@@ -45,16 +41,6 @@ contract('Contract Registry Tests', (accounts) => {
         await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.setParent(content.address);
-
-        craft = await Craft.new();
-        await craft.__Craft_init(1000);
-        
-        salvage = await Salvage.new();
-        await salvage.__Salvage_init(1000);
-        
-        // registered manager
-        await craft.registerManager(deployerAddress, {from: deployerAddress});
-        await salvage.registerManager(deployerAddress, {from: deployerAddress});
     });
     
     it('Verify ContractRegistry Interface Implementation', async () => {
@@ -68,16 +54,12 @@ contract('Contract Registry Tests', (accounts) => {
     it('Register Game Developer Contracts', async () => {
         // Register the Content Manager with the Contract Registry to make sure it's part of the Rawrshak ecosystem
         await registry.registerContentManager(contentManager.address);
-        await registry.registerCraft(craft.address);
-        await registry.registerSalvage(salvage.address);
 
         // Test registered addresses
         var isContentManagerRegistered = await registry.isRegistered(contentManager.address);
-        var isCraftRegistered = await registry.isRegistered(craft.address);
-        var isSalvageRegstered = await registry.isRegistered(salvage.address);
 
         assert.equal(
-            isContentManagerRegistered && isCraftRegistered && isSalvageRegstered,
+            isContentManagerRegistered,
             true, 
             "Game Developer contracts were not registered properly");
             

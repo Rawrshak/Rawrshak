@@ -9,9 +9,6 @@ import "./IAccessControlManager.sol";
 
 interface IContentManager {
 
-    /*********************** Events *********************/
-    // event ContentManagerCreated(address indexed owner, address content, address contentStorage, address accessControlManager);
-    
     /******** View Functions ********/
     function content() external view returns(IContent);
     
@@ -33,10 +30,4 @@ interface IContentManager {
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external;
     
     function mintBatch(LibAsset.MintData memory _data) external;
-    
-    function mintUnique(
-        LibAsset.MintData memory _data,
-        address _uniqueContentContract,
-        address to
-    ) external;
 }
