@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
@@ -32,6 +32,7 @@ contract ContractRegistry is OwnableUpgradeable, ERC165StorageUpgradeable {
     /***************** Stored Variables *****************/
     mapping(address => EnumerableSetUpgradeable.AddressSet) private owners;
     EnumerableSetUpgradeable.AddressSet contentManagers;
+    EnumerableSetUpgradeable.AddressSet content;
     EnumerableSetUpgradeable.AddressSet craft;
     EnumerableSetUpgradeable.AddressSet salvage;
 
