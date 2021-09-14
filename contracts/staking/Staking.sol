@@ -6,14 +6,12 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../tokens/RawrToken.sol";
 import "./interface/IClaimable.sol";
 import "./interface/IStaking.sol";
 
 contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for *;
 
     /***************** Stored Variables *****************/
@@ -49,8 +47,8 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
         require(_amount > 0, "Invalid amount");
 
         // add amount staked internally
-        stakedAmounts[_msgSender()] = stakedAmounts[_msgSender()].add(_amount);
-        totalStakedTokens = totalStakedTokens.add(_amount);
+        stakedAmounts[_msgSender()] = stakedAmounts[_msgSender()] + _amount;
+        totalStakedTokens = totalStakedTokens + _amount;
 
         // this contract must have been approved first
         _erc20().transferFrom(_msgSender(), address(this), _amount);
@@ -62,8 +60,8 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
         require(_amount > 0, "Invalid withdraw amount.");
         require(_amount <= stakedAmounts[_msgSender()], "Invalid staked amount to withdraw.");
 
-        stakedAmounts[_msgSender()] = stakedAmounts[_msgSender()].sub(_amount);
-        totalStakedTokens = totalStakedTokens.sub(_amount);
+        stakedAmounts[_msgSender()] = stakedAmounts[_msgSender()] - _amount;
+        totalStakedTokens = totalStakedTokens - _amount;
 
         _erc20().transfer(_msgSender(), _amount);
 
@@ -75,8 +73,8 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
 
         uint256 stakedPercentage = getStakePercentage();
     
-        stakePool.claim(stakePool.supply().mul(stakedPercentage).div(1 ether), _msgSender());
-        exchangeFeePool.claim(exchangeFeePool.supply().mul(stakedPercentage).div(1 ether), _msgSender());
+        stakePool.claim((stakePool.supply() * stakedPercentage) / (1 ether), _msgSender());
+        exchangeFeePool.claim((exchangeFeePool.supply() * stakedPercentage) / (1 ether), _msgSender());
     }
 
     function getStakePercentage() public view override returns(uint256) {
@@ -85,15 +83,15 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
         }
 
         uint256 calcBase = 1 ether;
-        return calcBase.mul(stakedAmounts[_msgSender()]).div(totalStakedTokens);
+        return (calcBase * stakedAmounts[_msgSender()]) / totalStakedTokens;
     }
 
     function totalClaimableTokensInInterval() external view override returns(uint256) {
-        return stakePool.supply().add(exchangeFeePool.supply());
+        return stakePool.supply() + exchangeFeePool.supply();
     }
 
     function unclaimedTokensInInterval() external view override returns(uint256) {
-        return stakePool.remaining().add(exchangeFeePool.remaining());
+        return stakePool.remaining() + exchangeFeePool.remaining();
     }
     
     /**************** Internal Functions ****************/

@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";    
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
@@ -17,7 +16,6 @@ import "../libraries/LibCraft.sol";
 contract Craft is ICraft, CraftBase {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for *;
     using LibCraft for *;
     
@@ -91,7 +89,7 @@ contract Craft is ICraft, CraftBase {
         if (recipes[_id].craftingRate < 1 ether) {
             for (uint256 i = 0; i < _amount; ++i) {
                 seed = LibCraft.random(_msgSender(), seed);
-                if (seed.mod(1 ether) > recipes[_id].craftingRate) {
+                if ((seed % 1 ether) > recipes[_id].craftingRate) {
                     // if crafting fails, deduct the number of rolls that failed
                     --_amount;
                 }
@@ -118,7 +116,7 @@ contract Craft is ICraft, CraftBase {
             burnData.tokenIds = new uint256[](1);
             burnData.amounts = new uint256[](1);
             burnData.tokenIds[0] = recipes[_id].materials[i].tokenId;
-            burnData.amounts[0] = recipes[_id].materialAmounts[i].mul(_burnAmount);
+            burnData.amounts[0] = recipes[_id].materialAmounts[i] * _burnAmount;
             IContent(recipes[_id].materials[i].content).burnBatch(burnData);
         }
     }
@@ -130,7 +128,7 @@ contract Craft is ICraft, CraftBase {
             mintData.tokenIds = new uint256[](1);
             mintData.amounts = new uint256[](1);
             mintData.tokenIds[0] = recipes[_id].rewards[i].tokenId;
-            mintData.amounts[0] = recipes[_id].rewardAmounts[i].mul(_rolls);
+            mintData.amounts[0] = recipes[_id].rewardAmounts[i] * _rolls;
             IContent(recipes[_id].rewards[i].content).mintBatch(mintData);
         }
     }

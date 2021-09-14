@@ -1,5 +1,6 @@
 // Upgrade Deployer proxy
 const { deployProxy } = require('@openzeppelin/truffle-upgrades');
+const { constants } = require('@openzeppelin/test-helpers');
 
 // Library Contracts
 const Constants = artifacts.require("LibConstants");
@@ -66,14 +67,14 @@ module.exports = async function(deployer, networks, accounts) {
     
     // Add Assets
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, []],
-        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 0, []],
-        [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 0, []],
-        [4, "arweave.net/tx/public-uri-4", "arweave.net/tx/private-uri-4", 0, []],
-        [5, "arweave.net/tx/public-uri-5", "arweave.net/tx/private-uri-5", 0, []],
-        [6, "arweave.net/tx/public-uri-6", "arweave.net/tx/private-uri-6", 0, []],
-        [7, "arweave.net/tx/public-uri-7", "arweave.net/tx/private-uri-7", 0, []],
-        [8, "arweave.net/tx/public-uri-8", "arweave.net/tx/private-uri-8", 0, []],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, []],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", constants.MAX_UINT256, []],
+        [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", constants.MAX_UINT256, []],
+        [4, "arweave.net/tx/public-uri-4", "arweave.net/tx/private-uri-4", constants.MAX_UINT256, []],
+        [5, "arweave.net/tx/public-uri-5", "arweave.net/tx/private-uri-5", constants.MAX_UINT256, []],
+        [6, "arweave.net/tx/public-uri-6", "arweave.net/tx/private-uri-6", constants.MAX_UINT256, []],
+        [7, "arweave.net/tx/public-uri-7", "arweave.net/tx/private-uri-7", constants.MAX_UINT256, []],
+        [8, "arweave.net/tx/public-uri-8", "arweave.net/tx/private-uri-8", constants.MAX_UINT256, []],
     ];
     await contentManager.addAssetBatch(asset);
 

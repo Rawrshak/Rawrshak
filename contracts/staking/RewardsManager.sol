@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./interface/IRewardsManager.sol";
 import "./interface/ILockedFundPool.sol";
 import "../exchange/interfaces/IExchangeFeePool.sol";
@@ -15,7 +14,6 @@ import "../utils/LibConstants.sol";
 
 contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
-    // using SafeMathUpgradeable for uint256;
     using EnumerableSetUpgradeable for *;
 
     /******************** Constants ********************/

@@ -5,13 +5,11 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../tokens/RawrToken.sol";
 import "./interface/IFundPool.sol";
 
 abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
 
     /******************** Constants ********************/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -42,7 +40,7 @@ abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165Storage
     function receiveFunds(uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         require(_amount > 0, "Invalid amount");
 
-        supply = remaining.add(_amount);
+        supply = remaining + _amount;
         remaining = supply;
 
         emit FundsReceived(_msgSender(), _amount, supply);
@@ -51,7 +49,7 @@ abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165Storage
     function claim(uint256 _amount, address _recepient) external override onlyRole(MANAGER_ROLE) {
         require(_amount > 0, "Invalid claim");
         require(_amount <= remaining, "amount to claim is invalid.");
-        remaining = remaining.sub(_amount);
+        remaining = remaining - _amount;
 
         _erc20().transfer(_recepient, _amount);
 

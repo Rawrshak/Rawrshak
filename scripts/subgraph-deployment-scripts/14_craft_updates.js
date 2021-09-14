@@ -1,5 +1,6 @@
 // Upgrade Deployer proxy
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
+const { constants } = require('@openzeppelin/test-helpers');
 
 // RAWR Token
 const Content = artifacts.require("Content");
@@ -94,7 +95,6 @@ module.exports = async function(deployer, networks, accounts) {
     await salvage.managerSetPause(false, {from: deployerAddress});
 
     // mint some assets
-    const zeroAddress = "0x0000000000000000000000000000000000000000";
-    var mintData = [player1Address, [4, 3], [2, 2], 0, zeroAddress, []];
+    var mintData = [player1Address, [4, 3], [2, 2], 0, constants.ZERO_ADDRESS, []];
     await content.mintBatch(mintData, {from: deployerAddress});
 };

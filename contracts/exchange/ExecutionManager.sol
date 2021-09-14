@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./ManagerBase.sol";
 import "./OrderbookStorage.sol";
 import "../libraries/LibOrder.sol";
@@ -9,9 +8,7 @@ import "./interfaces/IExecutionManager.sol";
 import "./interfaces/IEscrowERC20.sol";
 import "./interfaces/IEscrowNFTs.sol";
 
-contract ExecutionManager is IExecutionManager, ManagerBase {
-    using SafeMathUpgradeable for uint256;
-    
+contract ExecutionManager is IExecutionManager, ManagerBase {    
     /******************** Public API ********************/
     function __ExecutionManager_init(address _registry) public initializer {
         __Context_init_unchained();
@@ -87,7 +84,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
             _tokenEscrow(_order.token).withdraw(
                 _orderId,
                 _user, 
-                _order.price.mul(_order.amount));
+                _order.price * _order.amount);
         } else {
             // withdraw NFTs
             _nftEscrow().withdraw(_orderId, _user, _order.amount);

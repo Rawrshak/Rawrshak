@@ -35,6 +35,6 @@ module.exports = async function(deployer, networks, accounts) {
 
     // await content.mintBatch(mintData, {from: deployerAddress});
 
-    // var assetSupply = await content.supply(1);
+    // var assetSupply = await content.totalSupply(1);
     // console.log("Asset Supply: ", assetSupply.toString());
 };

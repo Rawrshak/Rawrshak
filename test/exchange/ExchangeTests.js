@@ -15,6 +15,7 @@ const Exchange = artifacts.require("Exchange");
 const AddressRegistry = artifacts.require("AddressRegistry");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const TruffleAssert = require("truffle-assertions");
+const { constants } = require('@openzeppelin/test-helpers');
 
 contract('Exchange Contract', (accounts)=> {
     const [
@@ -33,7 +34,7 @@ contract('Exchange Contract', (accounts)=> {
     var contentStorage;
     var contentManager;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[creator1Address, web3.utils.toWei('0.02', 'ether')]]],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[creator1Address, web3.utils.toWei('0.02', 'ether')]]],
         [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
     ];
 
@@ -58,7 +59,6 @@ contract('Exchange Contract', (accounts)=> {
     var default_admin_role;
 
     var nftAssetData;
-    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     beforeEach(async () => {
         registry = await ContractRegistry.new();
@@ -153,10 +153,10 @@ contract('Exchange Contract', (accounts)=> {
         await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         // Mint an asset
-        var mintData = [playerAddress, [1, 2], [10, 1], 0, zeroAddress, []];
+        var mintData = [playerAddress, [1, 2], [10, 1], 0, constants.ZERO_ADDRESS, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
         
-        mintData = [player2Address, [1, 2], [10, 10], 0, zeroAddress, []];
+        mintData = [player2Address, [1, 2], [10, 10], 0, constants.ZERO_ADDRESS, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
 
         // Set contract royalties

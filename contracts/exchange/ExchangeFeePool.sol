@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
@@ -12,7 +11,6 @@ import "./interfaces/IExchangeFeePool.sol";
 contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
 
     /***************** Stored Variables *****************/
     mapping(bytes4 => uint256) amounts;
@@ -51,7 +49,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         for (uint256 i = 0; i < _funds.length; ++i) {
             funds.push(_funds[i]);
             percentages.push(_percentages[i]);
-            totalPercentages = totalPercentages.add(_percentages[i]);
+            totalPercentages = totalPercentages + _percentages[i];
         }
         require(totalPercentages == 1 ether, "Percentages do not sum to 1 ether.");
 
@@ -64,7 +62,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     }
 
     function depositRoyalty(bytes4 _token, address _tokenAddr, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
-        amounts[_token] = amounts[_token].add(_amount);
+        amounts[_token] = amounts[_token] + _amount;
 
         emit ExchangeFeesPaid(_token, _tokenAddr, _amount);
     }
@@ -78,7 +76,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
         uint256[] memory distributions = new uint256[](funds.length);
         for (uint256 i = 0; i < funds.length; ++i) {
-            distributions[i] = balance.mul(percentages[i]).div(1 ether);
+            distributions[i] = (balance * percentages[i]) / (1 ether);
             IERC20Upgradeable(_tokenAddr).transfer(funds[i], distributions[i]);
         }
 

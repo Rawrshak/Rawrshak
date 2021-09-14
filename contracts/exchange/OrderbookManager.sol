@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./ManagerBase.sol";
 import "./OrderbookStorage.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IOrderbookManager.sol";
 
 contract OrderbookManager is IOrderbookManager, ManagerBase {
-    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     uint256 internal orderIdCounter;
@@ -55,8 +53,8 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
             order = _orderbook().getOrder(_orderIds[i]);
             require(order.amount >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
             
-            amountPerOrder[i] = order.price.mul(_amounts[i]);
-            amountDue = amountDue.add(amountPerOrder[i]);
+            amountPerOrder[i] = order.price * _amounts[i];
+            amountDue = amountDue + amountPerOrder[i];
         }
     } 
 

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./ManagerBase.sol";
 import "../libraries/LibRoyalties.sol";
 import "../content/Content.sol";
@@ -10,8 +9,6 @@ import "./interfaces/IExchangeFeePool.sol";
 import "./ExchangeFeePool.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
-    using SafeMathUpgradeable for uint256;
-    
     /***************** Stored Variables *****************/
 
     /******************** Public API ********************/
@@ -47,7 +44,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         bytes4 _token,
         uint256 _total
     ) external override onlyOwner {
-        uint256 feeAmount = _total.mul(_exchangeFeePool().rate()).div(1 ether);
+        uint256 feeAmount = (_total * _exchangeFeePool().rate()) / (1 ether);
         _tokenEscrow(_token).depositPlatformRoyalty(_sender, address(_exchangeFeePool()), feeAmount);
         _exchangeFeePool().depositRoyalty(_token, _tokenEscrow(_token).token(), feeAmount);
     }
@@ -72,7 +69,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 _orderId,
         uint256 _total
     ) external override onlyOwner {
-        uint256 feeAmount = _total.mul(_exchangeFeePool().rate()).div(1 ether);
+        uint256 feeAmount = (_total * _exchangeFeePool().rate()) / (1 ether);
         _tokenEscrow(_token).transferPlatformRoyalty(_orderId, address(_exchangeFeePool()), feeAmount);
         _exchangeFeePool().depositRoyalty(_token, _tokenEscrow(_token).token(), feeAmount);
     }
@@ -91,15 +88,15 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 idx = 0;
         for (uint256 i = 0; i < fees.length; ++i) {
             // Get Royalties owed per fee
-            royalty = _total.mul(fees[i].rate).div(1 ether);
+            royalty = (_total * fees[i].rate) / (1 ether);
             accounts[idx] = fees[i].account;
             royaltyAmounts[idx] = royalty;
-            remaining = remaining.sub(royalty);
+            remaining = remaining - royalty;
             ++idx;
         }
 
-        royalty = _total.mul(_exchangeFeePool().rate()).div(1 ether);
-        remaining = remaining.sub(royalty);
+        royalty = (_total * _exchangeFeePool().rate()) / (1 ether);
+        remaining = remaining - royalty;
     }
 
     function claimableRoyaltyAmount(address _user, bytes4 _token) external view override returns(uint256) {        

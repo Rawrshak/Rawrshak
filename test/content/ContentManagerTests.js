@@ -4,6 +4,7 @@ const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
+const { constants } = require('@openzeppelin/test-helpers');
 
 // Todo: Update this test
 contract('Content Manager Contract Tests', (accounts) => {
@@ -19,10 +20,9 @@ contract('Content Manager Contract Tests', (accounts) => {
     var content;
     var contentStorage;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
         [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []]
     ];
-    const zeroAddress = "0x0000000000000000000000000000000000000000";
 
     beforeEach(async () => {
         registry = await ContractRegistry.new();
@@ -77,7 +77,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         await contentManager.addAssetBatch(newAssets);
 
         // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
-        var mintData = [playerAddress, [3], [10], 1, zeroAddress, []];
+        var mintData = [playerAddress, [3], [10], 1, constants.ZERO_ADDRESS, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(
@@ -98,7 +98,7 @@ contract('Content Manager Contract Tests', (accounts) => {
         ];
         await contentManager.setPublicUriBatch(assetUri);
 
-        var mintData = [playerAddress, [2], [1], 1, zeroAddress, []];
+        var mintData = [playerAddress, [2], [1], 1, constants.ZERO_ADDRESS, []];
         await content.mintBatch(mintData, {from: craftingSystemAddress});
 
         assert.equal(

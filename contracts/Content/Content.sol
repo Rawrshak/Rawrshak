@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
@@ -19,7 +18,6 @@ import "./interfaces/IContentStorage.sol";
 contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
     
     /******************** Constants ********************/
     /*
@@ -97,11 +95,11 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
             
             require(_tokenExists(_data.tokenIds[i]), "token id missing");
             require(
-                _maxSupply(_data.tokenIds[i]) >= _supply(_data.tokenIds[i]).add(_data.amounts[i]),
+                _maxSupply(_data.tokenIds[i]) >= _supply(_data.tokenIds[i]) + _data.amounts[i],
                 "Max Supply reached"
             );
 
-            _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]).add(_data.amounts[i]));
+            _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]) + _data.amounts[i]);
         }
         _mintBatch(_data.to, _data.tokenIds, _data.amounts, "");
         emit Mint(_msgSender(), _data);
@@ -113,7 +111,7 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             require(_tokenExists(_data.tokenIds[i]), "token id missing");
-            _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]).sub(_data.amounts[i], "amount is greater than supply"));
+            _updateSupply(_data.tokenIds[i], _supply(_data.tokenIds[i]) - _data.amounts[i]);
         }
 
         _burnBatch(_data.account, _data.tokenIds, _data.amounts);

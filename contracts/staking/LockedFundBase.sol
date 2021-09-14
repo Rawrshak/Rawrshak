@@ -5,14 +5,12 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "../tokens/RawrToken.sol";
 import "./ExchangeRewardsPool.sol";
 import "./interface/ILockedFundPool.sol";
 
 abstract contract LockedFundBase is ILockedFundPool, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
-    using SafeMathUpgradeable for uint256;
     
     /***************** Stored Variables *****************/
     address token;

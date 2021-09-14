@@ -1,6 +1,7 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const ContentStorage = artifacts.require("ContentStorage");
 const TruffleAssert = require("truffle-assertions");
+const { constants } = require('@openzeppelin/test-helpers');
 
 contract('ContentStorage Contract Tests', (accounts) => {
     const [
@@ -141,7 +142,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     it('Add multiple assets', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
             [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2",  10, []]
         ];
         var results = await contentStorage.addAssetBatch(asset);
@@ -195,7 +196,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
     
     it('Basic Royalties tests', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
             [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
             [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, [[deployerAddress, web3.utils.toWei('0.02', 'ether')], [deployerAltAddress, web3.utils.toWei('0.03', 'ether')]]]
         ];
@@ -223,7 +224,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     it('Basic Uri tests', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
             [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
             [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, []]
         ];
