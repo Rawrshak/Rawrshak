@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
@@ -26,7 +26,7 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
      * ERC1155 interface == 0xd9b67a26
      * IContractUri == 0xc0e24d5e
      * IRoyaltyProvider == 0xbb3bafd6
-     * bytes4(keccak256('supply(uint256)')) == 0x35403023
+     * bytes4(keccak256('totalSupply(uint256)')) == 0x35403023 // Todo: update this
      * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
      * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
@@ -35,12 +35,12 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
      */
 
     /***************** Stored Variables *****************/
-    IContentStorage dataStorage;
-    IAccessControlManager  accessControlManager;
+    IContentStorage contentStorage;
+    IAccessControlManager accessControlManager;
 
     /******************** Public API ********************/
     function __Content_init(
-        IContentStorage _dataStorage,
+        IContentStorage _contentStorage,
         IAccessControlManager _accessControlManager)
         public initializer
     {
@@ -48,41 +48,41 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __ERC1155_init_unchained("");
-        __Content_init_unchained(_dataStorage, _accessControlManager);
+        __Content_init_unchained(_contentStorage, _accessControlManager);
     }
 
     function __Content_init_unchained(
-        IContentStorage _dataStorage,
+        IContentStorage _contentStorage,
         IAccessControlManager _accessControlManager)
         internal initializer
     {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
 
-        dataStorage = _dataStorage;
+        contentStorage = _contentStorage;
         accessControlManager = _accessControlManager;
     }
 
     // CONTRACT URI
     function contractUri() external view override returns (string memory) {
-        return dataStorage.contractUri();
+        return contentStorage.contractUri();
     }
 
     // TOKEN URIS
     function uri(uint256 _tokenId) public view override returns (string memory) {
-        uint256 version = HasTokenUri(address(dataStorage)).getLatestUriVersion(_tokenId, true);
+        uint256 version = HasTokenUri(address(contentStorage)).getLatestUriVersion(_tokenId, true);
         return this.uri(_tokenId, version);
     }
 
     function uri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
-        return dataStorage.uri(_tokenId, _version);
+        return contentStorage.uri(_tokenId, _version);
     }
     
     // Royalties
     function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
-        return dataStorage.getRoyalties(_tokenId);
+        return contentStorage.getRoyalties(_tokenId);
     }
     
-    function supply(uint256 _tokenId) external view override returns (uint256) {
+    function totalSupply(uint256 _tokenId) external view override returns (uint256) {
         return _supply(_tokenId);
     }
     
@@ -97,7 +97,6 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
             
             require(_tokenExists(_data.tokenIds[i]), "token id missing");
             require(
-                _maxSupply(_data.tokenIds[i]) == 0 ||
                 _maxSupply(_data.tokenIds[i]) >= _supply(_data.tokenIds[i]).add(_data.amounts[i]),
                 "Max Supply reached"
             );
@@ -128,19 +127,19 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
 
     /**************** Internal Functions ****************/
     function _supply(uint256 _tokenId) internal view returns(uint256) {
-        return dataStorage.supply(_tokenId);
+        return contentStorage.supply(_tokenId);
     }
 
     function _maxSupply(uint256 _tokenId) internal view returns(uint256) {
-        return dataStorage.maxSupply(_tokenId);
+        return contentStorage.maxSupply(_tokenId);
     }
 
     function _tokenExists(uint256 _tokenId) internal view returns(bool) {
-        return dataStorage.ids(_tokenId);
+        return contentStorage.ids(_tokenId);
     }
 
     function _updateSupply(uint256 _tokenId, uint256 _newSupply) internal {
-        return dataStorage.updateSupply(_tokenId, _newSupply);
+        return contentStorage.updateSupply(_tokenId, _newSupply);
     }
 
     uint256[50] private __gap;

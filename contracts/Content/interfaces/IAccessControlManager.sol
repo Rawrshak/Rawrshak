@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 // import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
@@ -14,8 +14,4 @@ interface IAccessControlManager {
 
     /******** Mutative Functions ********/    
     function verifyMint(LibAsset.MintData memory _data, address _caller) external;
-
-    /*********************** Events *********************/
-    event UserApproved(address indexed contentContract, address indexed user, bool approved);
-    event RegisteredSystemsUpdated(address indexed contentContract, LibAsset.SystemApprovalPair[] operators);
 }

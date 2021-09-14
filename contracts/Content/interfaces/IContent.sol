@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "../../libraries/LibRoyalties.sol";
@@ -16,7 +16,7 @@ interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
     event Burn(address operator, LibAsset.BurnData data);
     
     /******** View Functions ********/
-    function supply(uint256 _tokenId) external view returns (uint256);
+    function totalSupply(uint256 _tokenId) external view returns (uint256);
     
     function maxSupply(uint256 _tokenId) external view returns (uint256);
 
