@@ -26,11 +26,9 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_CONTENT = 0x98AA21F4; // 0x94b3e03b;
     bytes4 constant _INTERFACE_ID_CONTENT_STORAGE = 0xA133AF9C; // 0x00000002;
     bytes4 constant _INTERFACE_ID_CONTENT_MANAGER = 0xEAD82167; // 0x00000003;
-    bytes4 constant _INTERFACE_ID_UNIQUE_CONTENT = 0x00000005;
     bytes4 constant _INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E; // Prev: 0x00000011;
     bytes4 constant _INTERFACE_ID_CONTENT_SUBSYSTEM_BASE = 0xFC6A7FB2; // 0x00000018;
     bytes4 constant _INTERFACE_ID_CONTRACT_REGISTRY = 0x498D4CA2; // 0x00000019;
-    bytes4 constant _INTERFACE_ID_CONTENT_WITH_HIDDEN_DATA = 0x0000001A;
 
     // Exchange Interfaces
     bytes4 constant _INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;
@@ -42,10 +40,6 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_ROYALTY_MANAGER       = 0x0000000D;
     bytes4 constant _INTERFACE_ID_EXCHANGE              = 0x0000000E;
     bytes4 constant _INTERFACE_ID_EXCHANGE_FEE_POOL     = 0x00000012;
-
-    // Salvage Interfaces
-    bytes4 constant _INTERFACE_ID_SALVAGE               = 0x0000000F;
-    bytes4 constant _INTERFACE_ID_CRAFT                 = 0x00000010;
 
     // Staking Interfaces
     bytes4 constant _INTERFACE_ID_CLAIMABLE             = 0x00000013;

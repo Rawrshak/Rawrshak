@@ -4,13 +4,14 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "../libraries/LibAsset.sol";
-import "./UniqueContent.sol";
+import "../utils/LibConstants.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
 import "./interfaces/IAccessControlManager.sol";
-import "./interfaces/IUniqueContent.sol";
 
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
@@ -114,21 +115,6 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     
     function mintBatch(LibAsset.MintData memory _data) external override onlyOwner {
         content.mintBatch(_data);
-    }
-    
-    function mintUnique(
-        LibAsset.MintData memory _data,
-        address _uniqueContentContract,
-        address to
-    ) external override onlyOwner {
-        require(_uniqueContentContract != address(0) && _uniqueContentContract.isContract() && 
-                _uniqueContentContract.supportsInterface(LibConstants._INTERFACE_ID_UNIQUE_CONTENT),
-                "Invalid Address");
-        require(_data.tokenIds.length == 1, "Only mint 1 asset per Unique Content Contract.");
-        require(_data.to == _uniqueContentContract, "Mint asset to the Unique Content Contract");
-        
-        content.mintBatch(_data);
-        IUniqueContent(_uniqueContentContract).mint(to);
     }
     
     uint256[50] private __gap;
