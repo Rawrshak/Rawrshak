@@ -22,10 +22,10 @@ abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165Storage
     /******************** Public API ********************/
     function __FundBase_init_unchained(address _token) public initializer {
         require(_token.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_token, LibConstants._INTERFACE_ID_TOKENBASE),
+            ERC165CheckerUpgradeable.supportsInterface(_token, LibInterfaces.INTERFACE_ID_TOKENBASE),
             "Invalid erc 20 contract interface.");
-        _registerInterface(LibConstants._INTERFACE_ID_FUND_POOL);
-        _registerInterface(LibConstants._INTERFACE_ID_CLAIMABLE);
+        _registerInterface(LibInterfaces.INTERFACE_ID_FUND_POOL);
+        _registerInterface(LibInterfaces.INTERFACE_ID_CLAIMABLE);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         rawrToken = _token;
         supply = 0;

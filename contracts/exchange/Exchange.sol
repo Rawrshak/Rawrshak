@@ -48,14 +48,14 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
             _royaltyManager != address(0) && _orderbookManager != address(0) && _executionManager != address(0),
             "Address cannot be empty."
         );
-        require(_royaltyManager.supportsInterface(LibConstants._INTERFACE_ID_ROYALTY_MANAGER), "Invalid manager interface.");
-        require(_orderbookManager.supportsInterface(LibConstants._INTERFACE_ID_ORDERBOOK_MANAGER), "Invalid manager interface.");
-        require(_executionManager.supportsInterface(LibConstants._INTERFACE_ID_EXECUTION_MANAGER), "Invalid manager interface.");
+        require(_royaltyManager.supportsInterface(LibInterfaces.INTERFACE_ID_ROYALTY_MANAGER), "Invalid manager interface.");
+        require(_orderbookManager.supportsInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK_MANAGER), "Invalid manager interface.");
+        require(_executionManager.supportsInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER), "Invalid manager interface.");
         
         royaltyManager = IRoyaltyManager(_royaltyManager);
         orderbookManager = IOrderbookManager(_orderbookManager);
         executionManager = IExecutionManager(_executionManager);
-        _registerInterface(LibConstants._INTERFACE_ID_EXCHANGE);
+        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE);
     }
 
     // exchange functions

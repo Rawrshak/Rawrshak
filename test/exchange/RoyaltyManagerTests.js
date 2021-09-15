@@ -7,7 +7,7 @@ const AccessControlManager = artifacts.require("AccessControlManager");
 const EscrowERC20 = artifacts.require("EscrowERC20");
 const ExchangeFeePool = artifacts.require("ExchangeFeePool");
 const RoyaltyManager = artifacts.require("RoyaltyManager");
-const AddressRegistry = artifacts.require("AddressRegistry");
+const AddressResolver = artifacts.require("AddressResolver");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
@@ -75,14 +75,14 @@ contract('Royalty Manager Contract', (accounts)=> {
         manager_role = await escrow.MANAGER_ROLE();
         default_admin_role = await escrow.DEFAULT_ADMIN_ROLE();
 
-        registry = await AddressRegistry.new();
-        await registry.__AddressRegistry_init({from: deployerAddress});
+        resolver = await AddressResolver.new();
+        await resolver.__AddressResolver_init({from: deployerAddress});
 
         // register the royalty manager
-        await registry.registerAddress(["0xd4df6855", "0x018d6f5c"], [escrow.address, feePool.address], {from: deployerAddress});
+        await resolver.registerAddress(["0xd4df6855", "0x018d6f5c"], [escrow.address, feePool.address], {from: deployerAddress});
 
         royaltyManager = await RoyaltyManager.new();
-        await royaltyManager.__RoyaltyManager_init(registry.address, {from: deployerAddress});
+        await royaltyManager.__RoyaltyManager_init(resolver.address, {from: deployerAddress});
         
         // Register the royalty manager
         await escrow.registerManager(royaltyManager.address, {from:deployerAddress});
@@ -107,7 +107,7 @@ contract('Royalty Manager Contract', (accounts)=> {
     });
 
     it('Supports the Royalty Manager Interface', async () => {
-        // _INTERFACE_ID_ROYALTY_MANAGER = 0x0000000D
+        // INTERFACE_ID_ROYALTY_MANAGER = 0x0000000D
         assert.equal(
             await royaltyManager.supportsInterface("0x0000000D"),
             true, 

@@ -7,16 +7,17 @@ import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IExchangeFeePool.sol";
 import "./ExchangeFeePool.sol";
+import "../utils/LibContractHash.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     /***************** Stored Variables *****************/
 
     /******************** Public API ********************/
-    function __RoyaltyManager_init(address _registry) public initializer {
+    function __RoyaltyManager_init(address _resolver) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __ManagerBase_init_unchained(_registry);
-        _registerInterface(LibConstants._INTERFACE_ID_ROYALTY_MANAGER);
+        __ManagerBase_init_unchained(_resolver);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ROYALTY_MANAGER);
     }
 
     function claimRoyalties(address _user, bytes4 _token) external override onlyOwner {
@@ -108,11 +109,11 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     }
 
     function _tokenEscrow(bytes4 _token) internal view returns(IEscrowERC20) {
-        return IEscrowERC20(registry.getAddress(_token));
+        return IEscrowERC20(resolver.getAddress(_token));
     }
 
     function _exchangeFeePool() internal view returns(IExchangeFeePool) {
-        return IExchangeFeePool(registry.getAddress(EXCHANGE_FEE_POOL));
+        return IExchangeFeePool(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL));
     }
 
     uint256[50] private __gap;

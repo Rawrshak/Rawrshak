@@ -12,7 +12,7 @@ abstract contract HasRoyalties is ContentSubsystemBase {
     /*
      * bytes4(keccak256('contractRoyalties()')) == 0x0982790e
      */
-    bytes4 private constant _INTERFACE_ID_ROYALTIES = 0x0982790e;
+    bytes4 private constant INTERFACE_ID_ROYALTIES = 0x0982790e;
 
     /***************** Stored Variables *****************/
     // All asset sales on this contract will pay the contract royalties
@@ -28,7 +28,7 @@ abstract contract HasRoyalties is ContentSubsystemBase {
     /******************** Public API ********************/
     function __HasRoyalties_init_unchained(LibRoyalties.Fees[] memory _fees) internal initializer {
         _setContractRoyalties(_fees);
-        _registerInterface(_INTERFACE_ID_ROYALTIES);
+        _registerInterface(INTERFACE_ID_ROYALTIES);
     }
 
     /**************** Internal Functions ****************/

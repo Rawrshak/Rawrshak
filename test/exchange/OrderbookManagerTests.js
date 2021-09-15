@@ -1,7 +1,7 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const OrderbookStorage = artifacts.require("OrderbookStorage");
 const TestOrderbookManager = artifacts.require("TestOrderbookManager");
-const AddressRegistry = artifacts.require("AddressRegistry");
+const AddressResolver = artifacts.require("AddressResolver");
 const TruffleAssert = require("truffle-assertions");
 
 contract('Orderbook Manager Contract', (accounts)=> {
@@ -47,8 +47,8 @@ contract('Orderbook Manager Contract', (accounts)=> {
     ];
 
     beforeEach(async () => {
-        registry = await AddressRegistry.new();
-        await registry.__AddressRegistry_init({from: deployerAddress});
+        resolver = await AddressResolver.new();
+        await resolver.__AddressResolver_init({from: deployerAddress});
 
         orderbookStorage = await OrderbookStorage.new();
         await orderbookStorage.__OrderbookStorage_init({from: deployerAddress});
@@ -56,10 +56,10 @@ contract('Orderbook Manager Contract', (accounts)=> {
         // register the orderbook storage
         var ids = ["0xe22271ab"];
         var addresses = [orderbookStorage.address];
-        await registry.registerAddress(ids, addresses, {from: deployerAddress});
+        await resolver.registerAddress(ids, addresses, {from: deployerAddress});
 
         orderbookManager = await TestOrderbookManager.new();
-        await orderbookManager.__TestOrderbookManager_init(registry.address, {from: deployerAddress});
+        await orderbookManager.__TestOrderbookManager_init(resolver.address, {from: deployerAddress});
 
         manager_role = await orderbookStorage.MANAGER_ROLE();
 
@@ -79,7 +79,7 @@ contract('Orderbook Manager Contract', (accounts)=> {
     });
 
     it('Supports the OrderbookManager Interface', async () => {
-        // _INTERFACE_ID_ORDERBOOK_MANAGER = 0x0000000B
+        // INTERFACE_ID_ORDERBOOK_MANAGER = 0x0000000B
         assert.equal(
             await orderbookManager.supportsInterface("0x0000000B"),
             true, 

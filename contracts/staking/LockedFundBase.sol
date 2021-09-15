@@ -23,14 +23,14 @@ abstract contract LockedFundBase is ILockedFundPool, OwnableUpgradeable, ERC165S
         address _rewardsPool
     ) public initializer {
         require(_token.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_token, LibConstants._INTERFACE_ID_TOKENBASE),
+            ERC165CheckerUpgradeable.supportsInterface(_token, LibInterfaces.INTERFACE_ID_TOKENBASE),
             "Invalid erc 20 contract interface.");
             
         require(_rewardsPool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_rewardsPool, LibConstants._INTERFACE_ID_FUND_POOL),
+            ERC165CheckerUpgradeable.supportsInterface(_rewardsPool, LibInterfaces.INTERFACE_ID_FUND_POOL),
             "Invalid Fund Pool contract interface.");
 
-        _registerInterface(LibConstants._INTERFACE_ID_LOCKED_FUND);
+        _registerInterface(LibInterfaces.INTERFACE_ID_LOCKED_FUND);
 
         token = _token;
         rewardsPool = _rewardsPool;

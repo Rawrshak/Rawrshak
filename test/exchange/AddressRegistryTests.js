@@ -1,37 +1,37 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const AddressRegistry = artifacts.require("AddressRegistry");
+const AddressResolver = artifacts.require("AddressResolver");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
 const TruffleAssert = require("truffle-assertions");
 
-contract('Address Registry Contract', (accounts) => {
+contract('Address resolver Contract', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
     ] = accounts;
-    var registry;
+    var resolver;
     var escrowNFTs;
     var escrowNFTs2;
 
     beforeEach(async () => {
-        registry = await AddressRegistry.new();
-        await registry.__AddressRegistry_init({from: deployerAddress});
+        resolver = await AddressResolver.new();
+        await resolver.__AddressResolver_init({from: deployerAddress});
         escrowNFTs = await EscrowNFTs.new();
         await escrowNFTs.__EscrowNFTs_init({from: deployerAddress});
         escrowNFTs2 = await EscrowNFTs.new();
         await escrowNFTs2.__EscrowNFTs_init({from: deployerAddress});
     });
 
-    it('Check if address registry was deployed properly', async () => {
+    it('Check if address resolver was deployed properly', async () => {
         assert.equal(
-            registry.address != 0x0,
+            resolver.address != 0x0,
             true,
-            "Address Registry was not deployed properly.");
+            "Address resolver was not deployed properly.");
     });
 
-    it('Supports the Address Registry Interface', async () => {
+    it('Supports the Address resolver Interface', async () => {
         assert.equal(
-            await registry.supportsInterface("0x00000006"),
+            await resolver.supportsInterface("0x00000006"),
             true, 
-            "The registry doesn't support the Address Registry interface");
+            "The resolver doesn't support the Address resolver interface");
     });
 
     it('Register a single contract', async () => {
@@ -39,11 +39,11 @@ contract('Address Registry Contract', (accounts) => {
         var addresses = [escrowNFTs.address];
 
         TruffleAssert.eventEmitted(
-            await registry.registerAddress(ids, addresses, {from: deployerAddress}),
+            await resolver.registerAddress(ids, addresses, {from: deployerAddress}),
             'AddressRegistered'
         );
         assert.equal(
-            await registry.getAddress("0x00000001"),
+            await resolver.getAddress("0x00000001"),
             escrowNFTs.address,
             "Incorrect address returned."
         );
@@ -54,18 +54,18 @@ contract('Address Registry Contract', (accounts) => {
         var addresses = [escrowNFTs.address, escrowNFTs2.address];
 
         TruffleAssert.eventEmitted(
-            await registry.registerAddress(ids, addresses, {from: deployerAddress}),
+            await resolver.registerAddress(ids, addresses, {from: deployerAddress}),
             'AddressRegistered'
         );
 
         assert.equal(
-            await registry.getAddress("0x00000001"),
+            await resolver.getAddress("0x00000001"),
             escrowNFTs.address,
             "Incorrect address returned."
         );
         
         assert.equal(
-            await registry.getAddressWithCheck("0x00000002"),
+            await resolver.getAddressWithCheck("0x00000002"),
             escrowNFTs2.address,
             "Incorrect address returned."
         );
@@ -76,19 +76,19 @@ contract('Address Registry Contract', (accounts) => {
         var addresses = [escrowNFTs.address];
         
         await TruffleAssert.fails(
-            registry.registerAddress(ids, addresses, {from: deployerAddress}),
+            resolver.registerAddress(ids, addresses, {from: deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         await TruffleAssert.fails(
-            registry.registerAddress([], addresses, {from: deployerAddress}),
+            resolver.registerAddress([], addresses, {from: deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
  
     it('Invalid id', async () => {
         await TruffleAssert.fails(
-            registry.getAddressWithCheck("0x00000001"),
+            resolver.getAddressWithCheck("0x00000001"),
             TruffleAssert.ErrorType.REVERT
         );
     });

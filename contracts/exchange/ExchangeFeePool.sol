@@ -24,7 +24,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibConstants._INTERFACE_ID_EXCHANGE_FEE_POOL);
+        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE_FEE_POOL);
         rate = _rate;
     }
  

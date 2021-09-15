@@ -74,7 +74,7 @@ contract('Staking Rewards Pool Contract Tests', (accounts) => {
     });
 
     it('Supports the FundPool Interface', async () => {
-        // _INTERFACE_ID_STAKING = 0x00000016
+        // INTERFACE_ID_STAKING = 0x00000016
         assert.equal(
             await staking.supportsInterface("0x00000016"),
             true, 

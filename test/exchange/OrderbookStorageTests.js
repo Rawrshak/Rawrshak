@@ -42,7 +42,7 @@ contract('Orderbook Storage Contract', (accounts)=> {
     });
 
     it('Supports the OrderbookStorage Interface', async () => {
-        // _INTERFACE_ID_ORDERBOOK_STORAGE = 0x00000008
+        // INTERFACE_ID_ORDERBOOK_STORAGE = 0x00000008
         assert.equal(
             await orderbookStorage.supportsInterface("0x0000000A"),
             true, 

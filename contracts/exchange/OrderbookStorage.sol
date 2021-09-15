@@ -16,7 +16,7 @@ contract OrderbookStorage is IOrderbookStorage, StorageBase {
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibConstants._INTERFACE_ID_ORDERBOOK_STORAGE);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK_STORAGE);
     }
 
     function orderExists(uint256 _orderId) external view override returns(bool) {

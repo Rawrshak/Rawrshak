@@ -48,7 +48,7 @@ contract('Exchange Fee Pool Contract', (accounts) => {
     });
 
     it('Supports the ExchangeFeePool Interface', async () => {
-        // _INTERFACE_ID_EXCHANGE_FEE_POOL = 0x00000012
+        // INTERFACE_ID_LibContractHash.CONTRACT_EXCHANGE_FEE_POOL = 0x00000012
         assert.equal(
             await feePool.supportsInterface("0x00000012"),
             true, 

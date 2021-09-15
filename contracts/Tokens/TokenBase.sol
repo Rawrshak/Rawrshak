@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 
 abstract contract TokenBase is ERC20Upgradeable, ERC165StorageUpgradeable, AccessControlUpgradeable {
     // Create a new role identifier for the minter role. Limiting what each component of a system 
@@ -32,7 +32,7 @@ abstract contract TokenBase is ERC20Upgradeable, ERC165StorageUpgradeable, Acces
         // mint initial supply of tokens
         _mint(msg.sender, _initialSupply);
 
-        _registerInterface(LibConstants._INTERFACE_ID_TOKENBASE);
+        _registerInterface(LibInterfaces.INTERFACE_ID_TOKENBASE);
         tokenId = keccak256(abi.encodePacked(name(), symbol()));
         emit TokenCreated(address(this), name(), symbol(), tokenId, _initialSupply);
     }

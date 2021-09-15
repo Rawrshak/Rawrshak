@@ -12,7 +12,7 @@ const OrderbookStorage = artifacts.require("OrderbookStorage");
 const ExecutionManager = artifacts.require("ExecutionManager");
 const RoyaltyManager = artifacts.require("RoyaltyManager");
 const Exchange = artifacts.require("Exchange");
-const AddressRegistry = artifacts.require("AddressRegistry");
+const AddressResolver = artifacts.require("AddressResolver");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
@@ -100,30 +100,30 @@ contract('Exchange Contract', (accounts)=> {
         manager_role = await escrowRawr.MANAGER_ROLE();
         default_admin_role = await escrowRawr.DEFAULT_ADMIN_ROLE();
 
-        // Setup Address Registry
-        registry = await AddressRegistry.new();
-        await registry.__AddressRegistry_init({from: deployerAddress});
+        // Setup Address resolver
+        resolver = await AddressResolver.new();
+        await resolver.__AddressResolver_init({from: deployerAddress});
 
         // register the royalty manager
         var addresses = [escrowRawr.address, escrowContent.address, orderbookStorage.address, feePool.address];
         var escrowIds = ["0xd4df6855", "0x13534f58", "0xe22271ab", "0x018d6f5c"];
-        await registry.registerAddress(escrowIds, addresses, {from: deployerAddress});
+        await resolver.registerAddress(escrowIds, addresses, {from: deployerAddress});
 
         // Create and Register the execution manager
         executionManager = await ExecutionManager.new();
-        await executionManager.__ExecutionManager_init(registry.address, {from: deployerAddress});
+        await executionManager.__ExecutionManager_init(resolver.address, {from: deployerAddress});
         await escrowContent.registerManager(executionManager.address, {from:deployerAddress});
         await escrowRawr.registerManager(executionManager.address, {from:deployerAddress});
         await orderbookStorage.registerManager(executionManager.address, {from:deployerAddress});
         
         // Create and Register the orderbook manager
         orderbookManager = await OrderbookManager.new();
-        await orderbookManager.__OrderbookManager_init(registry.address, {from: deployerAddress});
+        await orderbookManager.__OrderbookManager_init(resolver.address, {from: deployerAddress});
         await orderbookStorage.registerManager(orderbookManager.address, {from:deployerAddress})
         
         // Create and Register the Royalty Manager
         royaltyManager = await RoyaltyManager.new();
-        await royaltyManager.__RoyaltyManager_init(registry.address, {from: deployerAddress});
+        await royaltyManager.__RoyaltyManager_init(resolver.address, {from: deployerAddress});
         await escrowRawr.registerManager(royaltyManager.address, {from:deployerAddress})
         await feePool.registerManager(royaltyManager.address, {from:deployerAddress});
         

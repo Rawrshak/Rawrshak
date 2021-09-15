@@ -27,7 +27,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
         __ERC1155Holder_init_unchained();
         __ERC721Holder_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibConstants._INTERFACE_ID_ESCROW_NFTS);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ESCROW_NFTS);
     }
 
     function deposit(
@@ -77,7 +77,7 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
 
     /**************** Internal Functions ****************/
     function _transfer(uint256 _orderId, address _sender, address _receiver, uint256 amount) internal {
-        if (ERC165CheckerUpgradeable.supportsInterface(assetData[_orderId].contentAddress, LibConstants._INTERFACE_ID_CONTENT)) {
+        if (ERC165CheckerUpgradeable.supportsInterface(assetData[_orderId].contentAddress, LibInterfaces.INTERFACE_ID_CONTENT)) {
             IContent(assetData[_orderId].contentAddress)
                 .safeTransferFrom(_sender, _receiver, assetData[_orderId].tokenId, amount, "");
         }

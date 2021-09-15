@@ -27,16 +27,16 @@ contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
         __Ownable_init_unchained();
         __ERC165_init_unchained();
         require(_token.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_token, LibConstants._INTERFACE_ID_TOKENBASE),
+            ERC165CheckerUpgradeable.supportsInterface(_token, LibInterfaces.INTERFACE_ID_TOKENBASE),
             "Invalid erc 20 contract interface.");
         require(_stakePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_stakePool, LibConstants._INTERFACE_ID_CLAIMABLE),
+            ERC165CheckerUpgradeable.supportsInterface(_stakePool, LibInterfaces.INTERFACE_ID_CLAIMABLE),
             "Invalid erc 20 contract interface.");
         require(_exchangeFeePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibConstants._INTERFACE_ID_CLAIMABLE),
+            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibInterfaces.INTERFACE_ID_CLAIMABLE),
             "Invalid erc 20 contract interface.");
 
-        _registerInterface(LibConstants._INTERFACE_ID_STAKING);
+        _registerInterface(LibInterfaces.INTERFACE_ID_STAKING);
         token = _token;
         totalStakedTokens = 0;
         stakePool = IClaimable(_stakePool);

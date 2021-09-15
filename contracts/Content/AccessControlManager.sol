@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "../utils/EIP712Extended.sol";
 import "../libraries/LibAsset.sol";
 import "./interfaces/IAccessControlManager.sol";
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 import "./ContentSubsystemBase.sol";
 
 contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, AccessControlUpgradeable, EIP712Extended {
@@ -21,7 +21,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
      * bytes4(keccak256('userMintNonce(adderess)')) == 0x0514a32b
      * bytes4(keccak256('verifyMint(LibAsset.MintData memory,address)')) == 0x0c794dd6
      */
-    // bytes4 private constant _INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E;
+    // bytes4 private constant INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E;
     bytes32 public constant override MINTER_ROLE = keccak256("MINTER_ROLE");
 
     /***************** Stored Variables *****************/
@@ -38,7 +38,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     
     function __AccessControlManager_init_unchained() internal initializer
     {
-        _registerInterface(LibConstants._INTERFACE_ID_ACCESS_CONTROL_MANAGER);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ACCESS_CONTROL_MANAGER);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
