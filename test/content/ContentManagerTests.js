@@ -3,7 +3,7 @@ const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
-const ContractRegistry = artifacts.require("ContractRegistry");
+const ContentFactory = artifacts.require("ContentFactory");
 const { constants } = require('@openzeppelin/test-helpers');
 
 contract('Content Manager Contract Tests', (accounts) => {
@@ -24,22 +24,28 @@ contract('Content Manager Contract Tests', (accounts) => {
     ];
 
     beforeEach(async () => {
-        registry = await ContractRegistry.new();
-        await registry.__ContractRegistry_init();
+        accessControlManagerImpl = await AccessControlManager.new();
+        contentImpl = await Content.new();
+        contentStorageImpl = await ContentStorage.new();
+        contentManagerImpl = await ContentManager.new();
+        contentFactory = await ContentFactory.new();
 
-        accessControlManager = await AccessControlManager.new();
-        await accessControlManager.__AccessControlManager_init();
-        contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
-        content = await Content.new();
-        await content.__Content_init(contentStorage.address, accessControlManager.address);
-        await contentStorage.setParent(content.address);
+        // Initialize Clone Factory
+        await contentFactory.__ContentFactory_init(
+            contentImpl.address,
+            contentManagerImpl.address,
+            contentStorageImpl.address,
+            accessControlManagerImpl.address);
 
-        contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address);
-        await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.setParent(content.address);
+        // deploy contracts
+        var result = await contentFactory.createContracts(
+            [[deployerAddress, web3.utils.toWei('0.01', 'ether')]],
+            "arweave.net/tx-contract-uri");
+
+        // To figure out which log contains the ContractDeployed event
+        // console.log(result.logs);
+        content = await Content.at(result.logs[2].args.content);
+        contentManager = await ContentManager.at(result.logs[2].args.contentManager);
 
         // give crafting system approval
         var approvalPair = [[craftingSystemAddress, true]];
@@ -51,12 +57,6 @@ contract('Content Manager Contract Tests', (accounts) => {
 
     it('Check Content Manager proper deployment', async () => {
         assert.equal(await contentManager.content(), content.address, "content contract is incorrect");
-
-        assert.equal(
-            await contentStorage.hasRole(await contentStorage.OWNER_ROLE(), deployerAddress),
-            true,
-            "Content Storage doesn't have the Owner Role."
-        )
     });
 
     it('Check Supported interfaces', async () => {

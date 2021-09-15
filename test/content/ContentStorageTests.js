@@ -55,24 +55,13 @@ contract('ContentStorage Contract Tests', (accounts) => {
     });
 
     it('Check role permissions', async () => {
-        var owner_role = await contentStorage.OWNER_ROLE();
         var default_admin_role = await contentStorage.DEFAULT_ADMIN_ROLE();
 
-        assert.equal(
-            await contentStorage.hasRole(owner_role, deployerAddress),
-            true,
-            "deployer address should have owner role.")
-            
         assert.equal(
             await contentStorage.hasRole(default_admin_role, deployerAddress),
             true,
             "deployer address should be the default admin.")
-        
-        assert.equal(
-            await contentStorage.hasRole(owner_role, playerAddress),
-            false,
-            "deployer address should have owner role.")
-            
+
         assert.equal(
             await contentStorage.hasRole(default_admin_role, playerAddress),
             false,

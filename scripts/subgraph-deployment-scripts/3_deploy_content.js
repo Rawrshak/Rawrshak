@@ -11,7 +11,6 @@ const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
-const ContractRegistry = artifacts.require("ContractRegistry");
 
 module.exports = async function(deployer, networks, accounts) {
     [
@@ -28,9 +27,6 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.link(Asset, [Content, ContentStorage, ContentManager, AccessControlManager]);
     await deployer.link(Royalties, [Content, ContentStorage, ContentManager]);
 
-    // Deploy the Contracts Registry
-    const registry = await deployProxy(ContractRegistry, [], {deployer, initializer: '__ContractRegistry_init'});
-
     // Deploy ERC1155 Content Contracts
     const accessControlManager = await deployProxy(AccessControlManager, [], {deployer, initializer: '__AccessControlManager_init'});
     const contentStorage = await deployProxy(ContentStorage, [[[deployerWalletAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri"], {deployer, initializer: '__ContentStorage_init'});
@@ -42,8 +38,6 @@ module.exports = async function(deployer, networks, accounts) {
         ],
         {deployer, initializer: '__Content_init'});
 
-    // set content as for the subsystems Parent 
-    await contentStorage.setParent(content.address, {from: deployerAddress});
 
     // Deploy Content Contract Manager
     const contentManager = await deployProxy(
@@ -55,7 +49,9 @@ module.exports = async function(deployer, networks, accounts) {
         ],
         {deployer, initializer: '__ContentManager_init'});
 
-    await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+    // set content as for the subsystems Parent 
+    await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+    await contentStorage.setParent(content.address, {from: deployerAddress});
     await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
     await accessControlManager.setParent(content.address, {from: deployerAddress});
 

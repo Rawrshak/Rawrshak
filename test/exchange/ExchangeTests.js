@@ -13,7 +13,6 @@ const ExecutionManager = artifacts.require("ExecutionManager");
 const RoyaltyManager = artifacts.require("RoyaltyManager");
 const Exchange = artifacts.require("Exchange");
 const AddressRegistry = artifacts.require("AddressRegistry");
-const ContractRegistry = artifacts.require("ContractRegistry");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
@@ -61,9 +60,6 @@ contract('Exchange Contract', (accounts)=> {
     var nftAssetData;
 
     beforeEach(async () => {
-        registry = await ContractRegistry.new();
-        await registry.__ContractRegistry_init();
-        
         // Set up NFT Contract
         accessControlManager = await AccessControlManager.new();
         await accessControlManager.__AccessControlManager_init();
@@ -71,12 +67,12 @@ contract('Exchange Contract', (accounts)=> {
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, accessControlManager.address);
-        await contentStorage.setParent(content.address);
         
         // Setup content manager
         contentManager = await ContentManager.new();
         await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address);
-        await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
+        await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
+        await contentStorage.setParent(content.address);
         await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
         await accessControlManager.setParent(content.address);
 
