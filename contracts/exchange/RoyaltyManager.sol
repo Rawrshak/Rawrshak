@@ -6,6 +6,7 @@ import "../libraries/LibRoyalties.sol";
 import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IExchangeFeePool.sol";
+import "./interfaces/IErc20Escrow.sol";
 import "./ExchangeFeePool.sol";
 import "../utils/LibContractHash.sol";
 
@@ -108,8 +109,8 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         return _tokenEscrow(_token).claimableTokensByOwner(_user);
     }
 
-    function _tokenEscrow(bytes4 _token) internal view returns(IEscrowERC20) {
-        return IEscrowERC20(resolver.getAddress(_token));
+    function _tokenEscrow(bytes4 _token) internal view returns(IErc20Escrow) {
+        return IErc20Escrow(resolver.getAddress(_token));
     }
 
     function _exchangeFeePool() internal view returns(IExchangeFeePool) {

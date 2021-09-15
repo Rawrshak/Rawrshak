@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../../libraries/LibOrder.sol";
 
-interface IEscrowERC20 {
+interface IErc20Escrow {
 
     /******** View Functions ********/
     function token() external view returns(address);

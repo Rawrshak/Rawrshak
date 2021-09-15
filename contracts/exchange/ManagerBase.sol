@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
-import "./EscrowERC20.sol";
-import "./EscrowNFTs.sol";
 import "../resolver/IAddressResolver.sol";
 
 abstract contract ManagerBase is OwnableUpgradeable, ERC165StorageUpgradeable {

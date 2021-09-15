@@ -70,7 +70,7 @@ contract('Escrow NFTs Contract', (accounts) => {
     });
 
     it('Supports the EscrowNFTs Interface', async () => {
-        // INTERFACE_ID_ESCROW_NFTS = 0x00000007
+        // INTERFACE_ID_NFT_ESCROW = 0x00000007
         assert.equal(
             await escrow.supportsInterface("0x00000007"),
             true, 
