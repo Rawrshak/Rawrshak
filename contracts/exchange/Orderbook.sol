@@ -27,6 +27,29 @@ contract Orderbook is IOrderbook, ManagerBase {
         orders[id] = _order;
     }
 
+    function fillOrders(uint256[] memory _orderIds, uint256[] memory _amounts) external override onlyOwner {
+        // If we get to this point, the orders in the list of order ids have already been verified.
+        require(_orderIds.length == _amounts.length, "Invalid input lengths");
+
+        // the caller will already fill in the orders up to the amount. 
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            orders[_orderIds[i]].amount = orders[_orderIds[i]].amount - _amounts[i];
+        }
+    }
+
+    function deleteOrder(uint256 _orderId, address _owner) external override onlyOwner {
+        // If we get to this point, the orders in the list of order ids have already been verified.
+        // the caller will already fill in the orders up to the amount. 
+        require(
+            orders[_orderId].owner == _owner,
+            "Invalid order owner."
+        );
+
+        // Deleting costs 5000, but returns a 15000 gas refund at the end of your call, which will make
+        // the overall transaction cheaper, I think.
+        delete orders[_orderId];
+    }
+
     function verifyOrders(
         uint256[] memory _orderIds,
         LibOrder.AssetData memory _asset,
@@ -56,29 +79,6 @@ contract Orderbook is IOrderbook, ManagerBase {
             amountDue = amountDue + amountPerOrder[i];
         }
     } 
-
-    function fillOrders(uint256[] memory _orderIds, uint256[] memory _amounts) external override onlyOwner {
-        // If we get to this point, the orders in the list of order ids have already been verified.
-        require(_orderIds.length == _amounts.length, "Invalid input lengths");
-
-        // the caller will already fill in the orders up to the amount. 
-        for (uint256 i = 0; i < _orderIds.length; ++i) {
-            orders[_orderIds[i]].amount = orders[_orderIds[i]].amount - _amounts[i];
-        }
-    }
-
-    function deleteOrder(uint256 _orderId, address _owner) external override onlyOwner {
-        // If we get to this point, the orders in the list of order ids have already been verified.
-        // the caller will already fill in the orders up to the amount. 
-        require(
-            orders[_orderId].owner == _owner,
-            "Invalid order owner."
-        );
-
-        // Deleting costs 5000, but returns a 15000 gas refund at the end of your call, which will make
-        // the overall transaction cheaper, I think.
-        delete orders[_orderId];
-    }
 
     function getOrder(uint256 _orderId) external view override returns(LibOrder.OrderData memory) {
         return orders[_orderId];

@@ -34,11 +34,6 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         emit FeeUpdated(_msgSender(), rate);
     }
 
-    // gets the amount in the fee pool
-    function totalFeePool(bytes4 _token) external view override returns(uint256) {
-        return amounts[_token];
-    }
-
     function updateDistributionFunds(address[] memory _funds, uint256[] memory _percentages) external override onlyRole(MANAGER_ROLE) {
         require(_funds.length > 0 && _funds.length == _percentages.length, "Invalid input length");
 
@@ -54,11 +49,6 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         require(totalPercentages == 1 ether, "Percentages do not sum to 1 ether.");
 
         emit FundsUpdated(_msgSender(), _funds, _percentages);
-    }
-
-    function distributionRates() external view override returns(address[] memory _funds, uint256[] memory _percentages) {
-        _funds = funds;
-        _percentages = percentages;
     }
 
     function depositRoyalty(bytes4 _token, address _tokenAddr, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
@@ -81,6 +71,16 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         }
 
         emit FundsDistributed(_msgSender(), funds, distributions);
+    }
+
+    function distributionRates() external view override returns(address[] memory _funds, uint256[] memory _percentages) {
+        _funds = funds;
+        _percentages = percentages;
+    }
+
+    // gets the amount in the fee pool
+    function totalFeePool(bytes4 _token) external view override returns(uint256) {
+        return amounts[_token];
     }
 
     uint256[50] private __gap;

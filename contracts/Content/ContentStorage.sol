@@ -90,16 +90,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         supply[_tokenId] = _supply;
     }
 
-    // returns the token uri for public token info
-    function uri(uint256 _tokenId, uint256 _version) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
-        return _tokenUri(_tokenId, _version, true);
-    }
-
-    // returns the token uri for private token info
-    function hiddenUri(uint256 _tokenId, uint256 _version) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
-        return _tokenUri(_tokenId, _version, false);
-    }
-
     function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
@@ -112,13 +102,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setPublicUri(_assets[i].tokenId, _assets[i].uri);
         }
-    }
-    
-    function getRoyalties(uint256 _tokenId) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (LibRoyalties.Fees[] memory) {
-        // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
-        // _getRoyalties() will return the contract's default royalty fee. However, that can also
-        // be null. In the case of null, there are no royalty fees. 
-        return _getRoyalties(_tokenId);
     }
 
     function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external override onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -133,6 +116,23 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setTokenRoyalties(_assets[i].tokenId, _assets[i].fees);
         }
+    }
+
+    // returns the token uri for public token info
+    function uri(uint256 _tokenId, uint256 _version) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
+        return _tokenUri(_tokenId, _version, true);
+    }
+
+    // returns the token uri for private token info
+    function hiddenUri(uint256 _tokenId, uint256 _version) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
+        return _tokenUri(_tokenId, _version, false);
+    }
+    
+    function getRoyalties(uint256 _tokenId) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (LibRoyalties.Fees[] memory) {
+        // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
+        // _getRoyalties() will return the contract's default royalty fee. However, that can also
+        // be null. In the case of null, there are no royalty fees. 
+        return _getRoyalties(_tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {
