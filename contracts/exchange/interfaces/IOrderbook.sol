@@ -7,10 +7,12 @@ interface IOrderbook {
     /******** View Functions ********/
     function exists(uint256 _orderId) external view returns(bool);
     
-    function verifyOrders(
+    function verifyOrdersExist(
+        uint256[] memory _orderIds
+    ) external view returns (bool);
+
+    function verifyOrderData(
         uint256[] memory _orderIds,
-        LibOrder.AssetData memory _asset,
-        bytes4 _token,
         bool _isBuyOrder
     ) external view returns (bool);
 

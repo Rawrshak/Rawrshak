@@ -28,9 +28,7 @@ contract Orderbook is IOrderbook, ManagerBase {
     }
 
     function fillOrders(uint256[] memory _orderIds, uint256[] memory _amounts) external override onlyOwner {
-        // If we get to this point, the orders in the list of order ids have already been verified.
-        require(_orderIds.length == _amounts.length, "Invalid input lengths");
-
+        // The Exchange contract should have already checked the matching lengths of the parameters.
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             orders[_orderIds[i]].amount = orders[_orderIds[i]].amount - _amounts[i];
@@ -50,14 +48,27 @@ contract Orderbook is IOrderbook, ManagerBase {
         delete orders[_orderId];
     }
 
-    function verifyOrders(
-        uint256[] memory _orderIds,
-        LibOrder.AssetData memory _asset,
-        bytes4 _token,
-        bool _isBuyOrder
+    function verifyOrdersExist(
+        uint256[] memory _orderIds
     ) external view override onlyOwner returns (bool) {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            if (!LibOrder._verifyOrders(orders[_orderIds[i]], _asset, _token, _isBuyOrder)) {
+            if (!exists(_orderIds[i]) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function verifyOrderData(
+        uint256[] memory _orderIds,
+        bool _isBuyOrder
+    ) external view override onlyOwner returns (bool) {
+        LibOrder.OrderData memory firstOrder = orders[_orderIds[0]];
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            if (orders[_orderIds[i]].asset.contentAddress != firstOrder.asset.contentAddress || 
+                orders[_orderIds[i]].asset.tokenId != firstOrder.asset.tokenId ||
+                orders[_orderIds[i]].token != firstOrder.token ||
+                orders[_orderIds[i]].isBuyOrder != _isBuyOrder) {
                 return false;
             }
         }
@@ -68,8 +79,7 @@ contract Orderbook is IOrderbook, ManagerBase {
         uint256[] calldata _orderIds,
         uint256[] calldata _amounts
     ) external view override onlyOwner returns(uint256 amountDue, uint256[] memory amountPerOrder) {
-        require(_orderIds.length == _amounts.length, "Invalid Length");
-
+        // The Exchange contract should have already checked the matching lengths of the parameters.
         amountPerOrder = new uint256[](_amounts.length);
         amountDue = 0;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
@@ -84,7 +94,7 @@ contract Orderbook is IOrderbook, ManagerBase {
         return orders[_orderId];
     }
 
-    function exists(uint256 _orderId) external view override returns(bool){
+    function exists(uint256 _orderId) public view override returns(bool){
         return orders[_orderId].owner != address(0);
     }
     

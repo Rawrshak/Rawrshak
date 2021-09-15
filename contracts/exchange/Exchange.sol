@@ -80,18 +80,15 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
 
     function fillBuyOrder(
         uint256[] memory _orderIds,
-        uint256[] memory _amounts,
-        LibOrder.AssetData memory _asset,
-        bytes4 _token
+        uint256[] memory _amounts
     ) external {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
-        require(executionManager.verifyToken(_token), "Token is not supported.");
-        LibOrder.verifyAssetData(_asset);
-        require(orderbook.verifyOrders(_orderIds, _asset, _token, true), "Invalid order");
 
-        if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC721Upgradeable).interfaceId)) {
-            require(_orderIds.length == 1, "Only 1 unique asset can be bought at a time.");
-        }
+        // Verify orders exist
+        require(orderbook.verifyOrdersExist(_orderIds), "Non-existent order");
+
+        // Verify all orders are of the same asset and the same token payment
+        require(orderbook.verifyOrderData(_orderIds, true), "Invalid order data");
 
         // Get Total Payment
         (, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
@@ -103,7 +100,8 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         }
 
         // Verify that the buyer has these NFTs
-        require(Content(_asset.contentAddress).balanceOf(_msgSender(), _asset.tokenId) >= totalAssetsToSell, "Not enough assets.");
+        LibOrder.OrderData memory order = orderbook.getOrder(_orderIds[0]);
+        require(Content(order.asset.contentAddress).balanceOf(_msgSender(), order.asset.tokenId) >= totalAssetsToSell, "Not enough assets.");
 
         // Orderbook -> fill buy order
         orderbook.fillOrders(_orderIds, _amounts);
@@ -112,46 +110,38 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             (address[] memory accounts,
              uint256[] memory royaltyAmounts,
-             uint256 remaining) = royaltyManager.getRequiredRoyalties(_asset, amountPerOrder[i]);
+             uint256 remaining) = royaltyManager.getRequiredRoyalties(order.asset, amountPerOrder[i]);
             
-            royaltyManager.transferRoyalty(_token, _orderIds[i], accounts, royaltyAmounts);
-            royaltyManager.transferPlatformRoyalty(_token, _orderIds[i], amountPerOrder[i]);
+            royaltyManager.transferRoyalty(order.token, _orderIds[i], accounts, royaltyAmounts);
+            royaltyManager.transferPlatformRoyalty(order.token, _orderIds[i], amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
         // Update Escrow records for the orders
-        executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _asset, _token);
+        executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.asset, order.token);
 
-        emit BuyOrdersFilled(_msgSender(), _orderIds, _amounts, _asset, _token, totalAssetsToSell);
+        emit BuyOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, totalAssetsToSell);
     }
 
     function fillSellOrder(
         uint256[] memory _orderIds,
-        uint256[] memory _amounts,
-        LibOrder.AssetData memory _asset,
-        bytes4 _token
+        uint256[] memory _amounts
     ) external {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
-        require(executionManager.verifyToken(_token), "Token is not supported.");
-        LibOrder.verifyAssetData(_asset);
-        require(orderbook.verifyOrders(_orderIds, _asset, _token, false), "Invalid input");
 
-        if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC721Upgradeable).interfaceId)) {
-            require(_orderIds.length == 1, "Only 1 unique asset can be bought at a time.");
-        }
+        // Verify orders exist
+        require(orderbook.verifyOrdersExist(_orderIds), "Non-existent order");
+
+        // Verify all orders are of the same asset and the same token payment
+        require(orderbook.verifyOrderData(_orderIds, false), "Invalid order data");
 
         // Get Total Payment
         (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
         
         // check buyer's account balance
-        require(executionManager.verifyUserBalance(_msgSender(), _token, amountDue), "Not enough funds.");
+        LibOrder.OrderData memory order = orderbook.getOrder(_orderIds[0]);
+        require(executionManager.verifyUserBalance(_msgSender(), order.token, amountDue), "Not enough funds.");
         
-        // Get Total Assets to buy
-        uint256 totalAssetsToBuy = 0;
-        for (uint256 i = 0; i < _amounts.length; ++i) {
-            totalAssetsToBuy = totalAssetsToBuy + _amounts[i];
-        }
-
         // Orderbook -> fill sell order
         orderbook.fillOrders(_orderIds, _amounts);
 
@@ -159,25 +149,25 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             (address[] memory accounts,
              uint256[] memory royaltyAmounts,
-             uint256 remaining) = royaltyManager.getRequiredRoyalties(_asset, amountPerOrder[i]);
+             uint256 remaining) = royaltyManager.getRequiredRoyalties(order.asset, amountPerOrder[i]);
 
             // for each order, update the royalty table for each creator to get paid
-            royaltyManager.depositRoyalty(_msgSender(), _token, accounts, royaltyAmounts);
-            royaltyManager.depositPlatformRoyalty(_msgSender(), _token, amountPerOrder[i]);
+            royaltyManager.depositRoyalty(_msgSender(), order.token, accounts, royaltyAmounts);
+            royaltyManager.depositPlatformRoyalty(_msgSender(), order.token, amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
         // Execute trade
-        executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, _token);
+        executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.token);
 
-        emit SellOrdersFilled(_msgSender(), _orderIds, _amounts, _asset, _token, amountDue);
+        emit SellOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, amountDue);
     }
 
-    function deleteOrders(uint256 _orderId) external {
+    function deleteOrder(uint256 _orderId) external {
         require(orderbook.exists(_orderId), "Invalid Order.");
 
+        // Delete Order from Orderbook before withdrawing assets in order to avoid re-entrancy attacks
         LibOrder.OrderData memory order = orderbook.getOrder(_orderId);
-        // delete orders
         orderbook.deleteOrder(_orderId, _msgSender());
         
         executionManager.deleteOrder(
