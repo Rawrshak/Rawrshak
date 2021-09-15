@@ -30,7 +30,8 @@ contract('Content Contract Tests', (accounts) => {
         await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, accessControlManager.address);
-        await contentStorage.setParent(content.address);
+        await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), content.address, {from: deployerAddress});
+        // await contentStorage.setParent(content.address);
 
         // give deployer address and crafting system approval; This would normally be done through the ContentManager
         minter_role = await accessControlManager.MINTER_ROLE();

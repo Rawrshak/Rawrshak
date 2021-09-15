@@ -33,7 +33,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
      * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
      */
     // bytes4 private constant _INTERFACE_ID_CONTENT_STORAGE = A133AF9C;
-    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
 
     /***************** Stored Variables *****************/
     mapping(uint256 => bool) public override ids;
@@ -57,20 +56,19 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     function __ContentStorage_init_unchained() internal initializer {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        _setupRole(OWNER_ROLE, _msgSender());
     }
 
-
-    function setParent(address _contentParent) external override onlyRole(OWNER_ROLE) {
+    function setParent(address _contentParent) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_contentParent.isContract(), "Address is not a contract.");
         require(_contentParent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
         _setParent(_contentParent);
-        grantRole(OWNER_ROLE, _contentParent);
+        grantRole(DEFAULT_ADMIN_ROLE, _contentParent);
+        renounceRole(DEFAULT_ADMIN_ROLE, _msgSender());
         
         emit ParentSet(_contentParent);
     }
 
-    function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyRole(OWNER_ROLE) {
+    function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(!ids[_assets[i].tokenId], "Token Id already exists.");
             ids[_assets[i].tokenId] = true;
@@ -95,48 +93,48 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         emit AssetsAdded(_parent(), _assets);
     }
 
-    function updateSupply(uint256 _tokenId, uint256 _supply) external override onlyRole(OWNER_ROLE) {
+    function updateSupply(uint256 _tokenId, uint256 _supply) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         supply[_tokenId] = _supply;
     }
 
     // returns the token uri for public token info
-    function uri(uint256 _tokenId, uint256 _version) external view override onlyRole(OWNER_ROLE) returns (string memory) {
+    function uri(uint256 _tokenId, uint256 _version) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
         return _tokenUri(_tokenId, _version, true);
     }
 
     // returns the token uri for private token info
-    function hiddenUri(uint256 _tokenId, uint256 _version) external view override onlyRole(OWNER_ROLE) returns (string memory) {
+    function hiddenUri(uint256 _tokenId, uint256 _version) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
         return _tokenUri(_tokenId, _version, false);
     }
 
-    function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyRole(OWNER_ROLE) {
+    function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setHiddenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
 
-    function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyRole(OWNER_ROLE) {
+    function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
             _setPublicUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
     
-    function getRoyalties(uint256 _tokenId) external view override onlyRole(OWNER_ROLE) returns (LibRoyalties.Fees[] memory) {
+    function getRoyalties(uint256 _tokenId) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (LibRoyalties.Fees[] memory) {
         // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
         // _getRoyalties() will return the contract's default royalty fee. However, that can also
         // be null. In the case of null, there are no royalty fees. 
         return _getRoyalties(_tokenId);
     }
 
-    function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external override onlyRole(OWNER_ROLE) {
+    function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         // This can be reset by setting _fee to an empty string.
         // This overwrites the existing array of contract fees.
         _setContractRoyalties(_fee);
     }
 
-    function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external override onlyRole(OWNER_ROLE) {
+    function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         // This overwrites the existing array of contract fees.
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");

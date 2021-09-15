@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "../Content.sol";
@@ -17,6 +17,7 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
     address public contentManagerImplementation;
     address public contentStorageImplementation;
     address public accessControlManagerImplementation;
+    uint24 public contractVersion;
 
     EnumerableSetUpgradeable.AddressSet contentContracts;
     EnumerableSetUpgradeable.AddressSet contentManagerContracts;
@@ -42,6 +43,9 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
     )
         internal initializer
     {
+        contractVersion = 0;
+
+        // updateContracts increments the contract version to 1
         updateContracts(_content, _contentManager, _contentStorage, _accessControlManager);
     }
 
@@ -53,6 +57,8 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
     )
         public onlyOwner
     {
+        contractVersion += 1;
+        // Only the deployer and owner can update the implementation for newer content contracts
         contentImplementation = _content;
         contentManagerImplementation = _contentManager;
         contentStorageImplementation = _contentStorage;
@@ -79,11 +85,12 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
         accessControlManager.__AccessControlManager_init();
         contentStorage.__ContentStorage_init(_contractFees, _contractUri);
         content.__Content_init(address(contentStorage), address(accessControlManager));
-        contentStorage.setParent(address(content));
         contentManager.__ContentManager_init(address(content), address(contentStorage), address(accessControlManager));
         
-        // Grant Roles
-        contentStorage.grantRole(contentStorage.OWNER_ROLE(), address(contentManager));
+        // Grant Roles. ContentManager receives the DEFAULT_ADMIN_ROLE as well. However, only the content
+        // contract is the parent.
+        contentStorage.grantRole(contentStorage.DEFAULT_ADMIN_ROLE(), address(contentManager));
+        contentStorage.setParent(address(content));
         accessControlManager.grantRole(accessControlManager.DEFAULT_ADMIN_ROLE(), address(contentManager));
         accessControlManager.setParent(address(content));
         
