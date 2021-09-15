@@ -188,16 +188,21 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         emit OrderDeleted(_msgSender(), _orderId);
     }
 
-    function getOrder(uint256 id) external view returns (LibOrder.OrderData memory) {
-        return orderbook.getOrder(id);
-    }
-
     function claimOrders(uint256[] memory orderIds) external {
         require(orderIds.length > 0, "empty order length.");
         
         executionManager.claimOrders(_msgSender(), orderIds);
         
         emit FilledOrdersClaimed(_msgSender(), orderIds);
+    }
+
+    function claimRoyalties(bytes4 _token) external {
+        require(executionManager.verifyToken(_token), "Token is not supported.");
+        royaltyManager.claimRoyalties(_msgSender(), _token);
+    }
+
+    function getOrder(uint256 id) external view returns (LibOrder.OrderData memory) {
+        return orderbook.getOrder(id);
     }
 
     function tokenEscrow(bytes4 _token) external view returns(address) {
@@ -211,11 +216,6 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     function claimableRoyaltyAmount(bytes4 _token) external view returns (uint256) {
         require(executionManager.verifyToken(_token), "Token is not supported.");
         return royaltyManager.claimableRoyaltyAmount(_msgSender(), _token);
-    }
-
-    function claimRoyalties(bytes4 _token) external {
-        require(executionManager.verifyToken(_token), "Token is not supported.");
-        royaltyManager.claimRoyalties(_msgSender(), _token);
     }
 
     /**************** Internal Functions ****************/

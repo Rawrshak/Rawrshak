@@ -17,18 +17,6 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         __ManagerBase_init_unchained(_resolver);
         _registerInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER);
     }
-    
-    function token(bytes4 _token) external view override returns(address) {
-        return _tokenEscrow(_token).token();
-    }
-    
-    function tokenEscrow(bytes4 _token) external view override returns(address) {
-        return address(resolver.getAddress(_token));
-    }
-    
-    function nftsEscrow() external view override returns(address) {
-        return address(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
-    }
 
     function placeBuyOrder(uint256 _orderId, bytes4 _token, address _sender, uint256 _tokenAmount) external override onlyOwner {
         _tokenEscrow(_token).deposit(_orderId, _sender, _tokenAmount);
@@ -112,6 +100,18 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
                     amount);
             }
         }
+    }
+    
+    function token(bytes4 _token) external view override returns(address) {
+        return _tokenEscrow(_token).token();
+    }
+    
+    function tokenEscrow(bytes4 _token) external view override returns(address) {
+        return address(resolver.getAddress(_token));
+    }
+    
+    function nftsEscrow() external view override returns(address) {
+        return address(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
     }
 
     function verifyUserBalance(address _user, bytes4 _token, uint256 amountDue) external view override returns(bool) {

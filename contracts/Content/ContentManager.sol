@@ -96,13 +96,13 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external override onlyOwner {
         contentStorage.setTokenRoyaltiesBatch(_assets);
     }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165StorageUpgradeable) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
     
     function mintBatch(LibAsset.MintData memory _data) external override onlyOwner {
         content.mintBatch(_data);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165StorageUpgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
     
     uint256[50] private __gap;

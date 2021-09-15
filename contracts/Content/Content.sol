@@ -55,34 +55,6 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
         accessControlManager = IAccessControlManager(_accessControlManager);
     }
 
-    // CONTRACT URI
-    function contractUri() external view override returns (string memory) {
-        return contentStorage.contractUri();
-    }
-
-    // TOKEN URIS
-    function uri(uint256 _tokenId) public view override returns (string memory) {
-        uint256 version = HasTokenUri(address(contentStorage)).getLatestUriVersion(_tokenId, true);
-        return this.uri(_tokenId, version);
-    }
-
-    function uri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
-        return contentStorage.uri(_tokenId, _version);
-    }
-    
-    // Royalties
-    function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
-        return contentStorage.getRoyalties(_tokenId);
-    }
-    
-    function totalSupply(uint256 _tokenId) external view override returns (uint256) {
-        return _supply(_tokenId);
-    }
-    
-    function maxSupply(uint256 _tokenId) external view override returns (uint256) {
-        return _maxSupply(_tokenId);
-    }
-
     // Asset Minting
     function mintBatch(LibAsset.MintData memory _data) external override {
         accessControlManager.verifyMint(_data, _msgSender());
@@ -111,6 +83,34 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
 
         _burnBatch(_data.account, _data.tokenIds, _data.amounts);
         emit Burn(_msgSender(), _data);
+    }
+
+    // CONTRACT URI
+    function contractUri() external view override returns (string memory) {
+        return contentStorage.contractUri();
+    }
+
+    // TOKEN URIS
+    function uri(uint256 _tokenId) public view override returns (string memory) {
+        uint256 version = HasTokenUri(address(contentStorage)).getLatestUriVersion(_tokenId, true);
+        return this.uri(_tokenId, version);
+    }
+
+    function uri(uint256 _tokenId, uint256 _version) external view override returns (string memory) {
+        return contentStorage.uri(_tokenId, _version);
+    }
+    
+    // Royalties
+    function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
+        return contentStorage.getRoyalties(_tokenId);
+    }
+    
+    function totalSupply(uint256 _tokenId) external view override returns (uint256) {
+        return _supply(_tokenId);
+    }
+    
+    function maxSupply(uint256 _tokenId) external view override returns (uint256) {
+        return _maxSupply(_tokenId);
     }
 
     // Interface support
