@@ -80,7 +80,6 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     ) external view override onlyOwner returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining) {
         remaining = _total;
 
-        // Todo: Update this for unique content later on
         LibRoyalties.Fees[] memory fees = IContent(_asset.contentAddress).getRoyalties(_asset.tokenId);
         royaltyAmounts = new uint256[](fees.length);
         accounts = new address[](fees.length);

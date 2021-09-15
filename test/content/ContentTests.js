@@ -6,7 +6,6 @@ const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 const { sign } = require("../mint");
 
-// Todo: Update this test
 contract('Content Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -45,7 +44,6 @@ contract('Content Contract Tests', (accounts) => {
         await contentStorage.addAssetBatch(asset);
     });
 
-    // Todo: Create ContentWithHiddenData tests and move this there
     it('Check Content proper deployment', async () => {
         // Check initializer parameters
         assert.equal(
