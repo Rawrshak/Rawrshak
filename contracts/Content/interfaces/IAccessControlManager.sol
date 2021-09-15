@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 import "./IContentSubsystemBase.sol";
 
