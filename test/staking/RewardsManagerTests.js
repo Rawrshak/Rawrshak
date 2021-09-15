@@ -100,7 +100,7 @@ contract('Rewards Manager Contract Tests', (accounts) => {
     });
 
     it('Supports the Rewards Manager Interface', async () => {
-        // _INTERFACE_ID_REWARDS_MANAGER = 0x00000014
+        // INTERFACE_ID_REWARDS_MANAGER = 0x00000014
         assert.equal(
             await rewardsManager.supportsInterface("0x00000014"),
             true, 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
@@ -36,7 +36,7 @@ library LibOrder {
         require(_asset.contentAddress != address(0),"Invalid Address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
         require(
-            _asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT),
+            _asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_CONTENT),
             "Invalid contract interface.");
     }
 

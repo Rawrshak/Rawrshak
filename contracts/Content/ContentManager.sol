@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../libraries/LibAsset.sol";
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
@@ -30,7 +30,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
      * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
      */
-    // bytes4 private constant _INTERFACE_ID_CONTENT_MANAGER = 0xEAD82167;
+    // bytes4 private constant INTERFACE_ID_CONTENT_MANAGER = 0xEAD82167;
 
     /***************** Stored Variables *****************/
     IContent public override content;
@@ -59,7 +59,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         address _contentStorage,
         address _accessControlManager
     ) internal initializer {
-        _registerInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER);
+        _registerInterface(LibInterfaces.INTERFACE_ID_CONTENT_MANAGER);
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);

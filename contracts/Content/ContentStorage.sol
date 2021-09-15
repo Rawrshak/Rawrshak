@@ -8,7 +8,7 @@ import "./HasContractUri.sol";
 import "./ContentSubsystemBase.sol";
 import "./interfaces/IContentStorage.sol";
 import "../libraries/LibAsset.sol";
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 
 contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasContractUri, HasTokenUri {    
     /******************** Constants ********************/
@@ -27,7 +27,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
      * bytes4(keccak256('setContractRoyalties(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
      * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
      */
-    // bytes4 private constant _INTERFACE_ID_CONTENT_STORAGE = A133AF9C;
+    // bytes4 private constant INTERFACE_ID_CONTENT_STORAGE = A133AF9C;
 
     /***************** Stored Variables *****************/
     mapping(uint256 => bool) public override ids;
@@ -49,7 +49,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     }
 
     function __ContentStorage_init_unchained() internal initializer {
-        _registerInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE);
+        _registerInterface(LibInterfaces.INTERFACE_ID_CONTENT_STORAGE);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

@@ -3,7 +3,7 @@ const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
 // V2 Exchange Contracts
 const Exchange = artifacts.require("Exchange");
-const AddressRegistry = artifacts.require("AddressRegistry");
+const AddressResolver = artifacts.require("AddressResolver");
 const EscrowNFTs= artifacts.require("EscrowNFTs");
 const EscrowERC20= artifacts.require("EscrowERC20");
 const ExecutionManager= artifacts.require("ExecutionManager");

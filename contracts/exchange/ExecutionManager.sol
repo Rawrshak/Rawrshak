@@ -7,14 +7,15 @@ import "../libraries/LibOrder.sol";
 import "./interfaces/IExecutionManager.sol";
 import "./interfaces/IEscrowERC20.sol";
 import "./interfaces/IEscrowNFTs.sol";
+import "../utils/LibContractHash.sol";
 
 contract ExecutionManager is IExecutionManager, ManagerBase {    
     /******************** Public API ********************/
-    function __ExecutionManager_init(address _registry) public initializer {
+    function __ExecutionManager_init(address _resolver) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __ManagerBase_init_unchained(_registry);
-        _registerInterface(LibConstants._INTERFACE_ID_EXECUTION_MANAGER);
+        __ManagerBase_init_unchained(_resolver);
+        _registerInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER);
     }
     
     function token(bytes4 _token) external view override returns(address) {
@@ -22,11 +23,11 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
     
     function tokenEscrow(bytes4 _token) external view override returns(address) {
-        return address(registry.getAddress(_token));
+        return address(resolver.getAddress(_token));
     }
     
     function nftsEscrow() external view override returns(address) {
-        return address(registry.getAddress(ESCROW_NFTS_CONTRACT));
+        return address(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
     }
 
     function placeBuyOrder(uint256 _orderId, bytes4 _token, address _sender, uint256 _tokenAmount) external override onlyOwner {
@@ -118,20 +119,20 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
 
     function verifyToken(bytes4 _token) external view override returns(bool) {
-        return registry.getAddress(_token) != address(0);
+        return resolver.getAddress(_token) != address(0);
     }
 
     /**************** Internal Functions ****************/
     function _tokenEscrow(bytes4 _token) internal view returns(IEscrowERC20) {
-        return IEscrowERC20(registry.getAddress(_token));
+        return IEscrowERC20(resolver.getAddress(_token));
     }
     
     function _nftEscrow() internal view returns(IEscrowNFTs) {
-        return IEscrowNFTs(registry.getAddress(ESCROW_NFTS_CONTRACT));
+        return IEscrowNFTs(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
     }
 
     function _orderbookStorage() internal view returns(IOrderbookStorage) {
-        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT));
+        return IOrderbookStorage(resolver.getAddress(LibContractHash.CONTRACT_ORDERBOOK_STORAGE));
     }
     
     uint256[50] private __gap;

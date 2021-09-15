@@ -5,11 +5,11 @@ import "../../exchange/OrderbookManager.sol";
 
 contract TestOrderbookManager is OrderbookManager {
 
-    function __TestOrderbookManager_init(address _registry) external initializer {
+    function __TestOrderbookManager_init(address _resolver) external initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __ManagerBase_init_unchained(_registry);
-        _registerInterface(LibConstants._INTERFACE_ID_ORDERBOOK_MANAGER);
+        __ManagerBase_init_unchained(_resolver);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK_MANAGER);
         orderIdCounter = 0;
     }
 

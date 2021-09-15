@@ -10,7 +10,7 @@ import "./interface/IRewardsManager.sol";
 import "./interface/ILockedFundPool.sol";
 import "../exchange/interfaces/IExchangeFeePool.sol";
 import "./interface/IStaking.sol";
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 
 contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
@@ -34,19 +34,19 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
         __ERC165_init_unchained();
         
         require(_staking.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_staking, LibConstants._INTERFACE_ID_STAKING),
+            ERC165CheckerUpgradeable.supportsInterface(_staking, LibInterfaces.INTERFACE_ID_STAKING),
             "Invalid staking interface.");
         require(_lockedStakingPool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_lockedStakingPool, LibConstants._INTERFACE_ID_LOCKED_FUND),
+            ERC165CheckerUpgradeable.supportsInterface(_lockedStakingPool, LibInterfaces.INTERFACE_ID_LOCKED_FUND),
             "Invalid locked staking funding contract interface.");
         require(_lockedExchangeFeePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_lockedExchangeFeePool, LibConstants._INTERFACE_ID_LOCKED_FUND),
+            ERC165CheckerUpgradeable.supportsInterface(_lockedExchangeFeePool, LibInterfaces.INTERFACE_ID_LOCKED_FUND),
             "Invalid locked exchange funding contract interface.");
         require(_exchangeFeePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibConstants._INTERFACE_ID_EXCHANGE_FEE_POOL),
+            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibInterfaces.INTERFACE_ID_EXCHANGE_FEE_POOL),
             "Invalid Exchange Fee Pool interface.");
 
-        _registerInterface(LibConstants._INTERFACE_ID_REWARDS_MANAGER);
+        _registerInterface(LibInterfaces.INTERFACE_ID_REWARDS_MANAGER);
         stakingInterval = 0;
         staking = IStaking(_staking);
         lockedStakingPool = ILockedFundPool(_lockedStakingPool);

@@ -5,6 +5,7 @@ import "./ManagerBase.sol";
 import "./OrderbookStorage.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IOrderbookManager.sol";
+import "../utils/LibContractHash.sol";
 
 contract OrderbookManager is IOrderbookManager, ManagerBase {
     
@@ -12,15 +13,15 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
     uint256 internal orderIdCounter;
 
     /******************** Public API ********************/
-    function __OrderbookManager_init(address _registry) public initializer {
+    function __OrderbookManager_init(address _resolver) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        __ManagerBase_init_unchained(_registry);
-        _registerInterface(LibConstants._INTERFACE_ID_ORDERBOOK_MANAGER);
+        __ManagerBase_init_unchained(_resolver);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK_MANAGER);
         orderIdCounter = 0;
     }
 
-    /**************** Internal Functions ****************/
+    /**************** External Functions ****************/
     function placeOrder(LibOrder.OrderData memory _order) external override onlyOwner returns(uint256 id){
         id = _generateOrderId(_order.owner, _order.asset.contentAddress, _order.asset.tokenId, orderIdCounter++);
 
@@ -93,7 +94,7 @@ contract OrderbookManager is IOrderbookManager, ManagerBase {
     }
 
     function _orderbook() internal view returns(IOrderbookStorage) {
-        return IOrderbookStorage(registry.getAddress(ORDERBOOK_STORAGE_CONTRACT));
+        return IOrderbookStorage(resolver.getAddress(LibContractHash.CONTRACT_ORDERBOOK_STORAGE));
     }
     
     uint256[50] private __gap;

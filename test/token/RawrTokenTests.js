@@ -29,7 +29,7 @@ contract('RAWR Token Contract', (accounts) => {
     });
 
     it('Supports the TokenBase Interface', async () => {
-        // _INTERFACE_ID_TOKENBASE = 0x00000004
+        // INTERFACE_ID_TOKENBASE = 0x00000004
         assert.equal(
             await rawrToken.supportsInterface("0x00000004"),
             true, 

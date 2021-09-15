@@ -19,13 +19,13 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     function __EscrowERC20_init(address _token) public initializer {
         require(
             _token.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_token, LibConstants._INTERFACE_ID_TOKENBASE),
+            ERC165CheckerUpgradeable.supportsInterface(_token, LibInterfaces.INTERFACE_ID_TOKENBASE),
             "Invalid erc 20 contract interface.");
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibConstants._INTERFACE_ID_ESCROW_ERC20);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ESCROW_ERC20);
         
         token = _token;
     }

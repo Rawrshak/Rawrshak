@@ -28,13 +28,13 @@ contract('Fund Base Contract Tests', (accounts) => {
     });
 
     it('Supports the FundPool Interface', async () => {
-        // _INTERFACE_ID_FUND_POOL = 0x00000015
+        // INTERFACE_ID_FUND_POOL = 0x00000015
         assert.equal(
             await test.supportsInterface("0x00000015"),
             true, 
             "the token doesn't support the FundPool interface");
             
-        // _INTERFACE_ID_CLAIMABLE = 0x00000013
+        // INTERFACE_ID_CLAIMABLE = 0x00000013
         assert.equal(
             await test.supportsInterface("0x00000013"),
             true, 

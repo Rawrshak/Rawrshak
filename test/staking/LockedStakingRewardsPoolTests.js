@@ -45,7 +45,7 @@ contract('Locked Fund Base Contract Tests', (accounts) => {
     });
 
     it('Supports the LockedFund Interface', async () => {
-        // _INTERFACE_ID_LOCKED_FUND = 0x00000017
+        // INTERFACE_ID_LOCKED_FUND = 0x00000017
         assert.equal(
             await lockedPool.supportsInterface("0x00000017"),
             true, 

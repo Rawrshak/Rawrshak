@@ -8,7 +8,7 @@ const EscrowERC20 = artifacts.require("EscrowERC20");
 const EscrowNFTs = artifacts.require("EscrowNFTs");
 const OrderbookStorage = artifacts.require("OrderbookStorage");
 const ExecutionManager = artifacts.require("ExecutionManager");
-const AddressRegistry = artifacts.require("AddressRegistry");
+const AddressResolver = artifacts.require("AddressResolver");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
@@ -85,17 +85,17 @@ contract('Execution Manager Contract Sell Tests', (accounts)=> {
         manager_role = await escrowRawr.MANAGER_ROLE();
         default_admin_role = await escrowRawr.DEFAULT_ADMIN_ROLE();
 
-        // Setup Address Registry
-        registry = await AddressRegistry.new();
-        await registry.__AddressRegistry_init({from: deployerAddress});
+        // Setup Address Resolver
+        resolver = await AddressResolver.new();
+        await resolver.__AddressResolver_init({from: deployerAddress});
 
         // register the royalty manager
         var addresses = [escrowRawr.address, escrowContent.address, orderbookStorage.address];
         var escrowIds = ["0xd4df6855", "0x13534f58", "0xe22271ab"];
-        await registry.registerAddress(escrowIds, addresses, {from: deployerAddress});
+        await resolver.registerAddress(escrowIds, addresses, {from: deployerAddress});
 
         executionManager = await ExecutionManager.new();
-        await executionManager.__ExecutionManager_init(registry.address, {from: deployerAddress});
+        await executionManager.__ExecutionManager_init(resolver.address, {from: deployerAddress});
         
         // Register the execution manager
         await escrowContent.registerManager(executionManager.address, {from:deployerAddress});

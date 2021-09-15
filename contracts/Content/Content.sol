@@ -8,7 +8,7 @@ import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "../libraries/LibRoyalties.sol";
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";
@@ -49,7 +49,7 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
         address _accessControlManager)
         internal initializer
     {
-        _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
+        _registerInterface(LibInterfaces.INTERFACE_ID_CONTENT);
 
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);
