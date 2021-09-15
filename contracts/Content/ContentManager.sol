@@ -2,10 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "../libraries/LibAsset.sol";
 import "../utils/LibConstants.sol";
 import "./interfaces/IContent.sol";
@@ -14,8 +12,6 @@ import "./interfaces/IContentManager.sol";
 import "./interfaces/IAccessControlManager.sol";
 
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
-    using AddressUpgradeable for address;
-    using ERC165CheckerUpgradeable for address;
     
     /******************** Constants ********************/
     /*
@@ -64,14 +60,6 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         address _accessControlManager
     ) internal initializer {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT_MANAGER);
-    
-        require(_content != address(0) && _content.isContract() && 
-                _content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT),
-                "Invalid Content Address");
-        require(_contentStorage != address(0) && _contentStorage.isContract() && 
-                _contentStorage.supportsInterface(LibConstants._INTERFACE_ID_CONTENT_STORAGE),
-                "Invalid Storage Address");
-
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
 import "./HasContractUri.sol";
@@ -12,10 +10,7 @@ import "./interfaces/IContentStorage.sol";
 import "../libraries/LibAsset.sol";
 import "../utils/LibConstants.sol";
 
-contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasContractUri, HasTokenUri {
-    using AddressUpgradeable for address;
-    using ERC165CheckerUpgradeable for address;
-    
+contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasContractUri, HasTokenUri {    
     /******************** Constants ********************/
     /*
      * IContractUri == 0xc0e24d5e
@@ -59,8 +54,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
     }
 
     function setParent(address _contentParent) external override onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_contentParent.isContract(), "Address is not a contract.");
-        require(_contentParent.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Address is not a Content Contract");
         _setParent(_contentParent);
         grantRole(DEFAULT_ADMIN_ROLE, _contentParent);
         renounceRole(DEFAULT_ADMIN_ROLE, _msgSender());
