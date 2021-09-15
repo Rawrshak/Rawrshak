@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../exchange/OrderbookManager.sol";
+import "../../exchange/Orderbook.sol";
 
-contract TestOrderbookManager is OrderbookManager {
+contract TestOrderbook is Orderbook {
 
-    function __TestOrderbookManager_init(address _resolver) external initializer {
+    function __TestOrderbook_init(address _resolver) external initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_resolver);
-        _registerInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK_MANAGER);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK);
         orderIdCounter = 0;
     }
 

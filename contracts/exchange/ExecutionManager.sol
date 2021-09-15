@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ManagerBase.sol";
-import "./OrderbookStorage.sol";
+import "./Orderbook.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IExecutionManager.sol";
 import "./interfaces/IEscrowERC20.sol";
@@ -96,8 +96,8 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         LibOrder.OrderData memory order;
         uint256 amount = 0;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            require(_orderbookStorage().orderExists(_orderIds[i]), "Invalid Order.");
-            order = _orderbookStorage().getOrder(_orderIds[i]);
+            require(_orderbook().exists(_orderIds[i]), "Invalid Order.");
+            order = _orderbook().getOrder(_orderIds[i]);
             require(order.owner == _user, "User doesn't own this order");
             if (order.isBuyOrder) {
                 // withdraw NFTs
@@ -131,8 +131,8 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         return IEscrowNFTs(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
     }
 
-    function _orderbookStorage() internal view returns(IOrderbookStorage) {
-        return IOrderbookStorage(resolver.getAddress(LibContractHash.CONTRACT_ORDERBOOK_STORAGE));
+    function _orderbook() internal view returns(IOrderbook) {
+        return IOrderbook(resolver.getAddress(LibContractHash.CONTRACT_ORDERBOOK));
     }
     
     uint256[50] private __gap;
