@@ -10,7 +10,7 @@ import "./EscrowERC20.sol";
 import "../content/Content.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IRoyaltyManager.sol";
-import "./interfaces/IOrderbookManager.sol";
+import "./interfaces/IOrderbook.sol";
 import "./interfaces/IExecutionManager.sol";
 
 contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
@@ -19,7 +19,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     
     /***************** Stored Variables *****************/
     IRoyaltyManager royaltyManager;
-    IOrderbookManager orderbookManager;
+    IOrderbook orderbook;
     IExecutionManager executionManager;
 
     /*********************** Events *********************/
@@ -42,18 +42,18 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     event FilledOrdersClaimed(address indexed owner, uint256[] orderIds);
 
     /******************** Public API ********************/
-    function __Exchange_init(address _royaltyManager, address _orderbookManager, address _executionManager) public initializer {
+    function __Exchange_init(address _royaltyManager, address _orderbook, address _executionManager) public initializer {
         __Context_init_unchained();
         require(
-            _royaltyManager != address(0) && _orderbookManager != address(0) && _executionManager != address(0),
+            _royaltyManager != address(0) && _orderbook != address(0) && _executionManager != address(0),
             "Address cannot be empty."
         );
         require(_royaltyManager.supportsInterface(LibInterfaces.INTERFACE_ID_ROYALTY_MANAGER), "Invalid manager interface.");
-        require(_orderbookManager.supportsInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK_MANAGER), "Invalid manager interface.");
+        require(_orderbook.supportsInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK), "Invalid manager interface.");
         require(_executionManager.supportsInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER), "Invalid manager interface.");
         
         royaltyManager = IRoyaltyManager(_royaltyManager);
-        orderbookManager = IOrderbookManager(_orderbookManager);
+        orderbook = IOrderbook(_orderbook);
         executionManager = IExecutionManager(_executionManager);
         _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE);
     }
@@ -64,7 +64,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         require(executionManager.verifyToken(_order.token), "Token is not supported.");
 
         // place order in orderbook
-        uint256 id = orderbookManager.placeOrder(_order);
+        uint256 id = orderbook.placeOrder(_order);
 
         if (_order.isBuyOrder) {
             // if it's a buy order, move tokens to ERC20 escrow.
@@ -87,14 +87,14 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
         require(executionManager.verifyToken(_token), "Token is not supported.");
         LibOrder.verifyAssetData(_asset);
-        require(orderbookManager.verifyOrders(_orderIds, _asset, _token, true), "Invalid order");
+        require(orderbook.verifyOrders(_orderIds, _asset, _token, true), "Invalid order");
 
         if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC721Upgradeable).interfaceId)) {
             require(_orderIds.length == 1, "Only 1 unique asset can be bought at a time.");
         }
 
         // Get Total Payment
-        (, uint256[] memory amountPerOrder) = orderbookManager.getPaymentTotals(_orderIds, _amounts);
+        (, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
         
         // Get Total Assets to sell
         uint256 totalAssetsToSell = 0;
@@ -106,7 +106,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         require(Content(_asset.contentAddress).balanceOf(_msgSender(), _asset.tokenId) >= totalAssetsToSell, "Not enough assets.");
 
         // Orderbook -> fill buy order
-        orderbookManager.fillOrders(_orderIds, _amounts);
+        orderbook.fillOrders(_orderIds, _amounts);
 
         // Deduct royalties from escrow per order and transfer to claimable in escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
@@ -134,14 +134,14 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
         require(executionManager.verifyToken(_token), "Token is not supported.");
         LibOrder.verifyAssetData(_asset);
-        require(orderbookManager.verifyOrders(_orderIds, _asset, _token, false), "Invalid input");
+        require(orderbook.verifyOrders(_orderIds, _asset, _token, false), "Invalid input");
 
         if (ERC165CheckerUpgradeable.supportsInterface(_asset.contentAddress, type(IERC721Upgradeable).interfaceId)) {
             require(_orderIds.length == 1, "Only 1 unique asset can be bought at a time.");
         }
 
         // Get Total Payment
-        (uint256 amountDue, uint256[] memory amountPerOrder) = orderbookManager.getPaymentTotals(_orderIds, _amounts);
+        (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
         
         // check buyer's account balance
         require(executionManager.verifyUserBalance(_msgSender(), _token, amountDue), "Not enough funds.");
@@ -153,7 +153,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         }
 
         // Orderbook -> fill sell order
-        orderbookManager.fillOrders(_orderIds, _amounts);
+        orderbook.fillOrders(_orderIds, _amounts);
 
         // Deduct royalties
         for (uint256 i = 0; i < _orderIds.length; ++i) {
@@ -174,11 +174,11 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     }
 
     function deleteOrders(uint256 _orderId) external {
-        require(orderbookManager.orderExists(_orderId), "Invalid Order.");
+        require(orderbook.exists(_orderId), "Invalid Order.");
 
-        LibOrder.OrderData memory order = orderbookManager.getOrder(_orderId);
+        LibOrder.OrderData memory order = orderbook.getOrder(_orderId);
         // delete orders
-        orderbookManager.deleteOrder(_orderId, _msgSender());
+        orderbook.deleteOrder(_orderId, _msgSender());
         
         executionManager.deleteOrder(
             _orderId,
@@ -189,7 +189,7 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     }
 
     function getOrder(uint256 id) external view returns (LibOrder.OrderData memory) {
-        return orderbookManager.getOrder(id);
+        return orderbook.getOrder(id);
     }
 
     function claimOrders(uint256[] memory orderIds) external {

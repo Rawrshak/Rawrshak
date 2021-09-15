@@ -8,6 +8,9 @@ library LibContractHash {
     bytes4 constant public CONTRACT_EXCHANGE = 0xeef64103;
     bytes4 constant public CONTRACT_ERC20_ESCROW = 0x29a264aa;
     bytes4 constant public CONTRACT_NFT_ESCROW = 0x87d4498b;
-    bytes4 constant public CONTRACT_ORDERBOOK_STORAGE = 0x98452292;
+    bytes4 constant public CONTRACT_ORDERBOOK = 0xd9ff7618;
     bytes4 constant public CONTRACT_EXCHANGE_FEE_POOL = 0x4911f18f;
+
+    bytes4 constant public CONTRACT_EXECUTION_MANAGER = 0x018869a9;
+    bytes4 constant public CONTRACT_ROYALTY_MANAGER = 0x2c7e992e;
 }

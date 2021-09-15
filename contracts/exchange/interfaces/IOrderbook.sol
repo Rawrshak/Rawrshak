@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../../libraries/LibOrder.sol";
 
-interface IOrderbookManager { 
+interface IOrderbook { 
     /******** View Functions ********/
-    function orderExists(uint256 _orderId) external view returns(bool);
+    function exists(uint256 _orderId) external view returns(bool);
     
     function verifyOrders(
         uint256[] memory _orderIds,
@@ -23,7 +23,6 @@ interface IOrderbookManager {
 
     /******** Mutative Functions ********/
     function placeOrder(LibOrder.OrderData memory _order) external returns(uint256 id);
-
 
     function fillOrders(uint256[] memory orderIds, uint256[] memory amounts) external;
 
