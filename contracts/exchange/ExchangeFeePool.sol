@@ -14,12 +14,12 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
     /***************** Stored Variables *****************/
     mapping(bytes4 => uint256) amounts;
-    uint256 public override rate;
+    uint24 public override rate;
     address[] funds;
-    uint256[] percentages;
+    uint24[] percentages;
 
     /******************** Public API ********************/
-    function __ExchangeFeePool_init(uint256 _rate) public initializer {
+    function __ExchangeFeePool_init(uint24 _rate) public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
@@ -28,25 +28,25 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         rate = _rate;
     }
  
-    function setRate(uint256 _rate) public override onlyRole(MANAGER_ROLE) {
-        require(_rate > 0 && _rate < 1 ether, "Invalid rate");
+    function setRate(uint24 _rate) public override onlyRole(MANAGER_ROLE) {
+        require(_rate > 0 && _rate <= 1e6, "Invalid rate");
         rate = _rate;
         emit FeeUpdated(_msgSender(), rate);
     }
 
-    function updateDistributionFunds(address[] memory _funds, uint256[] memory _percentages) external override onlyRole(MANAGER_ROLE) {
+    function updateDistributionFunds(address[] memory _funds, uint24[] memory _percentages) external override onlyRole(MANAGER_ROLE) {
         require(_funds.length > 0 && _funds.length == _percentages.length, "Invalid input length");
 
         delete funds;
         delete percentages;
 
-        uint256 totalPercentages = 0;
-        for (uint256 i = 0; i < _funds.length; ++i) {
+        uint24 totalPercentages = 0;
+        for (uint24 i = 0; i < _funds.length; ++i) {
             funds.push(_funds[i]);
             percentages.push(_percentages[i]);
             totalPercentages = totalPercentages + _percentages[i];
         }
-        require(totalPercentages == 1 ether, "Percentages do not sum to 1 ether.");
+        require(totalPercentages == 1e6, "Percentages do not sum to 100%");
 
         emit FundsUpdated(_msgSender(), _funds, _percentages);
     }
@@ -66,14 +66,14 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
         uint256[] memory distributions = new uint256[](funds.length);
         for (uint256 i = 0; i < funds.length; ++i) {
-            distributions[i] = (balance * percentages[i]) / (1 ether);
+            distributions[i] = (balance * percentages[i]) / 1e6;
             IERC20Upgradeable(_tokenAddr).transfer(funds[i], distributions[i]);
         }
 
         emit FundsDistributed(_msgSender(), funds, distributions);
     }
 
-    function distributionRates() external view override returns(address[] memory _funds, uint256[] memory _percentages) {
+    function distributionRates() external view override returns(address[] memory _funds, uint24[] memory _percentages) {
         _funds = funds;
         _percentages = percentages;
     }

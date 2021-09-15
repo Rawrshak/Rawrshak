@@ -5,13 +5,13 @@ library LibRoyalties {
 
     struct Fees {
         address payable account;
-        uint256 rate;
+        uint24 rate;
     }
 
-    function validateFees(LibRoyalties.Fees[] memory _fees) internal pure {
+    function validateFees(Fees[] memory _fees) internal pure {
         for (uint256 i = 0; i < _fees.length; ++i) {
             require(_fees[i].account != address(0), "Invalid Account Address");
-            require(_fees[i].rate != 0 && _fees[i].rate <= 1 ether, "Invalid Fee Rate");
+            require(_fees[i].rate != 0 && _fees[i].rate <= 1e6, "Invalid Fee Rate");
         }
     }
 }
