@@ -6,7 +6,6 @@ const AccessControlManager = artifacts.require("AccessControlManager");
 const ContractRegistry = artifacts.require("ContractRegistry");
 const { constants } = require('@openzeppelin/test-helpers');
 
-// Todo: Update this test
 contract('Content Manager Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
@@ -84,12 +83,6 @@ contract('Content Manager Contract Tests', (accounts) => {
             await content.uri(3),
             "arweave.net/tx/public-uri-3", 
             "New asset wasn't added.");
-        
-        // Todo: Move this hiddenUri() test to the ContentWithHiddenData contract tests once added
-        // assert.equal(
-        //     await content.methods['hiddenUri(uint256,uint256)'](3, 0, {from: playerAddress}),
-        //     "arweave.net/tx/private-uri-3", 
-        //     "New asset wasn't added.");
     });
 
     it('Set Token URI', async () => {

@@ -38,8 +38,8 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
 
     /******************** Public API ********************/
     function __Content_init(
-        IContentStorage _contentStorage,
-        IAccessControlManager _accessControlManager)
+        address _contentStorage,
+        address _accessControlManager)
         public initializer
     {
         // __Ownable_init_unchained();
@@ -50,14 +50,14 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
     }
 
     function __Content_init_unchained(
-        IContentStorage _contentStorage,
-        IAccessControlManager _accessControlManager)
+        address _contentStorage,
+        address _accessControlManager)
         internal initializer
     {
         _registerInterface(LibConstants._INTERFACE_ID_CONTENT);
 
-        contentStorage = _contentStorage;
-        accessControlManager = _accessControlManager;
+        contentStorage = IContentStorage(_contentStorage);
+        accessControlManager = IAccessControlManager(_accessControlManager);
     }
 
     // CONTRACT URI
