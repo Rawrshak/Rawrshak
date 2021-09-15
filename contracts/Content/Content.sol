@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./HasContractUri.sol";
 import "./HasRoyalties.sol";
 import "./HasTokenUri.sol";
@@ -16,9 +14,6 @@ import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";
 
 contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
-    using AddressUpgradeable for address;
-    using ERC165CheckerUpgradeable for address;
-    
     /******************** Constants ********************/
     /*
      * ERC1155 interface == 0xd9b67a26
