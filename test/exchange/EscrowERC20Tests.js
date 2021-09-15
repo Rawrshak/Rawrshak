@@ -41,7 +41,7 @@ contract('Escrow ERC20 Contract', (accounts) => {
     });
 
     it('Supports the EscrowERC20 Interface', async () => {
-        // INTERFACE_ID_ESCROW_ERC20 = 0x00000008
+        // INTERFACE_ID_ERC20_ESCROW = 0x00000008
         assert.equal(
             await escrow.supportsInterface("0x00000008"),
             true, 

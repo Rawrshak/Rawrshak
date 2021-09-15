@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../../libraries/LibOrder.sol";
 
-interface IEscrowNFTs {
+interface INftEscrow {
     
     /******** View Functions ********/
     function escrowedAssetsByOrder(uint256 _orderId) external view returns(uint256);

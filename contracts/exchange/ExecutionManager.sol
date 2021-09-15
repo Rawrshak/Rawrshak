@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./ManagerBase.sol";
 import "./Orderbook.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IExecutionManager.sol";
-import "./interfaces/IEscrowERC20.sol";
-import "./interfaces/IEscrowNFTs.sol";
+import "./interfaces/IErc20Escrow.sol";
+import "./interfaces/INftEscrow.sol";
 import "../utils/LibContractHash.sol";
 
 contract ExecutionManager is IExecutionManager, ManagerBase {    
@@ -123,12 +124,12 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
 
     /**************** Internal Functions ****************/
-    function _tokenEscrow(bytes4 _token) internal view returns(IEscrowERC20) {
-        return IEscrowERC20(resolver.getAddress(_token));
+    function _tokenEscrow(bytes4 _token) internal view returns(IErc20Escrow) {
+        return IErc20Escrow(resolver.getAddress(_token));
     }
     
-    function _nftEscrow() internal view returns(IEscrowNFTs) {
-        return IEscrowNFTs(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
+    function _nftEscrow() internal view returns(INftEscrow) {
+        return INftEscrow(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
     }
 
     function _orderbook() internal view returns(IOrderbook) {

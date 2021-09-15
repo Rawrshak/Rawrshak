@@ -8,10 +8,10 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./StorageBase.sol";
 import "../libraries/LibOrder.sol";
-import "./interfaces/IEscrowNFTs.sol";
+import "./interfaces/INftEscrow.sol";
 import "../content/interfaces/IContent.sol";
 
-contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
+contract NftEscrow is INftEscrow, StorageBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for *;
     
@@ -20,14 +20,14 @@ contract EscrowNFTs is IEscrowNFTs, StorageBase, ERC1155HolderUpgradeable, ERC72
     mapping(uint256 => uint256) public override escrowedAssetsByOrder;
 
     /******************** Public API ********************/
-    function __EscrowNFTs_init() public initializer {
+    function __NftEscrow_init() public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __ERC1155Holder_init_unchained();
         __ERC721Holder_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibInterfaces.INTERFACE_ID_ESCROW_NFTS);
+        _registerInterface(LibInterfaces.INTERFACE_ID_NFT_ESCROW);
     }
 
     function deposit(

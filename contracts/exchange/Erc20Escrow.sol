@@ -5,9 +5,9 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./StorageBase.sol";
-import "./interfaces/IEscrowERC20.sol";
+import "./interfaces/IErc20Escrow.sol";
 
-contract EscrowERC20 is IEscrowERC20, StorageBase {
+contract Erc20Escrow is IErc20Escrow, StorageBase {
     using AddressUpgradeable for address;
     
     /***************** Stored Variables *****************/
@@ -16,7 +16,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
     mapping(address => uint256) public override claimableTokensByOwner;
 
     /******************** Public API ********************/
-    function __EscrowERC20_init(address _token) public initializer {
+    function __Erc20Escrow_init(address _token) public initializer {
         require(
             _token.isContract() && 
             ERC165CheckerUpgradeable.supportsInterface(_token, LibInterfaces.INTERFACE_ID_TOKENBASE),
@@ -25,7 +25,7 @@ contract EscrowERC20 is IEscrowERC20, StorageBase {
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibInterfaces.INTERFACE_ID_ESCROW_ERC20);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ERC20_ESCROW);
         
         token = _token;
     }

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "./EscrowERC20.sol";
 import "../content/Content.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IRoyaltyManager.sol";
