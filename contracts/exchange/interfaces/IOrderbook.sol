@@ -7,11 +7,13 @@ interface IOrderbook {
     /******** View Functions ********/
     function exists(uint256 _orderId) external view returns(bool);
     
+    function ordersLength() external view returns(uint256);
+    
     function verifyOrdersExist(
         uint256[] memory _orderIds
     ) external view returns (bool);
 
-    function verifyOrderData(
+    function verifyAllOrdersData(
         uint256[] memory _orderIds,
         bool _isBuyOrder
     ) external view returns (bool);

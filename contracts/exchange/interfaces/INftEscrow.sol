@@ -6,9 +6,9 @@ import "../../libraries/LibOrder.sol";
 interface INftEscrow {
     
     /******** View Functions ********/
-    function escrowedAssetsByOrder(uint256 _orderId) external view returns(uint256);
+    function escrowedAmounts(uint256 _orderId) external view returns(uint256);
     
-    function assetData(uint256 _orderId) external view returns(address contentAddress, uint256 tokenId);
+    function escrowedAsset(uint256 _orderId) external view returns(address contentAddress, uint256 tokenId);
 
     /******** Mutative Functions ********/
     function deposit(

@@ -10,20 +10,24 @@ contract Orderbook is IOrderbook, ManagerBase {
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.OrderData) orders;
-    uint256 internal orderIdCounter;
+    uint256 public override ordersLength;
 
     /******************** Public API ********************/
     function __Orderbook_init(address _resolver) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_resolver);
+        __Orderbook_init_unchained();
+    }
+
+    function __Orderbook_init_unchained() internal initializer {
         _registerInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK);
-        orderIdCounter = 0;
+        ordersLength = 0;
     }
 
     /**************** External Functions ****************/
     function placeOrder(LibOrder.OrderData memory _order) external override onlyOwner returns(uint256 id){
-        id = _generateOrderId(_order.owner, _order.asset.contentAddress, _order.asset.tokenId, orderIdCounter++);
+        id = ordersLength++;
         orders[id] = _order;
     }
 
@@ -59,7 +63,7 @@ contract Orderbook is IOrderbook, ManagerBase {
         return true;
     }
 
-    function verifyOrderData(
+    function verifyAllOrdersData(
         uint256[] memory _orderIds,
         bool _isBuyOrder
     ) external view override onlyOwner returns (bool) {
@@ -96,11 +100,6 @@ contract Orderbook is IOrderbook, ManagerBase {
 
     function exists(uint256 _orderId) public view override returns(bool){
         return orders[_orderId].owner != address(0);
-    }
-    
-    /**************** Internal Functions ****************/
-    function _generateOrderId(address _user, address _tokenAddr, uint256 _tokenId, uint256 _orderIdCounter) internal pure returns(uint256) {
-        return uint256(keccak256(abi.encodePacked(_user, _tokenAddr, _tokenId, _orderIdCounter)));
     }
     
     uint256[50] private __gap;

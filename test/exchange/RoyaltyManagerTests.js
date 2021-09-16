@@ -135,18 +135,18 @@ contract('Royalty Manager Contract', (accounts)=> {
         await royaltyManager.depositRoyalty(playerAddress, rawrId, creators, amounts, {from: deployerAddress});
 
         assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyalties(creator1Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
         
         assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyalties(creator2Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('100', 'ether').toString(),
             "Royalty was not deposited in Creator 2 address escrow."
         );
 
-        await royaltyManager.depositPlatformRoyalty(playerAddress, rawrId, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+        await royaltyManager.depositPlatformFees(playerAddress, rawrId, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
         
         assert.equal(
             await rawrToken.balanceOf(feePool.address, {from: deployerAddress}),
@@ -172,16 +172,16 @@ contract('Royalty Manager Contract', (accounts)=> {
 
         await royaltyManager.transferRoyalty(rawrId, 1, creators, amounts, {from:deployerAddress});
 
-        await royaltyManager.transferPlatformRoyalty(rawrId, 1, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+        await royaltyManager.transferPlatformFees(rawrId, 1, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyalties(creator1Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
         
         assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyalties(creator2Address, rawrId, {from: creator1Address}),
             web3.utils.toWei('100', 'ether').toString(),
             "Royalty was not deposited in Creator 2 address escrow."
         );
@@ -207,7 +207,7 @@ contract('Royalty Manager Contract', (accounts)=> {
     });
 
     it('Get Royalties for an asset', async () => {
-        var results = await royaltyManager.getRequiredRoyalties(assetData, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+        var results = await royaltyManager.payableRoyalties(assetData, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         assert.equal (
             results[0].length, 2, 
@@ -243,7 +243,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
 
         assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyalties(creator1Address, rawrId, {from: creator1Address}),
             0,
             "Royalty was not claimed yet."
         );
@@ -254,7 +254,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
         
         assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
+            await royaltyManager.claimableRoyalties(creator2Address, rawrId, {from: creator1Address}),
             0,
             "Royalty was not claimed yet."
         );

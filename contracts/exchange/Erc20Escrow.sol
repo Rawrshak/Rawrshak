@@ -5,11 +5,11 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
-import "./StorageBase.sol";
+import "./EscrowBase.sol";
 import "./interfaces/IErc20Escrow.sol";
 import "../utils/EnumerableMapsExtension.sol";
 
-contract Erc20Escrow is IErc20Escrow, StorageBase {
+contract Erc20Escrow is IErc20Escrow, EscrowBase {
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
     using EnumerableMapsExtension for *;
@@ -17,22 +17,23 @@ contract Erc20Escrow is IErc20Escrow, StorageBase {
     /***************** Stored Variables *****************/
     EnumerableSetUpgradeable.AddressSet supportedTokens;
 
-    // claimableByOwner[user][token] = amount
-    mapping(address => EnumerableMapsExtension.AddressToUintMap) claimableByOwner;
-
-    // escrowedTokensByOrder
     struct EscrowedAmount {
         address token;
         uint256 amount;
     }
     mapping(uint256 => EscrowedAmount) escrowedByOrder;
+    mapping(address => EnumerableMapsExtension.AddressToUintMap) claimableByOwner;
 
     /******************** Public API ********************/
     function __Erc20Escrow_init() public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
-        __StorageBase_init_unchained();
+        __EscrowBase_init_unchained();
+        __Erc20Escrow_init_unchained();
+    }
+
+    function __Erc20Escrow_init_unchained() internal initializer {
         _registerInterface(LibInterfaces.INTERFACE_ID_ERC20_ESCROW);
     }
 
@@ -40,6 +41,8 @@ contract Erc20Escrow is IErc20Escrow, StorageBase {
         // no need to check for input as we are the only ones to call it and we will always only
         // add an ERC20 token
         supportedTokens.add(token);
+
+        emit AddedTokenSupport(token);
     }
 
     function deposit(
@@ -96,27 +99,36 @@ contract Erc20Escrow is IErc20Escrow, StorageBase {
     }
 
     // Deposit Platform Fees
-    function depositPlatformRoyalty(address _token, address _sender, address _feePool, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
+    function depositPlatformFees(address _token, address _sender, address _feesEscrow, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
-        IERC20Upgradeable(_token).transferFrom(_sender, _feePool, _amount);
+        IERC20Upgradeable(_token).transferFrom(_sender, _feesEscrow, _amount);
     }
 
     // Transfer Platform fees from escrowed by order to escrow
-    function transferPlatformRoyalty(uint256 _orderId, address _feePool, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
+    function transferPlatformFees(uint256 _orderId, address _feesEscrow, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         escrowedByOrder[_orderId].amount = escrowedByOrder[_orderId].amount - _amount;
-        IERC20Upgradeable(escrowedByOrder[_orderId].token).transfer(_feePool, _amount);
+        IERC20Upgradeable(escrowedByOrder[_orderId].token).transfer(_feesEscrow, _amount);
     }
 
-    function claim(address _owner) external override onlyRole(MANAGER_ROLE) {
+    function claimRoyalties(address _owner) external override onlyRole(MANAGER_ROLE) {
         // Check should be done above this
+        uint256 numOfTokens = _getClaimableTokensLength(_owner);
+        uint256 counter = 0;
+        address[] memory tokens = new address[](numOfTokens);
+        uint256[] memory amounts = new uint256[](numOfTokens);
         for (uint256 i = 0; i < claimableByOwner[_owner].length(); i++) {
             (address token, uint256 amount) = claimableByOwner[_owner].at(i);
             if (amount > 0) {
                 claimableByOwner[_owner].set(token, 0);
                 IERC20Upgradeable(token).transfer(_owner, amount);
+                tokens[counter] = token;
+                amounts[counter] = amount;
+                counter++;
             }
         }
+
+        emit ClaimedRoyalties(_owner, tokens, amounts);
     }
 
     function isTokenSupported(address token) public override view returns(bool) {
@@ -129,24 +141,13 @@ contract Erc20Escrow is IErc20Escrow, StorageBase {
     
     function claimableTokensByOwner(address _owner) external override view returns(address[] memory tokens, uint256[] memory amounts) {
         // Check should be done above this
-        
         // Count how much memory to allocate
+        uint256 numOfTokens = _getClaimableTokensLength(_owner);
+        tokens = new address[](numOfTokens);
+        amounts = new uint256[](numOfTokens);
         uint256 counter = 0;
-        address token;
-        uint256 amount;
         for (uint256 i = 0; i < claimableByOwner[_owner].length(); i++) {
-            (, amount) = claimableByOwner[_owner].at(i);
-            if (amount > 0) {
-                counter++;
-            }
-        }
-
-        // Count how much memory to allocate
-        tokens = new address[](counter);
-        amounts = new uint256[](counter);
-        counter = 0;
-        for (uint256 i = 0; i < claimableByOwner[_owner].length(); i++) {
-            (token, amount) = claimableByOwner[_owner].at(i);
+            (address token, uint256 amount) = claimableByOwner[_owner].at(i);
             if (amount > 0) {
                 tokens[counter] = token;
                 amounts[counter] = amount;
@@ -155,8 +156,17 @@ contract Erc20Escrow is IErc20Escrow, StorageBase {
         }
     }
 
-
     /**************** Internal Functions ****************/
+    function _getClaimableTokensLength(address _owner) internal view returns(uint256) {
+        uint256 counter = 0;
+        for (uint256 i = 0; i < claimableByOwner[_owner].length(); i++) {
+            (, uint256 amount) = claimableByOwner[_owner].at(i);
+            if (amount > 0) {
+                counter++;
+            }
+        }
+        return counter;
+    }
 
     uint256[50] private __gap;
 }

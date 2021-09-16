@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "../utils/LibInterfaces.sol";
 
-abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradeable {
+abstract contract EscrowBase is AccessControlUpgradeable, ERC165StorageUpgradeable {
         
     /******************** Constants ********************/
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
@@ -15,7 +15,7 @@ abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradea
     event ManagerRegistered(address indexed _manager);
 
     /******************** Public API ********************/
-    function __StorageBase_init_unchained() public initializer {
+    function __EscrowBase_init_unchained() public initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

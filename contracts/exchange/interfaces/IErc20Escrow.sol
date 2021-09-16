@@ -23,10 +23,14 @@ interface IErc20Escrow {
 
     function transferRoyalty(uint256 _orderId, address _to, uint256 _amount) external;
     
-    function depositPlatformRoyalty(address _token, address _sender, address _feePool, uint256 _amount) external;
+    function depositPlatformFees(address _token, address _sender, address _feesEscrow, uint256 _amount) external;
 
-    function transferPlatformRoyalty(uint256 _orderId, address _feePool, uint256 _amount) external;
+    function transferPlatformFees(uint256 _orderId, address _feesEscrow, uint256 _amount) external;
 
-    function claim(address _owner) external;
+    function claimRoyalties(address _owner) external;
 
+    /******** Events ********/
+    event ClaimedRoyalties(address indexed owner, address[] tokens, uint256[] amounts);
+    
+    event AddedTokenSupport(address indexed token);
 }
