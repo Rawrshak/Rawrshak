@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeab
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./interface/IRewardsManager.sol";
 import "./interface/ILockedFundPool.sol";
-import "../exchange/interfaces/IExchangeFeePool.sol";
+import "../exchange/interfaces/IExchangeFeesEscrow.sol";
 import "./interface/IStaking.sol";
 import "../utils/LibInterfaces.sol";
 
@@ -20,11 +20,11 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
     IStaking staking;
     ILockedFundPool lockedStakingPool;
     ILockedFundPool lockedExchangeFeePool;
-    IExchangeFeePool exchangeFeePool;
+    IExchangeFeesEscrow exchangeFeesEscrow;
     uint256 public override stakingInterval;
 
     /******************** Public API ********************/
-    function __RewardsManager_init(address _staking, address _lockedStakingPool, address _lockedExchangeFeePool, address _exchangeFeePool) public initializer {
+    function __RewardsManager_init(address _staking, address _lockedStakingPool, address _lockedExchangeFeePool, address _exchangeFeesEscrow) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ERC165_init_unchained();
@@ -38,8 +38,8 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
         require(_lockedExchangeFeePool.isContract() && 
             ERC165CheckerUpgradeable.supportsInterface(_lockedExchangeFeePool, LibInterfaces.INTERFACE_ID_LOCKED_FUND),
             "Invalid locked exchange funding contract interface.");
-        require(_exchangeFeePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibInterfaces.INTERFACE_ID_EXCHANGE_FEE_POOL),
+        require(_exchangeFeesEscrow.isContract() && 
+            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeesEscrow, LibInterfaces.INTERFACE_ID_EXCHANGE_FEE_POOL),
             "Invalid Exchange Fee Pool interface.");
 
         _registerInterface(LibInterfaces.INTERFACE_ID_REWARDS_MANAGER);
@@ -47,7 +47,7 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
         staking = IStaking(_staking);
         lockedStakingPool = ILockedFundPool(_lockedStakingPool);
         lockedExchangeFeePool = ILockedFundPool(_lockedExchangeFeePool);
-        exchangeFeePool = IExchangeFeePool(_exchangeFeePool);
+        exchangeFeesEscrow = IExchangeFeesEscrow(_exchangeFeesEscrow);
     }
 
     function nextStakingInterval() external override onlyOwner {
@@ -66,13 +66,13 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
     }
 
     function distributeExchangeFees() external override onlyOwner {
-        uint256 exchangeFees = exchangeFeePool.totalFeePool(staking.token());
+        uint256 exchangeFees = exchangeFeesEscrow.totalFeePool(staking.token());
         if (exchangeFees == 0) {
             return;
         }
 
         lockedExchangeFeePool.reloadFunds(exchangeFees);
 
-        exchangeFeePool.distribute();
+        exchangeFeesEscrow.distribute();
     }
 }

@@ -446,7 +446,7 @@ contract('Exchange Contract', (accounts)=> {
 
         // check claimable royalty for creator address
         assert.equal(
-            await exchange.claimableRoyaltyAmount(rawrId, {from: creator1Address}),
+            await exchange.claimableRoyalties(rawrId, {from: creator1Address}),
             web3.utils.toWei('20', 'ether').toString(),
             "Creator's address doesn't have the correct amount of royalty");
 

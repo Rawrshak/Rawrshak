@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-
+import "../content/interfaces/IContent.sol";
 
 library LibOrder {
     using AddressUpgradeable for address;
@@ -38,6 +38,9 @@ library LibOrder {
         require(
             _asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_CONTENT),
             "Invalid contract interface.");
+        require(
+            IContent(_asset.contentAddress).totalSupply(_asset.tokenId) > 0,
+            "Invalid Token Id");
     }
 
     function _verifyOrders(

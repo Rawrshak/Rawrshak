@@ -16,6 +16,10 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_resolver);
+        __ExecutionManager_init_unchained();
+    }
+
+    function __ExecutionManager_init_unchained() internal initializer {
         _registerInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER);
     }
 
@@ -67,7 +71,8 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
 
     function deleteOrder(uint256 _orderId, address _user, LibOrder.OrderData memory _order) external override onlyOwner {
-        
+        // Todo: Withdraw Partial Fill
+
         if (_order.isBuyOrder) {
             // withdraw ERC20
             _tokenEscrow().withdraw(
@@ -83,13 +88,14 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     function claimOrders(address _user, uint256[] calldata _orderIds) external override onlyOwner {
         LibOrder.OrderData memory order;
         uint256 amount = 0;
+        // Todo: Withdraw Partial Fill
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             require(_orderbook().exists(_orderIds[i]), "Invalid Order.");
             order = _orderbook().getOrder(_orderIds[i]);
             require(order.owner == _user, "User doesn't own this order");
             if (order.isBuyOrder) {
                 // withdraw NFTs
-                amount = _nftEscrow().escrowedAssetsByOrder(_orderIds[i]);
+                amount = _nftEscrow().escrowedAmounts(_orderIds[i]);
                 _nftEscrow().withdraw(_orderIds[i], _user, amount);
             } else {
                 // withdraw ERC20      

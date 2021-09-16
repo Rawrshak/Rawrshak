@@ -12,8 +12,9 @@ import "../libraries/LibOrder.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IOrderbook.sol";
 import "./interfaces/IExecutionManager.sol";
+import "./interfaces/IExchange.sol";
 
-contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgradeable {
+contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -22,40 +23,25 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
     IOrderbook orderbook;
     IExecutionManager executionManager;
 
-    /*********************** Events *********************/
-    event OrderPlaced(address indexed from, uint256 indexed orderId, LibOrder.OrderData order);
-    event BuyOrdersFilled(
-        address indexed from,
-        uint256[] orderIds,
-        uint256[] amounts,
-        LibOrder.AssetData asset,
-        address token,
-        uint256 amountOfAssetsSold);
-    event SellOrdersFilled(
-        address indexed from,
-        uint256[] orderIds,
-        uint256[] amounts,
-        LibOrder.AssetData asset,
-        address token,
-        uint256 amountPaid);
-    event OrderDeleted(address indexed owner, uint256 orderId);
-    event FilledOrdersClaimed(address indexed owner, uint256[] orderIds);
-
     /******************** Public API ********************/
     function __Exchange_init(address _royaltyManager, address _orderbook, address _executionManager) public initializer {
         // We don't run the interface checks because we're the only one who will deploy this so
         // we know that the addresses are correct
         __Context_init_unchained();
         __Ownable_init_unchained();
+        __Exchange_init_unchained(_royaltyManager, _orderbook, _executionManager);
+    }
+
+    function __Exchange_init_unchained(address _royaltyManager, address _orderbook, address _executionManager) internal initializer {
+        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE);
           
         royaltyManager = IRoyaltyManager(_royaltyManager);
         orderbook = IOrderbook(_orderbook);
         executionManager = IExecutionManager(_executionManager);
-        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE);
     }
 
     // exchange functions
-    function placeOrder(LibOrder.OrderData memory _order) external {        
+    function placeOrder(LibOrder.OrderData memory _order) external override {        
         LibOrder.verifyOrderData(_order, _msgSender());
         require(executionManager.verifyToken(_order.token), "Token is not supported.");
         
@@ -77,14 +63,14 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
     function fillBuyOrder(
         uint256[] memory _orderIds,
         uint256[] memory _amounts
-    ) external {
+    ) external override {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
 
         // Verify orders exist
         require(orderbook.verifyOrdersExist(_orderIds), "Non-existent order");
 
         // Verify all orders are of the same asset and the same token payment
-        require(orderbook.verifyOrderData(_orderIds, true), "Invalid order data");
+        require(orderbook.verifyAllOrdersData(_orderIds, true), "Invalid order data");
 
         // Get Total Payment
         (, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
@@ -106,10 +92,10 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             (address[] memory accounts,
              uint256[] memory royaltyAmounts,
-             uint256 remaining) = royaltyManager.getRequiredRoyalties(order.asset, amountPerOrder[i]);
+             uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
             
             royaltyManager.transferRoyalty(_orderIds[i], accounts, royaltyAmounts);
-            royaltyManager.transferPlatformRoyalty(order.token, _orderIds[i], amountPerOrder[i]);
+            royaltyManager.transferPlatformFees(order.token, _orderIds[i], amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
@@ -122,14 +108,14 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
     function fillSellOrder(
         uint256[] memory _orderIds,
         uint256[] memory _amounts
-    ) external {
+    ) external override {
         require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
 
         // Verify orders exist
         require(orderbook.verifyOrdersExist(_orderIds), "Non-existent order");
 
         // Verify all orders are of the same asset and the same token payment
-        require(orderbook.verifyOrderData(_orderIds, false), "Invalid order data");
+        require(orderbook.verifyAllOrdersData(_orderIds, false), "Invalid order data");
 
         // Get Total Payment
         (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
@@ -145,11 +131,11 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             (address[] memory accounts,
              uint256[] memory royaltyAmounts,
-             uint256 remaining) = royaltyManager.getRequiredRoyalties(order.asset, amountPerOrder[i]);
+             uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
 
             // for each order, update the royalty table for each creator to get paid
             royaltyManager.depositRoyalty(_msgSender(), order.token, accounts, royaltyAmounts);
-            royaltyManager.depositPlatformRoyalty(_msgSender(), order.token, amountPerOrder[i]);
+            royaltyManager.depositPlatformFees(_msgSender(), order.token, amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
@@ -159,7 +145,7 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
         emit SellOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, amountDue);
     }
 
-    function deleteOrder(uint256 _orderId) external {
+    function deleteOrder(uint256 _orderId) external override {
         require(orderbook.exists(_orderId), "Invalid Order.");
 
         // Delete Order from Orderbook before withdrawing assets in order to avoid re-entrancy attacks
@@ -174,7 +160,7 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
         emit OrderDeleted(_msgSender(), _orderId);
     }
 
-    function claimOrders(uint256[] memory orderIds) external {
+    function claimOrders(uint256[] memory orderIds) external override {
         require(orderIds.length > 0, "empty order length.");
         
         executionManager.claimOrders(_msgSender(), orderIds);
@@ -182,28 +168,28 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
         emit FilledOrdersClaimed(_msgSender(), orderIds);
     }
 
-    function claimRoyalties() external {
+    function claimRoyalties() external override {
         royaltyManager.claimRoyalties(_msgSender());
     }
 
-    function addSupportedToken(address _token) external {
+    function addSupportedToken(address _token) external override onlyOwner {
         executionManager.addSupportedToken(_token);
     }
 
-    function getOrder(uint256 id) external view onlyOwner returns (LibOrder.OrderData memory) {
+    function getOrder(uint256 id) external view override returns (LibOrder.OrderData memory) {
         return orderbook.getOrder(id);
     }
 
-    function tokenEscrow() external view returns(address) {
+    function tokenEscrow() external view override returns(address) {
         return executionManager.tokenEscrow();
     }
 
-    function nftsEscrow() external view returns(address) {
+    function nftsEscrow() external view override returns(address) {
         return executionManager.nftsEscrow();
     }
 
-    function claimableRoyaltyAmount() external view returns (address[] memory tokens, uint256[] memory amounts) {
-        return royaltyManager.claimableRoyaltyAmount(_msgSender());
+    function claimableRoyalties() external view override returns (address[] memory tokens, uint256[] memory amounts) {
+        return royaltyManager.claimableRoyalties(_msgSender());
     }
 
     /**************** Internal Functions ****************/

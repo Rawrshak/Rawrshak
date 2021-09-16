@@ -5,11 +5,11 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "./StorageBase.sol";
-import "./interfaces/IExchangeFeePool.sol";
+import "./EscrowBase.sol";
+import "./interfaces/IExchangeFeesEscrow.sol";
 import "../utils/EnumerableMapsExtension.sol";
 
-contract ExchangeFeePool is IExchangeFeePool, StorageBase {
+contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     using EnumerableMapsExtension for *;
@@ -17,15 +17,19 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     /***************** Stored Variables *****************/
     EnumerableMapsExtension.AddressToUintMap amounts;
     uint24 public override rate;
-    address[] funds;
+    address[] pools;
     uint24[] percentages;
 
     /******************** Public API ********************/
-    function __ExchangeFeePool_init(uint24 _rate) public initializer {
+    function __ExchangeFeesEscrow_init(uint24 _rate) public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
-        __StorageBase_init_unchained();
+        __EscrowBase_init_unchained();
+        __ExchangeFeesEscrow_init_unchained(_rate);
+    }
+
+    function __ExchangeFeesEscrow_init_unchained(uint24 _rate) internal initializer {
         _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE_FEE_POOL);
         rate = _rate;
     }
@@ -36,21 +40,21 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         emit FeeUpdated(_msgSender(), rate);
     }
 
-    function updateDistributionFunds(address[] memory _funds, uint24[] memory _percentages) external override onlyRole(MANAGER_ROLE) {
-        require(_funds.length > 0 && _funds.length == _percentages.length, "Invalid input length");
+    function updateDistributionPools(address[] memory _pools, uint24[] memory _percentages) external override onlyRole(MANAGER_ROLE) {
+        require(_pools.length > 0 && _pools.length == _percentages.length, "Invalid input length");
 
-        delete funds;
+        delete pools;
         delete percentages;
 
         uint24 totalPercentages = 0;
-        for (uint24 i = 0; i < _funds.length; ++i) {
-            funds.push(_funds[i]);
+        for (uint24 i = 0; i < _pools.length; ++i) {
+            pools.push(_pools[i]);
             percentages.push(_percentages[i]);
             totalPercentages = totalPercentages + _percentages[i];
         }
         require(totalPercentages == 1e6, "Percentages do not sum to 100%");
 
-        emit FundsUpdated(_msgSender(), _funds, _percentages);
+        emit PoolsUpdated(_msgSender(), _pools, _percentages);
     }
 
     function depositRoyalty(address _token, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
@@ -61,7 +65,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     }
 
     function distribute() external override onlyRole(MANAGER_ROLE) {
-        require(funds.length > 0, "Invalid list of address for distribution");
+        require(pools.length > 0, "Invalid list of address for distribution");
         
         address token;
         uint256 balance;
@@ -76,18 +80,18 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
             amounts.set(token, 0);
 
             // Distribute the entire balance to everyone (not just what was recorded)
-            uint256[] memory distributions = new uint256[](funds.length);
-            for (uint256 j = 0; j < funds.length; ++j) {
+            uint256[] memory distributions = new uint256[](pools.length);
+            for (uint256 j = 0; j < pools.length; ++j) {
                 distributions[j] = (tokenBalance * percentages[j]) / 1e6;
-                IERC20Upgradeable(token).transfer(funds[j], distributions[j]);
+                IERC20Upgradeable(token).transfer(pools[j], distributions[j]);
             }
         }
 
-        emit FundsDistributed(_msgSender(), funds);
+        emit PoolsDistributed(_msgSender(), pools);
     }
 
-    function distributionRates() external view override returns(address[] memory _funds, uint24[] memory _percentages) {
-        _funds = funds;
+    function distributionRates() external view override returns(address[] memory _pools, uint24[] memory _percentages) {
+        _pools = pools;
         _percentages = percentages;
     }
 
