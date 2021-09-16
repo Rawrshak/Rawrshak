@@ -16,14 +16,14 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     beforeEach(async () => {
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
     });
 
     it('Check Content Storage proper deployment', async () => {
         // Check Contract Royalties
         var contractFees = await contentStorage.getRoyalties(0);
         assert.equal(
-            contractFees[0].account == deployerAddress && contractFees[0].rate == web3.utils.toWei('0.01', 'ether'),
+            contractFees[0].account == deployerAddress && contractFees[0].rate == 10000,
             true,
             "Royalty address should be the deployer.");
     });
@@ -82,7 +82,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
     // }
 
     it('Add single asset', async () => {
-        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1",  100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
+        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1",  100, [[deployerAddress, 20000]]]];
         var results = await contentStorage.addAssetBatch(asset);
 
         TruffleAssert.eventEmitted(
@@ -91,7 +91,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
+                    && ev.fees[0].rate == 20000;
             }
         );
         
@@ -131,7 +131,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     it('Add multiple assets', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
             [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2",  10, []]
         ];
         var results = await contentStorage.addAssetBatch(asset);
@@ -161,13 +161,13 @@ contract('ContentStorage Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
+                    && ev.fees[0].rate == 20000;
             }
         );
     });
 
     it('Update the current asset supply', async () => {
-        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
+        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, [[deployerAddress, 20000]]]];
         await contentStorage.addAssetBatch(asset);
 
         assert.equal(
@@ -185,35 +185,35 @@ contract('ContentStorage Contract Tests', (accounts) => {
     
     it('Basic Royalties tests', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
             [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
-            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, [[deployerAddress, web3.utils.toWei('0.02', 'ether')], [deployerAltAddress, web3.utils.toWei('0.03', 'ether')]]]
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, [[deployerAddress, 20000], [deployerAltAddress, 30000]]]
         ];
         await contentStorage.addAssetBatch(asset);
 
         tokenFees = await contentStorage.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.02', 'ether'),
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000,
             true,
             "Token 1 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(2);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.01', 'ether'),
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 10000,
             true,
             "Token 2 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(3);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.02', 'ether') &&
-            tokenFees[1].account == deployerAltAddress && tokenFees[1].rate == web3.utils.toWei('0.03', 'ether'),
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000 &&
+            tokenFees[1].account == deployerAltAddress && tokenFees[1].rate == 30000,
             true,
             "Token 3 incorrect royalties");
     });
 
     it('Basic Uri tests', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
             [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
             [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, []]
         ];

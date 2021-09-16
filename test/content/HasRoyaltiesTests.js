@@ -15,7 +15,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
 
     beforeEach(async () => {
         testContract = await TestHasRoyalties.new();
-        var contractFees = [[deployerAddress, web3.utils.toWei('0.01', 'ether')]];
+        var contractFees = [[deployerAddress, 10000]];
         await testContract.__TestHasRoyalties_init(contractFees);
     });
 
@@ -32,13 +32,13 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             "Royalty address should be the deployer.");
         assert.equal(
             contractFees[0].rate,
-            web3.utils.toWei('0.01', 'ether'),
+            10000,
             "Royalty rate is incorrect.");
     });
 
     it('Set Mutliple Contract Royalties', async () => {
         testContract = await TestHasRoyalties.new();
-        var defaultContractFees = [[deployerAddress, web3.utils.toWei('0.01', 'ether')], [deployerAltAddress, web3.utils.toWei('0.02', 'ether')]];
+        var defaultContractFees = [[deployerAddress, 10000], [deployerAltAddress, 20000]];
         await testContract.__TestHasRoyalties_init(defaultContractFees);
 
         var contractFees = await testContract.getRoyalties(0);
@@ -49,11 +49,11 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             "There should be multiple royalty fees");
 
         assert.equal(
-            contractFees[0].account == deployerAddress && contractFees[0].rate == web3.utils.toWei('0.01', 'ether'),
+            contractFees[0].account == deployerAddress && contractFees[0].rate == 10000,
             true,
             "First royalty fee should be the deployer.");
         assert.equal(
-            contractFees[1].account == deployerAltAddress && contractFees[1].rate == web3.utils.toWei('0.02', 'ether'),
+            contractFees[1].account == deployerAltAddress && contractFees[1].rate == 20000,
             true,
             "Second Royalty fee should be the deployer's alternate wallet.");
     });
@@ -90,20 +90,20 @@ contract('HasRoyalties Contract Tests', (accounts) => {
     });
 
     it('Set Update Contract Royalties', async () => {
-        contractFees = [[deployerAddress, web3.utils.toWei('0.02', 'ether')]];
+        contractFees = [[deployerAddress, 20000]];
         TruffleAssert.eventEmitted(
             await testContract.setContractRoyalties(contractFees),
             'ContractRoyaltiesUpdated',
             (ev) => {
                 return ev.fees[0].account == deployerAddress
-                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
+                    && ev.fees[0].rate == 20000;
             }
         );
 
         var tokenFees = await testContract.getRoyalties(0);
 
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.02', 'ether'),
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000,
             true,
             "Token Royalty should reflect new contract royalties.");
     });
@@ -121,7 +121,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
     //     }]
     // }
     it('Add royalty to Token ID 1', async () => {
-        var assetRoyalty = [[1, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
+        var assetRoyalty = [[1, [[deployerAddress, 20000]]]];
         var results = await testContract.setTokenRoyaltiesBatch(assetRoyalty);
         TruffleAssert.eventEmitted(
             results,
@@ -129,26 +129,26 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
+                    && ev.fees[0].rate == 20000;
             }
         );
 
         var tokenFees = await testContract.getRoyalties(0);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.01', 'ether'),
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 10000,
             true,
             "Token 0 royalties should reflect the contract royalties.");
 
         tokenFees = await testContract.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.02', 'ether'),
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000,
             true,
             "Token 1 royalties should reflect the new Token 1 royalties.");
     });
     
 
     it('Add royalty to Token ID 1 and 2', async () => {
-        var assetRoyalty = [[1, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]], [2, [[deployerAltAddress, web3.utils.toWei('0.02', 'ether')]]]];
+        var assetRoyalty = [[1, [[deployerAddress, 20000]]], [2, [[deployerAltAddress, 20000]]]];
         var results = await testContract.setTokenRoyaltiesBatch(assetRoyalty);
 
         // filter for token 1
@@ -158,7 +158,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 1
                     && ev.fees[0].account == deployerAddress
-                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
+                    && ev.fees[0].rate == 20000;
             }
         );
 
@@ -169,14 +169,14 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             (ev) => {
                 return ev.tokenId.toString() == 2
                     && ev.fees[0].account == deployerAltAddress
-                    && ev.fees[0].rate == web3.utils.toWei('0.02', 'ether');
+                    && ev.fees[0].rate == 20000;
             }
         );
     });
 
     it('Set Royalty to Token Id 1 and then revert to using Contract Royalty', async () => {
         // Set token 1 royalties
-        var assetRoyalty = [[1, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]]];
+        var assetRoyalty = [[1, [[deployerAddress, 20000]]]];
         await testContract.setTokenRoyaltiesBatch(assetRoyalty);
 
         // Delete Token 1 Royalties
@@ -193,7 +193,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
         
         tokenFees = await testContract.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == web3.utils.toWei('0.01', 'ether'),
+            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 10000,
             true,
             "Token 1 royalties should reflect the contract royalties.");
     });
