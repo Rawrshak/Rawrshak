@@ -17,11 +17,11 @@ interface IExchangeFeePool {
 
     function depositRoyalty(address _token, uint256 _amount) external;
 
-    function distribute(address _token) external;
+    function distribute() external;
     
     /*********************** Events *********************/
     event FeeUpdated(address indexed operator, uint24 rate);
     event FundsUpdated(address indexed operator, address[] funds, uint24[] percentages);
-    event FundsDistributed(address indexed operator, address[] funds, uint256[] distributions);
+    event FundsDistributed(address indexed operator, address[] funds);
     event ExchangeFeesPaid(address indexed tokenAddr, uint256 amount);
 }
