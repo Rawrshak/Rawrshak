@@ -19,8 +19,8 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         _registerInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER);
     }
 
-    function placeBuyOrder(uint256 _orderId, bytes4 _token, address _sender, uint256 _tokenAmount) external override onlyOwner {
-        _tokenEscrow(_token).deposit(_orderId, _sender, _tokenAmount);
+    function placeBuyOrder(uint256 _orderId, address _token, address _sender, uint256 _tokenAmount) external override onlyOwner {
+        _tokenEscrow().deposit(_token, _orderId, _sender, _tokenAmount);
     }
 
     function placeSellOrder(uint256 _orderId, address _sender, LibOrder.AssetData memory _asset, uint256 _assetAmount) external override onlyOwner {
@@ -32,8 +32,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         uint256[] calldata _orderIds,
         uint256[] calldata _paymentPerOrder,
         uint256[] calldata _amounts,
-        LibOrder.AssetData calldata _asset,
-        bytes4 _token) 
+        LibOrder.AssetData calldata _asset) 
         external override onlyOwner
     {
         require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input lenght");
@@ -43,7 +42,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
             _nftEscrow().deposit(_orderIds[i], _user, _amounts[i], _asset);
             
             // send payment from escrow to user
-            _tokenEscrow(_token).withdraw(_orderIds[i], _user, _paymentPerOrder[i]);
+            _tokenEscrow().withdraw(_orderIds[i], _user, _paymentPerOrder[i]);
         }
     }
 
@@ -53,14 +52,14 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         uint256[] calldata _orderIds,
         uint256[] calldata _paymentPerOrder,
         uint256[] calldata _amounts,
-        bytes4 _token)
-        external override onlyOwner 
+        address _token)
+        external override onlyOwner
     {
         require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input lenght");
         
         // send payment from user to escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            _tokenEscrow(_token).deposit(_orderIds[i], _user, _paymentPerOrder[i]);
+            _tokenEscrow().deposit(_token, _orderIds[i], _user, _paymentPerOrder[i]);
         }
 
         // send asset to buyer
@@ -71,7 +70,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         
         if (_order.isBuyOrder) {
             // withdraw ERC20
-            _tokenEscrow(_order.token).withdraw(
+            _tokenEscrow().withdraw(
                 _orderId,
                 _user, 
                 _order.price * _order.amount);
@@ -94,38 +93,34 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
                 _nftEscrow().withdraw(_orderIds[i], _user, amount);
             } else {
                 // withdraw ERC20      
-                amount = _tokenEscrow(order.token).escrowedTokensByOrder(_orderIds[i]);
-                _tokenEscrow(order.token).withdraw(
+                amount = _tokenEscrow().escrowedTokensByOrder(_orderIds[i]);
+                _tokenEscrow().withdraw(
                     _orderIds[i],
                     _user,
                     amount);
             }
         }
     }
-    
-    function token(bytes4 _token) external view override returns(address) {
-        return _tokenEscrow(_token).token();
+
+    function addSupportedToken(address _token) external override onlyOwner {
+        _tokenEscrow().addSupportedTokens(_token);
     }
     
-    function tokenEscrow(bytes4 _token) external view override returns(address) {
-        return address(resolver.getAddress(_token));
+    function tokenEscrow() external view override returns(address) {
+        return address(_tokenEscrow());
     }
     
     function nftsEscrow() external view override returns(address) {
-        return address(resolver.getAddress(LibContractHash.CONTRACT_NFT_ESCROW));
+        return address(_nftEscrow());
     }
 
-    function verifyUserBalance(address _user, bytes4 _token, uint256 amountDue) external view override returns(bool) {
-        return IERC20Upgradeable(_tokenEscrow(_token).token()).balanceOf(_user) >= amountDue;
-    }
-
-    function verifyToken(bytes4 _token) external view override returns(bool) {
-        return resolver.getAddress(_token) != address(0);
+    function verifyToken(address _token) external view override returns(bool) {
+        return _tokenEscrow().isTokenSupported(_token);
     }
 
     /**************** Internal Functions ****************/
-    function _tokenEscrow(bytes4 _token) internal view returns(IErc20Escrow) {
-        return IErc20Escrow(resolver.getAddress(_token));
+    function _tokenEscrow() internal view returns(IErc20Escrow) {
+        return IErc20Escrow(resolver.getAddress(LibContractHash.CONTRACT_ERC20_ESCROW));
     }
     
     function _nftEscrow() internal view returns(INftEscrow) {

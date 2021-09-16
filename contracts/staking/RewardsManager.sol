@@ -16,10 +16,6 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
 
-    /******************** Constants ********************/
-    // bytes4(keccak256('RAWR')) == 0xd4df6855
-    bytes4 constant ESCROW_RAWR_CONTRACT = 0xd4df6855;
-
     /***************** Stored Variables *****************/
     IStaking staking;
     ILockedFundPool lockedStakingPool;
@@ -70,13 +66,13 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
     }
 
     function distributeExchangeFees() external override onlyOwner {
-        uint256 exchangeFees = exchangeFeePool.totalFeePool(ESCROW_RAWR_CONTRACT);
+        uint256 exchangeFees = exchangeFeePool.totalFeePool(staking.token());
         if (exchangeFees == 0) {
             return;
         }
 
         lockedExchangeFeePool.reloadFunds(exchangeFees);
 
-        exchangeFeePool.distribute(ESCROW_RAWR_CONTRACT, staking.token());
+        exchangeFeePool.distribute(staking.token());
     }
 }

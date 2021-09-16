@@ -20,7 +20,7 @@ library LibOrder {
     struct OrderData {
         AssetData asset;
         address owner;
-        bytes4 token;
+        address token;
         uint256 price;
         uint256 amount;
         bool isBuyOrder;
@@ -43,7 +43,7 @@ library LibOrder {
     function _verifyOrders(
         OrderData storage _order,
         AssetData memory _asset,
-        bytes4 _token,
+        address _token,
         bool _isBuyOrder) public view returns (bool) {
         if (_order.asset.contentAddress == _asset.contentAddress &&
             _order.asset.tokenId == _asset.tokenId && 
