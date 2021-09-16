@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
@@ -12,7 +13,7 @@ import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IOrderbook.sol";
 import "./interfaces/IExecutionManager.sol";
 
-contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
+contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
     
@@ -28,29 +29,25 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         uint256[] orderIds,
         uint256[] amounts,
         LibOrder.AssetData asset,
-        bytes4 token,
+        address token,
         uint256 amountOfAssetsSold);
     event SellOrdersFilled(
         address indexed from,
         uint256[] orderIds,
         uint256[] amounts,
         LibOrder.AssetData asset,
-        bytes4 token,
+        address token,
         uint256 amountPaid);
     event OrderDeleted(address indexed owner, uint256 orderId);
     event FilledOrdersClaimed(address indexed owner, uint256[] orderIds);
 
     /******************** Public API ********************/
     function __Exchange_init(address _royaltyManager, address _orderbook, address _executionManager) public initializer {
+        // We don't run the interface checks because we're the only one who will deploy this so
+        // we know that the addresses are correct
         __Context_init_unchained();
-        require(
-            _royaltyManager != address(0) && _orderbook != address(0) && _executionManager != address(0),
-            "Address cannot be empty."
-        );
-        require(_royaltyManager.supportsInterface(LibInterfaces.INTERFACE_ID_ROYALTY_MANAGER), "Invalid manager interface.");
-        require(_orderbook.supportsInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK), "Invalid manager interface.");
-        require(_executionManager.supportsInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER), "Invalid manager interface.");
-        
+        __Ownable_init_unchained();
+          
         royaltyManager = IRoyaltyManager(_royaltyManager);
         orderbook = IOrderbook(_orderbook);
         executionManager = IExecutionManager(_executionManager);
@@ -61,6 +58,9 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
     function placeOrder(LibOrder.OrderData memory _order) external {        
         LibOrder.verifyOrderData(_order, _msgSender());
         require(executionManager.verifyToken(_order.token), "Token is not supported.");
+
+        // Todo: Check if the token is supported via Erc20 Escrow
+        // Todo: Add function to add supported escrows
 
         // place order in orderbook
         uint256 id = orderbook.placeOrder(_order);
@@ -111,13 +111,13 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
              uint256[] memory royaltyAmounts,
              uint256 remaining) = royaltyManager.getRequiredRoyalties(order.asset, amountPerOrder[i]);
             
-            royaltyManager.transferRoyalty(order.token, _orderIds[i], accounts, royaltyAmounts);
+            royaltyManager.transferRoyalty(_orderIds[i], accounts, royaltyAmounts);
             royaltyManager.transferPlatformRoyalty(order.token, _orderIds[i], amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
         // Update Escrow records for the orders
-        executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.asset, order.token);
+        executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.asset);
 
         emit BuyOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, totalAssetsToSell);
     }
@@ -139,8 +139,8 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         
         // check buyer's account balance
         LibOrder.OrderData memory order = orderbook.getOrder(_orderIds[0]);
-        require(executionManager.verifyUserBalance(_msgSender(), order.token, amountDue), "Not enough funds.");
-        
+        require(IERC20Upgradeable(order.token).balanceOf(_msgSender()) >= amountDue, "Not enough funds.");
+
         // Orderbook -> fill sell order
         orderbook.fillOrders(_orderIds, _amounts);
 
@@ -185,26 +185,28 @@ contract Exchange is ContextUpgradeable, ERC165StorageUpgradeable {
         emit FilledOrdersClaimed(_msgSender(), orderIds);
     }
 
-    function claimRoyalties(bytes4 _token) external {
-        require(executionManager.verifyToken(_token), "Token is not supported.");
-        royaltyManager.claimRoyalties(_msgSender(), _token);
+    function claimRoyalties() external {
+        royaltyManager.claimRoyalties(_msgSender());
     }
 
-    function getOrder(uint256 id) external view returns (LibOrder.OrderData memory) {
+    function addSupportedToken(address _token) external {
+        executionManager.addSupportedToken(_token);
+    }
+
+    function getOrder(uint256 id) external view onlyOwner returns (LibOrder.OrderData memory) {
         return orderbook.getOrder(id);
     }
 
-    function tokenEscrow(bytes4 _token) external view returns(address) {
-        return executionManager.tokenEscrow(_token);
+    function tokenEscrow() external view returns(address) {
+        return executionManager.tokenEscrow();
     }
 
     function nftsEscrow() external view returns(address) {
         return executionManager.nftsEscrow();
     }
 
-    function claimableRoyaltyAmount(bytes4 _token) external view returns (uint256) {
-        require(executionManager.verifyToken(_token), "Token is not supported.");
-        return royaltyManager.claimableRoyaltyAmount(_msgSender(), _token);
+    function claimableRoyaltyAmount() external view returns (address[] memory tokens, uint256[] memory amounts) {
+        return royaltyManager.claimableRoyaltyAmount(_msgSender());
     }
 
     /**************** Internal Functions ****************/

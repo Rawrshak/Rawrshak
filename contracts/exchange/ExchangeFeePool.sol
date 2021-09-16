@@ -13,7 +13,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     using ERC165CheckerUpgradeable for address;
 
     /***************** Stored Variables *****************/
-    mapping(bytes4 => uint256) amounts;
+    mapping(address => uint256) amounts;
     uint24 public override rate;
     address[] funds;
     uint24[] percentages;
@@ -51,23 +51,24 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
         emit FundsUpdated(_msgSender(), _funds, _percentages);
     }
 
-    function depositRoyalty(bytes4 _token, address _tokenAddr, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
+    function depositRoyalty(address _token, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         amounts[_token] = amounts[_token] + _amount;
 
-        emit ExchangeFeesPaid(_token, _tokenAddr, _amount);
+        emit ExchangeFeesPaid(_token, _amount);
     }
 
-    function distribute(bytes4 _token, address _tokenAddr) external override onlyRole(MANAGER_ROLE) {
+    // Todo: update this to distribute all the different tokens
+    function distribute(address _token) external override onlyRole(MANAGER_ROLE) {
         require(funds.length > 0, "Invalid list of address for distribution");
         
-        uint256 balance = IERC20Upgradeable(_tokenAddr).balanceOf(address(this));
+        uint256 balance = IERC20Upgradeable(_token).balanceOf(address(this));
         require(balance >= amounts[_token] && balance > 0, "Balance is incorrect.");
         amounts[_token] = 0;
 
         uint256[] memory distributions = new uint256[](funds.length);
         for (uint256 i = 0; i < funds.length; ++i) {
             distributions[i] = (balance * percentages[i]) / 1e6;
-            IERC20Upgradeable(_tokenAddr).transfer(funds[i], distributions[i]);
+            IERC20Upgradeable(_token).transfer(funds[i], distributions[i]);
         }
 
         emit FundsDistributed(_msgSender(), funds, distributions);
@@ -79,7 +80,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     }
 
     // gets the amount in the fee pool
-    function totalFeePool(bytes4 _token) external view override returns(uint256) {
+    function totalFeePool(address _token) external view override returns(uint256) {
         return amounts[_token];
     }
 

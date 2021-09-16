@@ -6,7 +6,7 @@ interface IExchangeFeePool {
     /******** View Functions ********/
     function rate() external view returns(uint24);
     
-    function totalFeePool(bytes4 _token) external view returns(uint256);
+    function totalFeePool(address _token) external view returns(uint256);
 
     function distributionRates() external view returns(address[] memory _funds, uint24[] memory _percentages);
     
@@ -15,13 +15,13 @@ interface IExchangeFeePool {
     
     function updateDistributionFunds(address[] memory _funds, uint24[] memory _percentages) external;
 
-    function depositRoyalty(bytes4 _token, address _tokenAddr, uint256 _amount) external;
+    function depositRoyalty(address _token, uint256 _amount) external;
 
-    function distribute(bytes4 _token, address _tokenAddr) external;
+    function distribute(address _token) external;
     
     /*********************** Events *********************/
     event FeeUpdated(address indexed operator, uint24 rate);
     event FundsUpdated(address indexed operator, address[] funds, uint24[] percentages);
     event FundsDistributed(address indexed operator, address[] funds, uint256[] distributions);
-    event ExchangeFeesPaid(bytes4 indexed token, address tokenAddr, uint256 amount);
+    event ExchangeFeesPaid(address indexed tokenAddr, uint256 amount);
 }

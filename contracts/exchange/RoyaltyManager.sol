@@ -21,15 +21,14 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         _registerInterface(LibInterfaces.INTERFACE_ID_ROYALTY_MANAGER);
     }
 
-    function claimRoyalties(address _user, bytes4 _token) external override onlyOwner {
-        uint256 amountClaimed = _claimableRoyaltyAmount(_user, _token);
-        _tokenEscrow(_token).claim(_user);
-        emit RoyaltiesClaimed(_user, _tokenEscrow(_token).token(), amountClaimed);
+    function claimRoyalties(address _user) external override onlyOwner {
+        _tokenEscrow().claim(_user);
+        emit RoyaltiesClaimed(_user);
     }
 
     function depositRoyalty(
         address _sender,
-        bytes4 _token,
+        address _token,
         address[] memory _accounts,
         uint256[] memory _amounts
     ) external override onlyOwner {
@@ -37,22 +36,21 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         // This is called in a fill sell order where Tokens are sent from the buyer to the escrow. We 
         // need to update the royalties table internally 
         for (uint256 i = 0; i < _accounts.length; ++i) {
-            _tokenEscrow(_token).depositRoyalty(_sender, _accounts[i], _amounts[i]);
+            _tokenEscrow().depositRoyalty(_token, _sender, _accounts[i], _amounts[i]);
         }
     }
 
     function depositPlatformRoyalty(
         address _sender,
-        bytes4 _token,
+        address _token,
         uint256 _total
     ) external override onlyOwner {
         uint256 feeAmount = (_total * _exchangeFeePool().rate()) / 1e6;
-        _tokenEscrow(_token).depositPlatformRoyalty(_sender, address(_exchangeFeePool()), feeAmount);
-        _exchangeFeePool().depositRoyalty(_token, _tokenEscrow(_token).token(), feeAmount);
+        _tokenEscrow().depositPlatformRoyalty(_token, _sender, address(_exchangeFeePool()), feeAmount);
+        _exchangeFeePool().depositRoyalty(_token, feeAmount);
     }
 
     function transferRoyalty(
-        bytes4 _token,
         uint256 _orderId,
         address[] memory _accounts,
         uint256[] memory _amounts
@@ -62,18 +60,18 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         // to the "claimable" table for the asset creator
 
         for (uint256 i = 0; i < _accounts.length; ++i) {
-            _tokenEscrow(_token).transferRoyalty(_orderId, _accounts[i], _amounts[i]);
+            _tokenEscrow().transferRoyalty(_orderId, _accounts[i], _amounts[i]);
         }
     }
 
     function transferPlatformRoyalty(
-        bytes4 _token,
+        address _token,
         uint256 _orderId,
         uint256 _total
     ) external override onlyOwner {
         uint256 feeAmount = (_total * _exchangeFeePool().rate()) / 1e6;
-        _tokenEscrow(_token).transferPlatformRoyalty(_orderId, address(_exchangeFeePool()), feeAmount);
-        _exchangeFeePool().depositRoyalty(_token, _tokenEscrow(_token).token(), feeAmount);
+        _tokenEscrow().transferPlatformRoyalty(_orderId, address(_exchangeFeePool()), feeAmount);
+        _exchangeFeePool().depositRoyalty(_token, feeAmount);
     }
 
     function getRequiredRoyalties(
@@ -100,17 +98,17 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         remaining = remaining - royalty;
     }
 
-    function claimableRoyaltyAmount(address _user, bytes4 _token) external view override returns(uint256) {        
-        return _claimableRoyaltyAmount(_user, _token);
+    function claimableRoyaltyAmount(address _user) external view override returns(address[] memory tokens, uint256[] memory amounts) {        
+        return _claimableRoyaltyAmount(_user);
     }
 
     /**************** Internal Functions ****************/
-    function _claimableRoyaltyAmount(address _user, bytes4 _token) internal view returns(uint256) {
-        return _tokenEscrow(_token).claimableTokensByOwner(_user);
+    function _claimableRoyaltyAmount(address _user) internal view returns(address[] memory tokens, uint256[] memory amounts) {
+        return _tokenEscrow().claimableTokensByOwner(_user);
     }
 
-    function _tokenEscrow(bytes4 _token) internal view returns(IErc20Escrow) {
-        return IErc20Escrow(resolver.getAddress(_token));
+    function _tokenEscrow() internal view returns(IErc20Escrow) {
+        return IErc20Escrow(resolver.getAddress(LibContractHash.CONTRACT_ERC20_ESCROW));
     }
 
     function _exchangeFeePool() internal view returns(IExchangeFeePool) {
