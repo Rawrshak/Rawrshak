@@ -9,8 +9,6 @@ const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
-const OrderbookStorage= artifacts.require("OrderbookStorage");
-const Exchange = artifacts.require("Exchange");
 
 
 module.exports = async function(deployer, networks, accounts) {
@@ -23,6 +21,4 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.link(Constants, [Content, ContentStorage, ContentManager, AccessControlManager]);
     await deployer.link(Asset, [Content, ContentStorage, ContentManager, AccessControlManager]);
     await deployer.link(Royalties, [Content, ContentStorage, ContentManager]);
-    
-    await deployer.link(Order, [OrderbookStorage, Exchange]);
 };

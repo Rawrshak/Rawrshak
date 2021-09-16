@@ -52,7 +52,7 @@ contract('Content Clone Factory Tests', (accounts) => {
         var uri = "arweave.net/tx-contract-uri";
 
         var result = await contentFactory.createContracts(
-            [[deployerAddress, web3.utils.toWei('0.01', 'ether')]],
+            [[deployerAddress, 10000]],
             uri);
 
         // To figure out which log contains the ContractDeployed event
@@ -78,7 +78,7 @@ contract('Content Clone Factory Tests', (accounts) => {
 
         // developer 1 launches contracts
         var contract1Result = await contentFactory.createContracts(
-            [[developer1Address, web3.utils.toWei('0.01', 'ether')]],
+            [[developer1Address, 10000]],
             uri1,
             {from: developer1Address});
 
@@ -87,7 +87,7 @@ contract('Content Clone Factory Tests', (accounts) => {
 
         // developer 2 launches contracts
         var contract2Result = await contentFactory.createContracts(
-            [[developer2Address, web3.utils.toWei('0.01', 'ether')]],
+            [[developer2Address, 10000]],
             uri2,
             {from: developer2Address});
 

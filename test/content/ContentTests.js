@@ -19,7 +19,7 @@ contract('Content Contract Tests', (accounts) => {
     var contentStorage;
     var accessControlManager;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
+        [1, "arweave.net/tx/public-uri-1", "", constants.MAX_UINT256, [[deployerAddress, 20000]]],
         [2, "arweave.net/tx/public-uri-2", "", 100, []],
     ];
 
@@ -27,11 +27,10 @@ contract('Content Contract Tests', (accounts) => {
         accessControlManager = await AccessControlManager.new();
         await accessControlManager.__AccessControlManager_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, accessControlManager.address);
         await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), content.address, {from: deployerAddress});
-        // await contentStorage.setParent(content.address);
 
         // give deployer address and crafting system approval; This would normally be done through the ContentManager
         minter_role = await accessControlManager.MINTER_ROLE();
@@ -105,7 +104,7 @@ contract('Content Contract Tests', (accounts) => {
         // test royalties
         var fees = await content.getRoyalties(1);
         assert.equal(
-            fees[0].account == deployerAddress && fees[0].rate == web3.utils.toWei('0.02', 'ether'),
+            fees[0].account == deployerAddress && fees[0].rate == 20000,
             true,
             "Token 1 royalties are incorrect");
     });
