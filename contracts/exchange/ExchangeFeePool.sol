@@ -7,13 +7,15 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./StorageBase.sol";
 import "./interfaces/IExchangeFeePool.sol";
+import "../utils/EnumerableMapsExtension.sol";
 
 contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     using AddressUpgradeable for address;
     using ERC165CheckerUpgradeable for address;
+    using EnumerableMapsExtension for *;
 
     /***************** Stored Variables *****************/
-    mapping(address => uint256) amounts;
+    EnumerableMapsExtension.AddressToUintMap amounts;
     uint24 public override rate;
     address[] funds;
     uint24[] percentages;
@@ -52,26 +54,36 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
     }
 
     function depositRoyalty(address _token, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
-        amounts[_token] = amounts[_token] + _amount;
+        amounts.set(_token, amounts.get(_token) + _amount);
+        // amounts[_token] = amounts[_token] + _amount;
 
         emit ExchangeFeesPaid(_token, _amount);
     }
 
-    // Todo: update this to distribute all the different tokens
-    function distribute(address _token) external override onlyRole(MANAGER_ROLE) {
+    function distribute() external override onlyRole(MANAGER_ROLE) {
         require(funds.length > 0, "Invalid list of address for distribution");
         
-        uint256 balance = IERC20Upgradeable(_token).balanceOf(address(this));
-        require(balance >= amounts[_token] && balance > 0, "Balance is incorrect.");
-        amounts[_token] = 0;
+        address token;
+        uint256 balance;
 
-        uint256[] memory distributions = new uint256[](funds.length);
-        for (uint256 i = 0; i < funds.length; ++i) {
-            distributions[i] = (balance * percentages[i]) / 1e6;
-            IERC20Upgradeable(_token).transfer(funds[i], distributions[i]);
+        for (uint256 i = 0; i < amounts.length(); i++) {
+            (token, balance) = amounts.at(i);
+            uint256 tokenBalance = IERC20Upgradeable(token).balanceOf(address(this));
+
+            // The reason we're not checking for exact equal is because anyone can send tokens 
+            // to this contract. The balance has to be at least the amount on here.
+            require(tokenBalance >= balance && tokenBalance > 0, "Balance is incorrect.");
+            amounts.set(token, 0);
+
+            // Distribute the entire balance to everyone (not just what was recorded)
+            uint256[] memory distributions = new uint256[](funds.length);
+            for (uint256 j = 0; j < funds.length; ++j) {
+                distributions[j] = (tokenBalance * percentages[j]) / 1e6;
+                IERC20Upgradeable(token).transfer(funds[j], distributions[j]);
+            }
         }
 
-        emit FundsDistributed(_msgSender(), funds, distributions);
+        emit FundsDistributed(_msgSender(), funds);
     }
 
     function distributionRates() external view override returns(address[] memory _funds, uint24[] memory _percentages) {
@@ -81,7 +93,7 @@ contract ExchangeFeePool is IExchangeFeePool, StorageBase {
 
     // gets the amount in the fee pool
     function totalFeePool(address _token) external view override returns(uint256) {
-        return amounts[_token];
+        return amounts.get(_token);
     }
 
     uint256[50] private __gap;

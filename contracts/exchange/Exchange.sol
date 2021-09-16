@@ -58,10 +58,7 @@ contract Exchange is ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgrad
     function placeOrder(LibOrder.OrderData memory _order) external {        
         LibOrder.verifyOrderData(_order, _msgSender());
         require(executionManager.verifyToken(_order.token), "Token is not supported.");
-
-        // Todo: Check if the token is supported via Erc20 Escrow
-        // Todo: Add function to add supported escrows
-
+        
         // place order in orderbook
         uint256 id = orderbook.placeOrder(_order);
 

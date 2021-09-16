@@ -73,6 +73,6 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
 
         lockedExchangeFeePool.reloadFunds(exchangeFees);
 
-        exchangeFeePool.distribute(staking.token());
+        exchangeFeePool.distribute();
     }
 }
