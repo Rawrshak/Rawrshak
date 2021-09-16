@@ -35,20 +35,20 @@ contract Orderbook is IOrderbook, ManagerBase {
         // The Exchange contract should have already checked the matching lengths of the parameters.
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < _orderIds.length; ++i) {
+            // This will revert if amount is greater than the order amount. This will automatically revert
             orders[_orderIds[i]].amount = orders[_orderIds[i]].amount - _amounts[i];
         }
     }
 
-    function deleteOrder(uint256 _orderId, address _owner) external override onlyOwner {
-        // If we get to this point, the orders in the list of order ids have already been verified.
-        // the caller will already fill in the orders up to the amount. 
-        require(
-            orders[_orderId].owner == _owner,
-            "Invalid order owner."
-        );
-
+    function cancelOrders(uint256[] memory _orderIds) external override onlyOwner {
         // Deleting costs 5000, but returns a 15000 gas refund at the end of your call, which will make
         // the overall transaction cheaper, I think.
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            delete orders[_orderIds[i]];
+        }
+    }
+    
+    function cancelOrder(uint256 _orderId) external override onlyOwner {
         delete orders[_orderId];
     }
 
@@ -73,6 +73,18 @@ contract Orderbook is IOrderbook, ManagerBase {
                 orders[_orderIds[i]].asset.tokenId != firstOrder.asset.tokenId ||
                 orders[_orderIds[i]].token != firstOrder.token ||
                 orders[_orderIds[i]].isBuyOrder != _isBuyOrder) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function verifyOrderOwners(
+        uint256[] memory _orderIds,
+        address _owner
+    ) external view override onlyOwner returns (bool) {
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            if (orders[_orderIds[i]].owner != _owner) {
                 return false;
             }
         }

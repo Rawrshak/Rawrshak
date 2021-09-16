@@ -12,7 +12,7 @@ interface IRoyaltyManager {
     function payableRoyalties(
         LibOrder.AssetData calldata _asset,
         uint256 _total
-    ) external view returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining);
+    ) external view returns(address[] memory creators, uint256[] memory creatorRoyaltieFees, uint256 remaining);
 
     /******** Mutative Functions ********/
     function claimRoyalties(address _user) external;

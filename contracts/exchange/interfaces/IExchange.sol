@@ -28,9 +28,9 @@ interface IExchange {
         uint256[] memory _amounts
     ) external;
 
-    function deleteOrder(uint256 _orderId) external;
+    function cancelOrders(uint256[] memory _orderIds) external;
 
-    function claimOrders(uint256[] memory orderIds) external;
+    function claimOrders(uint256[] memory _orderIds) external;
 
     function claimRoyalties() external;
 
@@ -54,9 +54,9 @@ interface IExchange {
         LibOrder.AssetData asset,
         address token,
         uint256 amountPaid);
-        
-    event OrderDeleted(address indexed owner, uint256 orderId);
+
+    event OrdersDeleted(address indexed owner, uint256[] orderIds);
     
-    event FilledOrdersClaimed(address indexed owner, uint256[] orderIds);
+    event OrdersClaimed(address indexed owner, uint256[] orderIds);
     
 }
