@@ -35,12 +35,11 @@ library LibOrder {
     function verifyAssetData(AssetData calldata _asset) public view {
         require(_asset.contentAddress != address(0),"Invalid Address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
+
+        // require support for IERC1155Upgradeable
         require(
-            _asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_CONTENT),
+            _asset.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId),
             "Invalid contract interface.");
-        require(
-            IContent(_asset.contentAddress).totalSupply(_asset.tokenId) > 0,
-            "Invalid Token Id");
     }
 
     function _verifyOrders(

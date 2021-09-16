@@ -34,7 +34,7 @@ interface IExecutionManager {
         address _token)
         external;
 
-    function deleteOrder(uint256 _orderId, address _user, LibOrder.OrderData memory _order) external;
+    function cancelOrders(uint256[] memory _orderIds) external;
 
     function claimOrders(address _user, uint256[] calldata _orderIds) external;
     

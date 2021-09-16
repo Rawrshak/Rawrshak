@@ -2,16 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "./EscrowBase.sol";
 import "./interfaces/IExchangeFeesEscrow.sol";
 import "../utils/EnumerableMapsExtension.sol";
 
 contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
-    using AddressUpgradeable for address;
-    using ERC165CheckerUpgradeable for address;
     using EnumerableMapsExtension for *;
 
     /***************** Stored Variables *****************/
@@ -59,7 +55,6 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
 
     function depositRoyalty(address _token, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         amounts.set(_token, amounts.get(_token) + _amount);
-        // amounts[_token] = amounts[_token] + _amount;
 
         emit ExchangeFeesPaid(_token, _amount);
     }

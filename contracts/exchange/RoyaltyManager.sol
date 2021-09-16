@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "./ManagerBase.sol";
 import "../libraries/LibRoyalties.sol";
 import "../content/Content.sol";
@@ -11,7 +12,7 @@ import "./ExchangeFeesEscrow.sol";
 import "../utils/LibContractHash.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
-    /***************** Stored Variables *****************/
+    using ERC165CheckerUpgradeable for address;
 
     /******************** Public API ********************/
     function __RoyaltyManager_init(address _resolver) public initializer {
@@ -73,32 +74,38 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 _total
     ) external override onlyOwner {
         uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;
-        _tokenEscrow().transferPlatformFees(_orderId, address(_exchangeFeesEscrow()), feeAmount);
         _exchangeFeesEscrow().depositRoyalty(_token, feeAmount);
+        _tokenEscrow().transferPlatformFees(_orderId, address(_exchangeFeesEscrow()), feeAmount);
     }
 
     function payableRoyalties(
         LibOrder.AssetData calldata _asset,
         uint256 _total
-    ) external view override onlyOwner returns(address[] memory accounts, uint256[] memory royaltyAmounts, uint256 remaining) {
+    ) external view override onlyOwner returns(address[] memory creators, uint256[] memory creatorRoyaltieFees, uint256 remaining) {
         remaining = _total;
 
+        // Get platform fees
+        uint256 platformFees = (_total * _exchangeFeesEscrow().rate()) / 1e6;
+        remaining -= platformFees;
+
+        // If IContent is not supported, ignore royalties
+        if (!_asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_CONTENT)) {
+            return (creators, creatorRoyaltieFees, remaining);
+        }
+
         LibRoyalties.Fees[] memory fees = IContent(_asset.contentAddress).getRoyalties(_asset.tokenId);
-        royaltyAmounts = new uint256[](fees.length);
-        accounts = new address[](fees.length);
-        uint256 royalty = 0;
+        creatorRoyaltieFees = new uint256[](fees.length);
+        creators = new address[](fees.length);
+        uint256 royaltyFee = 0;
         uint256 idx = 0;
         for (uint256 i = 0; i < fees.length; ++i) {
             // Get Royalties owed per fee
-            royalty = (_total * fees[i].rate) / 1e6;
-            accounts[idx] = fees[i].account;
-            royaltyAmounts[idx] = royalty;
-            remaining = remaining - royalty;
+            royaltyFee = (_total * fees[i].rate) / 1e6;
+            creators[idx] = fees[i].account;
+            creatorRoyaltieFees[idx] = royaltyFee;
+            remaining -= royaltyFee;
             ++idx;
         }
-
-        royalty = (_total * _exchangeFeesEscrow().rate()) / 1e6;
-        remaining = remaining - royalty;
     }
 
     function claimableRoyalties(address _user) external view override returns(address[] memory tokens, uint256[] memory amounts) {        

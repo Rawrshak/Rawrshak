@@ -2,22 +2,16 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "../content/Content.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/IRoyaltyManager.sol";
 import "./interfaces/IOrderbook.sol";
 import "./interfaces/IExecutionManager.sol";
 import "./interfaces/IExchange.sol";
 
-contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgradeable {
-    using AddressUpgradeable for address;
-    using ERC165CheckerUpgradeable for address;
-    
+contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgradeable {    
     /***************** Stored Variables *****************/
     IRoyaltyManager royaltyManager;
     IOrderbook orderbook;
@@ -44,6 +38,12 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
     function placeOrder(LibOrder.OrderData memory _order) external override {        
         LibOrder.verifyOrderData(_order, _msgSender());
         require(executionManager.verifyToken(_order.token), "Token is not supported.");
+
+        // Note: not checking for token id validity. If Id doesn't exist and the user places 
+        // a buy order, it will escrow the tokens until the user cancels the order. If the user
+        // creates a sell order for an invalid id, the transaction will fail due to invalid 
+        // asset transfer to escrow. The UI should not allow either, but if someone interacts
+        // with the smart contract, these two outcomes are fine.
         
         // place order in orderbook
         uint256 id = orderbook.placeOrder(_order);
@@ -81,25 +81,24 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
             totalAssetsToSell = totalAssetsToSell + _amounts[i];
         }
 
-        // Verify that the buyer has these NFTs
+        // Get Orderbook data
         LibOrder.OrderData memory order = orderbook.getOrder(_orderIds[0]);
-        require(Content(order.asset.contentAddress).balanceOf(_msgSender(), order.asset.tokenId) >= totalAssetsToSell, "Not enough assets.");
 
         // Orderbook -> fill buy order
         orderbook.fillOrders(_orderIds, _amounts);
 
         // Deduct royalties from escrow per order and transfer to claimable in escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            (address[] memory accounts,
-             uint256[] memory royaltyAmounts,
+            (address[] memory creators,
+             uint256[] memory creatorRoyaltyFees,
              uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
             
-            royaltyManager.transferRoyalty(_orderIds[i], accounts, royaltyAmounts);
+            royaltyManager.transferRoyalty(_orderIds[i], creators, creatorRoyaltyFees);
             royaltyManager.transferPlatformFees(order.token, _orderIds[i], amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
-        // Update Escrow records for the orders
+        // Update Escrow records for the orders - will revert if the user doesn't have enough assets
         executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.asset);
 
         emit BuyOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, totalAssetsToSell);
@@ -120,52 +119,53 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Get Total Payment
         (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
         
-        // check buyer's account balance
+        // get the order data
         LibOrder.OrderData memory order = orderbook.getOrder(_orderIds[0]);
-        require(IERC20Upgradeable(order.token).balanceOf(_msgSender()) >= amountDue, "Not enough funds.");
 
         // Orderbook -> fill sell order
         orderbook.fillOrders(_orderIds, _amounts);
 
         // Deduct royalties
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            (address[] memory accounts,
-             uint256[] memory royaltyAmounts,
+            (address[] memory creators,
+             uint256[] memory creatorRoyaltyFees,
              uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
 
             // for each order, update the royalty table for each creator to get paid
-            royaltyManager.depositRoyalty(_msgSender(), order.token, accounts, royaltyAmounts);
+            royaltyManager.depositRoyalty(_msgSender(), order.token, creators, creatorRoyaltyFees);
             royaltyManager.depositPlatformFees(_msgSender(), order.token, amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
-        // Execute trade
+        // Execute trade - will revert if buyer doesn't have enough funds
         executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.token);
 
         emit SellOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, amountDue);
     }
 
-    function deleteOrder(uint256 _orderId) external override {
-        require(orderbook.exists(_orderId), "Invalid Order.");
+    function cancelOrders(uint256[] memory _orderIds) external override {
+        require(_orderIds.length > 0, "empty order length.");
+        
+        require(orderbook.verifyOrdersExist(_orderIds), "Order does not exist");
+        require(orderbook.verifyOrderOwners(_orderIds, _msgSender()), "Order is not owned by claimer");
 
         // Delete Order from Orderbook before withdrawing assets in order to avoid re-entrancy attacks
-        LibOrder.OrderData memory order = orderbook.getOrder(_orderId);
-        orderbook.deleteOrder(_orderId, _msgSender());
+        orderbook.cancelOrders(_orderIds);
         
-        executionManager.deleteOrder(
-            _orderId,
-            _msgSender(),
-            order);
+        executionManager.cancelOrders(_orderIds);
 
-        emit OrderDeleted(_msgSender(), _orderId);
+        emit OrdersDeleted(_msgSender(), _orderIds);
     }
 
-    function claimOrders(uint256[] memory orderIds) external override {
-        require(orderIds.length > 0, "empty order length.");
+    function claimOrders(uint256[] memory _orderIds) external override {
+        require(_orderIds.length > 0, "empty order length.");
         
-        executionManager.claimOrders(_msgSender(), orderIds);
+        require(orderbook.verifyOrdersExist(_orderIds), "Order does not exist");
+        require(orderbook.verifyOrderOwners(_orderIds, _msgSender()), "Order is not owned by claimer");
+
+        executionManager.claimOrders(_msgSender(), _orderIds);
         
-        emit FilledOrdersClaimed(_msgSender(), orderIds);
+        emit OrdersClaimed(_msgSender(), _orderIds);
     }
 
     function claimRoyalties() external override {

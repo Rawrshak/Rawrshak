@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "./EscrowBase.sol";
@@ -10,7 +8,6 @@ import "./interfaces/IErc20Escrow.sol";
 import "../utils/EnumerableMapsExtension.sol";
 
 contract Erc20Escrow is IErc20Escrow, EscrowBase {
-    using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
     using EnumerableMapsExtension for *;
     

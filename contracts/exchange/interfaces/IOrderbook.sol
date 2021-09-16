@@ -18,6 +18,11 @@ interface IOrderbook {
         bool _isBuyOrder
     ) external view returns (bool);
 
+    function verifyOrderOwners(
+        uint256[] memory _orderIds,
+        address _owner
+    ) external view returns (bool);
+
     function getPaymentTotals(
         uint256[] calldata _orderIds,
         uint256[] calldata _amounts
@@ -28,7 +33,9 @@ interface IOrderbook {
     /******** Mutative Functions ********/
     function placeOrder(LibOrder.OrderData memory _order) external returns(uint256 id);
 
-    function fillOrders(uint256[] memory orderIds, uint256[] memory amounts) external;
+    function fillOrders(uint256[] memory _orderIds, uint256[] memory _amounts) external;
 
-    function deleteOrder(uint256 orderId, address owner) external;
+    function cancelOrders(uint256[] memory _orderIds) external;
+
+    function cancelOrder(uint256 _orderId) external;
 }

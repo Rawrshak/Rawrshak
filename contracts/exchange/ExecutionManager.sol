@@ -70,35 +70,53 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         _nftEscrow().withdrawBatch(_orderIds, _user, _amounts);
     }
 
-    function deleteOrder(uint256 _orderId, address _user, LibOrder.OrderData memory _order) external override onlyOwner {
-        // Todo: Withdraw Partial Fill
+    function cancelOrders(uint256[] memory _orderIds) external override onlyOwner {
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            LibOrder.OrderData memory order = _orderbook().getOrder(_orderIds[i]);
+            if (order.isBuyOrder) {
+                // withdraw escrowed ERC20
+                _tokenEscrow().withdraw(
+                    _orderIds[i],
+                    order.owner, 
+                    order.price * order.amount);
 
-        if (_order.isBuyOrder) {
-            // withdraw ERC20
-            _tokenEscrow().withdraw(
-                _orderId,
-                _user, 
-                _order.price * _order.amount);
-        } else {
-            // withdraw NFTs
-            _nftEscrow().withdraw(_orderId, _user, _order.amount);
+                // Withdraw partial fill (if any)
+                uint256 amount = _nftEscrow().escrowedAmounts(_orderIds[i]);
+                if (amount > 0) {
+                    _nftEscrow().withdraw(_orderIds[i], order.owner, amount);
+                }
+            } else {
+                // withdraw NFTs
+                _nftEscrow().withdraw(_orderIds[i], order.owner, order.amount);
+
+                // Withdraw partial fill (if any)
+                uint256 amount = _tokenEscrow().escrowedTokensByOrder(_orderIds[i]);
+                if (amount > 0) {
+                    _tokenEscrow().withdraw(_orderIds[i], order.owner, amount);
+                }
+            }
         }
+
     }
 
     function claimOrders(address _user, uint256[] calldata _orderIds) external override onlyOwner {
         LibOrder.OrderData memory order;
         uint256 amount = 0;
-        // Todo: Withdraw Partial Fill
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            require(_orderbook().exists(_orderIds[i]), "Invalid Order.");
             order = _orderbook().getOrder(_orderIds[i]);
-            require(order.owner == _user, "User doesn't own this order");
+
+            // If order is completely filled (amount == 0), delete order;
+            if (order.amount == 0) {
+                _orderbook().cancelOrder(_orderIds[i]);
+            }
+
+            // Withdraw the escrowed assets from the filled (complete or partial) order
             if (order.isBuyOrder) {
-                // withdraw NFTs
+                // Buy order: withdraw NFTs
                 amount = _nftEscrow().escrowedAmounts(_orderIds[i]);
                 _nftEscrow().withdraw(_orderIds[i], _user, amount);
             } else {
-                // withdraw ERC20      
+                // Sell order: withdraw ERC20      
                 amount = _tokenEscrow().escrowedTokensByOrder(_orderIds[i]);
                 _tokenEscrow().withdraw(
                     _orderIds[i],

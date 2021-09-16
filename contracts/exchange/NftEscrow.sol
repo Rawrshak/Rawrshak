@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./EscrowBase.sol";
 import "../libraries/LibOrder.sol";
 import "./interfaces/INftEscrow.sol";
-import "../content/interfaces/IContent.sol";
 
 contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
-    using AddressUpgradeable for address;
-    using ERC165CheckerUpgradeable for *;
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.AssetData) public override escrowedAsset;
@@ -42,7 +36,7 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
     ) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         escrowedAsset[_orderId] = _assetData;
-        escrowedAmounts[_orderId] = _amount;
+        escrowedAmounts[_orderId] = escrowedAmounts[_orderId] + _amount;
 
         _transfer(_orderId, _sender, address(this), _amount);
     }
@@ -54,8 +48,6 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
         address _receiver,
         uint256 _amount
     ) external override onlyRole(MANAGER_ROLE) {
-        require(escrowedAmounts[_orderId] >= _amount, "Incorrect order amount to withdraw");
-
         escrowedAmounts[_orderId] = escrowedAmounts[_orderId] - _amount;
 
         _transfer(_orderId, address(this), _receiver, _amount);
@@ -72,9 +64,7 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
         address _receiver,
         uint256[] memory _amounts
     ) external override onlyRole(MANAGER_ROLE) {
-        for (uint256 i = 0; i < _orderIds.length; ++i) {            
-            require(escrowedAmounts[_orderIds[i]] > 0, "Asset was already sold.");
-
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
             escrowedAmounts[_orderIds[i]] = escrowedAmounts[_orderIds[i]] - _amounts[i];
             _transfer(_orderIds[i], address(this), _receiver, _amounts[i]);
             
@@ -92,10 +82,8 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
 
     /**************** Internal Functions ****************/
     function _transfer(uint256 _orderId, address _sender, address _receiver, uint256 amount) internal {
-        if (ERC165CheckerUpgradeable.supportsInterface(escrowedAsset[_orderId].contentAddress, LibInterfaces.INTERFACE_ID_CONTENT)) {
-            IContent(escrowedAsset[_orderId].contentAddress)
-                .safeTransferFrom(_sender, _receiver, escrowedAsset[_orderId].tokenId, amount, "");
-        }
+        IERC1155Upgradeable(escrowedAsset[_orderId].contentAddress)
+            .safeTransferFrom(_sender, _receiver, escrowedAsset[_orderId].tokenId, amount, "");
     }
 
     uint256[50] private __gap;
