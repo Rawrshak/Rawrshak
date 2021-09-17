@@ -77,7 +77,11 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
         uint256 _amount
     ) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
-        claimableByOwner[_owner].set(_token, claimableByOwner[_owner].get(_token) + _amount);
+        if (!claimableByOwner[_owner].contains(_token)) {
+            claimableByOwner[_owner].set(_token, _amount);
+        } else {
+            claimableByOwner[_owner].set(_token, claimableByOwner[_owner].get(_token) + _amount);
+        }
         IERC20Upgradeable(_token).transferFrom(_sender, address(this), _amount);
     }
     
@@ -92,7 +96,12 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
         // No need to do checks. The exchange contracts will do the checks.
         address token = escrowedByOrder[_orderId].token;
         escrowedByOrder[_orderId].amount = escrowedByOrder[_orderId].amount - _amount;
-        claimableByOwner[_owner].set(token, claimableByOwner[_owner].get(token) + _amount);
+
+        if (!claimableByOwner[_owner].contains(token)) {
+            claimableByOwner[_owner].set(token, _amount);
+        } else {
+            claimableByOwner[_owner].set(token, claimableByOwner[_owner].get(token) + _amount);
+        }
     }
 
     // Deposit Platform Fees
@@ -117,6 +126,8 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
         for (uint256 i = 0; i < claimableByOwner[_owner].length(); i++) {
             (address token, uint256 amount) = claimableByOwner[_owner].at(i);
             if (amount > 0) {
+                // Note: we're not removing the entry because we expect that it will be used
+                // again eventually.
                 claimableByOwner[_owner].set(token, 0);
                 IERC20Upgradeable(token).transfer(_owner, amount);
                 tokens[counter] = token;
