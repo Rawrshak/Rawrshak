@@ -55,7 +55,7 @@ contract('Content Clone Factory Tests', (accounts) => {
             [[deployerAddress, 10000]],
             uri);
 
-        // To figure out which log contains the ContractDeployed event
+        // // To figure out which log contains the ContractDeployed event
         // console.log(result.logs);
 
         var cloneContent = await Content.at(result.logs[2].args.content);

@@ -1,83 +1,66 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Content = artifacts.require("Content");
 const ContentStorage = artifacts.require("ContentStorage");
+const ContentFactory = artifacts.require("ContentFactory");
 const ContentManager = artifacts.require("ContentManager");
 const AccessControlManager = artifacts.require("AccessControlManager");
-const EscrowNFTs = artifacts.require("EscrowNFTs");
+const NftEscrow = artifacts.require("NftEscrow");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
-contract('Escrow NFTs Contract', (accounts) => {
+contract('NFT Escrow Contract', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
         executionManagerAddress,    // execution manager address
         royaltiesManagerAddress,    // royalties manager address
         playerAddress,              // Player Address
-        player2Address,             // Player Address
     ] = accounts;
 
-    var content;
-    var contentStorage;
-    var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
-    ];
-    var approvalPair = [[executionManagerAddress, true]];
-
     var escrow;
-    var manager_role;
-    var default_admin_role;
+    var content;
+    var contentFactory;
+    var assetData;
+
+    before(async () => {
+        var originalAccessControlManager = await AccessControlManager.new();
+        var originalContent = await Content.new();
+        var originalContentStorage = await ContentStorage.new();
+        var originalContentManager = await ContentManager.new();
+        contentFactory = await ContentFactory.new();
+    
+        // Initialize Clone Factory
+        await contentFactory.__ContentFactory_init(
+            originalContent.address,
+            originalContentManager.address,
+            originalContentStorage.address,
+            originalAccessControlManager.address);
+    });
 
     beforeEach(async () => {
-        // Set up NFT Contract
-        accessControlManager = await AccessControlManager.new();
-        await accessControlManager.__AccessControlManager_init();
-        contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
-        content = await Content.new();
-        await content.__Content_init(contentStorage.address, accessControlManager.address);
+        escrow = await NftEscrow.new();
+        await escrow.__NftEscrow_init({from: deployerAddress});
         
-        // Setup content manager
-        contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address);
-        await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
-        await contentStorage.setParent(content.address);
-        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.setParent(content.address);
-
-        // Add 2 assets
-        await contentManager.addAssetBatch(asset);
-
-        // Mint an assets
-        var mintData = [playerAddress, [1, 2], [10, 1], 0, constants.ZERO_ADDRESS, []];
-        await contentManager.mintBatch(mintData, {from: deployerAddress});
-
-        escrow = await EscrowNFTs.new();
-        await escrow.__EscrowNFTs_init({from: deployerAddress});
-
-        manager_role = await escrow.MANAGER_ROLE();
-        default_admin_role = await escrow.DEFAULT_ADMIN_ROLE();
-
         // Register the execution manager
         await escrow.registerManager(executionManagerAddress, {from:deployerAddress})
     });
 
-    it('Check if EscrowNFTs was deployed properly', async () => {
+    it('Check if NftEscrow was deployed properly', async () => {
         assert.equal(
             escrow.address != 0x0,
             true,
             "Escrow was not deployed properly.");
     });
 
-    it('Supports the EscrowNFTs Interface', async () => {
+    it('Supports the NftEscrow Interface', async () => {
         // INTERFACE_ID_NFT_ESCROW = 0x00000007
         assert.equal(
             await escrow.supportsInterface("0x00000007"),
             true, 
-            "the escrow doesn't support the EscrowNFTs interface");
+            "the escrow doesn't support the NftEscrow interface");
     });
 
     it('Deployer wallet must have default admin role', async () => {
+        var default_admin_role = await escrow.DEFAULT_ADMIN_ROLE();
         assert.equal(
             await escrow.hasRole(
                 default_admin_role,
@@ -87,6 +70,7 @@ contract('Escrow NFTs Contract', (accounts) => {
     });
 
     it('Deployer wallet must not have manager role', async () => {
+        var manager_role = await escrow.MANAGER_ROLE();
         assert.equal(
             await escrow.hasRole(
                 manager_role,
@@ -95,7 +79,9 @@ contract('Escrow NFTs Contract', (accounts) => {
             "deployer wallet should not have the manager role");
     });
     
-    it('Registering Manager address', async () => {        
+    it('Registering Manager address', async () => {       
+        var manager_role = await escrow.MANAGER_ROLE();
+
         TruffleAssert.eventEmitted(
             await escrow.registerManager(royaltiesManagerAddress, {from:deployerAddress}),
             'ManagerRegistered'
@@ -117,13 +103,12 @@ contract('Escrow NFTs Contract', (accounts) => {
     });
     
     it('Depositing Asset', async () => {
-        var assetData = [content.address, 1];
+        await createContentContract();
 
-        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
         await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
 
         assert.equal(
-            await escrow.escrowedAssetsByOrder(1),
+            await escrow.escrowedAmounts(1),
             1,
             "Incorrect number of assets escrow recorded"
         );
@@ -140,7 +125,7 @@ contract('Escrow NFTs Contract', (accounts) => {
             "Incorrect number of assets owned by the player"
         );
         
-        var internalAssetData = await escrow.assetData(1);
+        var internalAssetData = await escrow.escrowedAsset(1);
         assert.equal(
             internalAssetData[0] == assetData[0] && internalAssetData[1] == assetData[1],
             true,
@@ -149,15 +134,14 @@ contract('Escrow NFTs Contract', (accounts) => {
     });
     
     it('Withdraw Asset', async () => {
-        var assetData = [content.address, 1];
+        await createContentContract();
 
-        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
         await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
         
         await escrow.withdraw(1, playerAddress, 1, {from: executionManagerAddress});
 
         assert.equal(
-            await escrow.escrowedAssetsByOrder(1),
+            await escrow.escrowedAmounts(1),
             0,
             "Incorrect number of assets escrowed."
         );
@@ -176,9 +160,8 @@ contract('Escrow NFTs Contract', (accounts) => {
     });
     
     it('Invalid Withdraws', async () => {
-        var assetData = [content.address, 1];
+        await createContentContract();
 
-        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
         await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
         
         await TruffleAssert.fails(
@@ -192,16 +175,15 @@ contract('Escrow NFTs Contract', (accounts) => {
         );
 
         assert.equal(
-            await escrow.escrowedAssetsByOrder(1),
+            await escrow.escrowedAmounts(1),
             1,
             "Incorrect number of assets escrowed."
         );
     });
 
     it('Withdraw Batch Asset', async () => {
-        var assetData = [content.address, 1];
+        await createContentContract();
 
-        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
         await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
         await escrow.deposit(2, playerAddress, 3, assetData, {from: executionManagerAddress});
         await escrow.deposit(3, playerAddress, 2, assetData, {from: executionManagerAddress});
@@ -211,22 +193,21 @@ contract('Escrow NFTs Contract', (accounts) => {
         await escrow.withdrawBatch(orders, playerAddress, amounts, {from: executionManagerAddress});
 
         assert.equal(
-            await escrow.escrowedAssetsByOrder(2),
+            await escrow.escrowedAmounts(2),
             0,
             "Incorrect number of assets escrowed."
         );
         
         assert.equal(
-            await escrow.escrowedAssetsByOrder(3),
+            await escrow.escrowedAmounts(3),
             1,
             "Incorrect number of assets escrowed."
         );
     });
     
     it('Invalid Withdraws', async () => {
-        var assetData = [content.address, 1];
-        
-        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+        await createContentContract();
+
         await escrow.deposit(1, playerAddress, 1, assetData, {from: executionManagerAddress});
         await escrow.deposit(2, playerAddress, 3, assetData, {from: executionManagerAddress});
         await escrow.deposit(3, playerAddress, 2, assetData, {from: executionManagerAddress});
@@ -246,4 +227,32 @@ contract('Escrow NFTs Contract', (accounts) => {
             TruffleAssert.ErrorType.REVERT
         );
     });
+
+    async function createContentContract() {
+        var uri = "arweave.net/tx-contract-uri";
+
+        var result = await contentFactory.createContracts(
+            [[deployerAddress, 10000]],
+            uri);
+        
+        content = await Content.at(result.logs[2].args.content);
+        contentManager = await ContentManager.at(result.logs[2].args.contentManager);
+        
+        var asset = [
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
+        ];
+
+        // Add 2 assets
+        await contentManager.addAssetBatch(asset);
+
+        // Mint an assets
+        var mintData = [playerAddress, [1, 2], [10, 1], 0, constants.ZERO_ADDRESS, []];
+        await contentManager.mintBatch(mintData, {from: deployerAddress});
+
+        assetData = [content.address, 1];
+
+        // approve player
+        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+    }
 });
