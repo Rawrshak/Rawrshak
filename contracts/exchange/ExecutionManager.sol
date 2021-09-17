@@ -107,7 +107,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
 
             // If order is completely filled (amount == 0), delete order;
             if (order.amount == 0) {
-                _orderbook().cancelOrder(_orderIds[i]);
+                _orderbook().deleteOrder(_orderIds[i]);
             }
 
             // Withdraw the escrowed assets from the filled (complete or partial) order

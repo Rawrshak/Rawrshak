@@ -37,5 +37,5 @@ interface IOrderbook {
 
     function cancelOrders(uint256[] memory _orderIds) external;
 
-    function cancelOrder(uint256 _orderId) external;
+    function deleteOrder(uint256 _orderId) external;
 }
