@@ -31,13 +31,13 @@ library LibInterfaces {
 
     // Exchange Interfaces
     bytes4 constant INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;
-    bytes4 constant INTERFACE_ID_NFT_ESCROW           = 0x00000007;
+    bytes4 constant INTERFACE_ID_NFT_ESCROW            = 0x00000007;
     bytes4 constant INTERFACE_ID_ERC20_ESCROW          = 0x00000008;
     bytes4 constant INTERFACE_ID_ORDERBOOK             = 0x0000000B;
     bytes4 constant INTERFACE_ID_EXECUTION_MANAGER     = 0x0000000C;
     bytes4 constant INTERFACE_ID_ROYALTY_MANAGER       = 0x0000000D;
     bytes4 constant INTERFACE_ID_EXCHANGE              = 0x0000000E;
-    bytes4 constant INTERFACE_ID_EXCHANGE_FEE_POOL     = 0x00000012;
+    bytes4 constant INTERFACE_ID_EXCHANGE_FEES_ESCROW  = 0x00000012;
 
     // Staking Interfaces
     bytes4 constant INTERFACE_ID_CLAIMABLE             = 0x00000013;

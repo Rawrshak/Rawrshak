@@ -1,23 +1,18 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const AddressResolver = artifacts.require("AddressResolver");
-const EscrowNFTs = artifacts.require("EscrowNFTs");
+const NftEscrow = artifacts.require("NftEscrow");
+const Erc20Escrow = artifacts.require("Erc20Escrow");
 const TruffleAssert = require("truffle-assertions");
 
-contract('Address resolver Contract', (accounts) => {
+contract('Address Resolver Contract tests', (accounts) => {
     const [
-        deployerAddress,            // Address that deployed contracts
+        deployerAddress             // Address that deployed contracts
     ] = accounts;
     var resolver;
-    var escrowNFTs;
-    var escrowNFTs2;
 
     beforeEach(async () => {
         resolver = await AddressResolver.new();
         await resolver.__AddressResolver_init({from: deployerAddress});
-        escrowNFTs = await EscrowNFTs.new();
-        await escrowNFTs.__EscrowNFTs_init({from: deployerAddress});
-        escrowNFTs2 = await EscrowNFTs.new();
-        await escrowNFTs2.__EscrowNFTs_init({from: deployerAddress});
     });
 
     it('Check if address resolver was deployed properly', async () => {
@@ -35,23 +30,32 @@ contract('Address resolver Contract', (accounts) => {
     });
 
     it('Register a single contract', async () => {
-        var ids = ["0x00000001"];
-        var addresses = [escrowNFTs.address];
+        var nftEscrow = await NftEscrow.new();
+        await nftEscrow.__NftEscrow_init({from: deployerAddress});
+
+        // CONTRACT_NFT_ESCROW
+        var ids = ["0x87d4498b"];
+        var addresses = [nftEscrow.address];
 
         TruffleAssert.eventEmitted(
             await resolver.registerAddress(ids, addresses, {from: deployerAddress}),
             'AddressRegistered'
         );
         assert.equal(
-            await resolver.getAddress("0x00000001"),
-            escrowNFTs.address,
+            await resolver.getAddress("0x87d4498b"),
+            nftEscrow.address,
             "Incorrect address returned."
         );
     });
     
     it('Register multiple contracts', async () => {
-        var ids = ["0x00000001", "0x00000002"];
-        var addresses = [escrowNFTs.address, escrowNFTs2.address];
+        var nftEscrow = await NftEscrow.new();
+        await nftEscrow.__NftEscrow_init({from: deployerAddress});
+        var escrowToken = await Erc20Escrow.new();
+        await escrowToken.__Erc20Escrow_init({from: deployerAddress});
+
+        var ids = ["0x87d4498b", "0x29a264aa"];
+        var addresses = [nftEscrow.address, escrowToken.address];
 
         TruffleAssert.eventEmitted(
             await resolver.registerAddress(ids, addresses, {from: deployerAddress}),
@@ -59,21 +63,23 @@ contract('Address resolver Contract', (accounts) => {
         );
 
         assert.equal(
-            await resolver.getAddress("0x00000001"),
-            escrowNFTs.address,
+            await resolver.getAddress("0x87d4498b"),
+            nftEscrow.address,
             "Incorrect address returned."
         );
         
         assert.equal(
-            await resolver.getAddressWithCheck("0x00000002"),
-            escrowNFTs2.address,
+            await resolver.getAddressWithCheck("0x29a264aa"),
+            escrowToken.address,
             "Incorrect address returned."
         );
     });
  
     it('Register test input length mismatch', async () => {
-        var ids = ["0x00000001", "0x00000002"];
-        var addresses = [escrowNFTs.address];
+        var ids = ["0x87d4498b", "0x29a264aa"];
+        var nftEscrow = await NftEscrow.new();
+        await nftEscrow.__NftEscrow_init({from: deployerAddress});
+        var addresses = [nftEscrow.address];
         
         await TruffleAssert.fails(
             resolver.registerAddress(ids, addresses, {from: deployerAddress}),

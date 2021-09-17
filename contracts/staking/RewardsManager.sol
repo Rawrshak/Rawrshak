@@ -39,7 +39,7 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
             ERC165CheckerUpgradeable.supportsInterface(_lockedExchangeFeePool, LibInterfaces.INTERFACE_ID_LOCKED_FUND),
             "Invalid locked exchange funding contract interface.");
         require(_exchangeFeesEscrow.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeesEscrow, LibInterfaces.INTERFACE_ID_EXCHANGE_FEE_POOL),
+            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeesEscrow, LibInterfaces.INTERFACE_ID_EXCHANGE_FEES_ESCROW),
             "Invalid Exchange Fee Pool interface.");
 
         _registerInterface(LibInterfaces.INTERFACE_ID_REWARDS_MANAGER);
