@@ -26,13 +26,12 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     }
 
     function __ExchangeFeesEscrow_init_unchained(uint24 _rate) internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE_FEE_POOL);
-        rate = _rate;
+        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE_FEES_ESCROW);
+        _setRate(_rate);
     }
  
     function setRate(uint24 _rate) public override onlyRole(MANAGER_ROLE) {
-        require(_rate > 0 && _rate <= 1e6, "Invalid rate");
-        rate = _rate;
+        _setRate(_rate);
         emit FeeUpdated(_msgSender(), rate);
     }
 
@@ -54,13 +53,18 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     }
 
     function depositRoyalty(address _token, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
-        amounts.set(_token, amounts.get(_token) + _amount);
+        if (!amounts.contains(_token)) {
+            amounts.set(_token, _amount);
+        } else {
+            amounts.set(_token, amounts.get(_token) + _amount);
+        }
 
         emit ExchangeFeesPaid(_token, _amount);
     }
 
     function distribute() external override onlyRole(MANAGER_ROLE) {
         require(pools.length > 0, "Invalid list of address for distribution");
+        require(amounts.length() > 0, "No fees to distribute");
         
         address token;
         uint256 balance;
@@ -92,7 +96,15 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
 
     // gets the amount in the fee pool
     function totalFeePool(address _token) external view override returns(uint256) {
+        if (!amounts.contains(_token)) {
+            return 0;
+        }
         return amounts.get(_token);
+    }
+
+    function _setRate(uint24 _rate) internal {
+        require(_rate > 0 && _rate <= 1e6, "Invalid rate");
+        rate = _rate;
     }
 
     uint256[50] private __gap;
