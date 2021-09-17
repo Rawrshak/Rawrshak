@@ -48,7 +48,7 @@ contract Orderbook is IOrderbook, ManagerBase {
         }
     }
     
-    function cancelOrder(uint256 _orderId) external override onlyOwner {
+    function deleteOrder(uint256 _orderId) external override onlyOwner {
         delete orders[_orderId];
     }
 
