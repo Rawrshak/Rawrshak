@@ -50,12 +50,6 @@ contract('AccessControlManager Contract Tests', (accounts) => {
     });
 
     it('Invalid SetParent()', async () => {
-        // Non-content contract
-        await TruffleAssert.fails(
-            manager.setParent(playerAddress),
-            TruffleAssert.ErrorType.REVERT
-        );
-
         contentStorage = await ContentStorage.new();
         await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
         content = await Content.new();
