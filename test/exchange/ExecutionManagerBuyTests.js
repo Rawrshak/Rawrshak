@@ -120,7 +120,6 @@ contract('Execution Manager Contract Buy Tests', (accounts)=> {
     beforeEach(async () => {
         executionManager = await ExecutionManager.new();
         await executionManager.__ExecutionManager_init(resolver.address, {from: deployerAddress});
-
     });
 
     it('Check if Execution Manager was deployed properly', async () => {
@@ -161,14 +160,6 @@ contract('Execution Manager Contract Buy Tests', (accounts)=> {
     it('Place Buy Order', async () => {
         await RawrTokenSetup();
         await ExchangeSetup();
-        // var buyOrderData = [ 
-        //     [content.address, 1],
-        //     playerAddress,
-        //     rawrToken.address,
-        //     web3.utils.toWei('1000', 'ether'),
-        //     2,
-        //     true
-        // ];
 
         await rawrToken.approve(tokenEscrow.address, web3.utils.toWei('2000', 'ether'), {from:playerAddress});
         await executionManager.placeBuyOrder(1, rawrToken.address, playerAddress, web3.utils.toWei('2000', 'ether'), {from: deployerAddress});
