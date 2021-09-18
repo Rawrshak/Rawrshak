@@ -53,6 +53,8 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
         _transfer(_orderId, address(this), _receiver, _amount);
 
         // Delete if order is filled; Gas Refund
+        // We don't need to store how much was escrowed because we keep track of the order data in 
+        // the orderbook.
         if (escrowedAmounts[_orderId] == 0) {
             delete escrowedAmounts[_orderId];
             delete escrowedAsset[_orderId];
@@ -69,6 +71,8 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
             _transfer(_orderIds[i], address(this), _receiver, _amounts[i]);
             
             // Delete if order is filled; Gas Refund
+            // We don't need to store how much was escrowed because we keep track of the order data in 
+            // the orderbook.
             if (escrowedAmounts[_orderIds[i]] == 0) {
                 delete escrowedAmounts[_orderIds[i]];
                 delete escrowedAsset[_orderIds[i]];

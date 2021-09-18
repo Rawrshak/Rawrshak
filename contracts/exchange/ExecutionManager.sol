@@ -72,13 +72,13 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
 
     function cancelOrders(uint256[] memory _orderIds) external override onlyOwner {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            LibOrder.OrderData memory order = _orderbook().getOrder(_orderIds[i]);
+            LibOrder.Order memory order = _orderbook().getOrder(_orderIds[i]);
             if (order.isBuyOrder) {
                 // withdraw escrowed ERC20
                 _tokenEscrow().withdraw(
                     _orderIds[i],
                     order.owner, 
-                    order.price * order.amount);
+                    order.price * (order.amountOrdered - order.amountFilled));
 
                 // Withdraw partial fill (if any)
                 uint256 amount = _nftEscrow().escrowedAmounts(_orderIds[i]);
@@ -87,7 +87,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
                 }
             } else {
                 // withdraw NFTs
-                _nftEscrow().withdraw(_orderIds[i], order.owner, order.amount);
+                _nftEscrow().withdraw(_orderIds[i], order.owner, (order.amountOrdered - order.amountFilled));
 
                 // Withdraw partial fill (if any)
                 uint256 amount = _tokenEscrow().escrowedTokensByOrder(_orderIds[i]);
@@ -100,7 +100,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
 
     function claimOrders(address _user, uint256[] calldata _orderIds) external override onlyOwner {
-        LibOrder.OrderData memory order;
+        LibOrder.Order memory order;
         uint256 amount = 0;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             order = _orderbook().getOrder(_orderIds[i]);

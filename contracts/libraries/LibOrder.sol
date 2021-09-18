@@ -17,7 +17,26 @@ library LibOrder {
         uint256 tokenId;
     }
 
-    struct OrderData {
+    enum OrderState {
+        READY,
+        PARTIALLY_FILLED,
+        FILLED,
+        CLAIMED,
+        CANCELLED
+    }
+
+    struct Order {
+        AssetData asset;
+        address owner;
+        address token;
+        uint256 price;
+        uint256 amountOrdered;
+        uint256 amountFilled;
+        bool isBuyOrder;
+        OrderState state;
+    }
+
+    struct OrderInput {
         AssetData asset;
         address owner;
         address token;
@@ -26,7 +45,7 @@ library LibOrder {
         bool isBuyOrder;
     }
 
-    function verifyOrderData(OrderData calldata _order, address _sender) public view {
+    function verifyOrderInput(OrderInput calldata _order, address _sender) public view {
         require(_order.owner == _sender, "Invalid sender.");
         require(_order.price > 0 && _order.amount > 0, "Invalid input price or amount");
         verifyAssetData(_order.asset);
@@ -43,7 +62,7 @@ library LibOrder {
     }
 
     function _verifyOrders(
-        OrderData storage _order,
+        OrderInput storage _order,
         AssetData memory _asset,
         address _token,
         bool _isBuyOrder) public view returns (bool) {

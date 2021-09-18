@@ -9,7 +9,7 @@ import "../utils/LibContractHash.sol";
 contract Orderbook is IOrderbook, ManagerBase {
     
     /***************** Stored Variables *****************/
-    mapping(uint256 => LibOrder.OrderData) orders;
+    mapping(uint256 => LibOrder.Order) orders;
     uint256 public override ordersLength;
 
     /******************** Public API ********************/
@@ -26,9 +26,17 @@ contract Orderbook is IOrderbook, ManagerBase {
     }
 
     /**************** External Functions ****************/
-    function placeOrder(LibOrder.OrderData memory _order) external override onlyOwner returns(uint256 id){
+    function placeOrder(LibOrder.OrderInput memory _order) external override onlyOwner returns(uint256 id){
         id = ordersLength++;
-        orders[id] = _order;
+        orders[id].asset = _order.asset;
+        orders[id].owner = _order.owner;
+        orders[id].token = _order.token;
+        orders[id].price = _order.price;
+        orders[id].amountOrdered = _order.amount;
+        orders[id].isBuyOrder = _order.isBuyOrder;
+        orders[id].state = LibOrder.OrderState.READY;
+
+        // Note: Order.amountFilled is 0 by default
     }
 
     function fillOrders(uint256[] memory _orderIds, uint256[] memory _amounts) external override onlyOwner {
@@ -36,22 +44,31 @@ contract Orderbook is IOrderbook, ManagerBase {
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             // This will revert if amount is greater than the order amount. This will automatically revert
-            orders[_orderIds[i]].amount = orders[_orderIds[i]].amount - _amounts[i];
+            orders[_orderIds[i]].amountFilled += _amounts[i];
+
+            if (orders[_orderIds[i]].amountFilled != orders[_orderIds[i]].amountOrdered) {
+                orders[_orderIds[i]].state = LibOrder.OrderState.PARTIALLY_FILLED;
+            } else {
+                orders[_orderIds[i]].state = LibOrder.OrderState.FILLED;
+            }
         }
     }
 
     function cancelOrders(uint256[] memory _orderIds) external override onlyOwner {
-        // Deleting costs 5000, but returns a 15000 gas refund at the end of your call, which will make
-        // the overall transaction cheaper, I think.
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            delete orders[_orderIds[i]];
+            require(orders[_orderIds[i]].state == LibOrder.OrderState.READY || 
+                orders[_orderIds[i]].state == LibOrder.OrderState.PARTIALLY_FILLED, "Invalid order state.");
+
+            orders[_orderIds[i]].state = LibOrder.OrderState.CANCELLED;
         }
     }
     
-    function deleteOrdersIfEmpty(uint256[] memory _orderIds) external override onlyOwner {
+    function claimOrders(uint256[] memory _orderIds) external override onlyOwner {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            if (orders[i].amount == 0) {
-                delete orders[_orderIds[i]];
+            // If the state is Partially Filled, we don't set the order state as claimed. Claimed state 
+            // only occurs for when the order is completely filled and the order owner claims.
+            if (orders[i].state == LibOrder.OrderState.FILLED) {
+                orders[_orderIds[i]].state = LibOrder.OrderState.CLAIMED;
             }
         }
     }
@@ -71,7 +88,7 @@ contract Orderbook is IOrderbook, ManagerBase {
         uint256[] memory _orderIds,
         bool _isBuyOrder
     ) external view override onlyOwner returns (bool) {
-        LibOrder.OrderData memory firstOrder = orders[_orderIds[0]];
+        LibOrder.Order memory firstOrder = orders[_orderIds[0]];
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             if (orders[_orderIds[i]].asset.contentAddress != firstOrder.asset.contentAddress || 
                 orders[_orderIds[i]].asset.tokenId != firstOrder.asset.tokenId ||
@@ -97,7 +114,8 @@ contract Orderbook is IOrderbook, ManagerBase {
 
     function verifyOrdersReady(uint256[] calldata _orderIds) external view override returns(bool){
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            if (orders[_orderIds[i]].amount == 0) {
+            if (orders[_orderIds[i]].state != LibOrder.OrderState.READY && 
+                orders[_orderIds[i]].state != LibOrder.OrderState.PARTIALLY_FILLED) {
                 return false;
             }
         }
@@ -112,14 +130,14 @@ contract Orderbook is IOrderbook, ManagerBase {
         amountPerOrder = new uint256[](_amounts.length);
         amountDue = 0;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            require(orders[_orderIds[i]].amount >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
+            require(orders[_orderIds[i]].amountOrdered - orders[_orderIds[i]].amountFilled >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
             
             amountPerOrder[i] = orders[_orderIds[i]].price * _amounts[i];
             amountDue = amountDue + amountPerOrder[i];
         }
     } 
 
-    function getOrder(uint256 _orderId) external view override returns(LibOrder.OrderData memory) {
+    function getOrder(uint256 _orderId) external view override returns(LibOrder.Order memory) {
         return orders[_orderId];
     }
 
