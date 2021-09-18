@@ -13,8 +13,6 @@ contract('Orderbook Contract tests', (accounts)=> {
 
     const orderbook_hash = "0xd9ff7618";
     var orderbook;
-    var manager_role;
-    var default_admin_role;
     
     var id;
     var orderData1= [ 
@@ -60,7 +58,7 @@ contract('Orderbook Contract tests', (accounts)=> {
         assert.equal(
             orderbook.address != 0x0,
             true,
-            "Orderbook Manager was not deployed properly.");
+            "Orderbook was not deployed properly.");
     });
 
     it('Supports the Orderbook Interface', async () => {
