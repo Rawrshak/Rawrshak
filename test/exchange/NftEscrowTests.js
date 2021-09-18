@@ -44,6 +44,34 @@ contract('NFT Escrow Contract', (accounts) => {
         await escrow.registerManager(executionManagerAddress, {from:deployerAddress})
     });
 
+    async function createContentContract() {
+        var uri = "arweave.net/tx-contract-uri";
+
+        var result = await contentFactory.createContracts(
+            [[deployerAddress, 10000]],
+            uri);
+        
+        content = await Content.at(result.logs[2].args.content);
+        contentManager = await ContentManager.at(result.logs[2].args.contentManager);
+        
+        var asset = [
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
+        ];
+
+        // Add 2 assets
+        await contentManager.addAssetBatch(asset);
+
+        // Mint an assets
+        var mintData = [playerAddress, [1, 2], [10, 1], 0, constants.ZERO_ADDRESS, []];
+        await contentManager.mintBatch(mintData, {from: deployerAddress});
+
+        assetData = [content.address, 1];
+
+        // approve player
+        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
+    }
+
     it('Check if NftEscrow was deployed properly', async () => {
         assert.equal(
             escrow.address != 0x0,
@@ -227,32 +255,4 @@ contract('NFT Escrow Contract', (accounts) => {
             TruffleAssert.ErrorType.REVERT
         );
     });
-
-    async function createContentContract() {
-        var uri = "arweave.net/tx-contract-uri";
-
-        var result = await contentFactory.createContracts(
-            [[deployerAddress, 10000]],
-            uri);
-        
-        content = await Content.at(result.logs[2].args.content);
-        contentManager = await ContentManager.at(result.logs[2].args.contentManager);
-        
-        var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
-        ];
-
-        // Add 2 assets
-        await contentManager.addAssetBatch(asset);
-
-        // Mint an assets
-        var mintData = [playerAddress, [1, 2], [10, 1], 0, constants.ZERO_ADDRESS, []];
-        await contentManager.mintBatch(mintData, {from: deployerAddress});
-
-        assetData = [content.address, 1];
-
-        // approve player
-        await content.setApprovalForAll(escrow.address, true, {from:playerAddress});
-    }
 });
