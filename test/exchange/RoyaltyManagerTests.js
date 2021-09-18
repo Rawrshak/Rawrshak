@@ -153,7 +153,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
 
         assert.equal(
-            await feesEscrow.totalFeePool(rawrToken.address, {from: deployerAddress}),
+            await feesEscrow.totalFees(rawrToken.address, {from: deployerAddress}),
             web3.utils.toWei('30', 'ether').toString(),
             "Exchange Fees not recorded in the fee pool"
         );
@@ -204,7 +204,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
 
         assert.equal(
-            await feesEscrow.totalFeePool(rawrToken.address, {from: deployerAddress}),
+            await feesEscrow.totalFees(rawrToken.address, {from: deployerAddress}),
             web3.utils.toWei('30', 'ether').toString(),
             "Exchange Fees not recorded in the fee pool"
         );

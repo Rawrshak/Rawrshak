@@ -28,6 +28,7 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     function __ExchangeFeesEscrow_init_unchained(uint24 _rate) internal initializer {
         _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE_FEES_ESCROW);
         _setRate(_rate);
+        grantRole(MANAGER_ROLE, _msgSender());
     }
  
     function setRate(uint24 _rate) public override onlyRole(MANAGER_ROLE) {
@@ -95,7 +96,7 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     }
 
     // gets the amount in the fee pool
-    function totalFeePool(address _token) external view override returns(uint256) {
+    function totalFees(address _token) external view override returns(uint256) {
         if (!amounts.contains(_token)) {
             return 0;
         }

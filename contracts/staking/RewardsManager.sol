@@ -66,7 +66,7 @@ contract RewardsManager is IRewardsManager, OwnableUpgradeable, ERC165StorageUpg
     }
 
     function distributeExchangeFees() external override onlyOwner {
-        uint256 exchangeFees = exchangeFeesEscrow.totalFeePool(staking.token());
+        uint256 exchangeFees = exchangeFeesEscrow.totalFees(staking.token());
         if (exchangeFees == 0) {
             return;
         }

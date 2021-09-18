@@ -148,11 +148,12 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         
         require(orderbook.verifyOrdersExist(_orderIds), "Order does not exist");
         require(orderbook.verifyOrderOwners(_orderIds, _msgSender()), "Order is not owned by claimer");
+        require(orderbook.verifyOrdersReady(_orderIds), "Filled Order cannot be canceled.");
 
-        // Delete Order from Orderbook before withdrawing assets in order to avoid re-entrancy attacks
-        orderbook.cancelOrders(_orderIds);
-        
+        // Escrows have built in reentrancy guards so doing withdraws before deleting the order is fine.
         executionManager.cancelOrders(_orderIds);
+
+        orderbook.cancelOrders(_orderIds);
 
         emit OrdersDeleted(_msgSender(), _orderIds);
     }
@@ -164,6 +165,8 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         require(orderbook.verifyOrderOwners(_orderIds, _msgSender()), "Order is not owned by claimer");
 
         executionManager.claimOrders(_msgSender(), _orderIds);
+
+        orderbook.deleteOrdersIfEmpty(_orderIds);
         
         emit OrdersClaimed(_msgSender(), _orderIds);
     }

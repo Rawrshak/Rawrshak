@@ -23,6 +23,8 @@ interface IOrderbook {
         address _owner
     ) external view returns (bool);
 
+    function verifyOrdersReady(uint256[] memory _orderIds) external view returns (bool);
+
     function getPaymentTotals(
         uint256[] calldata _orderIds,
         uint256[] calldata _amounts
@@ -37,5 +39,5 @@ interface IOrderbook {
 
     function cancelOrders(uint256[] memory _orderIds) external;
 
-    function deleteOrder(uint256 _orderId) external;
+    function deleteOrdersIfEmpty(uint256[] memory _orderIds) external;
 }

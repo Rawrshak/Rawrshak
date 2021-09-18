@@ -6,7 +6,7 @@ interface IExchangeFeesEscrow {
     /******** View Functions ********/
     function rate() external view returns(uint24);
     
-    function totalFeePool(address _token) external view returns(uint256);
+    function totalFees(address _token) external view returns(uint256);
 
     function distributionRates() external view returns(address[] memory _pools, uint24[] memory _percentages);
     

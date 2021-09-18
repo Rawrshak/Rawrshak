@@ -48,8 +48,12 @@ contract Orderbook is IOrderbook, ManagerBase {
         }
     }
     
-    function deleteOrder(uint256 _orderId) external override onlyOwner {
-        delete orders[_orderId];
+    function deleteOrdersIfEmpty(uint256[] memory _orderIds) external override onlyOwner {
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            if (orders[i].amount == 0) {
+                delete orders[_orderIds[i]];
+            }
+        }
     }
 
     function verifyOrdersExist(
@@ -85,6 +89,15 @@ contract Orderbook is IOrderbook, ManagerBase {
     ) external view override onlyOwner returns (bool) {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             if (orders[_orderIds[i]].owner != _owner) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function verifyOrdersReady(uint256[] calldata _orderIds) external view override returns(bool){
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            if (orders[_orderIds[i]].amount == 0) {
                 return false;
             }
         }
