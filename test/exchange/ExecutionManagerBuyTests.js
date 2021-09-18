@@ -97,11 +97,11 @@ contract('Execution Manager Contract Buy Tests', (accounts)=> {
         tokenEscrow = await Erc20Escrow.new();
         await tokenEscrow.__Erc20Escrow_init({from: deployerAddress});
 
-        // Setup Orderbook Storage
+        // Setup Orderbook
         orderbook = await Orderbook.new();
         await orderbook.__Orderbook_init(resolver.address, {from: deployerAddress});
 
-        // register the royalty manager
+        // register the managers
         var addresses = [tokenEscrow.address, nftEscrow.address, orderbook.address];
         var escrowIds = ["0x29a264aa", "0x87d4498b", "0xd9ff7618"];
         await resolver.registerAddress(escrowIds, addresses, {from: deployerAddress});

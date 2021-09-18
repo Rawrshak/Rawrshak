@@ -130,12 +130,12 @@ contract('Rewards Manager Contract Tests', (accounts) => {
         assert.equal(await lockedExchangeRewardsPool.lockedSupply(), web3.utils.toWei('0', 'ether'), "Locked Exchange supply value incorrect");
         
         // Check Exchange Fee Pool at 1,000,000 tokens
-        assert.equal(await feePool.totalFeePool(rawrId), web3.utils.toWei('500000', 'ether'), "Exchange Royalty contract is incorrect");
+        assert.equal(await feePool.totalFees(rawrId), web3.utils.toWei('500000', 'ether'), "Exchange Royalty contract is incorrect");
         
         // Distribute the royalty fees to the locked exchange contract
         await rewardsManager.distributeExchangeFees({from: deployerAddress});
 
-        assert.equal(await feePool.totalFeePool(rawrId), web3.utils.toWei('0', 'ether'), "Exchange Royalty contract is incorrect");
+        assert.equal(await feePool.totalFees(rawrId), web3.utils.toWei('0', 'ether'), "Exchange Royalty contract is incorrect");
         
         // Locked exchange fee pool now has a 1000000 tokens
         assert.equal(await lockedExchangeRewardsPool.lockedSupply(), web3.utils.toWei('500000', 'ether'), "New Locked Exchange supply value incorrect");

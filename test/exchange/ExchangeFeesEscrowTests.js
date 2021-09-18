@@ -30,6 +30,14 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await feesEscrow.__ExchangeFeesEscrow_init(20000, {from: deployerAddress});
     });
 
+    async function setup() {
+        // Register the execution manager
+        await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
+
+        // add funds
+        await feesEscrow.updateDistributionPools([stakingFund, daoFund], [500000, 500000], {from:deployerAddress});
+    }
+
     it('Check if ExchangeFeesEscrow was deployed properly', async () => {
         assert.equal(
             feesEscrow.address != 0x0,
@@ -55,16 +63,6 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
             "deployer wallet didn't have admin role");
     });
 
-    it('Deployer wallet must not have manager role', async () => {
-        manager_role = await feesEscrow.MANAGER_ROLE();
-        assert.equal(
-            await feesEscrow.hasRole(
-                manager_role,
-                deployerAddress),
-            false, 
-            "deployer wallet should not have the manager role");
-    });
-    
     it('Registering Manager address', async () => {
         manager_role = await feesEscrow.MANAGER_ROLE();
         // Register the execution manager
@@ -94,15 +92,13 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
     });
     
     it('Update Rate', async () => {
-        await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
-
         assert.equal(
             await feesEscrow.rate(),
             20000, 
             "initial Exchange Fees rate is incorrect.");
 
         TruffleAssert.eventEmitted(
-            await feesEscrow.setRate(30000, {from:executionManagerAddress}),
+            await feesEscrow.setRate(30000, {from:deployerAddress}),
             'FeeUpdated'
         );
         assert.equal(
@@ -116,7 +112,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
 
         // add funds
-        await feesEscrow.updateDistributionPools([stakingFund, daoFund], [500000, 500000], {from:executionManagerAddress});
+        await feesEscrow.updateDistributionPools([stakingFund, daoFund], [500000, 500000], {from:deployerAddress});
         
         var currentRates = await feesEscrow.distributionRates();
 
@@ -144,27 +140,27 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
         
         await TruffleAssert.fails(
-            feesEscrow.updateDistributionPools([], [], {from:executionManagerAddress}),
+            feesEscrow.updateDistributionPools([], [], {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
         await TruffleAssert.fails(
-            feesEscrow.updateDistributionPools([stakingFund, daoFund], [300000, 300000, 400000], {from:executionManagerAddress}),
+            feesEscrow.updateDistributionPools([stakingFund, daoFund], [300000, 300000, 400000], {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
 
         await TruffleAssert.fails(
-            feesEscrow.updateDistributionPools([stakingFund, daoFund, charityFund], [300000, 300000], {from:executionManagerAddress}),
+            feesEscrow.updateDistributionPools([stakingFund, daoFund, charityFund], [300000, 300000], {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         await TruffleAssert.fails(
-            feesEscrow.updateDistributionPools([stakingFund, daoFund, charityFund], [300000, 300000, 500000], {from:executionManagerAddress}),
+            feesEscrow.updateDistributionPools([stakingFund, daoFund, charityFund], [300000, 300000, 500000], {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         await TruffleAssert.fails(
-            feesEscrow.updateDistributionPools([stakingFund, daoFund, charityFund], [300000, 300000, 300000], {from:executionManagerAddress}),
+            feesEscrow.updateDistributionPools([stakingFund, daoFund, charityFund], [300000, 300000, 300000], {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
@@ -178,14 +174,14 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
             'ExchangeFeesPaid'
         );
 
-        assert.equal(await feesEscrow.totalFeePool(rawrToken.address), 10000, "Total fee pool incorrect.");
+        assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fee pool incorrect.");
         
         TruffleAssert.eventEmitted(
             await feesEscrow.depositRoyalty(rawrToken.address, 5000, {from: executionManagerAddress}),
             'ExchangeFeesPaid'
         );
 
-        assert.equal(await feesEscrow.totalFeePool(rawrToken.address), 15000, "Total fee pool incorrect.");
+        assert.equal(await feesEscrow.totalFees(rawrToken.address), 15000, "Total fee pool incorrect.");
     });
     
     it('Deposit Multiple Token Royalties', async () => {
@@ -215,8 +211,8 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         );
         
         // Check Escrow fees for both tokens
-        assert.equal(await feesEscrow.totalFeePool(rawrToken.address), 10000, "Total fee pool incorrect for Rawr Token");
-        assert.equal(await feesEscrow.totalFeePool(rawrV2Token.address), 10000, "Total fee pool incorrect for Rawr V2 token");
+        assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fee pool incorrect for Rawr Token");
+        assert.equal(await feesEscrow.totalFees(rawrV2Token.address), 10000, "Total fee pool incorrect for Rawr V2 token");
     });
     
     it('Distribute fee pool to funds', async () => {
@@ -228,7 +224,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await feesEscrow.depositRoyalty(rawrToken.address, 10000, {from: executionManagerAddress});
 
         TruffleAssert.eventEmitted(
-            await feesEscrow.distribute({from: executionManagerAddress}),
+            await feesEscrow.distribute({from: deployerAddress}),
             'PoolsDistributed'
         );
         
@@ -248,7 +244,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
             "fee pool balance is not zero"
         );
 
-        assert.equal(await feesEscrow.totalFeePool(rawrToken.address), 0, "Total fee pool incorrect.");
+        assert.equal(await feesEscrow.totalFees(rawrToken.address), 0, "Total fee pool incorrect.");
     });
 
     it('Distribute Multiple Token Royalties', async () => {
@@ -272,7 +268,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         
 
         TruffleAssert.eventEmitted(
-            await feesEscrow.distribute({from: executionManagerAddress}),
+            await feesEscrow.distribute({from: deployerAddress}),
             'PoolsDistributed'
         );
         
@@ -316,24 +312,15 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
 
         // funds is equal to zero
         await TruffleAssert.fails(
-            feesEscrow.distribute({from: executionManagerAddress}),
+            feesEscrow.distribute({from: deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
         
         // internal fee pool balance is greater than what the contract holds
         await feesEscrow.depositRoyalty(rawrToken.address, 10000, {from: executionManagerAddress});
         await TruffleAssert.fails(
-            feesEscrow.distribute({from: executionManagerAddress}),
+            feesEscrow.distribute({from: deployerAddress}),
             TruffleAssert.ErrorType.REVERT
         );
     });
-
-
-    async function setup() {
-        // Register the execution manager
-        await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
-
-        // add funds
-        await feesEscrow.updateDistributionPools([stakingFund, daoFund], [500000, 500000], {from:executionManagerAddress});
-    }
 });

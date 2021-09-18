@@ -105,11 +105,6 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             order = _orderbook().getOrder(_orderIds[i]);
 
-            // If order is completely filled (amount == 0), delete order;
-            if (order.amount == 0) {
-                _orderbook().deleteOrder(_orderIds[i]);
-            }
-
             // Withdraw the escrowed assets from the filled (complete or partial) order
             if (order.isBuyOrder) {
                 // Buy order: withdraw NFTs
