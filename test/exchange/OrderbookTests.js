@@ -75,36 +75,46 @@ contract('Orderbook Contract tests', (accounts)=> {
         await orderbook.placeOrder(orderData1, {from: deployerAddress});
 
         // check if the order was saved
-        storedOrderData = await orderbook.getOrder(id, {from: deployerAddress});
+        storedOrder = await orderbook.getOrder(id, {from: deployerAddress});
 
         assert.equal(
-            storedOrderData.asset.contentAddress == orderData1[0][0] && 
-            storedOrderData.asset.tokenId == orderData1[0][1],
+            storedOrder.asset.contentAddress == orderData1[0][0] && 
+            storedOrder.asset.tokenId == orderData1[0][1],
             true, 
             "order.asset was not properly stored.");
         assert.equal(
-            storedOrderData.owner,
+            storedOrder.owner,
             orderData1[1], 
             "order.owner was not properly stored.");
         assert.equal(
-            storedOrderData.token,
+            storedOrder.token,
             orderData1[2], 
             "order.token was not properly stored.");
             
         assert.equal(
-            storedOrderData.price,
+            storedOrder.price,
             orderData1[3], 
             "order.price was not properly stored.");
             
         assert.equal(
-            storedOrderData.amount,
+            storedOrder.amountOrdered,
             orderData1[4], 
-            "order.amount was not properly stored.");
+            "order.amountOrdered was not properly stored.");
             
         assert.equal(
-            storedOrderData.isBuyOrder,
+            storedOrder.amountFilled,
+            0, 
+            "order.amountFilled was not properly stored.");
+            
+        assert.equal(
+            storedOrder.isBuyOrder,
             orderData1[5], 
             "order.isBuyOrder was not properly stored.");
+            
+        assert.equal(
+            storedOrder.state,
+            0, // Ready
+            "order.state was not properly stored.");
     });
 
     it('Place multiple Orders', async () => {        
@@ -118,36 +128,46 @@ contract('Orderbook Contract tests', (accounts)=> {
         await orderbook.placeOrder(orderData3, {from: deployerAddress});
         
         // check if the order was saved
-        storedOrderData = await orderbook.getOrder(id3, {from: deployerAddress});
+        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
 
         assert.equal(
-            storedOrderData.asset.contentAddress == orderData3[0][0] && 
-            storedOrderData.asset.tokenId == orderData3[0][1],
+            storedOrder.asset.contentAddress == orderData3[0][0] && 
+            storedOrder.asset.tokenId == orderData3[0][1],
             true, 
             "order.asset was not properly stored.");
         assert.equal(
-            storedOrderData.owner,
+            storedOrder.owner,
             orderData3[1], 
             "order.owner was not properly stored.");
         assert.equal(
-            storedOrderData.token,
+            storedOrder.token,
             orderData3[2], 
             "order.token was not properly stored.");
             
         assert.equal(
-            storedOrderData.price,
+            storedOrder.price,
             orderData3[3], 
             "order.price was not properly stored.");
             
         assert.equal(
-            storedOrderData.amount,
+            storedOrder.amountOrdered,
             orderData3[4], 
-            "order.amount was not properly stored.");
+            "order.amountOrdered was not properly stored.");
             
         assert.equal(
-            storedOrderData.isBuyOrder,
+            storedOrder.amountFilled,
+            0, 
+            "order.amountFilled was not properly stored.");
+            
+        assert.equal(
+            storedOrder.isBuyOrder,
             orderData3[5], 
             "order.isBuyOrder was not properly stored.");
+            
+        assert.equal(
+            storedOrder.state,
+            0, // Ready
+            "order.state was not properly stored.");
     });
 
     it('Verifies orders are of the same asset', async () => {
@@ -223,7 +243,74 @@ contract('Orderbook Contract tests', (accounts)=> {
         );
     });
 
-    it('Invalid Input Length', async () => {
+    it('Fill Orders', async () => {
+        id = await orderbook.ordersLength();
+        await orderbook.placeOrder(orderData1, {from: deployerAddress});
+        id3 = await orderbook.ordersLength();
+        await orderbook.placeOrder(orderData3, {from: deployerAddress});
+
+        await orderbook.fillOrders([id, id3], [1, 1], {from: deployerAddress});
+        
+        storedOrder = await orderbook.getOrder(id, {from: deployerAddress});
+        assert.equal(
+            storedOrder.amountFilled,
+            1, 
+            "order.amountOrdered was not properly stored.");
+        assert.equal(
+            storedOrder.state,
+            1, // State.PARTIALLY_FILLED
+            "order.state was not properly updated to PARTIALLY_FILLED");
+
+        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
+        assert.equal(
+            storedOrder.amountFilled,
+            1, 
+            "order.amount was not properly stored.");
+        assert.equal(
+            storedOrder.state,
+            1, // State.PARTIALLY_FILLED
+            "order.state was not properly updated to PARTIALLY_FILLED");
+    });
+
+    it('Claim Orders', async () => {
+        id3 = await orderbook.ordersLength();
+        await orderbook.placeOrder(orderData3, {from: deployerAddress});
+
+        await orderbook.fillOrders([id3], [3], {from: deployerAddress});
+        
+        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
+        assert.equal(
+            storedOrder.amountFilled,
+            3, 
+            "order.amountOrdered was not properly stored.");
+        assert.equal(
+            storedOrder.state,
+            2, // State.FILLED
+            "order.state was not properly updated to FILLED");
+        
+        // Claim orders
+        await orderbook.claimOrders([id3], {from: deployerAddress});
+
+        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
+        assert.equal(
+            storedOrder.state,
+            3, // State.CLAIMED
+            "order.state was not properly updated to CLAIMED");
+    });
+
+    it('Cancel Order', async () => {
+        id = await orderbook.ordersLength();
+        await orderbook.placeOrder(orderData1, {from: deployerAddress});
+
+        await orderbook.cancelOrders([id], {from: deployerAddress});
+        storedOrder = await orderbook.getOrder(id, {from: deployerAddress});
+        assert.equal(
+            storedOrder.state,
+            4, // State.CANCELLED
+            "Order was not properly cancelled.");
+    });
+
+    it('Invalid Operations tests', async () => {
         // var id3 = await orderbook.getId(orderData3);
         id = await orderbook.ordersLength();
         await orderbook.placeOrder(orderData1, {from: deployerAddress});
@@ -234,45 +321,20 @@ contract('Orderbook Contract tests', (accounts)=> {
             orderbook.getPaymentTotals([id, id3], [1, 10]),
             TruffleAssert.ErrorType.REVERT
         );
-
-        // Note that getPaymentOrder* does the checking to verify if there is enough 
-        // assets escrowed. So fillOrders doesn't need to check for invalid amounts
+        
+        await orderbook.fillOrders([id3], [3], {from: deployerAddress});
+        
+        // cannot cancel filled orders
         await TruffleAssert.fails(
-            orderbook.fillOrders([id, id3], [1, 10], {from: deployerAddress}),
+            orderbook.cancelOrders([id3]),
             TruffleAssert.ErrorType.REVERT
         );
-    });
-
-    it('Fill Orders', async () => {
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
-        id3 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData3, {from: deployerAddress});
-
-        await orderbook.fillOrders([id, id3], [1, 1], {from: deployerAddress});
-        
-        storedOrderData = await orderbook.getOrder(id, {from: deployerAddress});
-        assert.equal(
-            storedOrderData[4],
-            4, 
-            "order.amount was not properly stored.");
-
-        storedOrderData = await orderbook.getOrder(id3, {from: deployerAddress});
-        assert.equal(
-            storedOrderData[4],
-            2, 
-            "order.amount was not properly stored.");
-    });
-
-    it('Delete Order', async () => {
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
 
         await orderbook.cancelOrders([id], {from: deployerAddress});
-        storedOrderData = await orderbook.getOrder(id, {from: deployerAddress});
-        assert.notEqual(
-            storedOrderData[1],
-            creatorAddress, 
-            "Order was not properly deleted.");
+        // cannot cancel already cancelled orders
+        await TruffleAssert.fails(
+            orderbook.cancelOrders([id]),
+            TruffleAssert.ErrorType.REVERT
+        );
     });
 });

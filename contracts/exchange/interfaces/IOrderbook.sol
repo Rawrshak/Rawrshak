@@ -30,14 +30,14 @@ interface IOrderbook {
         uint256[] calldata _amounts
     ) external view returns(uint256 amountDue, uint256[] memory amountPerOrder);
 
-    function getOrder(uint256 _orderId) external view returns(LibOrder.OrderData memory);
+    function getOrder(uint256 _orderId) external view returns(LibOrder.Order memory);
 
     /******** Mutative Functions ********/
-    function placeOrder(LibOrder.OrderData memory _order) external returns(uint256 id);
+    function placeOrder(LibOrder.OrderInput memory _order) external returns(uint256 id);
 
     function fillOrders(uint256[] memory _orderIds, uint256[] memory _amounts) external;
 
     function cancelOrders(uint256[] memory _orderIds) external;
 
-    function deleteOrdersIfEmpty(uint256[] memory _orderIds) external;
+    function claimOrders(uint256[] memory _orderIds) external;
 }

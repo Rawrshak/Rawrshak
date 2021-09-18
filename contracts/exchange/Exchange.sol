@@ -35,8 +35,8 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
     }
 
     // exchange functions
-    function placeOrder(LibOrder.OrderData memory _order) external override {        
-        LibOrder.verifyOrderData(_order, _msgSender());
+    function placeOrder(LibOrder.OrderInput memory _order) external override {        
+        LibOrder.verifyOrderInput(_order, _msgSender());
         require(executionManager.verifyToken(_order.token), "Token is not supported.");
 
         // Note: not checking for token id validity. If Id doesn't exist and the user places 
@@ -72,6 +72,9 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Verify all orders are of the same asset and the same token payment
         require(orderbook.verifyAllOrdersData(_orderIds, true), "Invalid order data");
 
+        // Verify orders are still valid (ready or partially filled) 
+        require(orderbook.verifyOrdersReady(_orderIds), "An order has been filled");
+        
         // Get Total Payment
         (, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
         
@@ -82,7 +85,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         }
 
         // Get Orderbook data
-        LibOrder.OrderData memory order = orderbook.getOrder(_orderIds[0]);
+        LibOrder.Order memory order = orderbook.getOrder(_orderIds[0]);
 
         // Orderbook -> fill buy order
         orderbook.fillOrders(_orderIds, _amounts);
@@ -116,11 +119,14 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Verify all orders are of the same asset and the same token payment
         require(orderbook.verifyAllOrdersData(_orderIds, false), "Invalid order data");
 
+        // Verify orders are still valid (ready or partially filled) 
+        require(orderbook.verifyOrdersReady(_orderIds), "An order has been filled");
+
         // Get Total Payment
         (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
         
         // get the order data
-        LibOrder.OrderData memory order = orderbook.getOrder(_orderIds[0]);
+        LibOrder.Order memory order = orderbook.getOrder(_orderIds[0]);
 
         // Orderbook -> fill sell order
         orderbook.fillOrders(_orderIds, _amounts);
@@ -148,7 +154,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         
         require(orderbook.verifyOrdersExist(_orderIds), "Order does not exist");
         require(orderbook.verifyOrderOwners(_orderIds, _msgSender()), "Order is not owned by claimer");
-        require(orderbook.verifyOrdersReady(_orderIds), "Filled Order cannot be canceled.");
+        require(orderbook.verifyOrdersReady(_orderIds), "Filled/Cancelled Orders cannot be canceled.");
 
         // Escrows have built in reentrancy guards so doing withdraws before deleting the order is fine.
         executionManager.cancelOrders(_orderIds);
@@ -164,9 +170,8 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         require(orderbook.verifyOrdersExist(_orderIds), "Order does not exist");
         require(orderbook.verifyOrderOwners(_orderIds, _msgSender()), "Order is not owned by claimer");
 
+        orderbook.claimOrders(_orderIds);
         executionManager.claimOrders(_msgSender(), _orderIds);
-
-        orderbook.deleteOrdersIfEmpty(_orderIds);
         
         emit OrdersClaimed(_msgSender(), _orderIds);
     }
@@ -179,7 +184,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         executionManager.addSupportedToken(_token);
     }
 
-    function getOrder(uint256 id) external view override returns (LibOrder.OrderData memory) {
+    function getOrder(uint256 id) external view override returns (LibOrder.Order memory) {
         return orderbook.getOrder(id);
     }
 

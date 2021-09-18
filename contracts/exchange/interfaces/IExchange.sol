@@ -7,7 +7,7 @@ interface IExchange {
     
     /******** View Functions ********/
 
-    function getOrder(uint256 id) external view returns (LibOrder.OrderData memory);
+    function getOrder(uint256 id) external view returns (LibOrder.Order memory);
 
     function tokenEscrow() external view returns(address);
 
@@ -16,7 +16,7 @@ interface IExchange {
     function claimableRoyalties() external view returns (address[] memory tokens, uint256[] memory amounts);
     
     /******** Mutative Functions ********/
-    function placeOrder(LibOrder.OrderData memory _order) external; 
+    function placeOrder(LibOrder.OrderInput memory _order) external; 
     
     function fillBuyOrder(
         uint256[] memory _orderIds,
@@ -37,7 +37,7 @@ interface IExchange {
     function addSupportedToken(address _token) external;
 
     /*********************** Events *********************/
-    event OrderPlaced(address indexed from, uint256 indexed orderId, LibOrder.OrderData order);
+    event OrderPlaced(address indexed from, uint256 indexed orderId, LibOrder.OrderInput order);
 
     event BuyOrdersFilled(
         address indexed from,
