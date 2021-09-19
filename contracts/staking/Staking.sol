@@ -1,101 +1,126 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "../tokens/RawrToken.sol";
-import "./interface/IClaimable.sol";
-import "./interface/IStaking.sol";
+import "../resolver/IAddressResolver.sol";
+import "./interfaces/IStaking.sol";
+import "./interfaces/IExchangeFeesEscrow.sol";
+import "../utils/LibContractHash.sol";
 
-contract Staking is IStaking, OwnableUpgradeable, ERC165StorageUpgradeable {
+contract Staking is IStaking, ContextUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
 
     /***************** Stored Variables *****************/
     address public override token;
     uint256 public override totalStakedTokens;
-    mapping(address => uint256) public override stakedAmounts;
-    IClaimable stakePool;
-    IClaimable exchangeFeePool;
+    mapping(address => uint256) public override userStakedAmount;
+    IAddressResolver resolver;
     
     /******************** Public API ********************/
-    function __Staking_init(address _token, address _stakePool, address _exchangeFeePool) public initializer {
+    function __Staking_init(address _token, address _resolver) public initializer {
         __Context_init_unchained();
-        __Ownable_init_unchained();
         __ERC165_init_unchained();
-        require(_token.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_token, LibInterfaces.INTERFACE_ID_TOKENBASE),
-            "Invalid erc 20 contract interface.");
-        require(_stakePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_stakePool, LibInterfaces.INTERFACE_ID_CLAIMABLE),
-            "Invalid erc 20 contract interface.");
-        require(_exchangeFeePool.isContract() && 
-            ERC165CheckerUpgradeable.supportsInterface(_exchangeFeePool, LibInterfaces.INTERFACE_ID_CLAIMABLE),
-            "Invalid erc 20 contract interface.");
+        __Staking_init_unchained(_token, _resolver);
+    }
 
+    function __Staking_init_unchained(address _token, address _resolver) internal initializer {
         _registerInterface(LibInterfaces.INTERFACE_ID_STAKING);
         token = _token;
         totalStakedTokens = 0;
-        stakePool = IClaimable(_stakePool);
-        exchangeFeePool = IClaimable(_exchangeFeePool);
+        resolver = IAddressResolver(_resolver);
     }
     
-    function deposit(uint256 _amount) external override {
+    function stake(uint256 _amount) external override {
         require(_amount > 0, "Invalid amount");
+        
+        // First staked tokens
+        if (totalStakedTokens > 0) {
+            totalStakedTokens += _amount;
+        } else {
+            totalStakedTokens = _amount;
+            _exchangeFeesEscrow().initializeTokenRate();
+        }
+        
+        // Update User Exchange Fees rewards
+        _exchangeFeesEscrow().updateUserRewards(_msgSender());
 
         // add amount staked internally
-        stakedAmounts[_msgSender()] = stakedAmounts[_msgSender()] + _amount;
-        totalStakedTokens = totalStakedTokens + _amount;
+        userStakedAmount[_msgSender()] += _amount;
 
         // this contract must have been approved first
         _erc20().transferFrom(_msgSender(), address(this), _amount);
 
-        emit Deposit(_msgSender(), _amount, stakedAmounts[_msgSender()]);
+        emit Staked(_msgSender(), _amount, userStakedAmount[_msgSender()]);
     }
 
-    function withdraw(uint256 _amount) external override {
+    function withdraw(uint256 _amount) public override {
+        require(userStakedAmount[_msgSender()] > 0, "User is not staking.");
         require(_amount > 0, "Invalid withdraw amount.");
-        require(_amount <= stakedAmounts[_msgSender()], "Invalid staked amount to withdraw.");
+        
+        // Update User Exchange Fees rewards
+        _exchangeFeesEscrow().updateUserRewards(_msgSender());
 
-        stakedAmounts[_msgSender()] = stakedAmounts[_msgSender()] - _amount;
-        totalStakedTokens = totalStakedTokens - _amount;
+        _withdraw(_amount, _msgSender());
 
-        _erc20().transfer(_msgSender(), _amount);
-
-        emit Withdraw(_msgSender(), _amount, stakedAmounts[_msgSender()]);
+        emit Withdraw(_msgSender(), _amount, userStakedAmount[_msgSender()]);
     }
 
-    function claim() external override {
-        require(stakedAmounts[_msgSender()] > 0, "User is not staking.");
+    function exit() external override {
+        require(userStakedAmount[_msgSender()] > 0, "User is not staking.");
+        
+        // Update User Exchange Fees rewards
+        _exchangeFeesEscrow().updateUserRewards(_msgSender());
 
-        uint256 stakedPercentage = getStakePercentage();
-    
-        stakePool.claim((stakePool.supply() * stakedPercentage) / (1 ether), _msgSender());
-        exchangeFeePool.claim((exchangeFeePool.supply() * stakedPercentage) / (1 ether), _msgSender());
+        uint256 stakedAmount = userStakedAmount[_msgSender()];
+
+        _withdraw(userStakedAmount[_msgSender()], _msgSender());
+        _claimRewards(_msgSender());
+        emit Withdraw(_msgSender(), stakedAmount, 0);
     }
 
-    function getStakePercentage() public view override returns(uint256) {
-        if (stakedAmounts[_msgSender()] == 0) {
-            return 0;
-        }
+    function claimRewards() external override {
+        require(userStakedAmount[_msgSender()] > 0, "User is not staking.");
+        
+        // Update User Exchange Fees rewards
+        _exchangeFeesEscrow().updateUserRewards(_msgSender());
 
-        uint256 calcBase = 1 ether;
-        return (calcBase * stakedAmounts[_msgSender()]) / totalStakedTokens;
+        _claimRewards(_msgSender());
     }
 
-    function totalClaimableTokensInInterval() external view override returns(uint256) {
-        return stakePool.supply() + exchangeFeePool.supply();
+    function getUserClaimableStakingRewards(address _user) external view override returns(LibStaking.Reward[] memory rewards) {
+        // Todo: get the rewards from Staking Rewards pool 
     }
 
-    function unclaimedTokensInInterval() external view override returns(uint256) {
-        return stakePool.remaining() + exchangeFeePool.remaining();
+    function getUserClaimableExchangeRewards(address _user) external view override returns(LibStaking.Reward[] memory rewards) {
+        return _exchangeFeesEscrow().getClaimableRewards(_user);
     }
     
     /**************** Internal Functions ****************/
     function _erc20() internal view returns(IERC20Upgradeable) {
         return IERC20Upgradeable(token);
+    }
+
+    function _exchangeFeesEscrow() internal view returns(IExchangeFeesEscrow) {
+        return IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL));
+    }
+
+    function _withdraw(uint256 _amount, address _user) internal {
+
+        userStakedAmount[_user] -= _amount;
+        totalStakedTokens -= _amount;
+
+        _erc20().transfer(_user, _amount);
+    }
+
+    function _claimRewards(address _user) internal {
+        // Todo: Claim rewards from Staking
+        _exchangeFeesEscrow().claimRewards(_user);
     }
 }

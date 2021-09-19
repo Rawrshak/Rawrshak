@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../../libraries/LibStaking.sol";
+
 interface IExchangeFeesEscrow { 
 
     /******** View Functions ********/
@@ -8,20 +10,20 @@ interface IExchangeFeesEscrow {
     
     function totalFees(address _token) external view returns(uint256);
 
-    function distributionRates() external view returns(address[] memory _pools, uint24[] memory _percentages);
+    function getClaimableRewards(address _user) external view returns(LibStaking.Reward[] memory claimableRewards);
     
     /******** Mutative Functions ********/
     function setRate(uint24 _rate) external;
-    
-    function updateDistributionPools(address[] memory _pools, uint24[] memory _percentages) external;
 
-    function depositRoyalty(address _token, uint256 _amount) external;
+    function depositFees(address _token, uint256 _amount) external;
 
-    function distribute() external;
+    function initializeTokenRate() external;
+
+    function updateUserRewards(address _user) external;
+
+    function claimRewards(address _user) external returns(LibStaking.Reward[] memory claimedRewards);
     
     /*********************** Events *********************/
     event FeeUpdated(address indexed operator, uint24 rate);
-    event PoolsUpdated(address indexed operator, address[] funds, uint24[] percentages);
-    event PoolsDistributed(address indexed operator, address[] funds);
     event ExchangeFeesPaid(address indexed tokenAddr, uint256 amount);
 }

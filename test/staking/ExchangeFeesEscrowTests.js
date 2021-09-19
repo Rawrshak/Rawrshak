@@ -170,14 +170,14 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
 
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositRoyalty(rawrToken.address, 10000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress}),
             'ExchangeFeesPaid'
         );
 
         assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fee pool incorrect.");
         
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositRoyalty(rawrToken.address, 5000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrToken.address, 5000, {from: executionManagerAddress}),
             'ExchangeFeesPaid'
         );
 
@@ -199,14 +199,14 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await rawrToken.transfer(feesEscrow.address, 10000, {from: playerAddress});
         
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositRoyalty(rawrToken.address, 10000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress}),
             'ExchangeFeesPaid'
         );
         
         // Deposit 10,000 of RawrV2 token fees
         await rawrV2Token.transfer(feesEscrow.address, 10000, {from: playerAddress});
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositRoyalty(rawrV2Token.address, 10000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrV2Token.address, 10000, {from: executionManagerAddress}),
             'ExchangeFeesPaid'
         );
         
@@ -221,7 +221,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
 
         await rawrToken.transfer(feesEscrow.address, 10000, {from: playerAddress});
-        await feesEscrow.depositRoyalty(rawrToken.address, 10000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress});
 
         TruffleAssert.eventEmitted(
             await feesEscrow.distribute({from: deployerAddress}),
@@ -260,11 +260,11 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
 
         // Deposit 10,000 of Rawr token fees
         await rawrToken.transfer(feesEscrow.address, 10000, {from: playerAddress});
-        await feesEscrow.depositRoyalty(rawrToken.address, 10000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress});
         
         // Deposit 10,000 of RawrV2 token fees
         await rawrV2Token.transfer(feesEscrow.address, 10000, {from: playerAddress});
-        await feesEscrow.depositRoyalty(rawrV2Token.address, 10000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrV2Token.address, 10000, {from: executionManagerAddress});
         
 
         TruffleAssert.eventEmitted(
@@ -317,7 +317,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         );
         
         // internal fee pool balance is greater than what the contract holds
-        await feesEscrow.depositRoyalty(rawrToken.address, 10000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress});
         await TruffleAssert.fails(
             feesEscrow.distribute({from: deployerAddress}),
             TruffleAssert.ErrorType.REVERT

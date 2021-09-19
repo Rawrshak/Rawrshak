@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "../tokens/RawrToken.sol";
-import "./interface/IFundPool.sol";
+import "./interfaces/IFundPool.sol";
 
 abstract contract FundBase is IFundPool, AccessControlUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
