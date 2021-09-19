@@ -6,9 +6,9 @@ import "./ManagerBase.sol";
 import "../libraries/LibRoyalties.sol";
 import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
-import "./interfaces/IExchangeFeesEscrow.sol";
 import "./interfaces/IErc20Escrow.sol";
-import "./ExchangeFeesEscrow.sol";
+import "../staking/interfaces/IExchangeFeesEscrow.sol";
+import "../staking/ExchangeFeesEscrow.sol";
 import "../utils/LibContractHash.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
@@ -51,7 +51,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     ) external override onlyOwner {
         uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;
         _tokenEscrow().depositPlatformFees(_token, _sender, address(_exchangeFeesEscrow()), feeAmount);
-        _exchangeFeesEscrow().depositRoyalty(_token, feeAmount);
+        _exchangeFeesEscrow().depositFees(_token, feeAmount);
     }
 
     function transferRoyalty(
@@ -74,7 +74,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 _total
     ) external override onlyOwner {
         uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;
-        _exchangeFeesEscrow().depositRoyalty(_token, feeAmount);
+        _exchangeFeesEscrow().depositFees(_token, feeAmount);
         _tokenEscrow().transferPlatformFees(_orderId, address(_exchangeFeesEscrow()), feeAmount);
     }
 
