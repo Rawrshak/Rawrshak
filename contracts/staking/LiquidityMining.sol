@@ -6,6 +6,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+// This liquidity mining contract is based off of Sarcophagus's Liquidity Mining program
+// Link: https://github.com/sarcophagus-org/sarcophagus-liquidity-mining
 contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20Upgradeable for ERC20Upgradeable;
 

@@ -96,7 +96,6 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
                 }
             }
         }
-
     }
 
     function claimOrders(address _user, uint256[] calldata _orderIds) external override onlyOwner {
