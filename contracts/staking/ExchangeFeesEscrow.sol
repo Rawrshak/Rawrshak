@@ -28,26 +28,35 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     uint24 public override rate;
 
     /******************** Public API ********************/
-    function __ExchangeFeesEscrow_init(uint24 _rate) public initializer {
+    function __ExchangeFeesEscrow_init(address _resolver) public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
         __EscrowBase_init_unchained();
-        __ExchangeFeesEscrow_init_unchained(_rate);
+        __ExchangeFeesEscrow_init_unchained(_resolver);
     }
 
-    function __ExchangeFeesEscrow_init_unchained(uint24 _rate) internal initializer {
+    function __ExchangeFeesEscrow_init_unchained(address _resolver) internal initializer {
         _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE_FEES_ESCROW);
-        _setRate(_rate);
+        resolver = IAddressResolver(_resolver);
         grantRole(MANAGER_ROLE, _msgSender());
+        rate = 0;
     }
  
     function setRate(uint24 _rate) public override onlyRole(MANAGER_ROLE) {
-        _setRate(_rate);
+        require(_rate > 0 && _rate <= 1e6, "Invalid rate");
+        require(_staking().totalStakedTokens() > 0, "No staked amount");
+
+        // We cannot set the rate unless there are already tokens being staked
+        rate = _rate;
         emit FeeUpdated(_msgSender(), rate);
     }
 
     function depositFees(address _token, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
+        // Note: We don't want to revert and fail if no tokens are being staked because the entire
+        // exchange contract will fail all the transactions. Instead, the exchange will ignore making 
+        // transaction fees if the exchange fees rate is 0 or there is no one currently staking. 
+        
         // Increase Rewards 
         if (!rewards.contains(_token)) {
             rewards.set(_token, _amount);
@@ -60,7 +69,7 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
 
         // Update reward rate
         if (_staking().totalStakedTokens() > 0) {
-            rewardRate.set(_token, rewardRate.get(_token) + (_amount / _staking().totalStakedTokens()));
+            rewardRate.set(_token, rewardRate.get(_token) + (_amount * 10**18 / _staking().totalStakedTokens()));
         }
 
         emit ExchangeFeesPaid(_token, _amount);
@@ -93,9 +102,9 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
                 userAccumulatedRewards[_user].set(token, 0);
             }
 
-            uint256 userRate = userAccumulatedRewards[_user].get(token) + ((totalRewardRate - userRewardRate[_user].get(token)) * _staking().userStakedAmount(_user) / 10**18);
+            uint256 userRewards = userAccumulatedRewards[_user].get(token) + ((totalRewardRate - userRewardRate[_user].get(token)) * _staking().userStakedAmount(_user) / 10**18);
 
-            userAccumulatedRewards[_user].set(token, userRate);
+            userAccumulatedRewards[_user].set(token, userRewards);
             userRewardRate[_user].set(token, totalRewardRate);
         }
     }
@@ -132,20 +141,24 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     function getClaimableRewards(address _user) external view override onlyRole(MANAGER_ROLE) returns(LibStaking.Reward[] memory claimableRewards) {
         address token;
         uint256 accumulatedReward;
-        claimableRewards = new LibStaking.Reward[](userAccumulatedRewards[_user].length());
-        for (uint256 i = 0; i < userAccumulatedRewards[_user].length(); ++i) {
-            (token, accumulatedReward) = userAccumulatedRewards[_user].at(i);
+        uint256 userRate;
+        uint256 totalRewardRate;
+        claimableRewards = new LibStaking.Reward[](rewardRate.length());
+        for (uint256 i = 0; i < rewardRate.length(); ++i) {
+            (token, totalRewardRate) = rewardRate.at(i);
+            
+            accumulatedReward = 0;
+            userRate = 0;
+            if (userAccumulatedRewards[_user].contains(token)) {
+                accumulatedReward = userAccumulatedRewards[_user].get(token);
+                userRate = userRewardRate[_user].get(token);
+            }
 
-            accumulatedReward += (rewardRate.get(token) - userRewardRate[_user].get(token)) * _staking().userStakedAmount(_user) / 10**18;
+            accumulatedReward += (totalRewardRate - userRate) * _staking().userStakedAmount(_user) / 10**18;
 
             claimableRewards[i].token = token;
             claimableRewards[i].amount = accumulatedReward;
         }
-    }
-
-    function _setRate(uint24 _rate) internal {
-        require(_rate > 0 && _rate <= 1e6, "Invalid rate");
-        rate = _rate;
     }
     
     /**************** Internal Functions ****************/
