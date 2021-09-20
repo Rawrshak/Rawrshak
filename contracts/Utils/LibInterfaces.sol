@@ -40,9 +40,5 @@ library LibInterfaces {
     bytes4 constant INTERFACE_ID_EXCHANGE_FEES_ESCROW  = 0x00000012;
 
     // Staking Interfaces
-    bytes4 constant INTERFACE_ID_CLAIMABLE             = 0x00000013;
-    bytes4 constant INTERFACE_ID_REWARDS_MANAGER       = 0x00000014;
-    bytes4 constant INTERFACE_ID_FUND_POOL             = 0x00000015;
     bytes4 constant INTERFACE_ID_STAKING               = 0x00000016;
-    bytes4 constant INTERFACE_ID_LOCKED_FUND           = 0x00000017;
 }

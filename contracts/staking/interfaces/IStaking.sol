@@ -17,15 +17,13 @@ interface IStaking {
     
     function getUserClaimableStakingRewards(address _user) external view returns(LibStaking.Reward[] memory rewards);
 
-    // function totalClaimableTokensInInterval() external view returns(uint256);
-
-    // function unclaimedTokensInInterval() external view returns(uint256);
-    // function getStakePercentage() external view returns(uint256);
-
     /******** Mutative Functions ********/
     function stake(uint256 _amount) external;
+
     function withdraw(uint256 _amount) external;
+
     function exit() external;
+
     function claimRewards() external;
 
     /*********************** Events *********************/
