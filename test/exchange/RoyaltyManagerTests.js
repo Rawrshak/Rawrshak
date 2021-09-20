@@ -9,6 +9,7 @@ const Erc20Escrow = artifacts.require("Erc20Escrow");
 const ExchangeFeesEscrow = artifacts.require("ExchangeFeesEscrow");
 const RoyaltyManager = artifacts.require("RoyaltyManager");
 const AddressResolver = artifacts.require("AddressResolver");
+const MockStaking = artifacts.require("MockStaking");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
@@ -20,7 +21,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         creator1Address,            // content nft Address
         creator2Address,            // creator Address
         playerAddress,              // malicious address
-        stakingFund,                // staking fund address
+        staker1,                    // Staker 1
     ] = accounts;
 
     var resolver;
@@ -76,8 +77,14 @@ contract('Royalty Manager Contract', (accounts)=> {
     }
 
     async function RoyaltyManagerSetup() {
+        staking = await MockStaking.new(resolver.address, {from: deployerAddress});
+        await feesEscrow.registerManager(staking.address, {from:deployerAddress});
+        
         // register the royalty manager
-        await resolver.registerAddress(["0x29a264aa", "0x4911f18f"], [escrow.address, feesEscrow.address], {from: deployerAddress});
+        await resolver.registerAddress(["0x29a264aa", "0x4911f18f", "0x1b48faca"], [escrow.address, feesEscrow.address, staking.address], {from: deployerAddress});
+        
+        await staking.stake(web3.utils.toWei('100', 'ether'), {from: staker1});
+        await feesEscrow.setRate(3000, {from: deployerAddress});
 
         // Register the royalty manager
         await escrow.registerManager(royaltyManager.address, {from:deployerAddress});
@@ -87,9 +94,6 @@ contract('Royalty Manager Contract', (accounts)=> {
         await escrow.registerManager(testManagerAddress, {from:deployerAddress})
         await feesEscrow.registerManager(testManagerAddress, {from:deployerAddress});
 
-        // add funds - 100% to the "staking fund"
-        await feesEscrow.updateDistributionPools([stakingFund], [1000000], {from:testManagerAddress});
-
         // add token support
         await escrow.addSupportedTokens(rawrToken.address, {from:testManagerAddress});
     }
@@ -98,7 +102,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         escrow = await Erc20Escrow.new();
         await escrow.__Erc20Escrow_init({from: deployerAddress});
         feesEscrow = await ExchangeFeesEscrow.new();
-        await feesEscrow.__ExchangeFeesEscrow_init(3000, {from: deployerAddress});
+        await feesEscrow.__ExchangeFeesEscrow_init(resolver.address, {from: deployerAddress});
 
         royaltyManager = await RoyaltyManager.new();
         await royaltyManager.__RoyaltyManager_init(resolver.address, {from: deployerAddress});

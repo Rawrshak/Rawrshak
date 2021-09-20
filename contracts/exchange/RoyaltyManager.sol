@@ -49,9 +49,12 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         address _token,
         uint256 _total
     ) external override onlyOwner {
-        uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;
-        _tokenEscrow().depositPlatformFees(_token, _sender, address(_exchangeFeesEscrow()), feeAmount);
-        _exchangeFeesEscrow().depositFees(_token, feeAmount);
+        if (_exchangeFeesEscrow().rate() > 0 && _staking().totalStakedTokens() > 0) {
+            // Rate has to be greater than 0 and there must be someone staking. If no one is staking,
+            // we ignore platform fees because no one will be able to collect it.
+            uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;            _exchangeFeesEscrow().depositFees(_token, feeAmount);
+            _tokenEscrow().depositPlatformFees(_token, _sender, address(_exchangeFeesEscrow()), feeAmount);
+        }
     }
 
     function transferRoyalty(
@@ -73,9 +76,13 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 _orderId,
         uint256 _total
     ) external override onlyOwner {
-        uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;
-        _exchangeFeesEscrow().depositFees(_token, feeAmount);
-        _tokenEscrow().transferPlatformFees(_orderId, address(_exchangeFeesEscrow()), feeAmount);
+        if (_exchangeFeesEscrow().rate() > 0 && _staking().totalStakedTokens() > 0) {
+            // Rate has to be greater than 0 and there must be someone staking. If no one is staking,
+            // we ignore platform fees because no one will be able to collect it.
+            uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;
+            _exchangeFeesEscrow().depositFees(_token, feeAmount);
+            _tokenEscrow().transferPlatformFees(_orderId, address(_exchangeFeesEscrow()), feeAmount);
+        }
     }
 
     function payableRoyalties(
@@ -85,8 +92,12 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         remaining = _total;
 
         // Get platform fees
-        uint256 platformFees = (_total * _exchangeFeesEscrow().rate()) / 1e6;
-        remaining -= platformFees;
+        if (_exchangeFeesEscrow().rate() > 0 && _staking().totalStakedTokens() > 0) {
+            // Rate has to be greater than 0 and there must be someone staking. If no one is staking,
+            // we ignore platform fees because no one will be able to collect it.
+            uint256 platformFees = (_total * _exchangeFeesEscrow().rate()) / 1e6;
+            remaining -= platformFees;
+        }
 
         // If IContent is not supported, ignore royalties
         if (!_asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_CONTENT)) {
@@ -123,6 +134,10 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
 
     function _exchangeFeesEscrow() internal view returns(IExchangeFeesEscrow) {
         return IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL));
+    }
+
+    function _staking() internal view returns(IStaking) {
+        return IStaking(resolver.getAddress(LibContractHash.CONTRACT_STAKING));
     }
 
     uint256[50] private __gap;

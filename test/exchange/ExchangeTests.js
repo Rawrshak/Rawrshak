@@ -13,20 +13,18 @@ const ExecutionManager = artifacts.require("ExecutionManager");
 const RoyaltyManager = artifacts.require("RoyaltyManager");
 const Exchange = artifacts.require("Exchange");
 const AddressResolver = artifacts.require("AddressResolver");
+const MockStaking = artifacts.require("MockStaking");
 const TruffleAssert = require("truffle-assertions");
 const { constants } = require('@openzeppelin/test-helpers');
 
 contract('Exchange Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
-        platformAddress,            // platform address fees
-        testManagerAddress,         // Only for putting in data for testing
         creator1Address,             // content nft Address
         creator2Address,             // creator Address
         playerAddress,              // player 1 address
         player2Address,              // player 2 address
-        stakingFund,                // staking fund address
-        daoFund
+        staker1,                    // staking address
     ] = accounts;
 
     // NFT
@@ -106,7 +104,7 @@ contract('Exchange Contract', (accounts)=> {
         
         // 30 basis points
         feesEscrow = await ExchangeFeesEscrow.new();
-        await feesEscrow.__ExchangeFeesEscrow_init(3000, {from: deployerAddress});
+        await feesEscrow.__ExchangeFeesEscrow_init(resolver.address, {from: deployerAddress});
 
         orderbook = await Orderbook.new();
         await orderbook.__Orderbook_init(resolver.address, {from: deployerAddress});
@@ -116,21 +114,25 @@ contract('Exchange Contract', (accounts)=> {
         
         royaltyManager = await RoyaltyManager.new();
         await royaltyManager.__RoyaltyManager_init(resolver.address, {from: deployerAddress});
+        
+        staking = await MockStaking.new(resolver.address, {from: deployerAddress});
 
         // register the exchange contracts on the address resolver
-        var addresses = [tokenEscrow.address, nftEscrow.address, feesEscrow.address, orderbook.address, executionManager.address, royaltyManager.address];
-        var escrowIds = ["0x29a264aa", "0x87d4498b", "0x4911f18f", "0xd9ff7618", "0x018869a9", "0x2c7e992e"];
+        var addresses = [tokenEscrow.address, nftEscrow.address, feesEscrow.address, orderbook.address, executionManager.address, royaltyManager.address, staking.address];
+        var escrowIds = ["0x29a264aa", "0x87d4498b", "0x4911f18f", "0xd9ff7618", "0x018869a9", "0x2c7e992e", "0x1b48faca"];
         await resolver.registerAddress(escrowIds, addresses, {from: deployerAddress});
-        
+
         // Register the managers
         await nftEscrow.registerManager(executionManager.address, {from:deployerAddress});
         await tokenEscrow.registerManager(executionManager.address, {from:deployerAddress});
         await tokenEscrow.registerManager(royaltyManager.address, {from:deployerAddress});
         await feesEscrow.registerManager(royaltyManager.address, {from:deployerAddress});
-
-        // add funds
-        await feesEscrow.updateDistributionPools([stakingFund, daoFund], [500000, 500000], {from:deployerAddress});
+        await feesEscrow.registerManager(staking.address, {from:deployerAddress});
         
+        // add stakers
+        await staking.stake(web3.utils.toWei('100', 'ether'), {from: staker1});
+        await feesEscrow.setRate(3000, {from: deployerAddress});
+
         exchange = await Exchange.new();
         await exchange.__Exchange_init(
             royaltyManager.address,
