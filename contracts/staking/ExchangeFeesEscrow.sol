@@ -110,7 +110,6 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     }
 
     function claimRewards(address _user) external override onlyRole(MANAGER_ROLE) returns(LibStaking.Reward[] memory claimedRewards) {
-        require(rewards.length() > 0, "Nothing to claim");
         address token;
         uint256 accumulatedReward;
 

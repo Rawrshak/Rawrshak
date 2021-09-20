@@ -15,16 +15,10 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         staker2,                    // 2nd Staker
     ] = accounts;
     
-    var rawrId = "0xd4df6855";
     var rawrToken;
-    var escrow;
     var feesEscrow;
 
     var staking;
-
-    // roles
-    var manager_role;
-    var default_admin_role;
 
     before(async () => {            
         resolver = await AddressResolver.new();
@@ -42,7 +36,6 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
 
     async function setup() {
         // Register the execution manager
-        await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
         await feesEscrow.registerManager(staking.address, {from:deployerAddress})
         
         // register the escrows
@@ -110,7 +103,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
             0, 
             "initial Exchange Fees rate is incorrect.");
 
-        // fails to set the rate because there are no tokens being statked
+        // fails to set the rate because there are no tokens being staked
         await TruffleAssert.fails(
             feesEscrow.setRate(30000, {from:deployerAddress}),
             TruffleAssert.ErrorType.REVERT
@@ -131,18 +124,16 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
 
     it('Deposit Royalties', async () => {
         await setup();
-        // Register the execution manager
-        await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress})
 
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress}),
             'ExchangeFeesPaid'
         );
 
         assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fee pool incorrect.");
         
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrToken.address, 5000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrToken.address, 5000, {from: deployerAddress}),
             'ExchangeFeesPaid'
         );
 
@@ -166,14 +157,14 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await rawrToken.transfer(feesEscrow.address, 10000, {from: playerAddress});
         
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress}),
             'ExchangeFeesPaid'
         );
         
         // Deposit 10,000 of RawrV2 token fees
         await rawrV2Token.transfer(feesEscrow.address, 10000, {from: playerAddress});
         TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrV2Token.address, 10000, {from: executionManagerAddress}),
+            await feesEscrow.depositFees(rawrV2Token.address, 10000, {from: deployerAddress}),
             'ExchangeFeesPaid'
         );
         
@@ -191,7 +182,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
 
         // Update internal deposits
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
         assert.equal(
@@ -220,7 +211,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
         await staking.stake(web3.utils.toWei('75', 'ether'), {from: staker2});
 
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
         
         var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
         assert.equal(
@@ -244,11 +235,11 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
 
         // add 2 stakers
         await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         
         await staking.stake(web3.utils.toWei('75', 'ether'), {from: staker2});
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
         
         var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
         assert.equal(
@@ -279,10 +270,10 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await staking.stake(web3.utils.toWei('75', 'ether'), {from: staker2});
 
         // Deposit 10,000 of Rawr token fees
-        await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress});
         
         // Deposit 10,000 of RawrV2 token fees
-        await feesEscrow.depositFees(rawrV2Token.address, 20000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrV2Token.address, 20000, {from: deployerAddress});
 
         var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
         assert.equal(
@@ -329,7 +320,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
 
         // Update internal deposits
         await rawrToken.transfer(feesEscrow.address, web3.utils.toWei('20000', 'ether'), {from: playerAddress});
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('20000', 'ether'), {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
         
         assert.equal(
             await rawrToken.balanceOf(feesEscrow.address),
@@ -376,11 +367,11 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
 
         // Deposit 10,000
         await rawrToken.transfer(feesEscrow.address, 10000, {from: playerAddress});
-        await feesEscrow.depositFees(rawrToken.address, 10000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress});
         
         // Deposit 20,000
         await rawrV2Token.transfer(feesEscrow.address, 20000, {from: playerAddress});
-        await feesEscrow.depositFees(rawrV2Token.address, 20000, {from: executionManagerAddress});
+        await feesEscrow.depositFees(rawrV2Token.address, 20000, {from: deployerAddress});
 
         assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fees incorrect.");
         assert.equal(await feesEscrow.totalFees(rawrV2Token.address), 20000, "Total fees incorrect.");
