@@ -57,32 +57,28 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address _usdc,
         address _usdt,
         address _dai,
-        address _rawr,
-        address _owner
+        address _rawr
     ) public initializer {
         __Context_init_unchained();
+        __Ownable_init_unchained();
         __ReentrancyGuard_init_unchained();
         __LiquidityMining_init_unchained(
             _usdc,
             _usdt,
             _dai,
-            _rawr,
-            _owner);
+            _rawr);
     }
 
     function __LiquidityMining_init_unchained(
         address _usdc,
         address _usdt,
         address _dai,
-        address _rawr,
-        address _owner
+        address _rawr
     ) public {
         usdc = ERC20Upgradeable(_usdc);
         usdt = ERC20Upgradeable(_usdt);
         dai = ERC20Upgradeable(_dai);
         rawr = ERC20Upgradeable(_rawr);
-
-        transferOwnership(_owner);
     }
 
     function totalStakeUsdc() public view returns (uint256 totalUsdc) {
@@ -235,18 +231,18 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         }
 
         if (usdcIn > 0) {
-            usdc.safeTransferFrom(msg.sender, address(this), usdcIn);
+            usdc.safeTransferFrom(_msgSender(), address(this), usdcIn);
         }
 
         if (usdtIn > 0) {
-            usdt.safeTransferFrom(msg.sender, address(this), usdtIn);
+            usdt.safeTransferFrom(_msgSender(), address(this), usdtIn);
         }
 
         if (daiIn > 0) {
-            dai.safeTransferFrom(msg.sender, address(this), daiIn);
+            dai.safeTransferFrom(_msgSender(), address(this), daiIn);
         }
 
-        if (totalUserStake(msg.sender) == 0) {
+        if (totalUserStake(_msgSender()) == 0) {
             totalStakers = totalStakers + 1;
         }
 
@@ -254,10 +250,10 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             normalize(usdc, usdcIn),
             normalize(usdt, usdtIn),
             normalize(dai, daiIn),
-            msg.sender
+            _msgSender()
         );
 
-        emit Stake(msg.sender, usdcIn, usdtIn, daiIn);
+        emit Stake(_msgSender(), usdcIn, usdtIn, daiIn);
     }
 
     function withdraw(address to)
@@ -273,7 +269,7 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     {
         totalStakers = totalStakers - 1;
 
-        (usdcOut, usdtOut, daiOut, reward) = _applyReward(msg.sender);
+        (usdcOut, usdtOut, daiOut, reward) = _applyReward(_msgSender());
 
         usdcOut = denormalize(usdc, usdcOut);
         usdtOut = denormalize(usdt, usdtOut);
@@ -293,13 +289,13 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
         if (reward > 0) {
             rawr.safeTransfer(to, reward);
-            userClaimedRewards[msg.sender] += reward;
+            userClaimedRewards[_msgSender()] += reward;
             totalClaimedRewards += reward;
 
-            emit Payout(msg.sender, reward, to);
+            emit Payout(_msgSender(), reward, to);
         }
 
-        emit Withdraw(msg.sender, usdcOut, usdtOut, daiOut, to);
+        emit Withdraw(_msgSender(), usdcOut, usdtOut, daiOut, to);
     }
 
     function payout(address to)
@@ -313,19 +309,19 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             uint256 usdtOut,
             uint256 daiOut,
             uint256 _reward
-        ) = _applyReward(msg.sender);
+        ) = _applyReward(_msgSender());
 
         reward = _reward;
 
         if (reward > 0) {
             rawr.safeTransfer(to, reward);
-            userClaimedRewards[msg.sender] += reward;
+            userClaimedRewards[_msgSender()] += reward;
             totalClaimedRewards += reward;
         }
 
-        _stake(usdcOut, usdtOut, daiOut, msg.sender);
+        _stake(usdcOut, usdtOut, daiOut, _msgSender());
 
-        emit Payout(msg.sender, _reward, to);
+        emit Payout(_msgSender(), _reward, to);
     }
 
     function _stake(
