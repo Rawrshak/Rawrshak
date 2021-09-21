@@ -90,7 +90,7 @@ contract('Salvage Contract', (accounts)=> {
         // Give player 1 10000 Credit tokens
         await lootboxCreditToken.transfer(playerAddress, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
-        // Mint an assets
+        // Mint assets
         var mintData = [playerAddress, [1, 2], [10, 10], 1, zeroAddress, []];
         await contentManager.mintBatch(mintData, {from: deployerAddress});
 
@@ -110,7 +110,7 @@ contract('Salvage Contract', (accounts)=> {
         var approvalPair = [[salvage.address, true], [creatorAddress, true]];
         await contentManager.registerOperators(approvalPair, {from: deployerAddress});
 
-        // registered manager
+        // Register manager
         await salvage.registerManager(managerAddress, {from: deployerAddress});
         
         initialSalvageableAssetData = [

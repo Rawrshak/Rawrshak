@@ -54,4 +54,10 @@ library LibConstants {
     bytes4 constant _INTERFACE_ID_FUND_POOL             = 0x00000015;
     bytes4 constant _INTERFACE_ID_STAKING               = 0x00000016;
     bytes4 constant _INTERFACE_ID_LOCKED_FUND           = 0x00000017;
+
+    // Lootbox Interfaces
+    bytes4 constant _INTERFACE_ID_LOOTBOX_BY_ITEM               = 0x0000001C;
+    bytes4 constant _INTERFACE_ID_LOOTBOX_STORAGE_BY_ITEM       = 0x0000001D;
+    bytes4 constant _INTERFACE_ID_LOOTBOX_BY_CLASS              = 0x0000001E;
+    bytes4 constant _INTERFACE_ID_LOOTBOX_STORAGE_BY_CLASS      = 0x0000001F;
 }

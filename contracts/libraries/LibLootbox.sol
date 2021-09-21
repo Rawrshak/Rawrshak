@@ -28,10 +28,10 @@ library LibLootbox {
     }
 
     struct Blueprint {
-        uint256 id;
         bool enabled;               // whether or not this lootbox can be minted yet
         uint256 cost;               // lootbox credit cost to buy the lootbox
-        LootboxReward[] rewards;
+        uint16 maxAssetsGiven;      // Max number of reward items the lootbox will randomly pick from the assets list when burned.
+        bool hasGuaranteedItems;    // Whether or not we have any items that are guaranteed to be given.
     }
 
     function verifyLootboxCreditReward(LootboxCreditReward memory _reward) internal pure {
@@ -41,7 +41,32 @@ library LibLootbox {
         require(_reward.amount > 0, "Invalid credit amount.");
     }
 
+    function verifyLootboxReward(LootboxReward memory _reward) internal pure {
+        // Check validity of the lootbox reward asset.
+        require(_reward.asset.content != address(0), "Invalid content address");
+        require(_reward.asset.tokenId != 0, "Invalid token id");
+        require(_reward.probability > 0 && _reward.probability <= 1 ether, "Invalid credit probability.");
+        require(_reward.amount > 0, "Invalid credit amount.");
+        // Class is optional, so no need to check that here.
+    }
+
+    function verifyBlueprint(LibLootbox.Blueprint memory _blueprint) internal pure {
+        require(_blueprint.maxAssetsGiven > 0, "Invalid max assets given.");
+        require(_blueprint.cost > 0, "Invalid cost");
+    }
+
+    function checkForGuaranteedItems(LibLootbox.LootboxReward[] memory _rewards) internal pure returns(bool) {
+        for (uint256 i = 0; i < _rewards.length; ++i) {
+            if(_rewards[i].probability >= 1 ether)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function salvageCredit(LootboxCreditReward storage _reward, uint256 _seed) internal view returns(uint256 amount) {
+        verifyLootboxCreditReward(_reward);
         amount = 0;
         if(_reward.probability == 1 ether) {
             amount = _reward.amount;

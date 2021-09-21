@@ -49,10 +49,12 @@ library LibCraft {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
         // here, it means we've verified the asset and reward assets correctly.
         require(_asset.salvageType < uint256(SalvageType.Max), "Invalid Salvage Type");
-        require(_asset.rewards.length > 0, "Invalid rewards length.");
+        require(_asset.rewards.length > 0, "Invalid rewards length");
         for (uint256 i = 0; i < _asset.rewards.length; ++i) {
-            require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 1 ether, "Invalid probability.");
-            require(_asset.rewards[i].amount > 0, "Invalid reward amount.");
+            require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 1 ether, "Invalid probability");
+            require(_asset.rewards[i].amount > 0, "Invalid reward amount");
+            require(_asset.rewards[i].asset.content != address(0), "Invalid content address");
+            require(_asset.rewards[i].asset.tokenId != 0, "Invalid token id");
         }
 
         // Check validity of the lootbox credit asset. If it was set as this is optional.
