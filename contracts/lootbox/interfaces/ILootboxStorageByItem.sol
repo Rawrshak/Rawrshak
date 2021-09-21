@@ -8,10 +8,16 @@ interface ILootboxStorageByItem {
     function getBlueprint(uint256 _tokenId) external view returns(LibLootbox.Blueprint memory _blueprint);
 
     function getRewards(uint256 _tokenId) external view returns(LibLootbox.LootboxReward[] memory _rewards);
+
+    function getNumAddedRewards(uint256 _tokenId) external view returns(uint256);
+
+    function getMaxRewardAssetsGiven(uint256 _tokenId) external view returns(uint16);
     
     function exists(uint256 _tokenId) external view returns(bool);
 
     function getCost(uint256 _tokenId) external view returns(uint256);
+
+    function getEnabled(uint256 _tokenId) external view returns(bool);
 
     /******** Mutative Functions ********/
     function setBlueprint(LibLootbox.Blueprint memory _blueprint) external;

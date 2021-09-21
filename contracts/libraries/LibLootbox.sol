@@ -50,6 +50,17 @@ library LibLootbox {
         // Class is optional, so no need to check that here.
     }
 
+    function isLootboxRewardValid(LootboxReward memory _reward) internal pure returns(bool) {
+        if(_reward.asset.content != address(0) &&
+           _reward.asset.tokenId != 0 &&
+           _reward.probability > 0 && _reward.probability <= 1 ether &&
+           _reward.amount > 0)
+        {
+            return true;
+        }
+        return false;
+    }
+
     function verifyBlueprint(LibLootbox.Blueprint memory _blueprint) internal pure {
         require(_blueprint.maxAssetsGiven > 0, "Invalid max assets given.");
         require(_blueprint.cost > 0, "Invalid cost");

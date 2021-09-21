@@ -38,12 +38,28 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
         tokenId = 0;
     }
 
+    /******** View Functions ********/
     function getBlueprint(uint256 _tokenId) external view override returns(LibLootbox.Blueprint memory _blueprint) {
         return lootboxBlueprints[_tokenId];
     }
 
     function getRewards(uint256 _tokenId) external view override returns(LibLootbox.LootboxReward[] memory _rewards) {
         return lootboxRewards[_tokenId];
+    }
+
+    function getNumAddedRewards(uint256 _tokenId) external view override returns(uint256) {
+        uint256 count = 0;
+        for(uint i = 0; i < lootboxRewards[_tokenId].length; i++) {
+            if(LibLootbox.isLootboxRewardValid(lootboxRewards[_tokenId][i]))
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+    
+    function getMaxRewardAssetsGiven(uint256 _tokenId) external view override returns(uint16) {
+        return lootboxBlueprints[_tokenId].maxAssetsGiven;
     }
 
     function exists(uint256 _tokenId) external view override returns(bool) {
@@ -58,6 +74,17 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
         return lootboxBlueprints[_tokenId].cost;
     }
 
+    function getEnabled(uint256 _tokenId) external view override returns(bool) {
+        return lootboxBlueprints[_tokenId].enabled;
+    }
+    
+    // Interface support
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable, StorageBase) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+    /******** End of View Functions ********/
+
+    /******************** Mutative Functions ********************/
     // Developer only - Add a new lootbox blueprint (i.e. recipe) to the contract.
     function setBlueprint(LibLootbox.Blueprint memory _blueprint) external override checkPermissions(MANAGER_ROLE) {
         LibLootbox.verifyBlueprint(_blueprint);
@@ -71,7 +98,6 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
         emit BlueprintUpdated(msg.sender, tokenId, newBlueprint);
     }
 
-    /******************** Blueprint Modifiers ********************/
     function setBlueprintEnabled(uint256 _tokenId, bool _enabled) external override checkPermissions(MANAGER_ROLE) {
         lootboxBlueprints[_tokenId].enabled = _enabled;
         emit BlueprintEnabled(msg.sender, _tokenId, _enabled);
@@ -104,12 +130,7 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
         lootboxBlueprints[_tokenId].hasGuaranteedItems = false;
         emit BlueprintRewardsCleared(msg.sender, _tokenId);
     }
-    /******************** End of Blueprint Modifiers ********************/
-
-    // Interface support
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable, StorageBase) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
+    /******************** End of Mutative Functions ********************/
 
     uint256[50] private __gap;
 }

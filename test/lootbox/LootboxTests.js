@@ -181,7 +181,7 @@ contract('Lootbox Contract', (accounts)=> {
 
     });
 
-    /*it('Check if Lootbox Contract was deployed properly', async () => {
+    it('Check if Lootbox Contract was deployed properly', async () => {
         assert.equal(
             lootbox.address != 0x0,
             true,
@@ -225,7 +225,7 @@ contract('Lootbox Contract', (accounts)=> {
         lootboxCost = lootboxCost.toString();
         console.log("| Blueprint Cost: " + lootboxCost);
         assert.notEqual(lootboxCost, 0x0, "Cost is empty");
-        assert.equal(lootboxCost, 50, "incorrect cost");
+        assert.equal(lootboxCost, web3.utils.toWei('50', 'ether'), "incorrect cost");
 
         var lootboxRewards = await lootboxStorage.getRewards(tokenId);
         console.log("| Blueprint Number of Rewards: " + lootboxRewards.length);
@@ -300,7 +300,7 @@ contract('Lootbox Contract', (accounts)=> {
 
         var balanceAsset = await content.balanceOf(playerAddress, 2);
         assert.equal(balanceAsset.valueOf().toString(), 11, "Asset was not minted");
-    });*/
+    });
 
     it('Burn Blueprint 2', async () => {
         var results = await lootboxStorage.setBlueprint(blueprints[1], {from: managerAddress});
@@ -404,13 +404,274 @@ contract('Lootbox Contract', (accounts)=> {
         console.log("| Number of Rewards Given: " + numAssetsGiven);
     });
 
-    // TODO: Don't let user without any lootbox credit mint a lootbox.
+    it('Do not let broke user mint lootbox', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Add some rewards.
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        await TruffleAssert.fails(
+            lootbox.mint(tokenId, 1, {from: player2Address}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
+    it('Operations stop working when entire lootbox system paused and operations resume when unpaused', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Pause the lootbox contract.
+        await lootbox.managerSetPause(true, {from: managerAddress});
+
+        // Add some rewards.
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        await TruffleAssert.fails(
+            lootbox.mint(tokenId, 1, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+
+        // Unpause the lootbox contract so we can mint one, to pause again and test failing on burning.
+        await lootbox.managerSetPause(false, {from: managerAddress});
+
+        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
+        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+
+        // Pause the lootbox contract.
+        await lootbox.managerSetPause(true, {from: managerAddress});
+
+        await TruffleAssert.fails(
+            lootbox.burn(tokenId, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
+    it('Operations stop working when single lootbox blueprint disabled and operations resume when re-enabled', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Add some rewards.
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        // Pause the specific lootbox contract.
+        await lootboxStorage.setBlueprintEnabled(tokenId, false, {from: managerAddress});
+
+        await TruffleAssert.fails(
+            lootbox.mint(tokenId, 1, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+
+        // Unpause the lootbox contract so we can mint one, to pause again and test failing on burning.
+        await lootboxStorage.setBlueprintEnabled(tokenId, true, {from: managerAddress});
+
+        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
+        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+
+        // Pause the lootbox contract.
+        await lootboxStorage.setBlueprintEnabled(tokenId, false, {from: managerAddress});
+
+        await TruffleAssert.fails(
+            lootbox.burn(tokenId, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
+    it('Test setting blueprint cost', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Add some rewards.
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var lootboxCost = await lootboxStorage.getCost(tokenId);
+        lootboxCost = lootboxCost.toString();
+        assert.notEqual(lootboxCost, 0x0, "Cost is empty");
+        assert.equal(lootboxCost, web3.utils.toWei('25', 'ether'), "incorrect cost");
+
+        // Change the cost of the blueprint.
+        await lootboxStorage.setBlueprintCost(tokenId, web3.utils.toWei('33', 'ether'), {from: managerAddress});
+
+        lootboxCost = await lootboxStorage.getCost(tokenId);
+        lootboxCost = lootboxCost.toString();
+        assert.equal(lootboxCost, web3.utils.toWei('33', 'ether'), "incorrect changed cost");
+
+        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
+        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+
+        var balance = await lootboxCreditToken.balanceOf(playerAddress);
+        assert.equal(
+            balance.valueOf().toString(),
+            web3.utils.toWei('9967', 'ether').toString(),
+            "Player's Lootbox Credit Incorrect");
+    });
+
+    it('Test setting max rewards', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Add some rewards.
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var lootboxNumRewards = await lootboxStorage.getMaxRewardAssetsGiven(tokenId);
+        lootboxNumRewards = lootboxNumRewards.toString();
+        assert.notEqual(lootboxNumRewards, 0x0, "Max Rewards is empty");
+        assert.equal(lootboxNumRewards, 2, "incorrect max rewards");
+
+        // Change the max rewards of the blueprint.
+        await lootboxStorage.setMaxRewardAssetsGiven(tokenId, 3, {from: managerAddress});
+
+        var lootboxNumRewards = await lootboxStorage.getMaxRewardAssetsGiven(tokenId);
+        lootboxNumRewards = lootboxNumRewards.toString();
+        assert.equal(lootboxNumRewards, 3, "incorrect changed max rewards");
+    });
+
+    it('Test clearing rewards', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Add some rewards.
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var lootboxNumRewards = await lootboxStorage.getNumAddedRewards(tokenId);
+        lootboxNumRewards = lootboxNumRewards.toString();
+        assert.notEqual(lootboxNumRewards, 0x0, "Num Rewards is empty");
+        assert.equal(lootboxNumRewards, 2, "incorrect num rewards");
+
+        await lootboxStorage.clearLootboxRewards(tokenId, {from: managerAddress});
+
+        lootboxNumRewards = await lootboxStorage.getNumAddedRewards(tokenId);
+        lootboxNumRewards = lootboxNumRewards.toString();
+        assert.equal(lootboxNumRewards, 0, "incorrect changed num rewards");
+    });
+
+    it('Fail adding rewards as non-manager', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Add some rewards as a player.
+        await TruffleAssert.fails(
+            lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
+    it('Fail clearing rewards as non-manager', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // Add some rewards.
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+
+        await TruffleAssert.fails(
+            lootboxStorage.clearLootboxRewards(tokenId, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
+    it('Fail disabling blueprint as non-manager', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        // As a player, try to disable a blueprint.
+        await TruffleAssert.fails(
+            lootboxStorage.setBlueprintEnabled(tokenId, false, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
+    it('Fail adding blueprint as non-manager', async () => {
+        await TruffleAssert.fails(
+            lootboxStorage.setBlueprint(blueprints[2], {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
+    it('Fail changing blueprint as non-manager', async () => {
+        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
+        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+
+        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
+        var tokenId = results.logs[0].args.tokenId.toString();
+        assert.notEqual(tokenId, 0x0, "Id is empty");
+
+        await TruffleAssert.fails(
+            lootboxStorage.setBlueprintCost(tokenId, web3.utils.toWei('25', 'ether'), {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+
+        await TruffleAssert.fails(
+            lootboxStorage.setMaxRewardAssetsGiven(tokenId, 10, {from: playerAddress}),
+            TruffleAssert.ErrorType.REVERT
+        );
+    });
+
     // TODO: Test against invalid data inputs.
-    // TODO: Test pausing lootbox contract. Make sure operations stop working and that you can unpause and operations start working again.
-    // TODO: Try to change blueprints/rewards while as a player not a manager.
-    // TODO: Test doing operations on lootbox while it's disabled (i.e enabled == false).
-    // TODO: Add test case for setBlueprintEnabled, setBlueprintCost, setMaxRewardAssetsGiven, clearLootboxRewards
     // TODO: Change test case to have an amount set to > 1
-    // TODO: Test reentrancy?
+    // TODO: Test reentrancy of mint/burn functions?
 
 });

@@ -71,6 +71,9 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         cost = SafeMathUpgradeable.mul(cost, _amount);
         require(IERC20Upgradeable(LootboxCredit(lootboxCreditAddress)).balanceOf(msg.sender) >= cost, "Not enough credit");
 
+        bool enabled = dataStorage.getEnabled(_tokenId);
+        require(enabled, "Lootbox not enabled");
+
         // 2) Grab the required LootboxCredit amount from the user and burn it.
         LootboxCredit(lootboxCreditAddress).burn(msg.sender, cost);
 
