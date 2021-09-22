@@ -41,4 +41,7 @@ library LibInterfaces {
 
     // Staking Interfaces
     bytes4 constant INTERFACE_ID_STAKING               = 0x00000016;
+
+    // ERC Interfaces
+    bytes4 constant INTERFACE_ID_ERC2981        = 0x2a55205a;
 }

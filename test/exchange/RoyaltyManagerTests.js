@@ -228,8 +228,8 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
 
         assert.equal (
-            results.creatorRoyaltieFees[0].toString() == web3.utils.toWei('200', 'ether').toString() && 
-            results.creatorRoyaltieFees[1].toString() == web3.utils.toWei('100', 'ether').toString(), 
+            results.creatorRoyaltyFees[0].toString() == web3.utils.toWei('200', 'ether').toString() && 
+            results.creatorRoyaltyFees[1].toString() == web3.utils.toWei('100', 'ether').toString(), 
             true, 
             "Incorrect amount of royalty to pay"
         );
@@ -273,4 +273,5 @@ contract('Royalty Manager Contract', (accounts)=> {
         );
     });
     
+    // Todo: Create a test for ERC2981 support. This means creating a mock ERC1155 contract supporting ERC2981 
 });
