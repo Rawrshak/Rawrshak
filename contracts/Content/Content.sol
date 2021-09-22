@@ -4,10 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "./HasContractUri.sol";
-import "./HasRoyalties.sol";
-import "./HasTokenUri.sol";
-import "../libraries/LibRoyalties.sol";
 import "../utils/LibInterfaces.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IAccessControlManager.sol";
@@ -94,7 +90,7 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
 
     // TOKEN URIS
     function uri(uint256 _tokenId) public view override returns (string memory) {
-        uint256 version = HasTokenUri(address(contentStorage)).getLatestUriVersion(_tokenId, true);
+        uint256 version = contentStorage.getLatestUriVersion(_tokenId, true);
         return this.uri(_tokenId, version);
     }
 
@@ -108,6 +104,10 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
     
     function maxSupply(uint256 _tokenId) external view override returns (uint256) {
         return _maxSupply(_tokenId);
+    }
+
+    function contractRoyalty() external view override returns (address, uint24) {
+        return contentStorage.getContractRoyalty();
     }
     
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount) {

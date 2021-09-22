@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "./HasRoyalties.sol";
+import "./HasRoyalty.sol";
 import "./HasTokenUri.sol";
 import "./HasContractUri.sol";
 import "./ContentSubsystemBase.sol";
@@ -10,7 +10,7 @@ import "./interfaces/IContentStorage.sol";
 import "../libraries/LibAsset.sol";
 import "../utils/LibInterfaces.sol";
 
-contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalties, HasContractUri, HasTokenUri {    
+contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty, HasContractUri, HasTokenUri {    
     /******************** Constants ********************/
     /*
      * IContractUri == 0xc0e24d5e
@@ -24,7 +24,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
      * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0x4c45670b
      * bytes4(keccak256('setHiddenUriBatch(LibAsset.AssetUri[] memory)')) == 0x8c8e95fa
      * bytes4(keccak256('setPublicUriBatch(LibAsset.AssetUri[] memory)')) == 0xc6c6617e
-     * bytes4(keccak256('setContractRoyalty(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
+     * bytes4(keccak256('setContractRoyalty(LibRoyalty.Fees[] memory)')) == 0xa2de9fbe
      * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
      */
     // bytes4 private constant INTERFACE_ID_CONTENT_STORAGE = A133AF9C;
@@ -36,14 +36,14 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
 
     /******************** Public API ********************/
     function __ContentStorage_init(
-        address _contractRoyaltyAccount,
-        uint24 _contractRoyaltyRate,
+        address _receiver,
+        uint24 _rate,
         string memory _contractUri
     ) public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __HasTokenUri_init_unchained();
-        __HasRoyalties_init_unchained(_contractRoyaltyAccount, _contractRoyaltyRate);
+        __HasRoyalty_init_unchained(_receiver, _rate);
         __HasContractUri_init_unchained(_contractUri);
         __ContentSubsystemBase_init_unchained();
         __ContentStorage_init_unchained();
@@ -79,7 +79,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
             _setHiddenUri(_assets[i].tokenId, _assets[i].hiddenDataUri);
             
             // if this specific token has a different royalty fees than the contract
-            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.account, _assets[i].fee.rate);
+            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.receiver, _assets[i].fee.rate);
         }
 
         emit AssetsAdded(_parent(), _assets);
@@ -113,7 +113,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         // This overwrites the existing array of contract fees.
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
-            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.account, _assets[i].fee.rate);
+            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.receiver, _assets[i].fee.rate);
         }
     }
 
@@ -127,11 +127,20 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalti
         return _tokenUri(_tokenId, _version, false);
     }
     
+    // returns the default royalty for the contract assets
+    function getContractRoyalty() external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (address receiver, uint24 rate) {
+        return (contractRoyalty.receiver, contractRoyalty.rate);
+    }
+    
     function getRoyalty(uint256 _tokenId) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (address receiver, uint24 rate) {
         // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
         // _getRoyalty() will return the contract's default royalty fee. However, that can also
         // be null. In the case of null, there are no royalty fees. 
         return _getRoyalty(_tokenId);
+    }
+
+    function getLatestUriVersion(uint256 _tokenId, bool _isPublic) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (uint256) {
+        return _getLatestUriVersion(_tokenId, _isPublic);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {

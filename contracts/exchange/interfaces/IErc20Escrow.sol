@@ -19,13 +19,13 @@ interface IErc20Escrow {
 
     function withdraw(uint256 _orderId, address _user, uint256 _amount) external;
     
-    function depositRoyalty(address _token, address _sender, address _owner, uint256 _amount) external;
+    function transferRoyalty(address _token, address _sender, address _owner, uint256 _amount) external;
 
     function transferRoyalty(uint256 _orderId, address _to, uint256 _amount) external;
     
-    function depositPlatformFees(address _token, address _sender, address _feesEscrow, uint256 _amount) external;
+    function transferPlatformFee(address _token, address _sender, address _feesEscrow, uint256 _amount) external;
 
-    function transferPlatformFees(uint256 _orderId, address _feesEscrow, uint256 _amount) external;
+    function transferPlatformFee(uint256 _orderId, address _feesEscrow, uint256 _amount) external;
 
     function claimRoyalties(address _owner) external;
 

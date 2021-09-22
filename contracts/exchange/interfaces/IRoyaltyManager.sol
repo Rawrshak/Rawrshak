@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "../../libraries/LibOrder.sol";
-import "../../libraries/LibRoyalties.sol";
 
 interface IRoyaltyManager { 
     /******** View Functions ********/
@@ -12,25 +11,25 @@ interface IRoyaltyManager {
     function payableRoyalties(
         LibOrder.AssetData calldata _asset,
         uint256 _total
-    ) external view returns(address[] memory creators, uint256[] memory creatorRoyaltyFees, uint256 remaining);
+    ) external view returns(address receiver, uint256 fee, uint256 remaining);
 
     /******** Mutative Functions ********/
     function claimRoyalties(address _user) external;
 
-    function depositRoyalty(
+    function transferRoyalty(
         address _sender,
         address _token,
-        address[] memory _accounts,
-        uint256[] memory _amounts
+        address _receiver,
+        uint256 _royaltyFee
     ) external;
-
-    function depositPlatformFees(address _sender, address _token, uint256 _total) external;
 
     function transferRoyalty(
         uint256 _orderId,
-        address[] memory _accounts,
-        uint256[] memory _amounts
+        address _receiver,
+        uint256 _royaltyFee
     ) external;
-    
-    function transferPlatformFees(address _token, uint256 _orderId, uint256 _total) external;
+
+    function transferPlatformFee(address _sender, address _token, uint256 _total) external;
+
+    function transferPlatformFee(address _token, uint256 _orderId, uint256 _total) external;
 }

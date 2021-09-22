@@ -92,12 +92,12 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
 
         // Deduct royalties from escrow per order and transfer to claimable in escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            (address[] memory creators,
-             uint256[] memory creatorRoyaltyFees,
+            (address receiver,
+             uint256 royaltyFee,
              uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
             
-            royaltyManager.transferRoyalty(_orderIds[i], creators, creatorRoyaltyFees);
-            royaltyManager.transferPlatformFees(order.token, _orderIds[i], amountPerOrder[i]);
+            royaltyManager.transferRoyalty(_orderIds[i], receiver, royaltyFee);
+            royaltyManager.transferPlatformFee(order.token, _orderIds[i], amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 
@@ -133,13 +133,13 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
 
         // Deduct royalties
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            (address[] memory creators,
-             uint256[] memory creatorRoyaltyFees,
+            (address receiver,
+             uint256 royaltyFee,
              uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
 
             // for each order, update the royalty table for each creator to get paid
-            royaltyManager.depositRoyalty(_msgSender(), order.token, creators, creatorRoyaltyFees);
-            royaltyManager.depositPlatformFees(_msgSender(), order.token, amountPerOrder[i]);
+            royaltyManager.transferRoyalty(_msgSender(), order.token, receiver, royaltyFee);
+            royaltyManager.transferPlatformFee(_msgSender(), order.token, amountPerOrder[i]);
             amountPerOrder[i] = remaining;
         }
 

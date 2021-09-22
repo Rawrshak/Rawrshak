@@ -23,7 +23,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
         // Check Contract Royalties
         var contractFees = await contentStorage.getRoyalties(0);
         assert.equal(
-            contractFees[0].account == deployerAddress && contractFees[0].rate == 10000,
+            contractFees[0].receiver == deployerAddress && contractFees[0].rate == 10000,
             true,
             "Royalty address should be the deployer.");
     });
@@ -40,18 +40,6 @@ contract('ContentStorage Contract Tests', (accounts) => {
             await contentStorage.supportsInterface("0xc0e24d5e"),
             true, 
             "the token doesn't support the HasContractUri interface");
-
-        // HasTokenUri interface
-        assert.equal(
-            await contentStorage.supportsInterface("0x57eeb456"),
-            true, 
-            "the token doesn't support the HasTokenUri interface");
-            
-        // HasRoyalties interface
-        assert.equal(
-            await contentStorage.supportsInterface("0x0982790e"),
-            true, 
-            "the token doesn't support the HasTokenUri interface");
     });
 
     it('Check role permissions', async () => {
@@ -90,7 +78,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             'TokenRoyaltiesUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].account == deployerAddress
+                    && ev.fees[0].receiver == deployerAddress
                     && ev.fees[0].rate == 20000;
             }
         );
@@ -160,7 +148,7 @@ contract('ContentStorage Contract Tests', (accounts) => {
             'TokenRoyaltiesUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].account == deployerAddress
+                    && ev.fees[0].receiver == deployerAddress
                     && ev.fees[0].rate == 20000;
             }
         );
@@ -193,20 +181,20 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
         tokenFees = await contentStorage.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000,
+            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000,
             true,
             "Token 1 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(2);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 10000,
+            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 10000,
             true,
             "Token 2 incorrect royalties");
             
         tokenFees = await contentStorage.getRoyalties(3);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000 &&
-            tokenFees[1].account == deployerAltAddress && tokenFees[1].rate == 30000,
+            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000 &&
+            tokenFees[1].receiver == deployerAltAddress && tokenFees[1].rate == 30000,
             true,
             "Token 3 incorrect royalties");
     });

@@ -104,7 +104,7 @@ contract('Content Contract Tests', (accounts) => {
         // test royalties
         var fees = await content.getRoyalties(1);
         assert.equal(
-            fees[0].account == deployerAddress && fees[0].rate == 20000,
+            fees[0].receiver == deployerAddress && fees[0].rate == 20000,
             true,
             "Token 1 royalties are incorrect");
     });

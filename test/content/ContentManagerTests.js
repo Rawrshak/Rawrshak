@@ -116,9 +116,9 @@ contract('Content Manager Contract Tests', (accounts) => {
 
         var royalties = await content.getRoyalties(2);
         assert.equal(royalties.length, 2, "Incorrect contract royalties length");
-        assert.equal(royalties[0].account, deployerAddress, "Incorrect contract royalty account 1");
+        assert.equal(royalties[0].receiver, deployerAddress, "Incorrect contract royalty account 1");
         assert.equal(royalties[0].rate, 20000, "Incorrect contract royalty rate 1");
-        assert.equal(royalties[1].account, deployerAltAddress, "Incorrect contract royalty account 2");
+        assert.equal(royalties[1].receiver, deployerAltAddress, "Incorrect contract royalty account 2");
         assert.equal(royalties[1].rate, 20000, "Incorrect contract royalty rate 2");
     });
 
@@ -128,9 +128,9 @@ contract('Content Manager Contract Tests', (accounts) => {
 
         var royalties = await content.getRoyalties(1);
         assert.equal(royalties.length, 2, "Incorrect royalties length");
-        assert.equal(royalties[0].account, deployerAddress, "Incorrect royalty account 1");
+        assert.equal(royalties[0].receiver, deployerAddress, "Incorrect royalty account 1");
         assert.equal(royalties[0].rate, 20000, "Incorrect royalty rate 1");
-        assert.equal(royalties[1].account, deployerAltAddress, "Incorrect royalty account 2");
+        assert.equal(royalties[1].receiver, deployerAltAddress, "Incorrect royalty account 2");
         assert.equal(royalties[1].rate, 20000, "Incorrect royalty rate 2");
     });
 });

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../libraries/LibRoyalties.sol";
+import "../libraries/LibRoyalty.sol";
 
 library LibAsset {
 
@@ -12,7 +12,7 @@ library LibAsset {
         string publicDataUri;
         string hiddenDataUri;
         uint256 maxSupply;
-        LibRoyalties.Fees fee;
+        LibRoyalty.Fee fee;
     }
 
     struct MintData {
@@ -42,7 +42,7 @@ library LibAsset {
 
     struct AssetRoyalties {
         uint256 tokenId;
-        LibRoyalties.Fees fee;
+        LibRoyalty.Fee fee;
     }
     
     struct SystemApprovalPair {
@@ -54,7 +54,7 @@ library LibAsset {
         address creator;
         address contentContract;
         uint256 id;
-        LibRoyalties.Fees[] contractFees;
+        LibRoyalty.Fee contractFees;
     }
 
     function hashMintData(MintData memory _data) internal pure returns (bytes32) {
