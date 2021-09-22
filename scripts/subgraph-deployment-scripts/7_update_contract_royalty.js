@@ -19,5 +19,5 @@ module.exports = async function(deployer, networks, accounts) {
     [deployerAltAddress, web3.utils.toWei('0.01', 'ether')],
     [deployerAddress, web3.utils.toWei('0.01', 'ether')]];
     // var assetRoyalty = [[deployerWalletAddress, web3.utils.toWei('0.03', 'ether')]];
-    await contentManager.setContractRoyalties(assetRoyalty);
+    await contentManager.setContractRoyalty(assetRoyalty);
 };

@@ -112,7 +112,7 @@ contract('Content Manager Contract Tests', (accounts) => {
 
     it('Set Token Contract Royalties', async () => {
         var assetRoyalty = [[deployerAddress, 20000], [deployerAltAddress, 20000]];
-        await contentManager.setContractRoyalties(assetRoyalty);
+        await contentManager.setContractRoyalty(assetRoyalty);
 
         var royalties = await content.getRoyalties(2);
         assert.equal(royalties.length, 2, "Incorrect contract royalties length");

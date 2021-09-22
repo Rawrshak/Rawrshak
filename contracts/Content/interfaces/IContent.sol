@@ -3,12 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "../../libraries/LibRoyalties.sol";
-import "./IRoyaltyProvider.sol";
 import "../../libraries/LibAsset.sol";
 import "./IAccessControlManager.sol";
 import "./IContractUri.sol";
 
-interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
+interface IContent is IContractUri, IERC1155Upgradeable {
 
     /*********************** Events *********************/
     event Mint(address operator, LibAsset.MintData data);

@@ -12,7 +12,7 @@ library LibAsset {
         string publicDataUri;
         string hiddenDataUri;
         uint256 maxSupply;
-        LibRoyalties.Fees[] fees;
+        LibRoyalties.Fees fee;
     }
 
     struct MintData {
@@ -42,7 +42,7 @@ library LibAsset {
 
     struct AssetRoyalties {
         uint256 tokenId;
-        LibRoyalties.Fees[] fees;
+        LibRoyalties.Fees fee;
     }
     
     struct SystemApprovalPair {
