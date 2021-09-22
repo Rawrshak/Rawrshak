@@ -11,6 +11,8 @@ interface IExchangeFeesEscrow {
     function totalFees(address _token) external view returns(uint256);
 
     function getClaimableRewards(address _user) external view returns(LibStaking.Reward[] memory claimableRewards);
+
+    function hasExchangeFees() external view returns(bool);
     
     /******** Mutative Functions ********/
     function setRate(uint24 _rate) external;

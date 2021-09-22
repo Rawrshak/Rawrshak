@@ -159,6 +159,10 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
             claimableRewards[i].amount = accumulatedReward;
         }
     }
+
+    function hasExchangeFees() external view override returns(bool) {
+        return rate > 0 && address(_staking()) != address(0) && _staking().totalStakedTokens() > 0; 
+    }
     
     /**************** Internal Functions ****************/
     function _staking() internal view returns(IStaking) {

@@ -45,13 +45,13 @@ library LibOrder {
         bool isBuyOrder;
     }
 
-    function verifyOrderInput(OrderInput calldata _order, address _sender) public view {
+    function verifyOrderInput(OrderInput memory _order, address _sender) internal view {
         require(_order.owner == _sender, "Invalid sender.");
         require(_order.price > 0 && _order.amount > 0, "Invalid input price or amount");
         verifyAssetData(_order.asset);
     }
 
-    function verifyAssetData(AssetData calldata _asset) public view {
+    function verifyAssetData(AssetData memory _asset) internal view {
         require(_asset.contentAddress != address(0),"Invalid Address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
 
@@ -65,7 +65,7 @@ library LibOrder {
         OrderInput storage _order,
         AssetData memory _asset,
         address _token,
-        bool _isBuyOrder) public view returns (bool) {
+        bool _isBuyOrder) internal view returns (bool) {
         if (_order.asset.contentAddress == _asset.contentAddress &&
             _order.asset.tokenId == _asset.tokenId && 
             _order.token == _token &&

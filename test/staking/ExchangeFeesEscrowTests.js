@@ -39,7 +39,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
         await feesEscrow.registerManager(staking.address, {from:deployerAddress})
         
         // register the escrows
-        await resolver.registerAddress(["0x1b48faca", "0x4911f18f"], [staking.address, feesEscrow.address], {from: deployerAddress});
+        await resolver.registerAddress(["0x1b48faca", "0x7f170836"], [staking.address, feesEscrow.address], {from: deployerAddress});
     }
 
     it('Check if ExchangeFeesEscrow was deployed properly', async () => {
@@ -50,7 +50,7 @@ contract('Exchange Fees Escrow Contract tests', (accounts) => {
     });
 
     it('Supports the ExchangeFeesEscrow Interface', async () => {
-        // INTERFACE_ID_LibContractHash.CONTRACT_EXCHANGE_FEE_POOL = 0x00000012
+        // INTERFACE_ID_LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW = 0x00000012
         assert.equal(
             await feesEscrow.supportsInterface("0x00000012"),
             true, 

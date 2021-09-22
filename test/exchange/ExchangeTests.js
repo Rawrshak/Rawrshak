@@ -119,7 +119,7 @@ contract('Exchange Contract', (accounts)=> {
 
         // register the exchange contracts on the address resolver
         var addresses = [tokenEscrow.address, nftEscrow.address, feesEscrow.address, orderbook.address, executionManager.address, royaltyManager.address, staking.address];
-        var escrowIds = ["0x29a264aa", "0x87d4498b", "0x4911f18f", "0xd9ff7618", "0x018869a9", "0x2c7e992e", "0x1b48faca"];
+        var escrowIds = ["0x29a264aa", "0x87d4498b", "0x7f170836", "0xd9ff7618", "0x018869a9", "0x2c7e992e", "0x1b48faca"];
         await resolver.registerAddress(escrowIds, addresses, {from: deployerAddress});
 
         // Register the managers

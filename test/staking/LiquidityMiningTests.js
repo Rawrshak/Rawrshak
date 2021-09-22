@@ -1,7 +1,6 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const RawrToken = artifacts.require("RawrToken");
 const MockToken = artifacts.require("MockToken");
-const ExchangeFeesEscrow = artifacts.require("ExchangeFeesEscrow");
 const LiquidityMining = artifacts.require("LiquidityMining");
 const TruffleAssert = require("truffle-assertions")
 const { BN, time } = require('@openzeppelin/test-helpers');
@@ -21,8 +20,6 @@ contract('Liquidity Mining Contract Tests', (accounts) => {
     var mockUSDT;
     var mockDAI;
 
-    var feesEscrow;
-    var resolver;
     var mining;
 
     beforeEach(async () => {

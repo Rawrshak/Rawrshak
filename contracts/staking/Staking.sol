@@ -108,7 +108,7 @@ contract Staking is IStaking, ContextUpgradeable, ERC165StorageUpgradeable {
     }
 
     function _exchangeFeesEscrow() internal view returns(IExchangeFeesEscrow) {
-        return IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL));
+        return IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW));
     }
 
     function _withdraw(uint256 _amount, address _user) internal {
