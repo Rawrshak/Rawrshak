@@ -74,7 +74,8 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
     }
 
     function createContracts(
-        LibRoyalties.Fees[] memory _contractFees,
+        address _contractRoyaltyAccount,
+        uint24 _contractRoyaltyRate,
         string memory _contractUri
     ) external {
         Content content = (Content)(ClonesUpgradeable.clone(contentImplementation));
@@ -83,7 +84,7 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
         AccessControlManager accessControlManager = (AccessControlManager)(ClonesUpgradeable.clone(accessControlManagerImplementation));
 
         accessControlManager.__AccessControlManager_init();
-        contentStorage.__ContentStorage_init(_contractFees, _contractUri);
+        contentStorage.__ContentStorage_init(_contractRoyaltyAccount, _contractRoyaltyRate, _contractUri);
         content.__Content_init(address(contentStorage), address(accessControlManager));
         contentManager.__ContentManager_init(address(content), address(contentStorage), address(accessControlManager));
         

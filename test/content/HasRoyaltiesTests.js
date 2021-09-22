@@ -74,7 +74,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
     it('Set Delete Contract Royalties', async () => {
         contractFees = [];
         TruffleAssert.eventEmitted(
-            await testContract.setContractRoyalties(contractFees),
+            await testContract.setContractRoyalty(contractFees),
             'ContractRoyaltiesUpdated',
             (ev) => {
                 return ev.fees.length == 0;
@@ -92,7 +92,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
     it('Set Update Contract Royalties', async () => {
         contractFees = [[deployerAddress, 20000]];
         TruffleAssert.eventEmitted(
-            await testContract.setContractRoyalties(contractFees),
+            await testContract.setContractRoyalty(contractFees),
             'ContractRoyaltiesUpdated',
             (ev) => {
                 return ev.fees[0].account == deployerAddress
