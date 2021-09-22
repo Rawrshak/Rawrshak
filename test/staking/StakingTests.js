@@ -41,7 +41,7 @@ contract('Staking Rewards Pool Contract Tests', (accounts) => {
         await feesEscrow.registerManager(staking.address, {from: deployerAddress});
 
         // register the escrows
-        await resolver.registerAddress(["0x1b48faca", "0x4911f18f"], [staking.address, feesEscrow.address], {from: deployerAddress});
+        await resolver.registerAddress(["0x1b48faca", "0x7f170836"], [staking.address, feesEscrow.address], {from: deployerAddress});
         
         // Give token to player
         await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});

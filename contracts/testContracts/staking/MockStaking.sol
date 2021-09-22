@@ -26,16 +26,16 @@ contract MockStaking is ContextUpgradeable {
             totalStakedTokens += _amount;
         } else {
             totalStakedTokens = _amount;
-            IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL)).initializeTokenRate();
+            IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW)).initializeTokenRate();
         }
         
-        IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL)).updateUserRewards(_msgSender());
+        IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW)).updateUserRewards(_msgSender());
 
         userStakedAmount[_msgSender()] += _amount;
     }
 
     function withdraw(uint256 _amount) public {     
-        IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL)).updateUserRewards(_msgSender());
+        IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW)).updateUserRewards(_msgSender());
 
         userStakedAmount[_msgSender()] -= _amount;
         totalStakedTokens -= _amount;

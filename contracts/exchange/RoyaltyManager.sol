@@ -49,7 +49,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         address _token,
         uint256 _total
     ) external override onlyOwner {
-        if (_exchangeFeesEscrow().rate() > 0 && _staking().totalStakedTokens() > 0) {
+        if (_exchangeFeesEscrow().hasExchangeFees()) {
             // Rate has to be greater than 0 and there must be someone staking. If no one is staking,
             // we ignore platform fees because no one will be able to collect it.
             uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;            _exchangeFeesEscrow().depositFees(_token, feeAmount);
@@ -76,7 +76,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         uint256 _orderId,
         uint256 _total
     ) external override onlyOwner {
-        if (_exchangeFeesEscrow().rate() > 0 && _staking().totalStakedTokens() > 0) {
+        if (_exchangeFeesEscrow().hasExchangeFees()) {
             // Rate has to be greater than 0 and there must be someone staking. If no one is staking,
             // we ignore platform fees because no one will be able to collect it.
             uint256 feeAmount = (_total * _exchangeFeesEscrow().rate()) / 1e6;
@@ -92,7 +92,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         remaining = _total;
 
         // Get platform fees
-        if (_exchangeFeesEscrow().rate() > 0 && _staking().totalStakedTokens() > 0) {
+        if (_exchangeFeesEscrow().hasExchangeFees()) {
             // Rate has to be greater than 0 and there must be someone staking. If no one is staking,
             // we ignore platform fees because no one will be able to collect it.
             uint256 platformFees = (_total * _exchangeFeesEscrow().rate()) / 1e6;
@@ -133,11 +133,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     }
 
     function _exchangeFeesEscrow() internal view returns(IExchangeFeesEscrow) {
-        return IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_POOL));
-    }
-
-    function _staking() internal view returns(IStaking) {
-        return IStaking(resolver.getAddress(LibContractHash.CONTRACT_STAKING));
+        return IExchangeFeesEscrow(resolver.getAddress(LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW));
     }
 
     uint256[50] private __gap;

@@ -81,7 +81,7 @@ contract('Royalty Manager Contract', (accounts)=> {
         await feesEscrow.registerManager(staking.address, {from:deployerAddress});
         
         // register the royalty manager
-        await resolver.registerAddress(["0x29a264aa", "0x4911f18f", "0x1b48faca"], [escrow.address, feesEscrow.address, staking.address], {from: deployerAddress});
+        await resolver.registerAddress(["0x29a264aa", "0x7f170836", "0x1b48faca"], [escrow.address, feesEscrow.address, staking.address], {from: deployerAddress});
         
         await staking.stake(web3.utils.toWei('100', 'ether'), {from: staker1});
         await feesEscrow.setRate(3000, {from: deployerAddress});

@@ -15,7 +15,7 @@ const Exchange = artifacts.require("Exchange");
 const ExecutionManager = artifacts.require("ExecutionManager");
 const NftEscrow = artifacts.require("NftEscrow");
 const Orderbook = artifacts.require("Orderbook");
-
+const RoyaltyManager = artifacts.require("RoyaltyManager");
 
 module.exports = async function(deployer, networks, accounts) {
     // Deploy Libraries
@@ -27,5 +27,5 @@ module.exports = async function(deployer, networks, accounts) {
     await deployer.link(Constants, [Content, ContentStorage, ContentManager, AccessControlManager]);
     await deployer.link(Asset, [Content, ContentStorage, ContentManager, AccessControlManager]);
     await deployer.link(Royalties, [Content, ContentStorage, ContentManager]);
-    await deployer.link(Order, [Exchange, ExecutionManager, NftEscrow, Orderbook]);
+    await deployer.link(Order, [Exchange, ExecutionManager, NftEscrow, Orderbook, RoyaltyManager]);
 };
