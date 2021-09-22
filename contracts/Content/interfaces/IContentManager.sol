@@ -25,7 +25,7 @@ interface IContentManager {
 
     function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
-    function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
+    function setContractRoyalty(address _receiver, uint24 _rate) external;
     
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external;
     

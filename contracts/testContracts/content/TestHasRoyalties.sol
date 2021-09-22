@@ -1,33 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../content/interfaces/IRoyaltyProvider.sol";
 import "../../content/HasRoyalties.sol";
 import "../../libraries/LibAsset.sol";
 
-contract TestHasRoyalties is IRoyaltyProvider, HasRoyalties {
-    function __TestHasRoyalties_init(LibRoyalties.Fees[] memory _contractFees) external initializer {
-        __HasRoyalties_init_unchained(_contractFees);
+contract TestHasRoyalties is HasRoyalties {
+    function __TestHasRoyalties_init(address _receiver, uint24 _rate) external initializer {
+        __HasRoyalties_init_unchained(_receiver, _rate);
         __ERC165Storage_init_unchained();
     }
     
-    function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
+    function getRoyalty(uint256 _tokenId) external view returns (address receiver, uint24 rate) {
         // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
-        // _getRoyalties() will return the contract's default royalty fee. However, that can also
+        // _getRoyalty() will return the contract's default royalty fee. However, that can also
         // be null. In the case of null, there are no royalty fees. 
-        return _getRoyalties(_tokenId);
+        return _getRoyalty(_tokenId);
     }
 
-    function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external {
+    function setContractRoyalty(address _receiver, uint24 _rate) external {
         // This can be reset by setting _fee to an empty string.
         // This overwrites the existing array of contract fees.
-        _setContractRoyalties(_fee);
+        _setContractRoyalty(_receiver, _rate);
     }
 
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external {
         // This overwrites the existing array of contract fees.
         for (uint256 i = 0; i < _assets.length; ++i) {
-            _setTokenRoyalties(_assets[i].tokenId, _assets[i].fees);
+            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.account, _assets[i].fee.rate);
         }
     }
 }

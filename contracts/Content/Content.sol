@@ -19,7 +19,7 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
     /*
      * ERC1155 interface == 0xd9b67a26
      * IContractUri == 0xc0e24d5e
-     * IRoyaltyProvider == 0xbb3bafd6
+     * IERC2981 == 0x2a55205a
      * bytes4(keccak256('totalSupply(uint256)')) == 0x35403023 // Todo: update this
      * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
      * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
@@ -102,11 +102,6 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
         return contentStorage.uri(_tokenId, _version);
     }
     
-    // Royalties
-    function getRoyalties(uint256 _tokenId) external view override returns (LibRoyalties.Fees[] memory) {
-        return contentStorage.getRoyalties(_tokenId);
-    }
-    
     function totalSupply(uint256 _tokenId) external view override returns (uint256) {
         return _supply(_tokenId);
     }
@@ -117,15 +112,10 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
     
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount) {
         // Get the Royalties from the content storage.
-        LibRoyalties.Fees[] memory fees = contentStorage.getRoyalties(_tokenId);
+        uint24 rate = 0;
+        (receiver, rate) = contentStorage.getRoyalty(_tokenId);
         
-        // There may be more than one royalty recipient, however, ERC2981 only has one receiver. So we will only 
-        // the first fee (receiver and rate). The developer must know that this if this asset is sold outside
-        // of the Rawrshak exchange, only the first royalty will be paid.
-        if (fees.length > 0) {
-            royaltyAmount = _salePrice * fees[0].rate / 1e6;
-            receiver = fees[0].account;
-        }
+        royaltyAmount = _salePrice * rate / 1e6;
     }
 
     // Interface support
