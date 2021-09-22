@@ -232,4 +232,6 @@ contract('Content Contract Tests', (accounts) => {
             TruffleAssert.ErrorType.REVERT
         );
     });
+
+    // Todo: Create test for ERC2981 NFT Royalty Support
 });

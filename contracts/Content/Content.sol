@@ -12,8 +12,9 @@ import "../utils/LibInterfaces.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";
+import "./interfaces/IERC2981.sol";
 
-contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
+contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgradeable {
     /******************** Constants ********************/
     /*
      * ERC1155 interface == 0xd9b67a26
@@ -50,6 +51,7 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
         internal initializer
     {
         _registerInterface(LibInterfaces.INTERFACE_ID_CONTENT);
+        _registerInterface(LibInterfaces.INTERFACE_ID_ERC2981);
 
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);
@@ -111,6 +113,19 @@ contract Content is IContent, ERC1155Upgradeable, ERC165StorageUpgradeable {
     
     function maxSupply(uint256 _tokenId) external view override returns (uint256) {
         return _maxSupply(_tokenId);
+    }
+    
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount) {
+        // Get the Royalties from the content storage.
+        LibRoyalties.Fees[] memory fees = contentStorage.getRoyalties(_tokenId);
+        
+        // There may be more than one royalty recipient, however, ERC2981 only has one receiver. So we will only 
+        // the first fee (receiver and rate). The developer must know that this if this asset is sold outside
+        // of the Rawrshak exchange, only the first royalty will be paid.
+        if (fees.length > 0) {
+            royaltyAmount = _salePrice * fees[0].rate / 1e6;
+            receiver = fees[0].account;
+        }
     }
 
     // Interface support

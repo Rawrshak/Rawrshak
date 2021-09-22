@@ -88,7 +88,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     function payableRoyalties(
         LibOrder.AssetData calldata _asset,
         uint256 _total
-    ) external view override onlyOwner returns(address[] memory creators, uint256[] memory creatorRoyaltieFees, uint256 remaining) {
+    ) external view override onlyOwner returns(address[] memory creators, uint256[] memory creatorRoyaltyFees, uint256 remaining) {
         remaining = _total;
 
         // Get platform fees
@@ -99,24 +99,30 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
             remaining -= platformFees;
         }
 
-        // If IContent is not supported, ignore royalties
-        if (!_asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_CONTENT)) {
-            return (creators, creatorRoyaltieFees, remaining);
+        if (_asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_CONTENT)) {
+            LibRoyalties.Fees[] memory fees = IContent(_asset.contentAddress).getRoyalties(_asset.tokenId);
+            creatorRoyaltyFees = new uint256[](fees.length);
+            creators = new address[](fees.length);
+            uint256 royaltyFee = 0;
+            uint256 idx = 0;
+            for (uint256 i = 0; i < fees.length; ++i) {
+                // Get Royalties owed per fee
+                royaltyFee = (_total * fees[i].rate) / 1e6;
+                creators[idx] = fees[i].account;
+                creatorRoyaltyFees[idx] = royaltyFee;
+                remaining -= royaltyFee;
+                ++idx;
+            }
+        } else if (_asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_ERC2981)) {
+            (address receiver, uint256 royaltyAmount) = IERC2981(_asset.contentAddress).royaltyInfo(_asset.tokenId, _total);
+            creators = new address[](1);
+            creatorRoyaltyFees = new uint256[](1);
+            creators[0] = receiver;
+            creatorRoyaltyFees[0] = royaltyAmount * 1e6 / _total;
+            remaining -= royaltyAmount;
         }
-
-        LibRoyalties.Fees[] memory fees = IContent(_asset.contentAddress).getRoyalties(_asset.tokenId);
-        creatorRoyaltieFees = new uint256[](fees.length);
-        creators = new address[](fees.length);
-        uint256 royaltyFee = 0;
-        uint256 idx = 0;
-        for (uint256 i = 0; i < fees.length; ++i) {
-            // Get Royalties owed per fee
-            royaltyFee = (_total * fees[i].rate) / 1e6;
-            creators[idx] = fees[i].account;
-            creatorRoyaltieFees[idx] = royaltyFee;
-            remaining -= royaltyFee;
-            ++idx;
-        }
+        
+        // If contract doesn't support the NFT royalty standard or IContent interface is not supported, ignore royalties
     }
 
     function claimableRoyalties(address _user) external view override returns(address[] memory tokens, uint256[] memory amounts) {        
