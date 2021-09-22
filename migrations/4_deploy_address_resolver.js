@@ -1,7 +1,7 @@
 // Upgrade Deployer proxy
 const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
-// AddressResolver Token
+// AddressResolver
 const AddressResolver = artifacts.require("AddressResolver");
 
 module.exports = async function(deployer, network, accounts) {
