@@ -26,7 +26,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
      * bytes4(keccak256('registerOperators(LibAsset.SystemApprovalPair[] memory)')) == 0x6c728bc8
      * bytes4(keccak256('setHiddenUriBatch(LibAsset.AssetUri[] memory)')) == 0x8c8e95fa
      * bytes4(keccak256('setPublicUriBatch(LibAsset.AssetUri[] memory)')) == 0xc6c6617e
-     * bytes4(keccak256('setContractRoyalty(LibRoyalties.Fees[] memory)')) == 0xa2de9fbe
+     * bytes4(keccak256('setContractRoyalty(LibRoyalty.Fee[] memory)')) == 0xa2de9fbe
      * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
      * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
      */

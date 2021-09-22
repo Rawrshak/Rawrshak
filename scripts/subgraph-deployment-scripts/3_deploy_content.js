@@ -4,7 +4,7 @@ const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 // Library Contracts
 const Constants = artifacts.require("LibInterfaces");
 const Asset = artifacts.require("LibAsset");
-const Royalties = artifacts.require("LibRoyalties");
+const Royalties = artifacts.require("LibRoyalty");
 
 // V2 Implementation
 const Content = artifacts.require("Content");

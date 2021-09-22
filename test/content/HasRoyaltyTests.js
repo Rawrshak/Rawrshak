@@ -1,8 +1,8 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const TestHasRoyalties = artifacts.require("TestHasRoyalties")
+const TestHasRoyalty = artifacts.require("TestHasRoyalty")
 const TruffleAssert = require("truffle-assertions");
 
-contract('HasRoyalties Contract Tests', (accounts) => {
+contract('HasRoyalty Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
         deployerAltAddress,         // Alternate deployer address
@@ -14,9 +14,9 @@ contract('HasRoyalties Contract Tests', (accounts) => {
     var testContract;
 
     beforeEach(async () => {
-        testContract = await TestHasRoyalties.new();
+        testContract = await TestHasRoyalty.new();
         var contractFees = [[deployerAddress, 10000]];
-        await testContract.__TestHasRoyalties_init(contractFees);
+        await testContract.__TestHasRoyalty_init(contractFees);
     });
 
     it('Check contract royalties', async () => {
@@ -27,7 +27,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             1,
             "There should only be 1 royalty fee.");
         assert.equal(
-            contractFees[0].account,
+            contractFees[0].receiver,
             deployerAddress,
             "Royalty address should be the deployer.");
         assert.equal(
@@ -37,9 +37,9 @@ contract('HasRoyalties Contract Tests', (accounts) => {
     });
 
     it('Set Mutliple Contract Royalties', async () => {
-        testContract = await TestHasRoyalties.new();
+        testContract = await TestHasRoyalty.new();
         var defaultContractFees = [[deployerAddress, 10000], [deployerAltAddress, 20000]];
-        await testContract.__TestHasRoyalties_init(defaultContractFees);
+        await testContract.__TestHasRoyalty_init(defaultContractFees);
 
         var contractFees = await testContract.getRoyalties(0);
 
@@ -49,19 +49,19 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             "There should be multiple royalty fees");
 
         assert.equal(
-            contractFees[0].account == deployerAddress && contractFees[0].rate == 10000,
+            contractFees[0].receiver == deployerAddress && contractFees[0].rate == 10000,
             true,
             "First royalty fee should be the deployer.");
         assert.equal(
-            contractFees[1].account == deployerAltAddress && contractFees[1].rate == 20000,
+            contractFees[1].receiver == deployerAltAddress && contractFees[1].rate == 20000,
             true,
             "Second Royalty fee should be the deployer's alternate wallet.");
     });
 
     it('Set No Contract Royalties', async () => {
-        testContract = await TestHasRoyalties.new();
+        testContract = await TestHasRoyalty.new();
         var defaultContractFees = [];
-        await testContract.__TestHasRoyalties_init(defaultContractFees);
+        await testContract.__TestHasRoyalty_init(defaultContractFees);
 
         var contractFees = await testContract.getRoyalties(0);
 
@@ -95,7 +95,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             await testContract.setContractRoyalty(contractFees),
             'ContractRoyaltiesUpdated',
             (ev) => {
-                return ev.fees[0].account == deployerAddress
+                return ev.fees[0].receiver == deployerAddress
                     && ev.fees[0].rate == 20000;
             }
         );
@@ -103,13 +103,13 @@ contract('HasRoyalties Contract Tests', (accounts) => {
         var tokenFees = await testContract.getRoyalties(0);
 
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000,
+            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000,
             true,
             "Token Royalty should reflect new contract royalties.");
     });
 
-    // Note that we are not doing ID checks in HasRoyalties contract. That should be done 
-    // in the contract inheriting HasRoyalties
+    // Note that we are not doing ID checks in HasRoyalty contract. That should be done 
+    // in the contract inheriting HasRoyalty
 
     // Asset Royalties:
     // { 
@@ -128,20 +128,20 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             'TokenRoyaltiesUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].account == deployerAddress
+                    && ev.fees[0].receiver == deployerAddress
                     && ev.fees[0].rate == 20000;
             }
         );
 
         var tokenFees = await testContract.getRoyalties(0);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 10000,
+            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 10000,
             true,
             "Token 0 royalties should reflect the contract royalties.");
 
         tokenFees = await testContract.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 20000,
+            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000,
             true,
             "Token 1 royalties should reflect the new Token 1 royalties.");
     });
@@ -157,7 +157,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             'TokenRoyaltiesUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].account == deployerAddress
+                    && ev.fees[0].receiver == deployerAddress
                     && ev.fees[0].rate == 20000;
             }
         );
@@ -168,7 +168,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
             'TokenRoyaltiesUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 2
-                    && ev.fees[0].account == deployerAltAddress
+                    && ev.fees[0].receiver == deployerAltAddress
                     && ev.fees[0].rate == 20000;
             }
         );
@@ -193,7 +193,7 @@ contract('HasRoyalties Contract Tests', (accounts) => {
         
         tokenFees = await testContract.getRoyalties(1);
         assert.equal(
-            tokenFees[0].account == deployerAddress && tokenFees[0].rate == 10000,
+            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 10000,
             true,
             "Token 1 royalties should reflect the contract royalties.");
     });

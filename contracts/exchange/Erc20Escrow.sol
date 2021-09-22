@@ -70,7 +70,7 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
     }
     
     // Deposit Creator Royalties from user to escrow
-    function depositRoyalty(
+    function transferRoyalty(
         address _token,
         address _sender,
         address _owner,
@@ -105,13 +105,13 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
     }
 
     // Deposit Platform Fees
-    function depositPlatformFees(address _token, address _sender, address _feesEscrow, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
+    function transferPlatformFee(address _token, address _sender, address _feesEscrow, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         IERC20Upgradeable(_token).transferFrom(_sender, _feesEscrow, _amount);
     }
 
     // Transfer Platform fees from escrowed by order to escrow
-    function transferPlatformFees(uint256 _orderId, address _feesEscrow, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
+    function transferPlatformFee(uint256 _orderId, address _feesEscrow, uint256 _amount) external override onlyRole(MANAGER_ROLE) {
         // No need to do checks. The exchange contracts will do the checks.
         escrowedByOrder[_orderId].amount = escrowedByOrder[_orderId].amount - _amount;
         IERC20Upgradeable(escrowedByOrder[_orderId].token).transfer(_feesEscrow, _amount);
