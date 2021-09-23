@@ -110,6 +110,10 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
         return contentStorage.getContractRoyalty();
     }
     
+    function userMintNonce() external view override returns (uint256) {
+        return accessControlManager.userMintNonce(_msgSender());
+    }
+    
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount) {
         // Get the Royalties from the content storage.
         uint24 rate = 0;
