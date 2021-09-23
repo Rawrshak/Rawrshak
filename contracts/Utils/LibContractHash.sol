@@ -16,6 +16,8 @@ library LibContractHash {
     bytes4 constant public CONTRACT_CONTENT_FACTORY = 0xdb337f7d;
     bytes4 constant public CONTRACT_STAKING = 0x1b48faca;
     bytes4 constant public CONTRACT_EXCHANGE_FEE_ESCROW = 0x7f170836;
+
+    bytes4 constant public CONTRACT_RAWR_TOKEN = 0x3d13c043;
     
     bytes4 constant public CONTRACT_LIQUIDITY_MINING = 0x385742b9;
 }
