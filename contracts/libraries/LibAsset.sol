@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../libraries/LibRoyalty.sol";
-
 library LibAsset {
 
     bytes32 public constant MINT_DATA_TYPEHASH = keccak256("MintData(address to,uint256[] tokenIds,uint256[] amounts,uint256 nonce,address signer)");
@@ -12,7 +10,8 @@ library LibAsset {
         string publicDataUri;
         string hiddenDataUri;
         uint256 maxSupply;
-        LibRoyalty.Fee fee;
+        address royaltyReceiver;
+        uint24 royaltyRate;
     }
 
     struct MintData {
@@ -42,7 +41,8 @@ library LibAsset {
 
     struct AssetRoyalties {
         uint256 tokenId;
-        LibRoyalty.Fee fee;
+        address royaltyReceiver;
+        uint24 royaltyRate;
     }
     
     struct SystemApprovalPair {
@@ -54,7 +54,8 @@ library LibAsset {
         address creator;
         address contentContract;
         uint256 id;
-        LibRoyalty.Fee contractFees;
+        address royaltyReceiver;
+        uint24 royaltyRate;
     }
 
     function hashMintData(MintData memory _data) internal pure returns (bytes32) {

@@ -24,4 +24,8 @@ contract TestHasTokenUri is HasTokenUri {
             _setHiddenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
+
+    function getLatestUriVersion(uint256 _id, bool _isPublic) external view returns(uint256) {
+        return _getLatestUriVersion(_id, _isPublic);
+    }
 }

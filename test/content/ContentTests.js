@@ -19,15 +19,15 @@ contract('Content Contract Tests', (accounts) => {
     var contentStorage;
     var accessControlManager;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-        [2, "arweave.net/tx/public-uri-2", "", 100, []],
+        [1, "arweave.net/tx/public-uri-1", "", constants.MAX_UINT256, deployerAddress, 20000],
+        [2, "arweave.net/tx/public-uri-2", "", 100, constants.ZERO_ADDRESS, 0],
     ];
 
     beforeEach(async () => {
         accessControlManager = await AccessControlManager.new();
         await accessControlManager.__AccessControlManager_init();
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, accessControlManager.address);
         await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), content.address, {from: deployerAddress});
@@ -101,10 +101,10 @@ contract('Content Contract Tests', (accounts) => {
             "arweave.net/tx/public-uri-1",
             "Token 1 uri is incorrect.");
         
-        // test royalties
-        var fees = await content.getRoyalties(1);
+        // test royalties (ERC2981)
+        var fees = await content.royaltyInfo(1, 1000);
         assert.equal(
-            fees[0].receiver == deployerAddress && fees[0].rate == 20000,
+            fees.receiver == deployerAddress && fees.royaltyAmount == 20,
             true,
             "Token 1 royalties are incorrect");
     });
@@ -112,7 +112,7 @@ contract('Content Contract Tests', (accounts) => {
     it('Add Assets', async () => {
         // invalid add because asset already exists
         var newAssets = [
-            [3, "arweave.net/tx/public-uri-3", "", 1000, []]
+            [3, "arweave.net/tx/public-uri-3", "", 1000, constants.ZERO_ADDRESS, 0]
         ];
         
         TruffleAssert.eventEmitted(await contentStorage.addAssetBatch(newAssets), 'AssetsAdded');
@@ -232,6 +232,4 @@ contract('Content Contract Tests', (accounts) => {
             TruffleAssert.ErrorType.REVERT
         );
     });
-
-    // Todo: Create test for ERC2981 NFT Royalty Support
 });

@@ -31,7 +31,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
 
     it('Change Parent and check roles', async () => {
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, manager.address);
         
@@ -51,7 +51,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
 
     it('Invalid SetParent()', async () => {
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, manager.address);
         
@@ -84,7 +84,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
 
         // Set Content Contract as parent & verifying contract
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, manager.address);
 
@@ -105,7 +105,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         
         // Set Content Contract as parent & verifying contract
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, manager.address);
 
@@ -126,7 +126,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         
         // Set Content Contract as parent & verifying contract
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, manager.address);
 
@@ -145,7 +145,7 @@ contract('AccessControlManager Contract Tests', (accounts) => {
         
         // Set Content Contract as parent & verifying contract
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
         content = await Content.new();
         await content.__Content_init(contentStorage.address, manager.address);
 

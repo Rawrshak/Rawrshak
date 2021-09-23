@@ -16,14 +16,14 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     beforeEach(async () => {
         contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, 10000]], "arweave.net/tx-contract-uri");
+        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
     });
 
     it('Check Content Storage proper deployment', async () => {
         // Check Contract Royalties
-        var contractFees = await contentStorage.getRoyalties(0);
+        var contractFees = await contentStorage.getRoyalty(0);
         assert.equal(
-            contractFees[0].receiver == deployerAddress && contractFees[0].rate == 10000,
+            contractFees.receiver == deployerAddress && contractFees.rate == 10000,
             true,
             "Royalty address should be the deployer.");
     });
@@ -70,16 +70,16 @@ contract('ContentStorage Contract Tests', (accounts) => {
     // }
 
     it('Add single asset', async () => {
-        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1",  100, [[deployerAddress, 20000]]]];
+        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1",  100, deployerAddress, 20000]];
         var results = await contentStorage.addAssetBatch(asset);
 
         TruffleAssert.eventEmitted(
             results,
-            'TokenRoyaltiesUpdated',
+            'TokenRoyaltyUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].receiver == deployerAddress
-                    && ev.fees[0].rate == 20000;
+                    && ev.receiver == deployerAddress
+                    && ev.rate == 20000;
             }
         );
         
@@ -119,8 +119,8 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
     it('Add multiple assets', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2",  10, []]
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, deployerAddress, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, constants.ZERO_ADDRESS, 0]
         ];
         var results = await contentStorage.addAssetBatch(asset);
 
@@ -145,65 +145,64 @@ contract('ContentStorage Contract Tests', (accounts) => {
 
         TruffleAssert.eventEmitted(
             results,
-            'TokenRoyaltiesUpdated',
+            'TokenRoyaltyUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].receiver == deployerAddress
-                    && ev.fees[0].rate == 20000;
+                    && ev.receiver == deployerAddress
+                    && ev.rate == 20000;
             }
         );
     });
 
-    it('Update the current asset supply', async () => {
-        var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, [[deployerAddress, 20000]]]];
-        await contentStorage.addAssetBatch(asset);
+    // it('Update the current asset supply', async () => {
+    //     var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, deployerAddress, 20000]];
+    //     await contentStorage.addAssetBatch(asset);
 
-        assert.equal(
-            await contentStorage.supply(1),
-            0,
-            "Asset wasn't added properly - supply is incorrect");
+    //     assert.equal(
+    //         await contentStorage.supply(1),
+    //         0,
+    //         "Asset wasn't added properly - supply is incorrect");
             
-        await contentStorage.updateSupply(1, 5); 
+    //     await contentStorage.updateSupply(1, 5); 
 
-        assert.equal(
-            await contentStorage.supply(1),
-            5,
-            "Asset wasn't added properly - supply is incorrect");
-    });
+    //     assert.equal(
+    //         await contentStorage.supply(1),
+    //         5,
+    //         "Asset wasn't added properly - supply is incorrect");
+    // });
     
     it('Basic Royalties tests', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
-            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, [[deployerAddress, 20000], [deployerAltAddress, 30000]]]
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, deployerAddress, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, constants.ZERO_ADDRESS, 0],
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, deployerAddress, 30000]
         ];
         await contentStorage.addAssetBatch(asset);
 
-        tokenFees = await contentStorage.getRoyalties(1);
+        tokenFees = await contentStorage.getRoyalty(1);
         assert.equal(
-            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000,
+            tokenFees.receiver == deployerAddress && tokenFees.rate == 20000,
             true,
             "Token 1 incorrect royalties");
             
-        tokenFees = await contentStorage.getRoyalties(2);
+        tokenFees = await contentStorage.getRoyalty(2);
         assert.equal(
-            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 10000,
+            tokenFees.receiver == deployerAddress && tokenFees.rate == 10000,
             true,
             "Token 2 incorrect royalties");
             
-        tokenFees = await contentStorage.getRoyalties(3);
+        tokenFees = await contentStorage.getRoyalty(3);
         assert.equal(
-            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000 &&
-            tokenFees[1].receiver == deployerAltAddress && tokenFees[1].rate == 30000,
+            tokenFees.receiver == deployerAddress && tokenFees.rate == 30000,
             true,
             "Token 3 incorrect royalties");
     });
 
     it('Basic Uri tests', async () => {
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, []],
-            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, []]
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, deployerAddress, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, constants.ZERO_ADDRESS, 0],
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 10, constants.ZERO_ADDRESS, 0]
         ];
         await contentStorage.addAssetBatch(asset);
 

@@ -2,14 +2,7 @@ const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const TestHasTokenUri = artifacts.require("TestHasTokenUri")
 const TruffleAssert = require("truffle-assertions");
 
-contract('HasTokenUri Contract Tests', (accounts) => {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        craftingSystemAddress,      // crafting system address
-        lootboxSystemAddress,       // lootbox system address
-        playerAddress,              // Player Address
-        player2Address,             // Player Address
-    ] = accounts;
+contract('HasTokenUri Contract Tests', () => {
     var testContract;
 
     beforeEach(async () => {

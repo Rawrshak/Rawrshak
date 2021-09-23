@@ -1,7 +1,7 @@
 // Library Contracts
 const Constants = artifacts.require("LibInterfaces");
 const Asset = artifacts.require("LibAsset");
-const Royalties = artifacts.require("LibRoyalty");
+const Royalty = artifacts.require("LibRoyalty");
 const Order = artifacts.require("LibOrder");
 
 // V2 Implementation
@@ -21,11 +21,11 @@ module.exports = async function(deployer, networks, accounts) {
     // Deploy Libraries
     await deployer.deploy(Constants);
     await deployer.deploy(Asset);
-    await deployer.deploy(Royalties);
+    await deployer.deploy(Royalty);
     await deployer.deploy(Order);
 
     await deployer.link(Constants, [Content, ContentStorage, ContentManager, AccessControlManager]);
     await deployer.link(Asset, [Content, ContentStorage, ContentManager, AccessControlManager]);
-    await deployer.link(Royalties, [Content, ContentStorage, ContentManager]);
+    await deployer.link(Royalty, [Content, ContentStorage, ContentManager]);
     await deployer.link(Order, [Exchange, ExecutionManager, NftEscrow, Orderbook, RoyaltyManager]);
 };

@@ -57,17 +57,15 @@ contract('Execution Manager Contract Buy Tests', (accounts)=> {
     });
 
     async function ContentContractSetup() {
-        var result = await contentFactory.createContracts(
-            [[creator1Address, 20000], [creator2Address, 10000]],
-            "arweave.net/tx-contract-uri");
+        var result = await contentFactory.createContracts(creator1Address, 20000, "arweave.net/tx-contract-uri");
         
         content = await Content.at(result.logs[2].args.content);
         contentManager = await ContentManager.at(result.logs[2].args.contentManager);
             
         // Add 2 assets
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, deployerAddress, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, constants.ZERO_ADDRESS, 0],
         ];
         await contentManager.addAssetBatch(asset);
         
