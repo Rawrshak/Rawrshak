@@ -95,9 +95,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         }
 
         if (_asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_ERC2981)) {
-            (address creator, uint256 rate) = IERC2981(_asset.contentAddress).royaltyInfo(_asset.tokenId, _total);
-            receiver = creator;
-            royaltyFee = rate * _total / 1e6 ;
+            (receiver, royaltyFee) = IERC2981(_asset.contentAddress).royaltyInfo(_asset.tokenId, _total);
             remaining -= royaltyFee;
         }
         

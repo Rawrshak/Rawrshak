@@ -202,8 +202,8 @@ contract('ERC20 Escrow Contract tests', (accounts) => {
         await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
         await escrow.deposit(rawrToken.address, 1, playerAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
         
-        await escrow.depositRoyalty(rawrToken.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
-        
+        await escrow.methods['transferRoyalty(address,address,address,uint256)'](rawrToken.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+
         // check escrowed tokens by order (1)
         assert.equal (
             await escrow.escrowedTokensByOrder(1),
@@ -231,7 +231,7 @@ contract('ERC20 Escrow Contract tests', (accounts) => {
         await rawrToken.approve(escrow.address, web3.utils.toWei('5000', 'ether'), {from:playerAddress});
         await escrow.deposit(rawrToken.address, 1, playerAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
         
-        await escrow.transferRoyalty(1, creatorAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
+        await escrow.methods['transferRoyalty(uint256,address,uint256)'](1, creatorAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
         
         // check escrowed tokens by order (1)
         assert.equal (
@@ -252,8 +252,8 @@ contract('ERC20 Escrow Contract tests', (accounts) => {
     it('Claim Royalty', async () => {
         await setup();
         await rawrToken.approve(escrow.address, web3.utils.toWei('5000', 'ether'), {from:playerAddress});
-        await escrow.depositRoyalty(rawrToken.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
-        
+        await escrow.methods['transferRoyalty(address,address,address,uint256)'](rawrToken.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+
         var claimable = await escrow.claimableTokensByOwner(creatorAddress);
         assert.equal (
             claimable.amounts[0],
@@ -295,9 +295,9 @@ contract('ERC20 Escrow Contract tests', (accounts) => {
         await rawrToken2.approve(escrow.address, web3.utils.toWei('5000', 'ether'), {from:playerAddress});
 
         // Deposit Royalty
-        await escrow.depositRoyalty(rawrToken.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
-        await escrow.depositRoyalty(rawrToken2.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
-        
+        await escrow.methods['transferRoyalty(address,address,address,uint256)'](rawrToken.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+        await escrow.methods['transferRoyalty(address,address,address,uint256)'](rawrToken2.address, playerAddress, creatorAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+
         // Checked claimable tokens for player 1
         claimable = await escrow.claimableTokensByOwner(creatorAddress);
         assert.equal(
@@ -340,7 +340,7 @@ contract('ERC20 Escrow Contract tests', (accounts) => {
         await escrow.deposit(rawrToken.address, 1, playerAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
         
         // deposit platform fee
-        await escrow.depositPlatformFees(rawrToken.address, playerAddress, platformFeesPoolAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
+        await escrow.methods['transferPlatformFee(address,address,address,uint256)'](rawrToken.address, playerAddress, platformFeesPoolAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
 
         // check platform fees pool balance
         assert.equal (
@@ -350,7 +350,7 @@ contract('ERC20 Escrow Contract tests', (accounts) => {
         );
 
         // transfer platform fee
-        await escrow.transferPlatformFees(1, platformFeesPoolAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
+        await escrow.methods['transferPlatformFee(uint256,address,uint256)'](1, platformFeesPoolAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
 
         // check platform fees pool balance
         assert.equal (
@@ -372,8 +372,8 @@ contract('ERC20 Escrow Contract tests', (accounts) => {
         await rawrToken.approve(escrow.address, web3.utils.toWei('5000', 'ether'), {from:playerAddress});
         await escrow.deposit(rawrToken.address, 1, playerAddress, web3.utils.toWei('5000', 'ether'), {from: executionManagerAddress});
 
-        await escrow.transferRoyalty(1, creatorAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
-        
+        await escrow.methods['transferRoyalty(uint256,address,uint256)'](1, creatorAddress, web3.utils.toWei('1000', 'ether'), {from: executionManagerAddress});
+
         await escrow.withdraw(1, player2Address, web3.utils.toWei('4000', 'ether'), {from: executionManagerAddress});
 
         await escrow.claimRoyalties(creatorAddress, {from: executionManagerAddress});

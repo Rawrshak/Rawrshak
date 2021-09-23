@@ -16,10 +16,8 @@ const { constants } = require('@openzeppelin/test-helpers');
 contract('Royalty Manager Contract', (accounts)=> {
     const [
         deployerAddress,            // Address that deployed contracts
-        platformAddress,            // platform address fees
         testManagerAddress,         // Only for putting in data for testing
-        creator1Address,            // content nft Address
-        creator2Address,            // creator Address
+        creatorAddress,            // content nft Address
         playerAddress,              // malicious address
         staker1,                    // Staker 1
     ] = accounts;
@@ -52,7 +50,7 @@ contract('Royalty Manager Contract', (accounts)=> {
     });
 
     async function ContentContractSetup() {
-        var result = await contentFactory.createContracts(creator1Address, 20000, "arweave.net/tx-contract-uri");
+        var result = await contentFactory.createContracts(creatorAddress, 20000, "arweave.net/tx-contract-uri");
         
         content = await Content.at(result.logs[2].args.content);
         contentManager = await ContentManager.at(result.logs[2].args.contentManager);
@@ -126,28 +124,18 @@ contract('Royalty Manager Contract', (accounts)=> {
         await RawrTokenSetup();
         await RoyaltyManagerSetup();
 
-        creators = [creator1Address, creator2Address];
-        amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
+        await rawrToken.approve(escrow.address, web3.utils.toWei('230', 'ether'), {from:playerAddress});
+        await royaltyManager.methods['transferRoyalty(address,address,address,uint256)'](playerAddress, rawrToken.address, creatorAddress, web3.utils.toWei('200', 'ether'), {from: deployerAddress});
 
-        await rawrToken.approve(escrow.address, web3.utils.toWei('330', 'ether'), {from:playerAddress});
-        await royaltyManager.depositRoyalty(playerAddress, rawrToken.address, creators, amounts, {from: deployerAddress});
-
-        var claimable = await escrow.claimableTokensByOwner(creator1Address, {from: creator1Address});
+        var claimable = await escrow.claimableTokensByOwner(creatorAddress, {from: creatorAddress});
         assert.equal(
             claimable.amounts[0],
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
-        
-        claimable = await escrow.claimableTokensByOwner(creator2Address, {from: creator2Address});
-        assert.equal(
-            claimable.amounts[0],
-            web3.utils.toWei('100', 'ether').toString(),
-            "Royalty was not deposited in Creator 2 address escrow."
-        );
 
-        await royaltyManager.depositPlatformFees(playerAddress, rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-        
+        await royaltyManager.methods['transferPlatformFee(address,address,uint256)'](playerAddress, rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+
         assert.equal(
             await rawrToken.balanceOf(feesEscrow.address, {from: deployerAddress}),
             web3.utils.toWei('30', 'ether').toString(),
@@ -171,31 +159,20 @@ contract('Royalty Manager Contract', (accounts)=> {
         await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
         await escrow.deposit(rawrToken.address, 1, playerAddress, web3.utils.toWei('10000', 'ether'), {from: testManagerAddress});
 
-        creators = [creator1Address, creator2Address];
-        amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
+        await royaltyManager.methods['transferRoyalty(uint256,address,uint256)'](1, creatorAddress, web3.utils.toWei('200', 'ether'), {from: deployerAddress});
+        await royaltyManager.methods['transferPlatformFee(address,uint256,uint256)'](rawrToken.address, 1, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
-        await royaltyManager.transferRoyalty(1, creators, amounts, {from:deployerAddress});
-
-        await royaltyManager.transferPlatformFees(rawrToken.address, 1, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
-        claimable = await escrow.claimableTokensByOwner(creator1Address, {from: creator1Address});
+        claimable = await escrow.claimableTokensByOwner(creatorAddress, {from: creatorAddress});
         assert.equal(
             claimable.amounts[0],
             web3.utils.toWei('200', 'ether').toString(),
             "Royalty was not deposited in Creator 1 address escrow."
         );
         
-        claimable = await escrow.claimableTokensByOwner(creator2Address, {from: creator2Address});
-        assert.equal(
-            claimable.amounts[0],
-            web3.utils.toWei('100', 'ether').toString(),
-            "Royalty was not deposited in Creator 2 address escrow."
-        );
-        
         // check if amounts were moved from the escrow for the order to claimable for the creator
         assert.equal (
             await escrow.escrowedTokensByOrder(1),
-            web3.utils.toWei('9670', 'ether').toString(), 
+            web3.utils.toWei('9770', 'ether').toString(), 
             "Escrowed tokens for the Order was not updated."
         );
         
@@ -221,23 +198,22 @@ contract('Royalty Manager Contract', (accounts)=> {
         var results = await royaltyManager.payableRoyalties(assetData, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         assert.equal (
-            results.creators.length, 2, 
-            "Incorrect amount of royalty accounts to pay"
+            results.receiver,
+            creatorAddress, 
+            "Incorrect receiver"
         );
 
         assert.equal (
-            results.creatorRoyaltyFees[0].toString() == web3.utils.toWei('200', 'ether').toString() && 
-            results.creatorRoyaltyFees[1].toString() == web3.utils.toWei('100', 'ether').toString(), 
+            results.royaltyFee == web3.utils.toWei('200', 'ether').toString(), 
             true, 
             "Incorrect amount of royalty to pay"
         );
         
         assert.equal (
-            results.remaining.toString() == web3.utils.toWei('9670', 'ether').toString(), 
+            results.remaining.toString() == web3.utils.toWei('9770', 'ether').toString(), 
             true, 
             "Incorrect amount remaining."
         );
-
     });
 
     it('Claim Royalties', async () => {
@@ -245,31 +221,17 @@ contract('Royalty Manager Contract', (accounts)=> {
         await RawrTokenSetup();
         await RoyaltyManagerSetup();
 
-        creators = [creator1Address, creator2Address];
-        amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
-
         await rawrToken.approve(escrow.address, web3.utils.toWei('300', 'ether'), {from:playerAddress});
-        await royaltyManager.depositRoyalty(playerAddress, rawrToken.address, creators, amounts, {from: deployerAddress});
+        await royaltyManager.methods['transferRoyalty(address,address,address,uint256)'](playerAddress, rawrToken.address, creatorAddress, web3.utils.toWei('200', 'ether'), {from: deployerAddress});
 
         // claim royalties
-        await royaltyManager.claimRoyalties(creator1Address, {from: deployerAddress});
+        await royaltyManager.claimRoyalties(creatorAddress, {from: deployerAddress});
 
-        var claimable = await royaltyManager.claimableRoyalties(creator1Address, {from: creator1Address});
-        assert.equal(
-            claimable.amounts.length,
-            0,
-            "Royalty was not claimed yet."
-        );
-        
-        await royaltyManager.claimRoyalties(creator2Address, {from: deployerAddress});
-        
-        claimable = await royaltyManager.claimableRoyalties(creator2Address, {from: creator2Address});
+        var claimable = await royaltyManager.claimableRoyalties(creatorAddress, {from: creatorAddress});
         assert.equal(
             claimable.amounts.length,
             0,
             "Royalty was not claimed yet."
         );
     });
-    
-    // Todo: Create a test for ERC2981 support. This means creating a mock ERC1155 contract supporting ERC2981 
 });
