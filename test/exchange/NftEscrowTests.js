@@ -47,16 +47,14 @@ contract('NFT Escrow Contract', (accounts) => {
     async function createContentContract() {
         var uri = "arweave.net/tx-contract-uri";
 
-        var result = await contentFactory.createContracts(
-            [[deployerAddress, 10000]],
-            uri);
+        var result = await contentFactory.createContracts(deployerAddress, 10000, uri);
         
         content = await Content.at(result.logs[2].args.content);
         contentManager = await ContentManager.at(result.logs[2].args.contentManager);
         
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, deployerAddress, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, constants.ZERO_ADDRESS, 0],
         ];
 
         // Add 2 assets

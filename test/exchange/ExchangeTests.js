@@ -57,9 +57,7 @@ contract('Exchange Contract', (accounts)=> {
     });
 
     async function ContentContractSetup() {
-        var result = await contentFactory.createContracts(
-            [[creator1Address, 20000], [creator2Address, 10000]],
-            "arweave.net/tx-contract-uri");
+        var result = await contentFactory.createContracts(creator1Address, 20000, "arweave.net/tx-contract-uri");
         
         content = await Content.at(result.logs[2].args.content);
         contentManager = await ContentManager.at(result.logs[2].args.contentManager);
@@ -68,8 +66,8 @@ contract('Exchange Contract', (accounts)=> {
         // Asset 1 has 200 basis points towards creator 1
         // Asset 2 has 200 basis points towards creator 1, 100 basis points towards creator 2
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[creator1Address, 20000]]],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, creator1Address, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, constants.ZERO_ADDRESS, 0],
         ];
         await contentManager.addAssetBatch(asset);
 

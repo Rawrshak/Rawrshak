@@ -51,9 +51,7 @@ contract('Content Clone Factory Tests', (accounts) => {
         // Check initializer parameters
         var uri = "arweave.net/tx-contract-uri";
 
-        var result = await contentFactory.createContracts(
-            [[deployerAddress, 10000]],
-            uri);
+        var result = await contentFactory.createContracts(deployerAddress, 10000, uri);
 
         // // To figure out which log contains the ContractDeployed event
         // console.log(result.logs);
@@ -77,19 +75,13 @@ contract('Content Clone Factory Tests', (accounts) => {
         var uri2 = "arweave.net/tx-contract-uri-2";
 
         // developer 1 launches contracts
-        var contract1Result = await contentFactory.createContracts(
-            [[developer1Address, 10000]],
-            uri1,
-            {from: developer1Address});
+        var contract1Result = await contentFactory.createContracts(developer1Address, 10000, uri1, {from: developer1Address});
 
         var dev1Content = await Content.at(contract1Result.logs[2].args.content);
         var dev1ContentManager = await ContentManager.at(contract1Result.logs[2].args.contentManager);
 
         // developer 2 launches contracts
-        var contract2Result = await contentFactory.createContracts(
-            [[developer2Address, 10000]],
-            uri2,
-            {from: developer2Address});
+        var contract2Result = await contentFactory.createContracts(developer2Address, 10000, uri2, {from: developer2Address});
 
         var dev2Content = await Content.at(contract2Result.logs[2].args.content);
         var dev2ContentManager = await ContentManager.at(contract2Result.logs[2].args.contentManager);

@@ -26,7 +26,7 @@ contract TestHasRoyalty is HasRoyalty {
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external {
         // This overwrites the existing array of contract fees.
         for (uint256 i = 0; i < _assets.length; ++i) {
-            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.receiver, _assets[i].fee.rate);
+            _setTokenRoyalty(_assets[i].tokenId, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
         }
     }
 }

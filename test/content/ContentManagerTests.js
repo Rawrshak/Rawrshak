@@ -19,8 +19,8 @@ contract('Content Manager Contract Tests', (accounts) => {
     var content;
     var contentStorage;
     var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, [[deployerAddress, 20000]]],
-        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []]
+        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, deployerAddress, 20000],
+        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, constants.ZERO_ADDRESS, 0]
     ];
 
     beforeEach(async () => {
@@ -38,9 +38,7 @@ contract('Content Manager Contract Tests', (accounts) => {
             accessControlManagerImpl.address);
 
         // deploy contracts
-        var result = await contentFactory.createContracts(
-            [[deployerAddress, 10000]],
-            "arweave.net/tx-contract-uri");
+        var result = await contentFactory.createContracts(deployerAddress, 10000, "arweave.net/tx-contract-uri");
 
         // To figure out which log contains the ContractDeployed event
         // console.log(result.logs);
@@ -70,7 +68,7 @@ contract('Content Manager Contract Tests', (accounts) => {
     it('Add Assets', async () => {
         // Add 1 asset
         var newAssets = [
-            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, []]
+            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, constants.ZERO_ADDRESS, 0]
         ];
         
         await contentManager.addAssetBatch(newAssets);
@@ -111,26 +109,19 @@ contract('Content Manager Contract Tests', (accounts) => {
     });
 
     it('Set Token Contract Royalties', async () => {
-        var assetRoyalty = [[deployerAddress, 20000], [deployerAltAddress, 20000]];
-        await contentManager.setContractRoyalty(assetRoyalty);
+        await contentManager.setContractRoyalty(deployerAddress, 20000);
 
-        var royalties = await content.getRoyalties(2);
-        assert.equal(royalties.length, 2, "Incorrect contract royalties length");
-        assert.equal(royalties[0].receiver, deployerAddress, "Incorrect contract royalty account 1");
-        assert.equal(royalties[0].rate, 20000, "Incorrect contract royalty rate 1");
-        assert.equal(royalties[1].receiver, deployerAltAddress, "Incorrect contract royalty account 2");
-        assert.equal(royalties[1].rate, 20000, "Incorrect contract royalty rate 2");
+        var royalties = await content.royaltyInfo(2, 1000);
+        assert.equal(royalties.receiver, deployerAddress, "Incorrect contract royalty account 1");
+        assert.equal(royalties.royaltyAmount, 20, "Incorrect contract royalty rate 1");
     });
 
     it('Set Token Royalties', async () => {
-        var assetRoyalty = [[1, [[deployerAddress, 20000], [deployerAltAddress, 20000]]]];
+        var assetRoyalty = [[1, deployerAddress, 10000]];
         await contentManager.setTokenRoyaltiesBatch(assetRoyalty);
 
-        var royalties = await content.getRoyalties(1);
-        assert.equal(royalties.length, 2, "Incorrect royalties length");
-        assert.equal(royalties[0].receiver, deployerAddress, "Incorrect royalty account 1");
-        assert.equal(royalties[0].rate, 20000, "Incorrect royalty rate 1");
-        assert.equal(royalties[1].receiver, deployerAltAddress, "Incorrect royalty account 2");
-        assert.equal(royalties[1].rate, 20000, "Incorrect royalty rate 2");
+        var royalties = await content.royaltyInfo(2, 1000);
+        assert.equal(royalties.receiver, deployerAddress, "Incorrect royalty account 1");
+        assert.equal(royalties.royaltyAmount, 10, "Incorrect royalty rate 1");
     });
 });

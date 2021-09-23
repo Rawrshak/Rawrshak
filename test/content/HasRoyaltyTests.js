@@ -1,109 +1,75 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const TestHasRoyalty = artifacts.require("TestHasRoyalty")
 const TruffleAssert = require("truffle-assertions");
+const { constants } = require('@openzeppelin/test-helpers');
 
 contract('HasRoyalty Contract Tests', (accounts) => {
     const [
         deployerAddress,            // Address that deployed contracts
         deployerAltAddress,         // Alternate deployer address
-        craftingSystemAddress,      // crafting system address
-        lootboxSystemAddress,       // lootbox system address
-        playerAddress,              // Player Address
-        player2Address,             // Player Address
     ] = accounts;
     var testContract;
 
     beforeEach(async () => {
         testContract = await TestHasRoyalty.new();
-        var contractFees = [[deployerAddress, 10000]];
-        await testContract.__TestHasRoyalty_init(contractFees);
+        await testContract.__TestHasRoyalty_init(deployerAddress, 10000);
     });
 
     it('Check contract royalties', async () => {
-        var contractFees = await testContract.getRoyalties(0);
+        var contractFees = await testContract.getRoyalty(0);
 
         assert.equal(
-            contractFees.length,
-            1,
-            "There should only be 1 royalty fee.");
-        assert.equal(
-            contractFees[0].receiver,
+            contractFees.receiver,
             deployerAddress,
             "Royalty address should be the deployer.");
         assert.equal(
-            contractFees[0].rate,
+            contractFees.rate,
             10000,
             "Royalty rate is incorrect.");
     });
 
-    it('Set Mutliple Contract Royalties', async () => {
-        testContract = await TestHasRoyalty.new();
-        var defaultContractFees = [[deployerAddress, 10000], [deployerAltAddress, 20000]];
-        await testContract.__TestHasRoyalty_init(defaultContractFees);
-
-        var contractFees = await testContract.getRoyalties(0);
-
-        assert.equal(
-            contractFees.length,
-            2,
-            "There should be multiple royalty fees");
-
-        assert.equal(
-            contractFees[0].receiver == deployerAddress && contractFees[0].rate == 10000,
-            true,
-            "First royalty fee should be the deployer.");
-        assert.equal(
-            contractFees[1].receiver == deployerAltAddress && contractFees[1].rate == 20000,
-            true,
-            "Second Royalty fee should be the deployer's alternate wallet.");
-    });
-
     it('Set No Contract Royalties', async () => {
         testContract = await TestHasRoyalty.new();
-        var defaultContractFees = [];
-        await testContract.__TestHasRoyalty_init(defaultContractFees);
+        await testContract.__TestHasRoyalty_init(deployerAddress, 0);
 
-        var contractFees = await testContract.getRoyalties(0);
+        var contractFees = await testContract.getRoyalty(0);
 
         assert.equal(
-            contractFees.length,
+            contractFees.rate,
             0,
             "There should be no royalty fees");
     });
 
     it('Set Delete Contract Royalties', async () => {
-        contractFees = [];
         TruffleAssert.eventEmitted(
-            await testContract.setContractRoyalty(contractFees),
-            'ContractRoyaltiesUpdated',
+            await testContract.setContractRoyalty(deployerAddress, 0),
+            'ContractRoyaltyUpdated',
             (ev) => {
-                return ev.fees.length == 0;
+                return ev.rate == 0;
             }
         );
 
-        var tokenFees = await testContract.getRoyalties(0);
-
+        var tokenFees = await testContract.getRoyalty(0);
         assert.equal(
-            tokenFees.length,
+            tokenFees.rate,
             0,
-            "There shouldn't be any token or contract royalties.");
+            "There should be no royalty fees");
     });
 
     it('Set Update Contract Royalties', async () => {
-        contractFees = [[deployerAddress, 20000]];
         TruffleAssert.eventEmitted(
-            await testContract.setContractRoyalty(contractFees),
-            'ContractRoyaltiesUpdated',
+            await testContract.setContractRoyalty(deployerAddress, 20000),
+            'ContractRoyaltyUpdated',
             (ev) => {
-                return ev.fees[0].receiver == deployerAddress
-                    && ev.fees[0].rate == 20000;
+                return ev.receiver == deployerAddress
+                    && ev.rate == 20000;
             }
         );
 
-        var tokenFees = await testContract.getRoyalties(0);
+        var tokenFees = await testContract.getRoyalty(0);
 
         assert.equal(
-            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000,
+            tokenFees.receiver == deployerAddress && tokenFees.rate == 20000,
             true,
             "Token Royalty should reflect new contract royalties.");
     });
@@ -121,79 +87,79 @@ contract('HasRoyalty Contract Tests', (accounts) => {
     //     }]
     // }
     it('Add royalty to Token ID 1', async () => {
-        var assetRoyalty = [[1, [[deployerAddress, 20000]]]];
+        var assetRoyalty = [[1, deployerAddress, 20000]];
         var results = await testContract.setTokenRoyaltiesBatch(assetRoyalty);
         TruffleAssert.eventEmitted(
             results,
-            'TokenRoyaltiesUpdated',
+            'TokenRoyaltyUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].receiver == deployerAddress
-                    && ev.fees[0].rate == 20000;
+                    && ev.receiver == deployerAddress
+                    && ev.rate == 20000;
             }
         );
 
-        var tokenFees = await testContract.getRoyalties(0);
+        var tokenFees = await testContract.getRoyalty(0);
         assert.equal(
-            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 10000,
+            tokenFees.receiver == deployerAddress && tokenFees.rate == 10000,
             true,
             "Token 0 royalties should reflect the contract royalties.");
 
-        tokenFees = await testContract.getRoyalties(1);
+        tokenFees = await testContract.getRoyalty(1);
         assert.equal(
-            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 20000,
+            tokenFees.receiver == deployerAddress && tokenFees.rate == 20000,
             true,
             "Token 1 royalties should reflect the new Token 1 royalties.");
     });
     
 
     it('Add royalty to Token ID 1 and 2', async () => {
-        var assetRoyalty = [[1, [[deployerAddress, 20000]]], [2, [[deployerAltAddress, 20000]]]];
+        var assetRoyalty = [[1, deployerAddress, 20000], [2, deployerAltAddress, 20000]];
         var results = await testContract.setTokenRoyaltiesBatch(assetRoyalty);
 
         // filter for token 1
         TruffleAssert.eventEmitted(
             results,
-            'TokenRoyaltiesUpdated',
+            'TokenRoyaltyUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees[0].receiver == deployerAddress
-                    && ev.fees[0].rate == 20000;
+                    && ev.receiver == deployerAddress
+                    && ev.rate == 20000;
             }
         );
 
         // filter for token 2
         TruffleAssert.eventEmitted(
             results,
-            'TokenRoyaltiesUpdated',
+            'TokenRoyaltyUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 2
-                    && ev.fees[0].receiver == deployerAltAddress
-                    && ev.fees[0].rate == 20000;
+                    && ev.receiver == deployerAltAddress
+                    && ev.rate == 20000;
             }
         );
     });
 
     it('Set Royalty to Token Id 1 and then revert to using Contract Royalty', async () => {
         // Set token 1 royalties
-        var assetRoyalty = [[1, [[deployerAddress, 20000]]]];
+        var assetRoyalty = [[1, deployerAddress, 20000]];
         await testContract.setTokenRoyaltiesBatch(assetRoyalty);
 
         // Delete Token 1 Royalties
-        var assetRoyalty = [[1, []]];
+        var assetRoyalty = [[1, deployerAddress, 0]];
         var results = await testContract.setTokenRoyaltiesBatch(assetRoyalty);
         TruffleAssert.eventEmitted(
             results,
-            'TokenRoyaltiesUpdated',
+            'TokenRoyaltyUpdated',
             (ev) => {
                 return ev.tokenId.toString() == 1
-                    && ev.fees.length == 0;
+                    && ev.rate == 0;
             }
         );
         
-        tokenFees = await testContract.getRoyalties(1);
+        tokenFees = await testContract.getRoyalty(1);
         assert.equal(
-            tokenFees[0].receiver == deployerAddress && tokenFees[0].rate == 10000,
+            tokenFees.receiver == deployerAddress && tokenFees.rate == 0,
             true,
             "Token 1 royalties should reflect the contract royalties.");
     });

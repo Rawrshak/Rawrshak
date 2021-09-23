@@ -79,7 +79,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
             _setHiddenUri(_assets[i].tokenId, _assets[i].hiddenDataUri);
             
             // if this specific token has a different royalty fees than the contract
-            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.receiver, _assets[i].fee.rate);
+            _setTokenRoyalty(_assets[i].tokenId, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
         }
 
         emit AssetsAdded(_parent(), _assets);
@@ -113,7 +113,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
         // This overwrites the existing array of contract fees.
         for (uint256 i = 0; i < _assets.length; ++i) {
             require(ids[_assets[i].tokenId], "Invalid Token Id");
-            _setTokenRoyalty(_assets[i].tokenId, _assets[i].fee.receiver, _assets[i].fee.rate);
+            _setTokenRoyalty(_assets[i].tokenId, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
         }
     }
 
