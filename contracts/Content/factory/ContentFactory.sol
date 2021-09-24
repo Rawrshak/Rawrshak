@@ -22,7 +22,7 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
     EnumerableSetUpgradeable.AddressSet contentContracts;
     EnumerableSetUpgradeable.AddressSet contentManagerContracts;
 
-    event ContractsDeployed(address content, address contentManager);
+    event ContractsDeployed(address indexed content, address indexed contentManager);
 
     function __ContentFactory_init(
         address _content,
