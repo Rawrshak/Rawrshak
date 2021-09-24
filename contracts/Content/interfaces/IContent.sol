@@ -20,7 +20,7 @@ interface IContent is IContractUri, IERC1155Upgradeable {
 
     function uri(uint256 _tokenId, uint256 _version) external view returns (string memory);
 
-    function contractRoyalty() external view returns (address, uint24);
+    function contractRoyalty() external view returns (address receiver, uint24 rate);
     
     function userMintNonce() external view returns (uint256);
 

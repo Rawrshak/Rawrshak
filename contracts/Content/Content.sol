@@ -106,7 +106,7 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
         return _maxSupply(_tokenId);
     }
 
-    function contractRoyalty() external view override returns (address, uint24) {
+    function contractRoyalty() external view override returns (address receiver, uint24 rate) {
         return contentStorage.getContractRoyalty();
     }
     
