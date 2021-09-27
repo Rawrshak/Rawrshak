@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
-const { constants } = require('@openzeppelin/test-helpers');
 
 describe('HasTokenUri Contract Tests', () => {
     var testContract;
@@ -32,12 +31,12 @@ describe('HasTokenUri Contract Tests', () => {
 
             await expect(testContract.setHiddenUri(tokenUris))
                 .to.emit(testContract, 'HiddenUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, 0);
+                .withArgs(ethers.constants.AddressZero, 1, 0);
 
             tokenUris = [[1, "arweave.net/tx/publictoken"]];
             await expect(testContract.setPublicUri(tokenUris))
                 .to.emit(testContract, 'PublicUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, 0);
+                .withArgs(ethers.constants.AddressZero, 1, 0);
 
             expect(await testContract.tokenUri(1, 0, true))
                 .to.equal("arweave.net/tx/publictoken");
@@ -54,10 +53,10 @@ describe('HasTokenUri Contract Tests', () => {
             var events = await testContract.setHiddenUri(tokenUris);
             expect(events)
                 .to.emit(testContract, 'HiddenUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, 0);
+                .withArgs(ethers.constants.AddressZero, 1, 0);
             expect(events)
                 .to.emit(testContract, 'HiddenUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 2, 0);
+                .withArgs(ethers.constants.AddressZero, 2, 0);
                 
             expect(await testContract.tokenUri(1, 0, false))
                 .to.equal("arweave.net/tx/hiddentoken-1");
@@ -70,10 +69,10 @@ describe('HasTokenUri Contract Tests', () => {
             var events = await testContract.setPublicUri(tokenUris);
             expect(events)
                 .to.emit(testContract, 'PublicUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, 0);
+                .withArgs(ethers.constants.AddressZero, 1, 0);
             expect(events)
                 .to.emit(testContract, 'PublicUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 2, 0);
+                .withArgs(ethers.constants.AddressZero, 2, 0);
                 
             expect(await testContract.tokenUri(1, 0, true))
                 .to.equal("arweave.net/tx/publictoken-1");
@@ -88,10 +87,10 @@ describe('HasTokenUri Contract Tests', () => {
     
             expect(events)
                 .to.emit(testContract, 'HiddenUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, 0);
+                .withArgs(ethers.constants.AddressZero, 1, 0);
             expect(events)
                 .to.emit(testContract, 'HiddenUriUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, 1);
+                .withArgs(ethers.constants.AddressZero, 1, 1);
             
             // check the two versions
             expect(await testContract.tokenUri(1, 0, false))

@@ -10,6 +10,7 @@ import "../libraries/LibAsset.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "../utils/LibInterfaces.sol";
 import "./ContentSubsystemBase.sol";
+import "hardhat/console.sol";
 
 contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, AccessControlUpgradeable, EIP712Extended {
     using EnumerableSetUpgradeable for *;
@@ -61,7 +62,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         // Otherwise, we need to verify who signed the data
 
         // this is to prevent minting replay attacks
-        require(_data.nonce == userMintNonce[_caller] + 1, "Invalid caller nonce");
+        require(_data.nonce == userMintNonce[_data.to] + 1, "Invalid caller nonce");
 
         // Verifying Contract must be there content contract parent of this control manager
         bytes32 hashData = _hashTypedDataV4(LibAsset.hashMintData(_data), _parent());
@@ -71,7 +72,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         require(hasRole(MINTER_ROLE, _data.signer) || hasRole(DEFAULT_ADMIN_ROLE, _data.signer), "Invalid Signer");
         
         // Increment user nonce
-        userMintNonce[_caller]++;
+        userMintNonce[_data.to]++;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {

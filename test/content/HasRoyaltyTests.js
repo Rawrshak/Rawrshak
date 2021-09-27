@@ -1,12 +1,7 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
-const { constants } = require('@openzeppelin/test-helpers');
 
 describe('HasRoyalty Contract Tests', () => {
-    // const [
-    //     deployerAddress,            // Address that deployed contracts
-    //     deployerAltAddress,         // Alternate deployer address
-    // ] = accounts;
     var testContract;
     var deployerAddress, deployerAltAddress;
     var TestHasRoyalty;
@@ -38,7 +33,7 @@ describe('HasRoyalty Contract Tests', () => {
         it('Set Delete Contract Royalties', async () => {
             await expect(testContract.setContractRoyalty(deployerAddress.address, 0))
                 .to.emit(testContract, 'ContractRoyaltyUpdated')
-                .withArgs(constants.ZERO_ADDRESS, deployerAddress.address, 0);
+                .withArgs(ethers.constants.AddressZero, deployerAddress.address, 0);
 
             var tokenFees = await testContract.getRoyalty(0);
             expect(tokenFees.rate).to.equal(0);
@@ -48,7 +43,7 @@ describe('HasRoyalty Contract Tests', () => {
 
             await expect(testContract.setContractRoyalty(deployerAddress.address, 20000))
                 .to.emit(testContract, 'ContractRoyaltyUpdated')
-                .withArgs(constants.ZERO_ADDRESS, deployerAddress.address, 20000);
+                .withArgs(ethers.constants.AddressZero, deployerAddress.address, 20000);
 
             var tokenFees = await testContract.getRoyalty(0);
             expect(tokenFees.rate).to.equal(20000);
@@ -76,7 +71,7 @@ describe('HasRoyalty Contract Tests', () => {
 
             expect(results)
                 .to.emit(testContract, 'TokenRoyaltyUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, deployerAddress.address, 20000);
+                .withArgs(ethers.constants.AddressZero, 1, deployerAddress.address, 20000);
             
             // token royalty from contract royalty
             var tokenFees = await testContract.getRoyalty(0);
@@ -97,12 +92,12 @@ describe('HasRoyalty Contract Tests', () => {
             // filter for token 1
             expect(results)
                 .to.emit(testContract, 'TokenRoyaltyUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, deployerAddress.address, 20000);
+                .withArgs(ethers.constants.AddressZero, 1, deployerAddress.address, 20000);
                 
             // filter for token 2
             expect(results)
                 .to.emit(testContract, 'TokenRoyaltyUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 2, deployerAltAddress.address, 20000);
+                .withArgs(ethers.constants.AddressZero, 2, deployerAltAddress.address, 20000);
         });
 
         it('Set Royalty to Token Id 1 and then revert to using Contract Royalty', async () => {
@@ -117,7 +112,7 @@ describe('HasRoyalty Contract Tests', () => {
             // check emitted event
             expect(results)
                 .to.emit(testContract, 'TokenRoyaltyUpdated')
-                .withArgs(constants.ZERO_ADDRESS, 1, deployerAddress.address, 0);
+                .withArgs(ethers.constants.AddressZero, 1, deployerAddress.address, 0);
             
             // check token royalty
             tokenFees = await testContract.getRoyalty(1);
