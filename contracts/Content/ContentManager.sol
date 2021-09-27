@@ -39,7 +39,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
 
     /******************** Public API ********************/
     
-    function __ContentManager_init(
+    function initialize(
         address _content,
         address _contentStorage,
         address _accessControlManager

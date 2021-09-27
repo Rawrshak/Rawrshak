@@ -29,7 +29,7 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
     IAccessControlManager accessControlManager;
 
     /******************** Public API ********************/
-    function __Content_init(
+    function initialize(
         address _contentStorage,
         address _accessControlManager)
         public initializer

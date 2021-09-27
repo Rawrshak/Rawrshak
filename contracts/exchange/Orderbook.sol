@@ -13,7 +13,7 @@ contract Orderbook is IOrderbook, ManagerBase {
     uint256 public override ordersLength;
 
     /******************** Public API ********************/
-    function __Orderbook_init(address _resolver) public initializer {
+    function initialize(address _resolver) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_resolver);

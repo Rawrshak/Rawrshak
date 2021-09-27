@@ -24,7 +24,7 @@ contract Staking is IStaking, ContextUpgradeable, ERC165StorageUpgradeable {
     IAddressResolver resolver;
     
     /******************** Public API ********************/
-    function __Staking_init(address _token, address _resolver) public initializer {
+    function initialize(address _token, address _resolver) public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __Staking_init_unchained(_token, _resolver);

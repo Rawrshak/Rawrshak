@@ -14,7 +14,7 @@ abstract contract EscrowBase is AccessControlUpgradeable, ERC165StorageUpgradeab
     event ManagerRegistered(address indexed _manager);
 
     /******************** Public API ********************/
-    function __EscrowBase_init_unchained() public initializer {
+    function __EscrowBase_init_unchained() internal initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

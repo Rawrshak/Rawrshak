@@ -29,7 +29,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     mapping(address => uint256) public override userMintNonce;
 
     /******************** Public API ********************/
-    function __AccessControlManager_init() public initializer {
+    function initialize() public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __EIP712Extended_init_unchained("MintData", "1");

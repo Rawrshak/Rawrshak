@@ -14,7 +14,7 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
     mapping(uint256 => uint256) public override escrowedAmounts;
 
     /******************** Public API ********************/
-    function __NftEscrow_init() public initializer {
+    function initialize() public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();

@@ -10,7 +10,7 @@ abstract contract ManagerBase is OwnableUpgradeable, ERC165StorageUpgradeable {
     IAddressResolver internal resolver;
 
     /******************** Public API ********************/
-    function __ManagerBase_init_unchained(address _resolver) public initializer {
+    function __ManagerBase_init_unchained(address _resolver) internal initializer {
         require(_resolver != address(0), "resolver passed.");
         resolver = IAddressResolver(_resolver);
     }

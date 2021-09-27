@@ -14,7 +14,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     using ERC165CheckerUpgradeable for address;
 
     /******************** Public API ********************/
-    function __RoyaltyManager_init(address _resolver) public initializer {
+    function initialize(address _resolver) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_resolver);

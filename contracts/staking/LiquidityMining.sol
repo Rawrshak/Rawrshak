@@ -53,7 +53,7 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address to
     );
 
-    function __LiquidityMining_init(
+    function initialize(
         address _usdc,
         address _usdt,
         address _dai,

@@ -24,7 +24,7 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
 
     event ContractsDeployed(address indexed content, address indexed contentManager);
 
-    function __ContentFactory_init(
+    function initialize(
         address _content,
         address _contentManager,
         address _contentStorage,
@@ -83,10 +83,10 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
         ContentStorage contentStorage = (ContentStorage)(ClonesUpgradeable.clone(contentStorageImplementation));
         AccessControlManager accessControlManager = (AccessControlManager)(ClonesUpgradeable.clone(accessControlManagerImplementation));
 
-        accessControlManager.__AccessControlManager_init();
-        contentStorage.__ContentStorage_init(_contractRoyaltyAccount, _contractRoyaltyRate, _contractUri);
-        content.__Content_init(address(contentStorage), address(accessControlManager));
-        contentManager.__ContentManager_init(address(content), address(contentStorage), address(accessControlManager));
+        accessControlManager.initialize();
+        contentStorage.initialize(_contractRoyaltyAccount, _contractRoyaltyRate, _contractUri);
+        content.initialize(address(contentStorage), address(accessControlManager));
+        contentManager.initialize(address(content), address(contentStorage), address(accessControlManager));
         
         // Grant Roles. ContentManager receives the DEFAULT_ADMIN_ROLE as well. However, only the content
         // contract is the parent.
