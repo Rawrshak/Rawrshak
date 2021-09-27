@@ -14,7 +14,7 @@ contract AddressResolver is IAddressResolver, OwnableUpgradeable, ERC165StorageU
     mapping(bytes4 => address) private registry;
 
     /******************** Public API ********************/
-    function __AddressResolver_init() public initializer {
+    function initialize() public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         _registerInterface(LibInterfaces.INTERFACE_ID_ADDRESS_REGISTRY);

@@ -28,7 +28,7 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     uint24 public override rate;
 
     /******************** Public API ********************/
-    function __ExchangeFeesEscrow_init(address _resolver) public initializer {
+    function initialize(address _resolver) public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();

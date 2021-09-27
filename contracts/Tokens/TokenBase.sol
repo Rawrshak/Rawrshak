@@ -25,7 +25,7 @@ abstract contract TokenBase is ERC20Upgradeable, ERC165StorageUpgradeable, Acces
     /******** Events ********/
     event TokenCreated(address indexed addr, string name, string symbol, bytes32 id, uint256 supply);
 
-    function __TokenBase_init_unchained(uint256 _initialSupply) public initializer {
+    function __TokenBase_init_unchained(uint256 _initialSupply) internal initializer {
         // Contract Deployer is now the owner and can set roles
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 

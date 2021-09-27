@@ -35,7 +35,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     mapping(uint256 => uint256) public override supply;
 
     /******************** Public API ********************/
-    function __ContentStorage_init(
+    function initialize(
         address _receiver,
         uint24 _rate,
         string memory _contractUri

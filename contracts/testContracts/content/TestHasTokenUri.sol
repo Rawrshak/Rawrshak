@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../../content/HasTokenUri.sol";
 
 contract TestHasTokenUri is HasTokenUri {
-    function __TestHasTokenUri_init() external initializer {
+    function initialize() external initializer {
         __HasTokenUri_init_unchained();
         __ERC165Storage_init_unchained();
     }

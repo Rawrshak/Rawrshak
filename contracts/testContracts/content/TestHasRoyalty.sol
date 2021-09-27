@@ -5,7 +5,7 @@ import "../../content/HasRoyalty.sol";
 import "../../libraries/LibAsset.sol";
 
 contract TestHasRoyalty is HasRoyalty {
-    function __TestHasRoyalty_init(address _receiver, uint24 _rate) external initializer {
+    function initialize(address _receiver, uint24 _rate) external initializer {
         __HasRoyalty_init_unchained(_receiver, _rate);
         __ERC165Storage_init_unchained();
     }

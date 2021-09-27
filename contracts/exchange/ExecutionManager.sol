@@ -12,7 +12,7 @@ import "../utils/LibContractHash.sol";
 
 contract ExecutionManager is IExecutionManager, ManagerBase {    
     /******************** Public API ********************/
-    function __ExecutionManager_init(address _resolver) public initializer {
+    function initialize(address _resolver) public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
         __ManagerBase_init_unchained(_resolver);

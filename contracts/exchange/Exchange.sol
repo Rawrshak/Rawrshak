@@ -18,7 +18,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
     IExecutionManager executionManager;
 
     /******************** Public API ********************/
-    function __Exchange_init(address _royaltyManager, address _orderbook, address _executionManager) public initializer {
+    function initialize(address _royaltyManager, address _orderbook, address _executionManager) public initializer {
         // We don't run the interface checks because we're the only one who will deploy this so
         // we know that the addresses are correct
         __Context_init_unchained();

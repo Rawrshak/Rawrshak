@@ -18,3 +18,7 @@ data
 
 # yarn
 yarn.lock
+
+# hardhat folders
+cache
+artifacts

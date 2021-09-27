@@ -22,7 +22,7 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
     mapping(address => EnumerableMapsExtension.AddressToUintMap) claimableByOwner;
 
     /******************** Public API ********************/
-    function __Erc20Escrow_init() public initializer {
+    function initialize() public initializer {
         __Context_init_unchained();
         __ERC165_init_unchained();
         __AccessControl_init_unchained();
