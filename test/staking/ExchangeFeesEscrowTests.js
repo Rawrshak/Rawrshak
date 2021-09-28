@@ -1,394 +1,284 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const RawrToken = artifacts.require("RawrToken");
-const ExchangeFeesEscrow = artifacts.require("ExchangeFeesEscrow");
-const MockStaking = artifacts.require("MockStaking");
-const AddressResolver = artifacts.require("AddressResolver");
-const TruffleAssert = require("truffle-assertions");
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
 
-contract('Exchange Fees Escrow Contract tests', (accounts) => {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        executionManagerAddress,    // execution manager address
-        royaltiesManagerAddress,    // royalties manager address
-        playerAddress,              // Player Address
-        staker1,                    // 1st Staker
-        staker2,                    // 2nd Staker
-    ] = accounts;
+describe('Exchange Fees Escrow Contract tests', () => {
+    var deployerAddress,
+        executionManagerAddress,
+        royaltiesManagerAddress,
+        playerAddress,
+        staker1,
+        staker2;
     
     var rawrToken;
     var feesEscrow;
+    var resolver;
 
     var staking;
+    const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
 
-    before(async () => {            
-        resolver = await AddressResolver.new();
-        await resolver.__AddressResolver_init({from: deployerAddress});
+    before(async () => {
+        [deployerAddress,
+            executionManagerAddress,
+            royaltiesManagerAddress,
+            playerAddress,
+            staker1,
+            staker2
+        ] = await ethers.getSigners();
+        ExchangeFeesEscrow = await ethers.getContractFactory("ExchangeFeesEscrow");
+        RawrToken = await ethers.getContractFactory("RawrToken");
+        AddressResolver = await ethers.getContractFactory("AddressResolver");
+        MockStaking = await ethers.getContractFactory("MockStaking");
+
+        resolver = await upgrades.deployProxy(AddressResolver, []);
     });
 
     beforeEach(async () => {
-        rawrToken = await RawrToken.new();
-        await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
-        feesEscrow = await ExchangeFeesEscrow.new();
-        await feesEscrow.__ExchangeFeesEscrow_init(resolver.address, {from: deployerAddress});
-
-        staking = await MockStaking.new(resolver.address);
+        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+        feesEscrow =  await upgrades.deployProxy(ExchangeFeesEscrow, [resolver.address]);
+        staking = await MockStaking.deploy(resolver.address);
     });
 
     async function setup() {
         // Register the execution manager
-        await feesEscrow.registerManager(staking.address, {from:deployerAddress})
+        await feesEscrow.registerManager(staking.address)
         
         // register the escrows
-        await resolver.registerAddress(["0x1b48faca", "0x7f170836"], [staking.address, feesEscrow.address], {from: deployerAddress});
+        await resolver.registerAddress(["0x1b48faca", "0x7f170836"], [staking.address, feesEscrow.address]);
     }
 
-    it('Check if ExchangeFeesEscrow was deployed properly', async () => {
-        assert.equal(
-            feesEscrow.address != 0x0,
-            true,
-            "Exchange Fee Pool was not deployed properly.");
-    });
-
-    it('Supports the ExchangeFeesEscrow Interface', async () => {
-        // INTERFACE_ID_LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW = 0x00000012
-        assert.equal(
-            await feesEscrow.supportsInterface("0x00000012"),
-            true, 
-            "the contract doesn't support the ExchangeFeesEscrow interface");
-    });
-
-    it('Deployer wallet must have default admin role', async () => {
-        default_admin_role = await feesEscrow.DEFAULT_ADMIN_ROLE();
-        assert.equal(
-            await feesEscrow.hasRole(
-                default_admin_role,
-                deployerAddress),
-            true, 
-            "deployer wallet didn't have admin role");
-    });
-
-    it('Registering Manager address', async () => {
-        manager_role = await feesEscrow.MANAGER_ROLE();
-        // Register the execution manager
-        TruffleAssert.eventEmitted(
-            await feesEscrow.registerManager(executionManagerAddress, {from:deployerAddress}),
-            'ManagerRegistered'
-        );
-        
-        TruffleAssert.eventEmitted(
-            await feesEscrow.registerManager(royaltiesManagerAddress, {from:deployerAddress}),
-            'ManagerRegistered'
-        );
-
-        assert.equal(
-            await feesEscrow.hasRole(
-                manager_role,
-                executionManagerAddress),
-            true, 
-            "execution manager should have the manager role");
-
-        assert.equal(
-            await feesEscrow.hasRole(
-                manager_role,
-                royaltiesManagerAddress),
-            true, 
-            "royalties manager should have the manager role");
-    });
+    describe("Basic Tests", () => {
     
-    it('Update Rate', async () => {
-        await setup();
-        
-        assert.equal(
-            await feesEscrow.rate(),
-            0, 
-            "initial Exchange Fees rate is incorrect.");
-
-        // fails to set the rate because there are no tokens being staked
-        await TruffleAssert.fails(
-            feesEscrow.setRate(30000, {from:deployerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        // add a staker
-        await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
-
-        TruffleAssert.eventEmitted(
-            await feesEscrow.setRate(30000, {from:deployerAddress}),
-            'FeeUpdated'
-        );
-        assert.equal(
-            await feesEscrow.rate(),
-            30000, 
-            "updated Exchange Fees rate is incorrect.");
-    });
-
-    it('Deposit Royalties', async () => {
-        await setup();
-
-        TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress}),
-            'ExchangeFeesPaid'
-        );
-
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fee pool incorrect.");
-        
-        TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrToken.address, 5000, {from: deployerAddress}),
-            'ExchangeFeesPaid'
-        );
-
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), 15000, "Total fee pool incorrect.");
-    });
+        it('Check if ExchangeFeesEscrow was deployed properly', async () => {
+            expect(feesEscrow.address).not.equal(ethers.constants.AddressZero);
+        });
     
-    it('Deposit Multiple Token Royalties', async () => {
-        await setup();
+        it('Supports the ExchangeFeesEscrow Interface', async () => {
+            // INTERFACE_ID_LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW = 0x00000012
+            expect(await feesEscrow.supportsInterface("0x00000012")).to.equal(true);
+        });
 
-        // Create a 2nd token
-        var rawrV2Token = await RawrToken.new();
-        await rawrV2Token.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
-
-        // Give tokens to Player
-        await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
-        await rawrV2Token.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
-
-        await setup();
-
-        // Deposit 10,000 of Rawr token fees
-        await rawrToken.transfer(feesEscrow.address, 10000, {from: playerAddress});
-        
-        TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress}),
-            'ExchangeFeesPaid'
-        );
-        
-        // Deposit 10,000 of RawrV2 token fees
-        await rawrV2Token.transfer(feesEscrow.address, 10000, {from: playerAddress});
-        TruffleAssert.eventEmitted(
-            await feesEscrow.depositFees(rawrV2Token.address, 10000, {from: deployerAddress}),
-            'ExchangeFeesPaid'
-        );
-        
-        // Check Escrow fees for both tokens
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fee pool incorrect for Rawr Token");
-        assert.equal(await feesEscrow.totalFees(rawrV2Token.address), 10000, "Total fee pool incorrect for Rawr V2 token");
-    });
-
-    it('Stake tokens before Exchange Fees', async () => {
-        await setup();
-
-        await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
-
-        // add stakers - this calls staking().initializeTokenRate()
-        await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
-
-        // Update internal deposits
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
-        var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
-        assert.equal(
-            p1claimable.length,
-            1,
-            "there should only be one claimable reward."
-        );
-        assert.equal(
-            p1claimable[0].token,
-            rawrToken.address,
-            "token address is incorrect."
-        );
-        assert.equal(
-            p1claimable[0].amount,
-            web3.utils.toWei('10000', 'ether'),
-            "claimable amount for player 1 is incorrect."
-        );
-
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), web3.utils.toWei('10000', 'ether'), "Total fees incorrect.");
-    });
+        it('Deployer wallet must have default admin role', async () => {
+            default_admin_role = await feesEscrow.DEFAULT_ADMIN_ROLE();
+            expect(await feesEscrow.hasRole(default_admin_role, deployerAddress.address)).to.equal(true);
+        });
     
-    it('Test claimable for 2 stakers', async () => {
-        await setup();
+        it('Registering Manager address', async () => {
+            manager_role = await feesEscrow.MANAGER_ROLE();
+            // Register the execution manager
+            await expect(await feesEscrow.registerManager(executionManagerAddress.address))
+                .to.emit(feesEscrow, 'ManagerRegistered');
 
-        // add 2 stakers
-        await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
-        await staking.stake(web3.utils.toWei('75', 'ether'), {from: staker2});
-
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-        
-        var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
-        assert.equal(
-            p1claimable[0].amount,
-            web3.utils.toWei('2500', 'ether'),
-            "claimable amount for player 1 is incorrect."
-        );
-        
-        var p2claimable = await feesEscrow.getClaimableRewards(staker2, {from: deployerAddress});
-        assert.equal(
-            p2claimable[0].amount,
-            web3.utils.toWei('7500', 'ether'),
-            "claimable amount for player 2 is incorrect."
-        );
-
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), web3.utils.toWei('10000', 'ether'), "Total fees incorrect.");
-    });
+            await expect(await feesEscrow.registerManager(royaltiesManagerAddress.address))
+                .to.emit(feesEscrow, 'ManagerRegistered');
     
-    it('Test claimable for 2 stakers at different times', async () => {
-        await setup();
-
-        // add 2 stakers
-        await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
-        
-        await staking.stake(web3.utils.toWei('75', 'ether'), {from: staker2});
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-        
-        var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
-        assert.equal(
-            p1claimable[0].amount,
-            web3.utils.toWei('12500', 'ether'),
-            "claimable amount for player 1 is incorrect."
-        );
-        
-        var p2claimable = await feesEscrow.getClaimableRewards(staker2, {from: deployerAddress});
-        assert.equal(
-            p2claimable[0].amount,
-            web3.utils.toWei('7500', 'ether'),
-            "claimable amount for player 2 is incorrect."
-        );
-
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), web3.utils.toWei('20000', 'ether'), "Total fees incorrect.");
+            expect(await feesEscrow.hasRole(manager_role, executionManagerAddress.address)).to.equal(true);
+            
+            expect(await feesEscrow.hasRole(manager_role, royaltiesManagerAddress.address)).to.equal(true);
+        });
     });
 
-    it('Distribute Multiple Token Royalties', async () => {
-        await setup();
+    describe("Functional Tests", () => {
+    
+        it('Update Rate', async () => {
+            await setup();
+            
+            expect(await feesEscrow.rate()).to.equal(0);
+    
+            // fails to set the rate because there are no tokens being staked
+            await expect(feesEscrow.setRate(30000)).to.be.reverted;
+            
+            // add a staker
+            await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
+    
+            await expect(await feesEscrow.setRate(30000))
+                .to.emit(feesEscrow, 'FeeUpdated');
 
-        // Create a 2nd token
-        var rawrV2Token = await RawrToken.new();
-        await rawrV2Token.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
+            expect(await feesEscrow.rate()).to.equal(30000);
+        });
 
-        // Stakers
-        await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
-        await staking.stake(web3.utils.toWei('75', 'ether'), {from: staker2});
-
-        // Deposit 10,000 of Rawr token fees
-        await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress});
+        it('Deposit Royalties', async () => {
+            await setup();
+    
+            await expect(await feesEscrow.depositFees(rawrToken.address, 10000))
+                .to.emit(feesEscrow, 'ExchangeFeesPaid');
+    
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(10000);
+            
+            await expect(await feesEscrow.depositFees(rawrToken.address, 5000))
+                .to.emit(feesEscrow, 'ExchangeFeesPaid');
+    
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(15000);
+        });
         
-        // Deposit 10,000 of RawrV2 token fees
-        await feesEscrow.depositFees(rawrV2Token.address, 20000, {from: deployerAddress});
-
-        var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
-        assert.equal(
-            p1claimable.length,
-            2,
-            "there should now be two claimable reward tokens."
-        );
-        assert.equal(
-            p1claimable[0].amount,
-            2500,
-            "claimable amount for token 1 for player 1 is incorrect."
-        );
-        assert.equal(
-            p1claimable[1].amount,
-            5000,
-            "claimable amount for token 2 for player 1 is incorrect."
-        );
-        
-        var p2claimable = await feesEscrow.getClaimableRewards(staker2, {from: deployerAddress});
-        assert.equal(
-            p2claimable.length,
-            2,
-            "there should now be two claimable reward tokens."
-        );
-        assert.equal(
-            p2claimable[0].amount,
-            7500,
-            "claimable amount for token 1 for player 2 is incorrect."
-        );
-        assert.equal(
-            p2claimable[1].amount,
-            15000,
-            "claimable amount for token 2 for player 2 is incorrect."
-        );
+        it('Deposit Multiple Token Royalties', async () => {
+            await setup();
+    
+            // Create a 2nd token
+            var rawrV2Token = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+    
+            // Give tokens to Player
+            await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
+            await rawrV2Token.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Deposit 10,000 of Rawr token fees
+            await rawrToken.connect(playerAddress).transfer(feesEscrow.address, 10000);
+            await expect(await feesEscrow.depositFees(rawrToken.address, 10000))
+                .to.emit(feesEscrow, 'ExchangeFeesPaid');
+            
+            // Deposit 10,000 of RawrV2 token fees
+            await rawrV2Token.connect(playerAddress).transfer(feesEscrow.address, 10000);
+            await expect(await feesEscrow.depositFees(rawrV2Token.address, 10000))
+                .to.emit(feesEscrow, 'ExchangeFeesPaid');
+            
+            // Check Escrow fees for both tokens
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(10000);
+            expect(await feesEscrow.totalFees(rawrV2Token.address)).to.equal(10000);
+        });
     });
 
-    it('Claim Fees', async () => {
-        await setup();
+    describe("Staking", () => {
+        it('Stake tokens before Exchange Fees', async () => {
+            await setup();
 
-        await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
+            await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
 
-        // add stakers - this calls staking().initializeTokenRate()
-        await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
+            // add stakers - this calls staking().initializeTokenRate()
+            await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
 
-        // Update internal deposits
-        await rawrToken.transfer(feesEscrow.address, web3.utils.toWei('20000', 'ether'), {from: playerAddress});
-        await feesEscrow.depositFees(rawrToken.address, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
+            // Update internal deposits
+            await expect(await feesEscrow.depositFees(rawrToken.address, ethers.BigNumber.from(10000).mul(_1e18)))
+                .to.emit(feesEscrow, 'ExchangeFeesPaid');
+
+            var p1claimable = await feesEscrow.getClaimableRewards(staker1.address);
+            expect(p1claimable.length).to.equal(1);
+            expect(p1claimable[0].token).to.equal(rawrToken.address);
+            expect(p1claimable[0].amount).to.equal(ethers.BigNumber.from(10000).mul(_1e18));
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(10000).mul(_1e18));
+        });
+
+        it('Test claimable for 2 stakers', async () => {
+            await setup();
+    
+            // add 2 stakers
+            await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
+            await staking.connect(staker2).stake(ethers.BigNumber.from(75).mul(_1e18));
+    
+            await feesEscrow.depositFees(rawrToken.address, ethers.BigNumber.from(10000).mul(_1e18));
+            
+            var p1claimable = await feesEscrow.getClaimableRewards(staker1.address);
+            expect(p1claimable[0].amount).to.equal(ethers.BigNumber.from(2500).mul(_1e18));
+            
+            var p2claimable = await feesEscrow.getClaimableRewards(staker2.address);
+            expect(p2claimable[0].amount).to.equal(ethers.BigNumber.from(7500).mul(_1e18));
+    
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(10000).mul(_1e18));
+        });
         
-        assert.equal(
-            await rawrToken.balanceOf(feesEscrow.address),
-            web3.utils.toWei('20000', 'ether'),
-            "fee escrow balance should be 20000 rawr tokens"
-        );
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), web3.utils.toWei('20000', 'ether'), "Total fees incorrect.");
+        it('Test claimable for 2 stakers at different times', async () => {
+            await setup();
 
-        // Note: the Staking contract will call UpdateUserRewards() before calling claimRewards()
-        await feesEscrow.updateUserRewards(staker1, {from: deployerAddress});
-        await feesEscrow.claimRewards(staker1, {from: deployerAddress});
-        assert.equal(
-            await rawrToken.balanceOf(staker1),
-            web3.utils.toWei('20000', 'ether'),
-            "Staker1 balance should be 20000 rawr tokens"
-        );
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), 0, "Total fees incorrect.");
+            // add 2 stakers
+            await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
+            await feesEscrow.depositFees(rawrToken.address, ethers.BigNumber.from(10000).mul(_1e18));
 
-        var p1claimable = await feesEscrow.getClaimableRewards(staker1, {from: deployerAddress});
-        assert.equal(
-            p1claimable.length,
-            1,
-            "there should only be one token reward."
-        );
-        assert.equal(
-            p1claimable[0].amount,
-           0,
-            "claimable amount for player 1 should be 0."
-        );
+            
+            await staking.connect(staker2).stake(ethers.BigNumber.from(75).mul(_1e18));
+            await feesEscrow.depositFees(rawrToken.address, ethers.BigNumber.from(10000).mul(_1e18));
+            
+            var p1claimable = await feesEscrow.getClaimableRewards(staker1.address);
+            expect(p1claimable[0].amount).to.equal(ethers.BigNumber.from(12500).mul(_1e18));
+            
+            var p2claimable = await feesEscrow.getClaimableRewards(staker2.address);
+            expect(p2claimable[0].amount).to.equal(ethers.BigNumber.from(7500).mul(_1e18));
+
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(20000).mul(_1e18));
+        });
     });
 
-    it('Claim Multiple Token Royalties', async () => {
-        await setup();
+    describe("Distribute and Claim", () => {
 
-        // Create a 2nd token
-        var rawrV2Token = await RawrToken.new();
-        await rawrV2Token.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
-
-        await rawrToken.transfer(playerAddress, 20000, {from: deployerAddress});
-        await rawrV2Token.transfer(playerAddress, 20000, {from: deployerAddress});
-
-        // Stakers
-        await staking.stake(web3.utils.toWei('25', 'ether'), {from: staker1});
-
-        // Deposit 10,000
-        await rawrToken.transfer(feesEscrow.address, 10000, {from: playerAddress});
-        await feesEscrow.depositFees(rawrToken.address, 10000, {from: deployerAddress});
+        it('Distribute Multiple Token Royalties', async () => {
+            await setup();
+    
+            // Create a 2nd token
+            var rawrV2Token = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+    
+            // Stakers
+            await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
+            await staking.connect(staker2).stake(ethers.BigNumber.from(75).mul(_1e18));
+    
+            // Deposit 10,000 of Rawr token fees
+            await feesEscrow.depositFees(rawrToken.address, ethers.BigNumber.from(10000).mul(_1e18));
+            
+            // Deposit 20,000 of RawrV2 token fees
+            await feesEscrow.depositFees(rawrV2Token.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            var p1claimable = await feesEscrow.getClaimableRewards(staker1.address);
+            expect(p1claimable.length).to.equal(2);
+            expect(p1claimable[0].amount).to.equal(ethers.BigNumber.from(2500).mul(_1e18));
+            expect(p1claimable[1].amount).to.equal(ethers.BigNumber.from(5000).mul(_1e18));
+            
+            var p2claimable = await feesEscrow.getClaimableRewards(staker2.address);
+            expect(p2claimable.length).to.equal(2);
+            expect(p2claimable[0].amount).to.equal(ethers.BigNumber.from(7500).mul(_1e18));
+            expect(p2claimable[1].amount).to.equal(ethers.BigNumber.from(15000).mul(_1e18));
+        });
         
-        // Deposit 20,000
-        await rawrV2Token.transfer(feesEscrow.address, 20000, {from: playerAddress});
-        await feesEscrow.depositFees(rawrV2Token.address, 20000, {from: deployerAddress});
+        it('Claim Fees', async () => {
+            await setup();
 
-        assert.equal(await feesEscrow.totalFees(rawrToken.address), 10000, "Total fees incorrect.");
-        assert.equal(await feesEscrow.totalFees(rawrV2Token.address), 20000, "Total fees incorrect.");
+            await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
 
-        // Note: the Staking contract will call UpdateUserRewards() before calling claimRewards()
-        await feesEscrow.updateUserRewards(staker1, {from: deployerAddress});
-        await feesEscrow.claimRewards(staker1, {from: deployerAddress});
+            // add stakers - this calls staking().initializeTokenRate()
+            await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
 
-        assert.equal(
-            await rawrToken.balanceOf(staker1),
-            10000,
-            "Staker1 balance should be 20000 rawr tokens"
-        );
-        assert.equal(
-            await rawrV2Token.balanceOf(staker1),
-            20000,
-            "Staker1 balance should be 20000 rawr2 tokens"
-        );
+            // Update internal deposits
+            await rawrToken.connect(playerAddress).transfer(feesEscrow.address, ethers.BigNumber.from(20000).mul(_1e18));
+            await feesEscrow.depositFees(rawrToken.address, ethers.BigNumber.from(20000).mul(_1e18));
+            
+            expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(20000).mul(_1e18));
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(20000).mul(_1e18));
+
+            // Note: the Staking contract will call UpdateUserRewards() before calling claimRewards()
+            await feesEscrow.updateUserRewards(staker1.address);
+            await feesEscrow.claimRewards(staker1.address);
+            expect(await rawrToken.balanceOf(staker1.address)).to.equal(ethers.BigNumber.from(20000).mul(_1e18));
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(0);
+
+            var p1claimable = await feesEscrow.getClaimableRewards(staker1.address);
+            expect(p1claimable.length).to.equal(1);
+            expect(p1claimable[0].amount).to.equal(0);
+        });
+        
+        it('Claim Multiple Token Royalties', async () => {
+            await setup();
+
+            // Create a 2nd token
+            var rawrV2Token = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+
+            await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
+            await rawrV2Token.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
+
+            // Stakers
+            await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
+
+            // Deposit 10,000
+            await rawrToken.connect(playerAddress).transfer(feesEscrow.address, 10000);
+            await feesEscrow.depositFees(rawrToken.address, 10000);
+            
+            // Deposit 20,000
+            await rawrV2Token.connect(playerAddress).transfer(feesEscrow.address, 20000);
+            await feesEscrow.depositFees(rawrV2Token.address, 20000);
+
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(10000);
+            expect(await feesEscrow.totalFees(rawrV2Token.address)).to.equal(20000);
+
+            // Note: the Staking contract will call UpdateUserRewards() before calling claimRewards()
+            await feesEscrow.updateUserRewards(staker1.address);
+            await feesEscrow.claimRewards(staker1.address);
+
+            expect(await rawrToken.balanceOf(staker1.address)).to.equal(10000);
+            expect(await rawrV2Token.balanceOf(staker1.address)).to.equal(20000);
+        });
     });
 });
