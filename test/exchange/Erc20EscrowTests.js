@@ -136,7 +136,6 @@ describe('ERC20 Escrow Contract tests', () => {
     
             await expect(escrow.connect(executionManagerAddress).withdraw(1, playerAddress, web3.utils.toWei('10000', 'ether'))).to.be.reverted;
 
-            
             // check escrowed tokens by order (1)
             expect(await escrow.escrowedTokensByOrder(1)).to.equal(tokenAmount);
         });
