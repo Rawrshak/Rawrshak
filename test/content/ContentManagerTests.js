@@ -36,8 +36,8 @@ describe('Content Manager Contract Tests', () => {
         var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
         // To figure out which log contains the ContractDeployed event
-        content = Content.attach(deployedContracts[0].args.content);
-        contentManager = ContentManager.attach(deployedContracts[0].args.contentManager);
+        content = await Content.attach(deployedContracts[0].args.content);
+        contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
 
         // give crafting system approval
         var approvalPair = [[craftingSystemAddress.address, true]];

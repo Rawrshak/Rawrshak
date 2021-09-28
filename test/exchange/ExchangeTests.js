@@ -53,8 +53,8 @@ describe('Exchange Contract', ()=> {
         var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
         // To figure out which log contains the ContractDeployed event
-        content = Content.attach(deployedContracts[0].args.content);
-        contentManager = ContentManager.attach(deployedContracts[0].args.contentManager);
+        content = await Content.attach(deployedContracts[0].args.content);
+        contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
             
         // Add 2 assets
         // Asset 1 has 200 basis points towards creator 1
@@ -157,7 +157,7 @@ describe('Exchange Contract', ()=> {
             var tokenEscrowAddr = await exchange.tokenEscrow();
             expect(tokenEscrowAddr).to.equal(tokenEscrow.address);
     
-            exchangeTokenEscrow = Erc20Escrow.attach(tokenEscrowAddr);
+            exchangeTokenEscrow = await Erc20Escrow.attach(tokenEscrowAddr);
             expect(await exchangeTokenEscrow.escrowedTokensByOrder(orderId)).to.equal(ethers.BigNumber.from(1000).mul(_1e18));
             expect(await rawrToken.balanceOf(exchangeTokenEscrow.address)).to.equal(ethers.BigNumber.from(1000).mul(_1e18));
         });

@@ -101,6 +101,13 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     npx hardhat test <specific test>
         - runs a specific test inside the test folder
 
+## To deploy to a local node
+    npx hardhat node
+    npx hardhat run --network localhost scripts/deploy.js
+
+## To deploy to a specific network
+    npx hardhat run --network <target network> scripts/deploy.js
+
 ## To run a Deterministic Ganache ethereum blockchain
     1. Open a new powershell/command prompt
     2. run:
