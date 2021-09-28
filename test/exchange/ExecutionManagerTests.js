@@ -1,22 +1,7 @@
-// const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-// const RawrToken = artifacts.require("RawrToken");
-// const Content = artifacts.require("Content");
-// const ContentStorage = artifacts.require("ContentStorage");
-// const ContentManager = artifacts.require("ContentManager");
-// const ContentFactory = artifacts.require("ContentFactory");
-// const AccessControlManager = artifacts.require("AccessControlManager");
-// const Erc20Escrow = artifacts.require("Erc20Escrow");
-// const NftEscrow = artifacts.require("NftEscrow");
-// const Orderbook = artifacts.require("Orderbook");
-// const ExecutionManager = artifacts.require("ExecutionManager");
-// const AddressResolver = artifacts.require("AddressResolver");
-// const TruffleAssert = require("truffle-assertions");
-// const { constants } = require('@openzeppelin/test-helpers');
-
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe('Execution Manager Contract Tests', (accounts)=> {
+describe('Execution Manager Contract Tests', ()=> {
     var deployerAddress, playerAddress, player2Address, creator1Address, creator2Address, invalidTokenAddress;
 
     // NFT
