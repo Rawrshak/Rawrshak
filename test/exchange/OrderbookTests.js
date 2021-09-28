@@ -1,340 +1,215 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const Orderbook = artifacts.require("Orderbook");
-const AddressResolver = artifacts.require("AddressResolver");
-const TruffleAssert = require("truffle-assertions");
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
 
-contract('Orderbook Contract tests', (accounts)=> {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        rawrTokenAddress,           // execution manager address
-        contentAddress,             // content nft Address
-        creatorAddress,             // creator Address
-    ] = accounts;
+describe('Orderbook Contract tests', ()=> {
+    var deployerAddress, rawrTokenAddress, contentAddress, creatorAddress;
 
     const orderbook_hash = "0xd9ff7618";
     var orderbook;
     
     var id;
-    var orderData1= [ 
-        [contentAddress, 1],
-        creatorAddress,
-        rawrTokenAddress,
-        web3.utils.toWei('10000', 'ether'),
-        5,
-        true
-    ];
-    var orderData2= [ 
-        [contentAddress, 2],
-        creatorAddress,
-        rawrTokenAddress,
-        web3.utils.toWei('5000', 'ether'),
-        5,
-        false
-    ];
-    var orderData3= [ 
-        [contentAddress, 1],
-        creatorAddress,
-        rawrTokenAddress,
-        web3.utils.toWei('2000', 'ether'),
-        3,
-        true
-    ];
+    var orderData1;
+    var orderData2;
+    var orderData3;
+    const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
 
     before(async () => {
-        resolver = await AddressResolver.new();
-        await resolver.__AddressResolver_init({from: deployerAddress});
+        [deployerAddress, rawrTokenAddress, contentAddress, creatorAddress] = await ethers.getSigners();
+        Orderbook = await ethers.getContractFactory("Orderbook");
+        AddressResolver = await ethers.getContractFactory("AddressResolver");
+        
+        resolver = await upgrades.deployProxy(AddressResolver, []);
+
+        orderData1 = [ 
+            [contentAddress.address, 1],
+            creatorAddress.address,
+            rawrTokenAddress.address,
+            ethers.BigNumber.from(10000).mul(_1e18),
+            5,
+            true
+        ];
+        orderData2 = [ 
+            [contentAddress.address, 2],
+            creatorAddress.address,
+            rawrTokenAddress.address,
+            ethers.BigNumber.from(5000).mul(_1e18),
+            5,
+            false
+        ];
+        orderData3 = [ 
+            [contentAddress.address, 1],
+            creatorAddress.address,
+            rawrTokenAddress.address,
+            ethers.BigNumber.from(2000).mul(_1e18),
+            3,
+            true
+        ];
     });
 
     beforeEach(async () => {
-        orderbook = await Orderbook.new();
-        await orderbook.__Orderbook_init(resolver.address, {from: deployerAddress});
+        orderbook = await upgrades.deployProxy(Orderbook, [resolver.address]);
 
         ids = [orderbook_hash];
         addresses = [orderbook.address];
-        await resolver.registerAddress(ids, addresses, {from: deployerAddress});
+        await resolver.registerAddress(ids, addresses);
     });
 
-    it('Check if Orderbook was deployed properly', async () => {
-        assert.equal(
-            orderbook.address != 0x0,
-            true,
-            "Orderbook was not deployed properly.");
+    describe("Basic Tests", () => {
+        it('Check if Orderbook was deployed properly', async () => {
+            expect(orderbook.address).not.equal(ethers.constants.AddressZero);
+        });
+
+        it('Supports the Address resolver Interface', async () => {
+            expect(await orderbook.supportsInterface("0x0000000B")).to.equal(true);
+        });
     });
 
-    it('Supports the Orderbook Interface', async () => {
-        // INTERFACE_ID_ORDERBOOK = 0x0000000B
-        assert.equal(
-            await orderbook.supportsInterface("0x0000000B"),
-            true, 
-            "the orderbook doesn't support the Orderbook interface");
+    describe("Placing Orders", () => {
+        it('Place an Order', async () => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+    
+            // check if the order was saved
+            storedOrder = await orderbook.getOrder(id);
+    
+            expect(storedOrder.asset.contentAddress).is.equal(orderData1[0][0]);
+            expect(storedOrder.asset.tokenId).is.equal(orderData1[0][1]);
+            expect(storedOrder.owner).is.equal(orderData1[1]);
+            expect(storedOrder.token).is.equal(orderData1[2]);
+            expect(storedOrder.price).is.equal(orderData1[3]);
+            expect(storedOrder.amountOrdered).is.equal(orderData1[4]);
+            expect(storedOrder.amountFilled).is.equal(0);
+            expect(storedOrder.isBuyOrder).is.equal(orderData1[5]);
+            expect(storedOrder.state).is.equal(0);
+        });
+    
+        it('Place multiple Orders', async () => {        
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+    
+            id2 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData2);
+    
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
+            
+            // check if the order was saved
+            storedOrder = await orderbook.getOrder(id2);
+    
+            expect(storedOrder.asset.contentAddress).is.equal(orderData2[0][0]);
+            expect(storedOrder.asset.tokenId).is.equal(orderData2[0][1]);
+            expect(storedOrder.owner).is.equal(orderData2[1]);
+            expect(storedOrder.token).is.equal(orderData2[2]);
+            expect(storedOrder.price).is.equal(orderData2[3]);
+            expect(storedOrder.amountOrdered).is.equal(orderData2[4]);
+            expect(storedOrder.amountFilled).is.equal(0);
+            expect(storedOrder.isBuyOrder).is.equal(orderData2[5]);
+            expect(storedOrder.state).is.equal(0);
+
+            // check if the order was saved
+            storedOrder = await orderbook.getOrder(id3);
+    
+            expect(storedOrder.asset.contentAddress).is.equal(orderData3[0][0]);
+            expect(storedOrder.asset.tokenId).is.equal(orderData3[0][1]);
+            expect(storedOrder.owner).is.equal(orderData3[1]);
+            expect(storedOrder.token).is.equal(orderData3[2]);
+            expect(storedOrder.price).is.equal(orderData3[3]);
+            expect(storedOrder.amountOrdered).is.equal(orderData3[4]);
+            expect(storedOrder.amountFilled).is.equal(0);
+            expect(storedOrder.isBuyOrder).is.equal(orderData3[5]);
+            expect(storedOrder.state).is.equal(0);
+
+        });
+    
+        it('Verifies orders are of the same asset', async () => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
+    
+            expect(await orderbook.verifyOrdersExist([id, id3])).is.equal(true);
+            expect(await orderbook.verifyAllOrdersData([id, id3], true)).is.equal(true);
+        });
     });
 
-    it('Place an Order', async () => {
-        
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
+    describe("Transaction Orders", () => {
 
-        // check if the order was saved
-        storedOrder = await orderbook.getOrder(id, {from: deployerAddress});
+        it('Get Payment totals', async () => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
 
-        assert.equal(
-            storedOrder.asset.contentAddress == orderData1[0][0] && 
-            storedOrder.asset.tokenId == orderData1[0][1],
-            true, 
-            "order.asset was not properly stored.");
-        assert.equal(
-            storedOrder.owner,
-            orderData1[1], 
-            "order.owner was not properly stored.");
-        assert.equal(
-            storedOrder.token,
-            orderData1[2], 
-            "order.token was not properly stored.");
+            var paymentTotals = await orderbook.getPaymentTotals([id, id3], [1, 1]);
+
+            expect(paymentTotals[0]).is.equal(ethers.BigNumber.from(12000).mul(_1e18));
+            expect(paymentTotals[1][0]).is.equal(ethers.BigNumber.from(10000).mul(_1e18));
+            expect(paymentTotals[1][1]).is.equal(ethers.BigNumber.from(2000).mul(_1e18));
             
-        assert.equal(
-            storedOrder.price,
-            orderData1[3], 
-            "order.price was not properly stored.");
+            paymentTotals = await orderbook.getPaymentTotals([id, id3], [3, 3]);
+            expect(paymentTotals[0]).is.equal(ethers.BigNumber.from(36000).mul(_1e18));
+            expect(paymentTotals[1][0]).is.equal(ethers.BigNumber.from(30000).mul(_1e18));
+            expect(paymentTotals[1][1]).is.equal(ethers.BigNumber.from(6000).mul(_1e18));
+        });
+
+        it('Fill Orders', async () => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
+
+            await orderbook.fillOrders([id, id3], [1, 1]);
             
-        assert.equal(
-            storedOrder.amountOrdered,
-            orderData1[4], 
-            "order.amountOrdered was not properly stored.");
+            storedOrder = await orderbook.getOrder(id);
+            expect(storedOrder.amountFilled).is.equal(1);
+            expect(storedOrder.state).is.equal(1); // State.PARTIALLY_FILLED
+
+            storedOrder = await orderbook.getOrder(id3);
+            expect(storedOrder.amountFilled).is.equal(1);
+            expect(storedOrder.state).is.equal(1); // State.PARTIALLY_FILLED
+        });
+
+        it('Claim Orders', async () => {
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
+
+            await orderbook.fillOrders([id3], [3]);
             
-        assert.equal(
-            storedOrder.amountFilled,
-            0, 
-            "order.amountFilled was not properly stored.");
+            storedOrder = await orderbook.getOrder(id3);
+            expect(storedOrder.amountFilled).is.equal(3);
+            expect(storedOrder.state).is.equal(2); // State.FILLED
             
-        assert.equal(
-            storedOrder.isBuyOrder,
-            orderData1[5], 
-            "order.isBuyOrder was not properly stored.");
+            // Claim orders
+            await orderbook.claimOrders([id3]);
+            storedOrder = await orderbook.getOrder(id3);
+            expect(storedOrder.state).is.equal(3); // State.CLAIMED
+        });
+
+        it('Cancel Order', async () => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+
+            await orderbook.cancelOrders([id]);
+            storedOrder = await orderbook.getOrder(id);
+            expect(storedOrder.state).is.equal(4); // State.CANCELLED
+        });
+
+        it('Invalid Operations tests', async () => {
+            // var id3 = await orderbook.getId(orderData3);
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
             
-        assert.equal(
-            storedOrder.state,
-            0, // Ready
-            "order.state was not properly stored.");
-    });
-
-    it('Place multiple Orders', async () => {        
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
-
-        id2 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData2, {from: deployerAddress});
-
-        id3 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData3, {from: deployerAddress});
-        
-        // check if the order was saved
-        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
-
-        assert.equal(
-            storedOrder.asset.contentAddress == orderData3[0][0] && 
-            storedOrder.asset.tokenId == orderData3[0][1],
-            true, 
-            "order.asset was not properly stored.");
-        assert.equal(
-            storedOrder.owner,
-            orderData3[1], 
-            "order.owner was not properly stored.");
-        assert.equal(
-            storedOrder.token,
-            orderData3[2], 
-            "order.token was not properly stored.");
+            await expect(orderbook.getPaymentTotals([id, id3], [1, 10])).to.be.reverted;            
+            await orderbook.fillOrders([id3], [3]);
             
-        assert.equal(
-            storedOrder.price,
-            orderData3[3], 
-            "order.price was not properly stored.");
-            
-        assert.equal(
-            storedOrder.amountOrdered,
-            orderData3[4], 
-            "order.amountOrdered was not properly stored.");
-            
-        assert.equal(
-            storedOrder.amountFilled,
-            0, 
-            "order.amountFilled was not properly stored.");
-            
-        assert.equal(
-            storedOrder.isBuyOrder,
-            orderData3[5], 
-            "order.isBuyOrder was not properly stored.");
-            
-        assert.equal(
-            storedOrder.state,
-            0, // Ready
-            "order.state was not properly stored.");
-    });
+            // cannot cancel filled orders
+            await expect(orderbook.cancelOrders([id3])).to.be.reverted; 
 
-    it('Verifies orders are of the same asset', async () => {
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
-        id3 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData3, {from: deployerAddress});
-
-        assert.equal(
-            await orderbook.verifyOrdersExist(
-                [id, id3],
-                {from: deployerAddress}
-            ),
-            true,
-            "Orders do not exist."
-        )
-
-        assert.equal(
-            await orderbook.verifyAllOrdersData(
-                [id, id3],
-                true,
-                {from: deployerAddress}
-            ),
-            true,
-            "Not all orders are for the same asset."
-        )
-    });
-
-    it('Get Payment totals', async () => {
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
-        id3 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData3, {from: deployerAddress});
-
-        var paymentTotals = await orderbook.getPaymentTotals([id, id3], [1, 1]);
-
-        assert.equal(
-            paymentTotals[0],
-            web3.utils.toWei('12000', 'ether'),
-            "Incorrect amount due."
-        );
-        
-        assert.equal(
-            paymentTotals[1][0],
-            web3.utils.toWei('10000', 'ether'),
-            "Incorrect amount due."
-        );
-        
-        assert.equal(
-            paymentTotals[1][1],
-            web3.utils.toWei('2000', 'ether'),
-            "Incorrect amount due."
-        );
-        
-        paymentTotals = await orderbook.getPaymentTotals([id, id3], [3, 3]);
-        
-        assert.equal(
-            paymentTotals[0],
-            web3.utils.toWei('36000', 'ether'),
-            "Incorrect amount due."
-        );
-        
-        assert.equal(
-            paymentTotals[1][0],
-            web3.utils.toWei('30000', 'ether'),
-            "Incorrect amount due."
-        );
-        
-        assert.equal(
-            paymentTotals[1][1],
-            web3.utils.toWei('6000', 'ether'),
-            "Incorrect amount due."
-        );
-    });
-
-    it('Fill Orders', async () => {
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
-        id3 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData3, {from: deployerAddress});
-
-        await orderbook.fillOrders([id, id3], [1, 1], {from: deployerAddress});
-        
-        storedOrder = await orderbook.getOrder(id, {from: deployerAddress});
-        assert.equal(
-            storedOrder.amountFilled,
-            1, 
-            "order.amountOrdered was not properly stored.");
-        assert.equal(
-            storedOrder.state,
-            1, // State.PARTIALLY_FILLED
-            "order.state was not properly updated to PARTIALLY_FILLED");
-
-        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
-        assert.equal(
-            storedOrder.amountFilled,
-            1, 
-            "order.amount was not properly stored.");
-        assert.equal(
-            storedOrder.state,
-            1, // State.PARTIALLY_FILLED
-            "order.state was not properly updated to PARTIALLY_FILLED");
-    });
-
-    it('Claim Orders', async () => {
-        id3 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData3, {from: deployerAddress});
-
-        await orderbook.fillOrders([id3], [3], {from: deployerAddress});
-        
-        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
-        assert.equal(
-            storedOrder.amountFilled,
-            3, 
-            "order.amountOrdered was not properly stored.");
-        assert.equal(
-            storedOrder.state,
-            2, // State.FILLED
-            "order.state was not properly updated to FILLED");
-        
-        // Claim orders
-        await orderbook.claimOrders([id3], {from: deployerAddress});
-
-        storedOrder = await orderbook.getOrder(id3, {from: deployerAddress});
-        assert.equal(
-            storedOrder.state,
-            3, // State.CLAIMED
-            "order.state was not properly updated to CLAIMED");
-    });
-
-    it('Cancel Order', async () => {
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
-
-        await orderbook.cancelOrders([id], {from: deployerAddress});
-        storedOrder = await orderbook.getOrder(id, {from: deployerAddress});
-        assert.equal(
-            storedOrder.state,
-            4, // State.CANCELLED
-            "Order was not properly cancelled.");
-    });
-
-    it('Invalid Operations tests', async () => {
-        // var id3 = await orderbook.getId(orderData3);
-        id = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData1, {from: deployerAddress});
-        id3 = await orderbook.ordersLength();
-        await orderbook.placeOrder(orderData3, {from: deployerAddress});
-        
-        await TruffleAssert.fails(
-            orderbook.getPaymentTotals([id, id3], [1, 10]),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        await orderbook.fillOrders([id3], [3], {from: deployerAddress});
-        
-        // cannot cancel filled orders
-        await TruffleAssert.fails(
-            orderbook.cancelOrders([id3]),
-            TruffleAssert.ErrorType.REVERT
-        );
-
-        await orderbook.cancelOrders([id], {from: deployerAddress});
-        // cannot cancel already cancelled orders
-        await TruffleAssert.fails(
-            orderbook.cancelOrders([id]),
-            TruffleAssert.ErrorType.REVERT
-        );
+            await orderbook.cancelOrders([id]);
+            // cannot cancel already cancelled orders
+            await expect(orderbook.cancelOrders([id])).to.be.reverted; 
+        });
     });
 });
