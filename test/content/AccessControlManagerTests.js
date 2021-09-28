@@ -1,9 +1,3 @@
-// const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-// const AccessControlManager = artifacts.require("AccessControlManager");
-// const ContentStorage = artifacts.require("ContentStorage");
-// const Content = artifacts.require("Content");
-// const TruffleAssert = require("truffle-assertions");
-
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 const { sign } = require("../mint");
