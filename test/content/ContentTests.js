@@ -1,41 +1,42 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const Content = artifacts.require("Content");
-const ContentStorage = artifacts.require("ContentStorage");
-const AccessControlManager = artifacts.require("AccessControlManager");
-const TruffleAssert = require("truffle-assertions");
-const { constants } = require('@openzeppelin/test-helpers');
+// const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
+// const Content = artifacts.require("Content");
+// const ContentStorage = artifacts.require("ContentStorage");
+// const AccessControlManager = artifacts.require("AccessControlManager");
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
 const { sign } = require("../mint");
 
-contract('Content Contract Tests', (accounts) => {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        deployerAltAddress,         // Alternate deployer address
-        craftingSystemAddress,      // crafting system address
-        lootboxSystemAddress,       // lootbox system address
-        playerAddress,              // Player Address
-        player2Address,             // Player Address
-    ] = accounts;
+describe('Content Contract Tests', () => {
+
+    var deployerAddress, craftingSystemAddress, lootboxSystemAddress, playerAddress, player2Address;
+    var AccessControlManager, ContentStorage, Content;
     var content;
     var contentStorage;
     var accessControlManager;
-    var asset = [
-        [1, "arweave.net/tx/public-uri-1", "", constants.MAX_UINT256, deployerAddress, 20000],
-        [2, "arweave.net/tx/public-uri-2", "", 100, constants.ZERO_ADDRESS, 0],
-    ];
+    var asset;
+    
+    before(async () => {
+        [deployerAddress, craftingSystemAddress, lootboxSystemAddress, playerAddress, player2Address] = await ethers.getSigners();
+        AccessControlManager = await ethers.getContractFactory("AccessControlManager");
+        ContentStorage = await ethers.getContractFactory("ContentStorage");
+        Content = await ethers.getContractFactory("Content");
+        asset = [
+            [1, "arweave.net/tx/public-uri-1", "", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            [2, "arweave.net/tx/public-uri-2", "", 100, ethers.constants.AddressZero, 0],
+        ];
+    });
 
     beforeEach(async () => {
-        accessControlManager = await AccessControlManager.new();
-        await accessControlManager.__AccessControlManager_init();
-        contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init(deployerAddress, 10000, "arweave.net/tx-contract-uri");
-        content = await Content.new();
-        await content.__Content_init(contentStorage.address, accessControlManager.address);
-        await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), content.address, {from: deployerAddress});
+        accessControlManager = await upgrades.deployProxy(AccessControlManager, []);
+        contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+        content = await upgrades.deployProxy(Content, [contentStorage.address, accessControlManager.address]);
+
+        await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), content.address);
 
         // give deployer address and crafting system approval; This would normally be done through the ContentManager
         minter_role = await accessControlManager.MINTER_ROLE();
-        await accessControlManager.grantRole(minter_role, deployerAddress, {from: deployerAddress});
-        await accessControlManager.grantRole(minter_role, craftingSystemAddress, {from: deployerAddress});
+        await accessControlManager.grantRole(minter_role, deployerAddress.address);
+        await accessControlManager.grantRole(minter_role, craftingSystemAddress.address);
 
         // Set the content contract as the new parent
         await accessControlManager.setParent(content.address);
@@ -44,192 +45,174 @@ contract('Content Contract Tests', (accounts) => {
         await contentStorage.addAssetBatch(asset);
     });
 
-    it('Check Content proper deployment', async () => {
-        // Check initializer parameters
-        assert.equal(
-            await content.contractUri(),
-            "arweave.net/tx-contract-uri",
-            "Contract uri is incorrect.");
-    });
+    describe("Basic Tests", () => {
+        it('Check Content proper deployment', async () => {
+            // Check initializer parameters
+            expect(await content.contractUri()).to.equal("arweave.net/tx-contract-uri");
+        });
+        
+        it('Verify ERC1155 Implementation', async () => {
+            // ERC1155 Interface
+            expect(await content.supportsInterface("0xd9b67a26")).to.equal(true);
+            
+            // Content Interface
+            expect(await content.supportsInterface("0x98AA21F4")).to.equal(true);
+        });
     
-    it('Verify ERC1155 Implementation', async () => {
-        
-        // ERC1155 Interface
-        assert.equal(
-            await content.supportsInterface("0xd9b67a26"),
-            true, 
-            "The content contract isn't an ERC1155 implementation");
-        // Content Interface
-        assert.equal(
-            await content.supportsInterface("0x98AA21F4"),
-            true, 
-            "The contract isn't an Content interface implementation");
+        it('Check Supply', async () => {
+            expect(await content.totalSupply(1)).to.equal(0);
+            expect(await content.maxSupply(1)).to.equal(ethers.constants.MaxUint256);
+            
+            expect(await content.totalSupply(2)).to.equal(0);
+            expect(await content.maxSupply(2)).to.equal(100);
+        });
     });
 
-    it('Check Supply', async () => {
-        assert.equal(await content.totalSupply(1), 0, "Asset 1 incorrect supply");
-        assert.equal((await content.maxSupply(1)).toString(), constants.MAX_UINT256.toString(), "Asset 1 incorrect max supply");
-        
-        assert.equal(await content.totalSupply(2), 0, "Asset 2 incorrect supply");
-        assert.equal(await content.maxSupply(2), 100, "Asset 2 incorrect max supply");
-    });
-
-    // CreateData
-    // {
-    //     tokenId,
-    //     dataUri,
-    //     maxSupply,
-    //     [
-    //         {
-    //             account,
-    //             rate
-    //         }
-    //     ]
-    // }
-
-    it('Trigger Content Storage and Systems Register Functions', async () => {
-        // Test token uri
-        // Note: we use content.methods['function()']() below because it hiddenUri() is an
-        //       overloaded function
-        
-        const signature = await sign(playerAddress, [1], [1], 1, craftingSystemAddress, content.address);
-        var mintData = [playerAddress, [1], [1], 1, craftingSystemAddress, signature];
-        await content.mintBatch(mintData, {from: playerAddress});
-
-        assert.equal(
-            await content.methods['uri(uint256,uint256)'](1, 0, {from: playerAddress}),
-            "arweave.net/tx/public-uri-1",
-            "Token 1 uri is incorrect.");
-        
-        // test royalties (ERC2981)
-        var fees = await content.royaltyInfo(1, 1000);
-        assert.equal(
-            fees.receiver == deployerAddress && fees.royaltyAmount == 20,
-            true,
-            "Token 1 royalties are incorrect");
-    });
-
-    it('Add Assets', async () => {
-        // invalid add because asset already exists
-        var newAssets = [
-            [3, "arweave.net/tx/public-uri-3", "", 1000, constants.ZERO_ADDRESS, 0]
-        ];
-        
-        TruffleAssert.eventEmitted(await contentStorage.addAssetBatch(newAssets), 'AssetsAdded');
-        
-        assert.equal(await content.totalSupply(3, {from: playerAddress}), 0, "Asset 3 incorrect supply");
-        assert.equal(await content.maxSupply(3, {from: playerAddress}), 1000, "Asset 3 incorrect max supply");
-    });
-
-    // MintData
-    // {
-    //     to,
-    //     [
-    //         tokenId,
-    //         tokenId
-    //     ],
-    //     [
-    //         amount,
-    //         amount
-    //     ]
-    // }
-
-    it('Mint Assets', async () => {
-        const signature = await sign(playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, content.address);
-        var mintData = [playerAddress, [1, 2], [10, 1], 1, craftingSystemAddress, signature];
-        await content.mintBatch(mintData, {from: playerAddress});
-        
-        assert.equal(await content.totalSupply(1, {from: playerAddress}), 10, "Asset 1 incorrect supply");
-        assert.equal(await content.totalSupply(2, {from: playerAddress}), 1, "Asset 2 incorrect supply");
-
-        var balance = await content.balanceOf(playerAddress, 1);
-        assert.equal(balance.valueOf().toString(), "10", "Player doesn't have the minted assets.");
-    });
-
-    it('Mint data length input mismatch', async () => {
-        const signature = await sign(playerAddress, [1, 2], [10], 1, craftingSystemAddress, content.address);
-        var invalidLengthData = [playerAddress, [1, 2], [10], 1, craftingSystemAddress, signature];
-        await TruffleAssert.fails(
-            content.mintBatch(invalidLengthData, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-    });
-
-    it('Mint invalid token id', async () => {
-        const signature = await sign(playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, content.address);
-        var invalidTokenIdData = [playerAddress, [4, 5], [1, 1], 1, craftingSystemAddress, signature];
-        await TruffleAssert.fails(
-            content.mintBatch(invalidTokenIdData, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-    });
-
-    it('Mint invalid supply', async () => {
-        const signature = await sign(playerAddress, [2], [300], 1, craftingSystemAddress, content.address);
-        var invalidSupplyData = [playerAddress, [2], [300], 1, craftingSystemAddress, signature];
-        await TruffleAssert.fails(
-            content.mintBatch(invalidSupplyData, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-    });
-
-    it('Burn Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
-        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
-        await content.mintBatch(mintData, {from: playerAddress});
-
-        var burnData = [playerAddress, [1], [5]];
-        await content.burnBatch(burnData, {from: playerAddress});
-                
-        assert.equal(await content.totalSupply(1, {from: playerAddress}), 5, "Asset 1 incorrect supply");
-
-        await content.setApprovalForAll(craftingSystemAddress, true, {from: playerAddress});
-        await content.burnBatch(burnData, {from: craftingSystemAddress});
-        assert.equal(await content.totalSupply(1, {from: playerAddress}), 0, "Asset 1 incorrect supply");
-        
-        var balance = await content.balanceOf(playerAddress, 1);
-        assert.equal(balance.valueOf().toString(), "0", "Player still has the burned assets.");
-    });
+    describe("Storage", () => {
+        // CreateData
+        // {
+        //     tokenId,
+        //     publicDataUri,
+        //     hiddenDataUri,
+        //     maxSupply
+        //     royaltyReceiver,
+        //     royaltyRate
+        // }
     
-    it('Invalid burns', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
-        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
-        await content.mintBatch(mintData, {from: playerAddress});
+        it('Mint Batch', async () => {
+            // Test token uri
+            // Note: we use content.methods['function()']() below because it hiddenUri() is an
+            //       overloaded function
+            
+            const signature = await sign(playerAddress.address, [1], [1], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [1], 1, craftingSystemAddress.address, signature];
+            await content.connect(playerAddress).mintBatch(mintData);
+    
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(1);
+        });
 
-        var burnData = [playerAddress, [1], [5]];
-        await TruffleAssert.fails(
-            content.burnBatch(burnData, {from: lootboxSystemAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        await TruffleAssert.fails(
-            content.burnBatch(burnData, {from: player2Address}),
-            TruffleAssert.ErrorType.REVERT
-        );
-        
-        var balance = await content.balanceOf(playerAddress, 1);
-        assert.equal(balance.valueOf().toString(), "10", "Player's assets were incorrectly burned.");
+        it("Uri", async () => {
+            expect(await content['uri(uint256,uint256)'](1, 0))
+                .to.equal("arweave.net/tx/public-uri-1");
+        });
+    
+        it('Royalty', async () => {
+            // test royalties (ERC2981)
+            var fees = await content.royaltyInfo(1, 1000);
+            expect(fees.receiver).to.equal(deployerAddress.address);
+            expect(fees.royaltyAmount).to.equal(20);
+        });
+    
+        it('Add Assets', async () => {
+            // invalid add because asset already exists
+            var newAssets = [
+                [3, "arweave.net/tx/public-uri-3", "", 1000, ethers.constants.AddressZero, 0]
+            ];
+            
+            await expect(contentStorage.addAssetBatch(newAssets))
+                .to.emit(contentStorage, 'AssetsAdded');
+            
+            expect(await content.totalSupply(3)).to.equal(0);
+            expect(await content.maxSupply(3)).to.equal(1000);
+        });
     });
 
-    it('Transfer Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
-        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
-        await content.mintBatch(mintData, {from: playerAddress});
+    describe("Mint", () => {
+        // MintData
+        // {
+        //     to,
+        //     [
+        //         tokenId,
+        //         tokenId
+        //     ],
+        //     [
+        //         amount,
+        //         amount
+        //     ]
+        // }
 
-        TruffleAssert.eventEmitted(
-            await content.safeTransferFrom(playerAddress, player2Address, 1, 1, 0, {from:playerAddress}),
-            'TransferSingle'
-        );
+        it('Mint Assets', async () => {
+            const signature = await sign(playerAddress.address, [1, 2], [10, 1], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [1, 2], [10, 1], 1, craftingSystemAddress.address, signature];
+            await content.connect(playerAddress).mintBatch(mintData);
+            
+            expect(await content.totalSupply(1)).to.equal(10);
+            expect(await content.totalSupply(2)).to.equal(1);
+
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(10);
+        });
+
+        it('Mint data length input mismatch', async () => {
+            const signature = await sign(playerAddress.address, [1, 2], [10], 1, craftingSystemAddress.address, content.address);
+            var invalidLengthData = [playerAddress.address, [1, 2], [10], 1, craftingSystemAddress.address, signature];
+
+            await expect(content.connect(playerAddress).mintBatch(invalidLengthData)).to.be.reverted;
+        });
+
+        it('Mint invalid token id', async () => {
+            const signature = await sign(playerAddress.address, [4, 5], [1, 1], 1, craftingSystemAddress.address, content.address);
+            var invalidTokenIdData = [playerAddress.address, [4, 5], [1, 1], 1, craftingSystemAddress.address, signature];
+            
+            await expect(content.connect(playerAddress).mintBatch(invalidTokenIdData)).to.be.reverted;
+        });
+
+        it('Mint invalid supply', async () => {
+            const signature = await sign(playerAddress.address, [2], [300], 1, craftingSystemAddress.address, content.address);
+            var invalidSupplyData = [playerAddress.address, [2], [300], 1, craftingSystemAddress.address, signature];
+            
+            await expect(content.connect(playerAddress).mintBatch(invalidSupplyData)).to.be.reverted;
+        });
     });
 
-    it('Invalid Transfer Assets', async () => {
-        const signature = await sign(playerAddress, [1], [10], 1, craftingSystemAddress, content.address);
-        var mintData = [playerAddress, [1], [10], 1, craftingSystemAddress, signature];
-        await content.mintBatch(mintData, {from: playerAddress});
+    describe("Burn", () => {
+        it('Burn Assets', async () => {
+            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            await content.connect(playerAddress).mintBatch(mintData);
+    
+            var burnData = [playerAddress.address, [1], [5]];
+            await content.connect(playerAddress).burnBatch(burnData);
+
+            expect(await content.connect(playerAddress).totalSupply(1)).to.equal(5);
+    
+            await content.connect(playerAddress).setApprovalForAll(craftingSystemAddress.address, true);
+            await content.connect(craftingSystemAddress).burnBatch(burnData);
+            expect(await content.connect(playerAddress).totalSupply(1)).to.equal(0);
+            
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(0);
+        });
         
-        await TruffleAssert.fails(
-            content.safeTransferFrom(playerAddress, player2Address, 1, 1, 0, {from:deployerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        it('Invalid burns', async () => {
+            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            await content.connect(playerAddress).mintBatch(mintData);
+    
+            var burnData = [playerAddress.address, [1], [5]];
+            await expect(content.connect(lootboxSystemAddress).mintBatch(burnData)).to.be.reverted;
+            
+            await expect(content.connect(player2Address).mintBatch(burnData)).to.be.reverted;
+            
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(10);
+        });
+    });
+
+    describe("Transfer", () => {
+        it('Transfer Assets', async () => {
+            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            await content.connect(playerAddress).mintBatch(mintData);
+    
+            await expect(content.connect(playerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 1, 1, 0))
+                .to.emit(content, 'TransferSingle');
+
+        });
+    
+        it('Invalid Transfer Assets', async () => {
+            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            await content.connect(playerAddress).mintBatch(mintData);
+            
+            await expect(content.connect(deployerAddress).safeTransferFrom(playerAddress, player2Address, 1, 1, 0)).to.be.reverted;
+        });
     });
 });

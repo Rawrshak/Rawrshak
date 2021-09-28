@@ -105,13 +105,11 @@ describe('ContentStorage Contract Tests', () => {
             var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, deployerAddress.address, 20000]];
             await contentStorage.addAssetBatch(asset);
 
-            expect(await contentStorage.supply(1))
-                .to.equal(0);
+            expect(await contentStorage.supply(1)).to.equal(0);
 
             await contentStorage.updateSupply(1, 5); 
 
-            expect(await contentStorage.supply(1))
-                .to.equal(5);
+            expect(await contentStorage.supply(1)).to.equal(5);
         });
         
         it('Basic Royalties tests', async () => {
