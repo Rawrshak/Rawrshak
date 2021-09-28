@@ -1,127 +1,108 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const Content = artifacts.require("Content");
-const ContentStorage = artifacts.require("ContentStorage");
-const ContentManager = artifacts.require("ContentManager");
-const AccessControlManager = artifacts.require("AccessControlManager");
-const ContentFactory = artifacts.require("ContentFactory");
-const { constants } = require('@openzeppelin/test-helpers');
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
 
-contract('Content Manager Contract Tests', (accounts) => {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        deployerAltAddress,         // Alternate deployer address
-        craftingSystemAddress,      // crafting system address
-        lootboxSystemAddress,       // lootbox system address
-        playerAddress,              // Player Address
-        player2Address,             // Player Address
-    ] = accounts;
+describe('Content Manager Contract Tests', () => {
+    var deployerAddress, craftingSystemAddress, playerAddress;
     var contentManager;
     var content;
-    var contentStorage;
-    var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", constants.MAX_UINT256, deployerAddress, 20000],
-        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, constants.ZERO_ADDRESS, 0]
-    ];
+    var contentFactory;
+    var asset;
+
+    before(async () => {
+        [deployerAddress, craftingSystemAddress, playerAddress] = await ethers.getSigners();
+        AccessControlManager = await ethers.getContractFactory("AccessControlManager");
+        ContentStorage = await ethers.getContractFactory("ContentStorage");
+        Content = await ethers.getContractFactory("Content");
+        ContentManager = await ethers.getContractFactory("ContentManager");
+        ContentFactory = await ethers.getContractFactory("ContentFactory");
+        asset = [
+            [1, "arweave.net/tx/public-uri-1", "", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            [2, "arweave.net/tx/public-uri-2", "", 100, ethers.constants.AddressZero, 0],
+        ];
+    });
 
     beforeEach(async () => {
-        accessControlManagerImpl = await AccessControlManager.new();
-        contentImpl = await Content.new();
-        contentStorageImpl = await ContentStorage.new();
-        contentManagerImpl = await ContentManager.new();
-        contentFactory = await ContentFactory.new();
-
+        accessControlManagerImpl = await AccessControlManager.deploy();
+        contentImpl = await Content.deploy();
+        contentStorageImpl = await ContentStorage.deploy();
+        contentManagerImpl = await ContentManager.deploy();
+        
         // Initialize Clone Factory
-        await contentFactory.__ContentFactory_init(
-            contentImpl.address,
-            contentManagerImpl.address,
-            contentStorageImpl.address,
-            accessControlManagerImpl.address);
+        contentFactory = await upgrades.deployProxy(ContentFactory, [contentImpl.address, contentManagerImpl.address, contentStorageImpl.address, accessControlManagerImpl.address]);
 
         // deploy contracts
-        var result = await contentFactory.createContracts(deployerAddress, 10000, "arweave.net/tx-contract-uri");
+        var tx =  await contentFactory.createContracts(deployerAddress.address, 10000, "arweave.net/tx-contract-uri");
+        var receipt = await tx.wait();
+        var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
         // To figure out which log contains the ContractDeployed event
-        // console.log(result.logs);
-        content = await Content.at(result.logs[2].args.content);
-        contentManager = await ContentManager.at(result.logs[2].args.contentManager);
+        content = Content.attach(deployedContracts[0].args.content);
+        contentManager = ContentManager.attach(deployedContracts[0].args.contentManager);
 
         // give crafting system approval
-        var approvalPair = [[craftingSystemAddress, true]];
+        var approvalPair = [[craftingSystemAddress.address, true]];
         await contentManager.registerOperators(approvalPair);
 
-        // Add 1 asset
+        // // Add 1 asset
         await contentManager.addAssetBatch(asset);
     });
 
-    it('Check Content Manager proper deployment', async () => {
-        assert.equal(await contentManager.content(), content.address, "content contract is incorrect");
+    describe("Basic Tests", () => {
+        it('Check Content Manager proper deployment', async () => {
+            expect(await contentManager.content()).to.equal(content.address);
+        });
+
+        it('Check Supported interfaces', async () => {
+            // Content Storage interface
+            expect(await contentManager.supportsInterface("0xEAD82167")).to.equal(true);
+        });
     });
 
-    it('Check Supported interfaces', async () => {
-        // Content Storage interface
-        assert.equal(
-            await contentManager.supportsInterface("0xEAD82167"),
-            true, 
-            "the contract doesn't support the ContentManager interface");
-    });
+    describe("Add Assets", () => {
+        it('Add Assets', async () => {
+            // Add 1 asset
+            var newAssets = [
+                [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, ethers.constants.AddressZero, 0]
+            ];
+            
+            await contentManager.addAssetBatch(newAssets);
 
-    it('Add Assets', async () => {
-        // Add 1 asset
-        var newAssets = [
-            [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, constants.ZERO_ADDRESS, 0]
-        ];
-        
-        await contentManager.addAssetBatch(newAssets);
+            // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
+            var mintData = [playerAddress.address, [3], [10], 1, ethers.constants.AddressZero, []];
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
 
-        // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
-        var mintData = [playerAddress, [3], [10], 1, constants.ZERO_ADDRESS, []];
-        await content.mintBatch(mintData, {from: craftingSystemAddress});
+            expect(await content['uri(uint256)'](3)).to.equal("arweave.net/tx/public-uri-3");
+        });
 
-        assert.equal(
-            await content.uri(3),
-            "arweave.net/tx/public-uri-3", 
-            "New asset wasn't added.");
-    });
+        it('Set Token URI', async () => {
+            var assetUri = [
+                [2, "arweave.net/tx/public-uri-2-v1"]
+            ];
+            await contentManager.setPublicUriBatch(assetUri);
 
-    it('Set Token URI', async () => {
-        var assetUri = [
-            [2, "arweave.net/tx/public-uri-2-v1"]
-        ];
-        await contentManager.setPublicUriBatch(assetUri);
+            var mintData = [playerAddress.address, [2], [1], 1, ethers.constants.AddressZero, []];
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
 
-        var mintData = [playerAddress, [2], [1], 1, constants.ZERO_ADDRESS, []];
-        await content.mintBatch(mintData, {from: craftingSystemAddress});
+            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](2, 0)).to.equal("arweave.net/tx/public-uri-2");
+            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](2, 1)).to.equal("arweave.net/tx/public-uri-2-v1");
+            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](2, 2)).to.equal("arweave.net/tx/public-uri-2-v1");
+        });
 
-        assert.equal(
-            await content.methods['uri(uint256,uint256)'](2, 0, {from: playerAddress}),
-            "arweave.net/tx/public-uri-2",
-            "Token 2 incorrect uri for previous version.");
-        
-        assert.equal(
-            await content.methods['uri(uint256,uint256)'](2, 1, {from: playerAddress}),
-            "arweave.net/tx/public-uri-2-v1",
-            "Token 2 incorrect uri for latest version.");
-        
-        assert.equal(
-            await content.methods['uri(uint256,uint256)'](2, 2, {from: playerAddress}),
-            "arweave.net/tx/public-uri-2-v1",
-            "Token 2 invalid version returns uri for latest version.");
-    });
+        it('Set Token Contract Royalties', async () => {
+            await contentManager.setContractRoyalty(deployerAddress.address, 20000);
 
-    it('Set Token Contract Royalties', async () => {
-        await contentManager.setContractRoyalty(deployerAddress, 20000);
+            var fees = await content.royaltyInfo(2, 1000);
+            expect(fees.receiver).to.equal(deployerAddress.address);
+            expect(fees.royaltyAmount).to.equal(20);
+        });
 
-        var royalties = await content.royaltyInfo(2, 1000);
-        assert.equal(royalties.receiver, deployerAddress, "Incorrect contract royalty account 1");
-        assert.equal(royalties.royaltyAmount, 20, "Incorrect contract royalty rate 1");
-    });
+        it('Set Token Royalties', async () => {
+            var assetRoyalty = [[1, deployerAddress.address, 10000]];
+            await contentManager.setTokenRoyaltiesBatch(assetRoyalty);
 
-    it('Set Token Royalties', async () => {
-        var assetRoyalty = [[1, deployerAddress, 10000]];
-        await contentManager.setTokenRoyaltiesBatch(assetRoyalty);
-
-        var royalties = await content.royaltyInfo(2, 1000);
-        assert.equal(royalties.receiver, deployerAddress, "Incorrect royalty account 1");
-        assert.equal(royalties.royaltyAmount, 10, "Incorrect royalty rate 1");
+            var fees = await content.royaltyInfo(2, 1000);
+            expect(fees.receiver).to.equal(deployerAddress.address);
+            expect(fees.royaltyAmount).to.equal(10);
+        });
     });
 });
