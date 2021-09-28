@@ -1,13 +1,8 @@
-// const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-// const Content = artifacts.require("Content");
-// const ContentStorage = artifacts.require("ContentStorage");
-// const AccessControlManager = artifacts.require("AccessControlManager");
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 const { sign } = require("../mint");
 
 describe('Content Contract Tests', () => {
-
     var deployerAddress, craftingSystemAddress, lootboxSystemAddress, playerAddress, player2Address;
     var AccessControlManager, ContentStorage, Content;
     var content;
