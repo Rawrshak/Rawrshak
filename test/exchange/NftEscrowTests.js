@@ -43,8 +43,8 @@ describe('NFT Escrow Contract', () => {
         var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
         // To figure out which log contains the ContractDeployed event
-        content = Content.attach(deployedContracts[0].args.content);
-        contentManager = ContentManager.attach(deployedContracts[0].args.contentManager);
+        content = await Content.attach(deployedContracts[0].args.content);
+        contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
         
         var asset = [
             [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],

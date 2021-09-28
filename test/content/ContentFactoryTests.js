@@ -44,8 +44,8 @@ describe('Content Clone Factory Tests', () => {
             var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
             // To figure out which log contains the ContractDeployed event
-            content = Content.attach(deployedContracts[0].args.content);
-            contentManager = ContentManager.attach(deployedContracts[0].args.contentManager);
+            content = await Content.attach(deployedContracts[0].args.content);
+            contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
 
             expect(content.address).not.equal(contentImpl.address);
             expect(contentManager.address).not.equal(contentManagerImpl.address);
@@ -68,8 +68,8 @@ describe('Content Clone Factory Tests', () => {
             var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
             // To figure out which log contains the ContractDeployed event
-            dev1Content = Content.attach(deployedContracts[0].args.content);
-            dev1ContentManager = ContentManager.attach(deployedContracts[0].args.contentManager);
+            dev1Content = await Content.attach(deployedContracts[0].args.content);
+            dev1ContentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
 
             // developer 2 launches contracts
             tx = await contentFactory.connect(developer2Address).createContracts(developer2Address.address, 10000, uri2);
@@ -77,8 +77,8 @@ describe('Content Clone Factory Tests', () => {
             deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
             // To figure out which log contains the ContractDeployed event
-            dev2Content = Content.attach(deployedContracts[0].args.content);
-            dev2ContentManager = ContentManager.attach(deployedContracts[0].args.contentManager);
+            dev2Content = await Content.attach(deployedContracts[0].args.content);
+            dev2ContentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
 
             // Checks if the addresses are not the same
             expect(dev1Content.address).not.equal(dev2Content.address);
