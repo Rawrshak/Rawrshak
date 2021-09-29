@@ -56,18 +56,6 @@ async function main() {
     const balance = await deployer.getBalance();
     console.log(`Account Balance: ${balance.toString()}`);
 
-    // Get Rawr token stuff
-    const RawrToken = await ethers.getContractFactory("RawrToken");
-    const rawr = RawrToken.attach("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0");
-
-    const rawrBalance = web3.utils.fromWei((await rawr.balanceOf(deployer.address)).toString(), 'ether');
-    console.log(`Deployer RAWR balance: ${rawrBalance.toString()}`);
-
-    // await rawr.transfer(player1.address, web3.utils.toWei('10000', 'ether'));
-    // await rawr.transfer(player2.address, web3.utils.toWei('10000', 'ether'));
-    // await rawr.transfer(player3.address, web3.utils.toWei('10000', 'ether'));    
-    // await rawr.transfer(player4.address, web3.utils.toWei('10000', 'ether'));
-
     // Get Content Contract Factory 
     Content = await ethers.getContractFactory("Content");
     ContentManager = await ethers.getContractFactory("ContentManager");
