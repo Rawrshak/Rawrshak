@@ -19,14 +19,14 @@ async function deployContract(factory, developer, rate, uri) {
     return {content, contentManager};
 }
 
-async function addAssets(content, contentManager, developer) {
+async function addRawrshakAssets(content, contentManager, developer) {
     var asset = [
-        [0, "arweave.net/tx/public-uri-1", "", ethers.constants.MaxUint256, developer.address, 10000],
-        [1, "arweave.net/tx/public-uri-2", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],
-        [2, "arweave.net/tx/public-uri-3", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],
-        [3, "arweave.net/tx/public-uri-4", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],
-        [4, "arweave.net/tx/public-uri-5", "", 100, developer.address, 20000],
-        [5, "arweave.net/tx/public-uri-6", "", 10, developer.address, 50000]
+        [0, "arweave.net/tx/public-uri-1", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Apprentice Title
+        [1, "arweave.net/tx/public-uri-2", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Creator Title
+        [2, "arweave.net/tx/public-uri-3", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Gamer Pesant Title
+        [3, "arweave.net/tx/public-uri-4", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Disciple Title
+        [4, "arweave.net/tx/public-uri-5", "", ethers.constants.MaxUint256, developer.address, 20000],          // Lord Title
+        [5, "arweave.net/tx/public-uri-6", "", ethers.constants.MaxUint256, developer.address, 20000]           // Original Sinner Title
     ];
 
     // add assets
@@ -34,6 +34,59 @@ async function addAssets(content, contentManager, developer) {
     
     // mint some assets
     var mintData = [developer.address, [0,1,2,3,4,5], [100,100,100,100,10,2], 0, ethers.constants.AddressZero, []];
+    await content.connect(developer).mintBatch(mintData);
+}
+
+async function addScreamFortress2Assets(content, contentManager, developer) {
+    var asset = [
+        [0, "arweave.net/tx/public-uri-1", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Demoman
+        [1, "arweave.net/tx/public-uri-2", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Engineer
+        [2, "arweave.net/tx/public-uri-3", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Heavy
+        [3, "arweave.net/tx/public-uri-4", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Medic
+        [4, "arweave.net/tx/public-uri-5", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Pyro
+        [5, "arweave.net/tx/public-uri-6", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Scout
+        [6, "arweave.net/tx/public-uri-7", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Sniper
+        [7, "arweave.net/tx/public-uri-8", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Soldier
+        [8, "arweave.net/tx/public-uri-9", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0]    // Spy
+    ];
+
+    // add assets
+    await contentManager.connect(developer).addAssetBatch(asset);
+    
+    // mint some assets
+    var mintData = [developer.address, [0,1,2,3,4,5], [100,100,100,100,10,2], 0, ethers.constants.AddressZero, []];
+    await content.connect(developer).mintBatch(mintData);
+}
+
+async function addFightBuddyAssets(content, contentManager, developer) {
+    var asset = [
+        [0, "arweave.net/tx/public-uri-1", "", 1000, developer.address, 10000],         // Nikolai
+        [1, "arweave.net/tx/public-uri-2", "", 1000, developer.address, 20000],         // Didier
+        [2, "arweave.net/tx/public-uri-3", "", 500, ethers.constants.AddressZero, 0],   // Josip
+        [3, "arweave.net/tx/public-uri-4", "", 50, developer.address, 30000]            // Glenn
+    ];
+
+    // add assets
+    await contentManager.connect(developer).addAssetBatch(asset);
+    
+    // mint some assets
+    var mintData = [developer.address, [0,1,2,3], [100,100,100,10], 0, ethers.constants.AddressZero, []];
+    await content.connect(developer).mintBatch(mintData);
+}
+
+async function addSuperScaryHorrorGameAssets(content, contentManager, developer) {
+    var asset = [
+        [0, "arweave.net/tx/public-uri-1", "", 10000, ethers.constants.AddressZero, 0], // Scary Terry
+        [1, "arweave.net/tx/public-uri-2", "", 50, ethers.constants.AddressZero, 0],    // Casper the Ghost
+        [2, "arweave.net/tx/public-uri-3", "", 50, ethers.constants.AddressZero, 0],    // Screamer
+        [3, "arweave.net/tx/public-uri-4", "", 25, ethers.constants.AddressZero, 0]     // Headless Canadian
+    ];
+
+    // add assets
+    await contentManager.connect(developer).addAssetBatch(asset);
+    
+    // mint some assets
+    var mintData = [developer.address, [0,1,2,3], [1000,50,50,25], 0, ethers.constants.AddressZero, []];
     await content.connect(developer).mintBatch(mintData);
 }
 
@@ -65,20 +118,24 @@ async function main() {
     Content = await ethers.getContractFactory("Content");
     ContentManager = await ethers.getContractFactory("ContentManager");
 
-    // Developer 1 Deploys A Contract
+    // Developer 1 Rawrshak and Scream Fortress 2 Contract
     var addresses = await deployContract(factory, dev1, 10000, "arweave.net/dev1-contract-uri");
     console.log(`Dev1 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
-    await addAssets(addresses.content, addresses.contentManager, dev1);
+    await addRawrshakAssets(addresses.content, addresses.contentManager, dev1);
+
+    var addresses = await deployContract(factory, dev1, 10000, "arweave.net/dev1-contract-uri");
+    console.log(`Dev1 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
+    await addScreamFortress2Assets(addresses.content, addresses.contentManager, dev1);
     
     // Developer 2 Deploys A Contract
     addresses = await deployContract(factory, dev2, 20000, "arweave.net/dev2-contract-uri");
     console.log(`Dev2 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
-    await addAssets(addresses.content, addresses.contentManager, dev2);
+    await addFightBuddyAssets(addresses.content, addresses.contentManager, dev2);
     
     // Developer 3 Deploys A Contract
     addresses = await deployContract(factory, dev3, 15000, "arweave.net/dev3-contract-uri");
     console.log(`Dev3 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
-    await addAssets(addresses.content, addresses.contentManager, dev3);
+    await addSuperScaryHorrorGameAssets(addresses.content, addresses.contentManager, dev3);
   }
   
   main()
