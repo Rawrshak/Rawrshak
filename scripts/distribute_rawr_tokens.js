@@ -30,6 +30,15 @@ async function main() {
     await rawr.transfer(player2.address, web3.utils.toWei('10000', 'ether'));
     await rawr.transfer(player3.address, web3.utils.toWei('10000', 'ether'));
     await rawr.transfer(player4.address, web3.utils.toWei('10000', 'ether'));
+    
+    var playerBalance = web3.utils.fromWei((await rawr.balanceOf(player1.address)).toString(), 'ether');
+    console.log(`Player 1 balance: ${playerBalance.toString()}`);
+    playerBalance= web3.utils.fromWei((await rawr.balanceOf(player2.address)).toString(), 'ether');
+    console.log(`Player 2 balance: ${playerBalance.toString()}`);
+    playerBalance= web3.utils.fromWei((await rawr.balanceOf(player3.address)).toString(), 'ether');
+    console.log(`Player 3 balance: ${playerBalance.toString()}`);
+    playerBalance= web3.utils.fromWei((await rawr.balanceOf(player4.address)).toString(), 'ether');
+    console.log(`Player 4 balance: ${playerBalance.toString()}`);
   }
   
   main()
