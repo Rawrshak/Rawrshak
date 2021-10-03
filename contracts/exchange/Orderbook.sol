@@ -43,13 +43,16 @@ contract Orderbook is IOrderbook, ManagerBase {
         // The Exchange contract should have already checked the matching lengths of the parameters.
         // the caller will already fill in the orders up to the amount. 
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            // This will revert if amount is greater than the order amount. This will automatically revert
-            orders[_orderIds[i]].amountFilled += _amounts[i];
+            // skip zero amounts
+            if (_amounts[i] > 0) {
+                // This will revert if amount is greater than the order amount. This will automatically revert
+                orders[_orderIds[i]].amountFilled += _amounts[i];
 
-            if (orders[_orderIds[i]].amountFilled != orders[_orderIds[i]].amountOrdered) {
-                orders[_orderIds[i]].state = LibOrder.OrderState.PARTIALLY_FILLED;
-            } else {
-                orders[_orderIds[i]].state = LibOrder.OrderState.FILLED;
+                if (orders[_orderIds[i]].amountFilled != orders[_orderIds[i]].amountOrdered) {
+                    orders[_orderIds[i]].state = LibOrder.OrderState.PARTIALLY_FILLED;
+                } else {
+                    orders[_orderIds[i]].state = LibOrder.OrderState.FILLED;
+                }
             }
         }
     }
@@ -122,6 +125,18 @@ contract Orderbook is IOrderbook, ManagerBase {
         return true;
     }
 
+    function getOrderAmounts(uint256[] calldata _orderIds) external view override returns(uint256[] memory orderAmounts) {
+        orderAmounts = new uint256[](_orderIds.length); // default already at 0
+        for (uint256 i = 0; i < _orderIds.length; ++i) {
+            if (orders[_orderIds[i]].state == LibOrder.OrderState.READY) {
+                // If state is ready, we set the order amount correctly
+                orderAmounts[i] = orders[_orderIds[i]].amountOrdered;
+            } else if (orders[_orderIds[i]].state == LibOrder.OrderState.PARTIALLY_FILLED) {
+                orderAmounts[i] = orders[_orderIds[i]].amountOrdered - orders[_orderIds[i]].amountFilled;
+            }
+        }
+    }
+
     function getPaymentTotals(
         uint256[] calldata _orderIds,
         uint256[] calldata _amounts
@@ -130,10 +145,11 @@ contract Orderbook is IOrderbook, ManagerBase {
         amountPerOrder = new uint256[](_amounts.length);
         amountDue = 0;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            require(orders[_orderIds[i]].amountOrdered - orders[_orderIds[i]].amountFilled >= _amounts[i], "Order doesn't have enough escrowed inventory. invalid amount.");
-            
-            amountPerOrder[i] = orders[_orderIds[i]].price * _amounts[i];
-            amountDue = amountDue + amountPerOrder[i];
+            // Only fill orders that have a non-zero amount
+            if (_amounts[i] > 0) {
+                amountPerOrder[i] = orders[_orderIds[i]].price * _amounts[i];
+                amountDue = amountDue + amountPerOrder[i];
+            }
         }
     } 
 
