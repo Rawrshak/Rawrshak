@@ -86,8 +86,10 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
 
     /**************** Internal Functions ****************/
     function _transfer(uint256 _orderId, address _sender, address _receiver, uint256 amount) internal {
-        IERC1155Upgradeable(escrowedAsset[_orderId].contentAddress)
-            .safeTransferFrom(_sender, _receiver, escrowedAsset[_orderId].tokenId, amount, "");
+        if (amount > 0) {
+            IERC1155Upgradeable(escrowedAsset[_orderId].contentAddress)
+                .safeTransferFrom(_sender, _receiver, escrowedAsset[_orderId].tokenId, amount, "");
+        }
     }
 
     uint256[50] private __gap;

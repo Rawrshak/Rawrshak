@@ -106,7 +106,7 @@ async function main() {
 
     console.log(`Deploying contracts with the account: ${deployer.address}`);
   
-    const balance = await deployer.getBalance();
+    var balance = await deployer.getBalance();
     console.log(`Account Balance: ${balance.toString()}`);
 
     // Get Content Contract Factory 
@@ -136,6 +136,10 @@ async function main() {
     addresses = await deployContract(factory, dev3, 15000, "https://arweave.net/PutfqWQZn-aj3RRC87KafDBLQ-_Mk6czi8KBIIVbchA");
     console.log(`SuperScaryHorrorGame Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
     await addSuperScaryHorrorGameAssets(addresses.content, addresses.contentManager, dev3);
+
+    balance = await deployer.getBalance();
+    balance = web3.utils.fromWei(balance.toString(), 'ether');
+    console.log(`Account Balance: ${balance.toString()}`);
   }
   
   main()

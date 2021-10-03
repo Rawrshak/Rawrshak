@@ -25,6 +25,8 @@ interface IOrderbook {
 
     function verifyOrdersReady(uint256[] memory _orderIds) external view returns (bool);
 
+    function getOrderAmounts(uint256[] memory _orderIds) external view returns(uint256[] memory orderAmounts);
+
     function getPaymentTotals(
         uint256[] calldata _orderIds,
         uint256[] calldata _amounts

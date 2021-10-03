@@ -120,7 +120,62 @@ describe('Orderbook Contract tests', ()=> {
             expect(storedOrder.state).is.equal(0);
 
         });
+
+        it('Get Order Amounts with no filled orders', async() => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
     
+            id2 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData2);
+    
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
+
+            var amounts = await orderbook.getOrderAmounts([id, id2, id3]);
+
+            expect(amounts[0]).is.equal(5);
+            expect(amounts[1]).is.equal(5);
+            expect(amounts[2]).is.equal(3);
+        });
+    
+        it('Get Order Amounts with partially filled orders', async() => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+    
+            id2 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData2);
+    
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
+            
+            await orderbook.fillOrders([id, id2], [3, 3]);
+            
+            var amounts = await orderbook.getOrderAmounts([id, id2, id3]);
+            
+            expect(amounts[0]).is.equal(2);
+            expect(amounts[1]).is.equal(2);
+            expect(amounts[2]).is.equal(3);
+        });
+    
+        it('Get Order Amounts with all filled orders', async() => {
+            id = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData1);
+    
+            id2 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData2);
+    
+            id3 = await orderbook.ordersLength();
+            await orderbook.placeOrder(orderData3);
+            
+            await orderbook.fillOrders([id, id2, id3], [3, 5, 3]);
+            
+            var amounts = await orderbook.getOrderAmounts([id, id2, id3]);
+            
+            expect(amounts[0]).is.equal(2);
+            expect(amounts[1]).is.equal(0);
+            expect(amounts[2]).is.equal(0);
+        });
+
         it('Verifies orders are of the same asset', async () => {
             id = await orderbook.ordersLength();
             await orderbook.placeOrder(orderData1);
@@ -200,8 +255,7 @@ describe('Orderbook Contract tests', ()=> {
             await orderbook.placeOrder(orderData1);
             id3 = await orderbook.ordersLength();
             await orderbook.placeOrder(orderData3);
-            
-            await expect(orderbook.getPaymentTotals([id, id3], [1, 10])).to.be.reverted;            
+
             await orderbook.fillOrders([id3], [3]);
             
             // cannot cancel filled orders
