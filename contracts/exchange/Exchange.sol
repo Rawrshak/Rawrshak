@@ -120,7 +120,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Update Escrow records for the orders - will revert if the user doesn't have enough assets
         executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, orderAmounts, order.asset);
 
-        emit BuyOrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsSold, volume);
+        emit OrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsSold, volume);
     }
 
     function fillSellOrder(
@@ -184,7 +184,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Execute trade - will revert if buyer doesn't have enough funds
         executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, orderAmounts, order.token);
 
-        emit SellOrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsBought, volume);
+        emit OrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsBought, volume);
     }
 
     function cancelOrders(uint256[] memory _orderIds) external override {
