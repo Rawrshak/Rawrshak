@@ -46,7 +46,7 @@ interface IExchange {
         LibOrder.AssetData asset,
         address token,
         uint256 amountOfAssetsSold,
-        uint256 tokensReceived);
+        uint256 volume);
 
     event SellOrdersFilled(
         address indexed from,
@@ -55,7 +55,7 @@ interface IExchange {
         LibOrder.AssetData asset,
         address token,
         uint256 amountOfAssetsBought,
-        uint256 tokensPaid);
+        uint256 volume);
 
     event OrdersDeleted(address indexed owner, uint256[] orderIds);
     

@@ -140,15 +140,15 @@ contract Orderbook is IOrderbook, ManagerBase {
     function getPaymentTotals(
         uint256[] calldata _orderIds,
         uint256[] calldata _amounts
-    ) external view override onlyOwner returns(uint256 amountDue, uint256[] memory amountPerOrder) {
+    ) external view override onlyOwner returns(uint256 volume, uint256[] memory amountPerOrder) {
         // The Exchange contract should have already checked the matching lengths of the parameters.
         amountPerOrder = new uint256[](_amounts.length);
-        amountDue = 0;
+        volume = 0;
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             // Only fill orders that have a non-zero amount
             if (_amounts[i] > 0) {
                 amountPerOrder[i] = orders[_orderIds[i]].price * _amounts[i];
-                amountDue = amountDue + amountPerOrder[i];
+                volume = volume + amountPerOrder[i];
             }
         }
     } 
