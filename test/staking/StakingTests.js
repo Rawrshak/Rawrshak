@@ -1,197 +1,278 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const RawrToken = artifacts.require("RawrToken");
-const StakingRewardsPool = artifacts.require("StakingRewardsPool");
-const LockedStakingRewardsPool = artifacts.require("LockedStakingRewardsPool");
-const ExchangeRewardsPool = artifacts.require("ExchangeRewardsPool");
-const LockedExchangeRewardsPool = artifacts.require("LockedExchangeRewardsPool");
-const Staking = artifacts.require("Staking");
-const TruffleAssert = require("truffle-assertions")
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
 
-contract('Staking Rewards Pool Contract Tests', (accounts) => {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        managerAddress,             // address with manager capabilities
-        managerAddress2,            // address with manager capabilities
-        playerAddress,              // Player Address
-        player2Address,             // Player Address
-    ] = accounts;
+describe('Staking Rewards Pool Contract Tests', () => {
+    var deployerAddress,
+        playerAddress,
+        player2Address,
+        staker1,
+        staker2;
 
     var rawrToken;
-    var stakingRewardsPool;
-    var lockedStakingRewardsPool;
-    var exchangeRewardsPool;
-    var lockedExchangeRewardsPool;
+    var feesEscrow;
+    var resolver;
     var staking;
+    
+    const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
 
-    // Note: This is identical to the FundBase Tests
+    before(async () => {            
+        [deployerAddress,
+            playerAddress,
+            player2Address,
+            staker1,
+            staker2
+        ] = await ethers.getSigners();
+        
+        ExchangeFeesEscrow = await ethers.getContractFactory("ExchangeFeesEscrow");
+        RawrToken = await ethers.getContractFactory("RawrToken");
+        AddressResolver = await ethers.getContractFactory("AddressResolver");
+        Staking = await ethers.getContractFactory("Staking");
+
+        resolver = await upgrades.deployProxy(AddressResolver, []);
+    });
+
     beforeEach(async () => {
-        rawrToken = await RawrToken.new();
-        await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
+        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+        feesEscrow = await upgrades.deployProxy(ExchangeFeesEscrow, [resolver.address]);
+        staking = await upgrades.deployProxy(Staking, [rawrToken.address, resolver.address]);
+    });
 
-        stakingRewardsPool = await StakingRewardsPool.new();
-        await stakingRewardsPool.__StakingRewardsPool_init(rawrToken.address);
-        
-        lockedStakingRewardsPool = await LockedStakingRewardsPool.new();
-        await lockedStakingRewardsPool.__LockedStakingRewardsPool_init(
-            rawrToken.address,
-            stakingRewardsPool.address,
-            web3.utils.toWei('200000000', 'ether'),
-            web3.utils.toWei('0.003512337636941769', 'ether'), // 20%
-            web3.utils.toWei('0.000012044020616142', 'ether'), // 18%/260 
-            260
-            );
-        
-        // lock tokens into contract
-        await rawrToken.transfer(lockedStakingRewardsPool.address, web3.utils.toWei('200000000', 'ether'), {from: deployerAddress});
-        await rawrToken.grantRole(await rawrToken.MINTER_ROLE(), lockedStakingRewardsPool.address, {from: deployerAddress});
-
-        // set manager role for manager address
-        await stakingRewardsPool.registerManager(lockedStakingRewardsPool.address, {from: deployerAddress});
-        
-        // Exchange Rewards Pool
-        exchangeRewardsPool = await ExchangeRewardsPool.new();
-        await exchangeRewardsPool.__ExchangeRewardsPool_init(rawrToken.address);
-        
-        lockedExchangeRewardsPool = await LockedExchangeRewardsPool.new();
-        await lockedExchangeRewardsPool.__LockedExchangeRewardsPool_init(
-            rawrToken.address,
-            exchangeRewardsPool.address
-            );
-
-        // set manager role for manager address
-        await exchangeRewardsPool.registerManager(lockedExchangeRewardsPool.address, {from: deployerAddress});
-
-        staking = await Staking.new();
-        await staking.__Staking_init(rawrToken.address, stakingRewardsPool.address, exchangeRewardsPool.address);
-
+    async function setup() {
         // Register Staking as a manager for the rewards pools
-        await stakingRewardsPool.registerManager(staking.address, {from: deployerAddress});
-        await exchangeRewardsPool.registerManager(staking.address, {from: deployerAddress});
+        await feesEscrow.registerManager(staking.address);
 
-        // Player 1 and 2 tokens
-        await rawrToken.transfer(playerAddress, web3.utils.toWei('50000000', 'ether'), {from: deployerAddress});
-        await rawrToken.transfer(player2Address, web3.utils.toWei('50000000', 'ether'), {from: deployerAddress});
-    });
-
-    it('Supports the FundPool Interface', async () => {
-        // _INTERFACE_ID_STAKING = 0x00000016
-        assert.equal(
-            await staking.supportsInterface("0x00000016"),
-            true, 
-            "the token doesn't support the Staking interface");
-    });
-
-    it('Check Default variables', async () => {
-        assert.equal(await staking.totalStakedTokens(), 0, "Incorrect total staked tokens");
-        assert.equal(await staking.stakedAmounts(playerAddress), 0, "Incorrect staked tokens for player 1");
-        assert.equal(await staking.stakedAmounts(player2Address), 0, "Incorrect staked tokens for player 2");
-        assert.equal(await staking.totalClaimableTokensInInterval(), 0, "Incorrect staked tokens for player 2");
-        assert.equal(await staking.unclaimedTokensInInterval(), 0, "Incorrect staked tokens for player 2");
-    });
-
-    it('Claimable and unclaimed tokens in interval', async () => {
-        // release fund for staking contract interval
-        await lockedStakingRewardsPool.releaseFunds(web3.utils.toWei('1000000', 'ether'));
-
-        // reload locked exchange fund and release locked exchange fund
-        await rawrToken.transfer(lockedExchangeRewardsPool.address, web3.utils.toWei('500000', 'ether'), {from: deployerAddress});
-        await lockedExchangeRewardsPool.reloadFunds(web3.utils.toWei('500000', 'ether'));
-        await lockedExchangeRewardsPool.releaseFunds(web3.utils.toWei('0', 'ether'));
+        // register the escrows
+        await resolver.registerAddress(["0x1b48faca", "0x7f170836"], [staking.address, feesEscrow.address]);
         
-        assert.equal((await staking.totalClaimableTokensInInterval()).toString(), web3.utils.toWei('503512.337636941769', 'ether'), "Incorrect total claimable tokens in interval");
-        assert.equal((await staking.unclaimedTokensInInterval()).toString(), web3.utils.toWei('503512.337636941769', 'ether'), "Incorrect total unclaimed tokens in interval");
+        // Give token to player
+        await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
+    }
+
+    describe("Basic Tests", () => {
+        it('Supports the Staking Interface', async () => {
+            // INTERFACE_ID_STAKING = 0x00000016
+            expect(await staking.supportsInterface("0x00000016")).to.equal(true);
+        });
+    
+        it('Check Default variables', async () => {
+            expect(await staking.totalStakedTokens()).to.equal(0);
+            expect(await staking.userStakedAmount(playerAddress.address)).to.equal(0);
+            expect(await staking.userStakedAmount(player2Address.address)).to.equal(0);
+            expect(await staking.token()).to.equal(rawrToken.address);
+        });
     });
 
-    it('Deposit Tokens', async () => {
-        // Player 1 deposit
-        await rawrToken.approve(staking.address, web3.utils.toWei('20000', 'ether'), {from:playerAddress});
-        TruffleAssert.eventEmitted(
-            await staking.deposit(web3.utils.toWei('20000', 'ether'), {from: playerAddress}),
-            'Deposit'
-        );
-        assert.equal(await staking.totalStakedTokens(), web3.utils.toWei('20000', 'ether'), "Incorrect total staked tokens");
-        assert.equal(await staking.stakedAmounts(playerAddress), web3.utils.toWei('20000', 'ether'), "Incorrect staked tokens for player 1");
-        assert.equal(
-            await rawrToken.balanceOf(staking.address),
-            web3.utils.toWei('20000', 'ether'),
-            "Incorrect number of tokens staked");
-        assert.equal(
-            await rawrToken.balanceOf(playerAddress),
-            web3.utils.toWei('49980000', 'ether'),
-            "Player 1 didn't send their tokens properly to stake contract");
+    describe("Staking", () => {
+        it('Single Staker', async () => {
+            await setup();
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(playerAddress).approve(staking.address, 10000);
+            await staking.connect(playerAddress).stake(10000);
 
-        // Player 2 deposit
-        await rawrToken.approve(staking.address, web3.utils.toWei('30000', 'ether'), {from:player2Address});
-        TruffleAssert.eventEmitted(
-            await staking.deposit(web3.utils.toWei('30000', 'ether'), {from: player2Address}),
-            'Deposit'
-        );
-        assert.equal(await staking.totalStakedTokens(), web3.utils.toWei('50000', 'ether'), "Incorrect total staked tokens");
-        assert.equal(await staking.stakedAmounts(player2Address), web3.utils.toWei('30000', 'ether'), "Incorrect staked tokens for player 2");
-        assert.equal(
-            await rawrToken.balanceOf(staking.address),
-            web3.utils.toWei('50000', 'ether'),
-            "Incorrect number of tokens staked");
-        assert.equal(
-            await rawrToken.balanceOf(player2Address),
-            web3.utils.toWei('49970000', 'ether'),
-            "Player 2 didn't send their tokens properly to stake contract");
+            expect(await staking.totalStakedTokens()).to.equal(10000);
+            expect(await staking.userStakedAmount(playerAddress.address)).to.equal(10000);
+    
+            var claimable = await staking.connect(playerAddress).getUserClaimableExchangeRewards(playerAddress.address);
+            expect(claimable.length).to.equal(0);
+        });
+    
+        it('Multiple Stakers', async () => {
+            await setup();
+            // Give token to player
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(playerAddress).approve(staking.address, 10000);
+            await rawrToken.connect(player2Address).approve(staking.address, 20000);
+            await staking.connect(playerAddress).stake(10000);
+            await staking.connect(player2Address).stake(20000);
+    
+            expect(await staking.totalStakedTokens()).to.equal(30000);
+            expect(await staking.userStakedAmount(playerAddress.address)).to.equal(10000);
+            expect(await staking.userStakedAmount(player2Address.address)).to.equal(20000);
+            
+            var claimable = await staking.connect(playerAddress).getUserClaimableExchangeRewards(playerAddress.address);
+            expect(claimable.length).to.equal(0);
+        });
     });
 
-    it('Withdraw Tokens', async () => {
-        // deposits
-        await rawrToken.approve(staking.address, web3.utils.toWei('20000', 'ether'), {from:playerAddress});
-        await rawrToken.approve(staking.address, web3.utils.toWei('30000', 'ether'), {from:player2Address});
-        await staking.deposit(web3.utils.toWei('20000', 'ether'), {from: playerAddress});
-        await staking.deposit(web3.utils.toWei('30000', 'ether'), {from: player2Address});
-        assert.equal(await staking.totalStakedTokens(), web3.utils.toWei('50000', 'ether'), "Incorrect total staked tokens");
+    describe("Staking and Withdraw", () => {
 
-        await staking.withdraw(web3.utils.toWei('10000', 'ether'), {from: playerAddress});
-        assert.equal(await staking.stakedAmounts(playerAddress), web3.utils.toWei('10000', 'ether'), "Incorrect staked tokens for player 1");
-        await staking.withdraw(web3.utils.toWei('10000', 'ether'), {from: playerAddress});
-        assert.equal(await staking.stakedAmounts(playerAddress), web3.utils.toWei('0', 'ether'), "Incorrect staked tokens for player 1");
+        it('Multiple Stakers, Single Withdraw', async () => {
+            await setup();
+            // Give token to player
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(playerAddress).approve(staking.address, 10000);
+            await rawrToken.connect(player2Address).approve(staking.address, 20000);
+            await staking.connect(playerAddress).stake(10000);
+            await staking.connect(player2Address).stake(20000);
+    
+            expect(await staking.totalStakedTokens()).to.equal(30000);
+            await staking.connect(player2Address).withdraw(10000);
+    
+            expect(await staking.totalStakedTokens()).to.equal(20000);
+            expect(await staking.userStakedAmount(playerAddress.address)).to.equal(10000);
+            expect(await staking.userStakedAmount(player2Address.address)).to.equal(10000);
+        });
+    
+        it('Multiple Stakers, Multiple Withdraw', async () => {
+            await setup();
+            // Give token to player
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(playerAddress).approve(staking.address, 10000);
+            await rawrToken.connect(player2Address).approve(staking.address, 20000);
+            await staking.connect(playerAddress).stake(10000);
+            await staking.connect(player2Address).stake(20000);
+    
+            expect(await staking.totalStakedTokens()).to.equal(30000);
+            await staking.connect(player2Address).withdraw(10000);
+    
+            expect(await staking.totalStakedTokens()).to.equal(20000);
+            
+            await staking.connect(playerAddress).withdraw(5000);
+            await staking.connect(player2Address).withdraw(5000);
+            expect(await staking.userStakedAmount(playerAddress.address)).to.equal(5000);
+            expect(await staking.userStakedAmount(player2Address.address)).to.equal(5000);
+        });
+    
+        it('Multiple Staker, Single Exit', async () => {
+            await setup();
+            // Give token to player
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+            
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(playerAddress).approve(staking.address, 10000);
+            await rawrToken.connect(player2Address).approve(staking.address, 20000);
+            await staking.connect(playerAddress).stake(10000);
+            await staking.connect(player2Address).stake(20000);
+    
+            expect(await staking.totalStakedTokens()).to.equal(30000);
+            await staking.connect(player2Address).exit();
+    
+            expect(await staking.totalStakedTokens()).to.equal(10000);
+            expect(await staking.userStakedAmount(player2Address.address)).to.equal(0);
+        });
 
-        await staking.withdraw(web3.utils.toWei('10000', 'ether'), {from: player2Address});
-        assert.equal(await staking.stakedAmounts(player2Address), web3.utils.toWei('20000', 'ether'), "Incorrect staked tokens for player 2");
-
-        assert.equal(await staking.totalStakedTokens(), web3.utils.toWei('20000', 'ether'), "Incorrect total staked tokens");
     });
 
-    it('Stake percentage', async () => {
-        // deposits
-        await rawrToken.approve(staking.address, web3.utils.toWei('20000', 'ether'), {from:playerAddress});
-        await rawrToken.approve(staking.address, web3.utils.toWei('30000', 'ether'), {from:player2Address});
-        await staking.deposit(web3.utils.toWei('20000', 'ether'), {from: playerAddress});
-        await staking.deposit(web3.utils.toWei('30000', 'ether'), {from: player2Address});
-        assert.equal(await staking.totalStakedTokens(), web3.utils.toWei('50000', 'ether'), "Incorrect total staked tokens");
-        
-        assert.equal(await staking.getStakePercentage({from: playerAddress}), web3.utils.toWei('0.4', 'ether'), "Incorrect stake percentage for player 1");     
+    describe("Staking and Claim", () => {
+
+        it('Single Staker with Claim', async () => {
+            await setup();
+    
+            // Give token to player
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(playerAddress).approve(staking.address, 10000);
+            await staking.connect(playerAddress).stake(10000);
+    
+            expect(await staking.totalStakedTokens()).to.equal(10000);
+            expect(await staking.userStakedAmount(playerAddress.address)).to.equal(10000);
+    
+            // Update internal deposits
+            await rawrToken.connect(player2Address).transfer(feesEscrow.address, ethers.BigNumber.from(100).mul(_1e18));
+            await feesEscrow.depositFees(rawrToken.address, ethers.BigNumber.from(100).mul(_1e18));
+    
+            var claimable = await staking.connect(playerAddress).getUserClaimableExchangeRewards(playerAddress.address);
+            expect(claimable.length).to.equal(1);
+            expect(claimable[0].amount).to.equal(ethers.BigNumber.from(100).mul(_1e18));
+    
+            await staking.connect(playerAddress).claimRewards();
+
+            expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(0);
+        });
+    
+        it('Multiple Staker with Single Claim', async () => {
+            await setup();
+    
+            // Give token to player
+            await rawrToken.transfer(staker1.address, 25);
+            await rawrToken.transfer(staker2.address, 75);
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(staker1).approve(staking.address, 25);
+            await rawrToken.connect(staker2).approve(staking.address, 75);
+            await staking.connect(staker1).stake(25);
+            await staking.connect(staker2).stake(75);
+    
+            expect(await staking.totalStakedTokens()).to.equal(100);
+    
+            // Update internal deposits
+            await rawrToken.connect(player2Address).transfer(feesEscrow.address, 1000);
+            await feesEscrow.depositFees(rawrToken.address, 1000);
+    
+            await staking.connect(staker1).claimRewards();
+    
+            expect(await rawrToken.balanceOf(staker1.address)).to.equal(250);
+        });
+    
+        it('Multiple Staker with Multiple rewards and single claim', async () => {
+            await setup();
+    
+            // Give token to player
+            await rawrToken.transfer(staker1.address, 25);
+            await rawrToken.transfer(staker2.address, 75);
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(staker1).approve(staking.address, 25);
+            await rawrToken.connect(staker2).approve(staking.address, 75);
+            await staking.connect(staker1).stake(25);
+            await staking.connect(staker2).stake(75);
+            
+            expect(await staking.totalStakedTokens()).to.equal(100);
+    
+            // Update internal deposits
+            await rawrToken.connect(player2Address).transfer(feesEscrow.address, 1000);
+            await feesEscrow.depositFees(rawrToken.address, 1000);
+    
+            await rawrToken.connect(playerAddress).transfer(feesEscrow.address, 4000);
+            await feesEscrow.depositFees(rawrToken.address, 4000);
+    
+            await staking.connect(staker1).claimRewards();
+    
+            expect(await rawrToken.balanceOf(staker1.address)).to.equal(1250);
+        });
+    
+        it('Multiple Staker with Multiple rewards and multiple claims', async () => {
+            await setup();
+    
+            // Give token to player
+            await rawrToken.transfer(staker1.address, 25);
+            await rawrToken.transfer(staker2.address, 75);
+            await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(20000).mul(_1e18));
+    
+            // Player 1 is Staking 10000 tokens (in wei)
+            await rawrToken.connect(staker1).approve(staking.address, 25);
+            await rawrToken.connect(staker2).approve(staking.address, 75);
+            await staking.connect(staker1).stake(25);
+            await staking.connect(staker2).stake(75);
+    
+            expect(await staking.totalStakedTokens()).to.equal(100);
+    
+            // Update internal deposits
+            await rawrToken.connect(player2Address).transfer(feesEscrow.address, 1000);
+            await feesEscrow.depositFees(rawrToken.address, 1000);
+    
+            await staking.connect(staker1).claimRewards();
+            expect(await rawrToken.balanceOf(staker1.address)).to.equal(250);
+            
+            await rawrToken.connect(playerAddress).transfer(feesEscrow.address, 4000);
+            await feesEscrow.depositFees(rawrToken.address, 4000);
+    
+            await staking.connect(staker1).claimRewards();
+            expect(await rawrToken.balanceOf(staker1.address)).to.equal(1250);
+    
+            var claimable = await staking.connect(staker2).getUserClaimableExchangeRewards(staker2.address);
+            expect(claimable[0].amount).to.equal(3750);
+        });
+    
     });
-
-    it('Claim', async () => {
-        // deposits
-        await rawrToken.approve(staking.address, web3.utils.toWei('500000', 'ether'), {from:playerAddress});
-        await rawrToken.approve(staking.address, web3.utils.toWei('500000', 'ether'), {from:player2Address});
-        await staking.deposit(web3.utils.toWei('500000', 'ether'), {from: playerAddress});
-        await staking.deposit(web3.utils.toWei('500000', 'ether'), {from: player2Address});
-
-        // release fund for staking contract interval
-        await lockedStakingRewardsPool.releaseFunds(web3.utils.toWei('1000000', 'ether'));
-
-        // reload locked exchange fund and release locked exchange fund
-        await rawrToken.transfer(lockedExchangeRewardsPool.address, web3.utils.toWei('500000', 'ether'), {from: deployerAddress});
-        await lockedExchangeRewardsPool.reloadFunds(web3.utils.toWei('500000', 'ether'));
-        await lockedExchangeRewardsPool.releaseFunds(web3.utils.toWei('0', 'ether'));
-
-        assert.equal((await staking.totalClaimableTokensInInterval()).toString(), web3.utils.toWei('503512.337636941769', 'ether'), "Incorrect total claimable tokens in interval");
-        assert.equal((await staking.unclaimedTokensInInterval()).toString(), web3.utils.toWei('503512.337636941769', 'ether'), "Incorrect total unclaimed tokens in interval");
-        assert.equal(await staking.getStakePercentage({from: playerAddress}), web3.utils.toWei('0.5', 'ether'), "Incorrect stake percentage for player 1"); 
-
-        await staking.claim({from: playerAddress});
-        assert.equal((await staking.totalClaimableTokensInInterval()).toString(), web3.utils.toWei('503512.337636941769', 'ether'), "Incorrect total claimable tokens in interval");
-        assert.equal((await staking.unclaimedTokensInInterval()).toString(), web3.utils.toWei('251756.1688184708845', 'ether'), "Incorrect total unclaimabled tokens in interval");
-        assert.equal((await rawrToken.balanceOf(playerAddress)).toString(), web3.utils.toWei('49751756.1688184708845', 'ether'), "Incorrect Player 1 tokens after claim");
-    });
-
-
 });

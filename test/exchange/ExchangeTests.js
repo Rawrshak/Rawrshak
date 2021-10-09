@@ -1,467 +1,373 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const RawrToken = artifacts.require("RawrToken");
-const Content = artifacts.require("Content");
-const ContentStorage = artifacts.require("ContentStorage");
-const ContentManager = artifacts.require("ContentManager");
-const AccessControlManager = artifacts.require("AccessControlManager");
-const EscrowERC20 = artifacts.require("EscrowERC20");
-const EscrowNFTs = artifacts.require("EscrowNFTs");
-const ExchangeFeePool = artifacts.require("ExchangeFeePool");
-const OrderbookManager = artifacts.require("OrderbookManager");
-const OrderbookStorage = artifacts.require("OrderbookStorage");
-const ExecutionManager = artifacts.require("ExecutionManager");
-const RoyaltyManager = artifacts.require("RoyaltyManager");
-const Exchange = artifacts.require("Exchange");
-const AddressRegistry = artifacts.require("AddressRegistry");
-const ContractRegistry = artifacts.require("ContractRegistry");
-const TagsManager = artifacts.require("TagsManager");
-const TruffleAssert = require("truffle-assertions");
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
 
-contract('Exchange Contract', (accounts)=> {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        platformAddress,            // platform address fees
-        testManagerAddress,         // Only for putting in data for testing
-        creator1Address,             // content nft Address
-        creator2Address,             // creator Address
-        playerAddress,              // player 1 address
-        player2Address,              // player 2 address
-        stakingFund,                // staking fund address
-    ] = accounts;
+describe('Exchange Contract', ()=> {
+    var deployerAddress, playerAddress, player2Address, creator1Address, staker1;
 
     // NFT
     var content;
-    var contentStorage;
+    var contentFactory;
     var contentManager;
-    var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[creator1Address, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
-    ];
 
     // Rawr Token 
-    var rawrId = "0xd4df6855";
     var rawrToken;
-
-    // Escrow contracts
-    var escrowRawr;
-    var escrowContent;
-    var orderbookStorage;
-
-    // Manager contracts
-    var executionManager;
-    var royaltyManager;
-    var orderbookManager;
 
     // Exchange contract
     var exchange;
+    
+    const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
 
-    var manager_role;
-    var default_admin_role;
+    before(async () => {
+        [deployerAddress, playerAddress, player2Address, creator1Address, staker1] = await ethers.getSigners();
 
-    var nftAssetData;
-    const zeroAddress = "0x0000000000000000000000000000000000000000";
+        AccessControlManager = await ethers.getContractFactory("AccessControlManager");
+        ContentStorage = await ethers.getContractFactory("ContentStorage");
+        Content = await ethers.getContractFactory("Content");
+        ContentManager = await ethers.getContractFactory("ContentManager");
+        ContentFactory = await ethers.getContractFactory("ContentFactory");
+        NftEscrow = await ethers.getContractFactory("NftEscrow");
+        RawrToken = await ethers.getContractFactory("RawrToken");
+        Erc20Escrow = await ethers.getContractFactory("Erc20Escrow");
+        Orderbook = await ethers.getContractFactory("Orderbook");
+        ExecutionManager = await ethers.getContractFactory("ExecutionManager");
+        AddressResolver = await ethers.getContractFactory("AddressResolver");
+        ExchangeFeesEscrow = await ethers.getContractFactory("ExchangeFeesEscrow");
+        RoyaltyManager = await ethers.getContractFactory("RoyaltyManager");
+        Exchange = await ethers.getContractFactory("Exchange");
+        MockStaking = await ethers.getContractFactory("MockStaking");
 
-    beforeEach(async () => {
-        registry = await ContractRegistry.new();
-        await registry.__ContractRegistry_init();
-        tagsManager = await TagsManager.new();
-        await tagsManager.__TagsManager_init(registry.address);
-        
-        // Set up NFT Contract
-        accessControlManager = await AccessControlManager.new();
-        await accessControlManager.__AccessControlManager_init();
-        contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
-        content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
-        await contentStorage.setParent(content.address);
-        
-        // Setup content manager
-        contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
-        await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.setParent(content.address);
+        originalAccessControlManager = await AccessControlManager.deploy();
+        originalContent = await Content.deploy();
+        originalContentStorage = await ContentStorage.deploy();
+        originalContentManager = await ContentManager.deploy();
+    
+        // Initialize Clone Factory
+        contentFactory = await upgrades.deployProxy(ContentFactory, [originalContent.address, originalContentManager.address, originalContentStorage.address, originalAccessControlManager.address]);
+            
+        resolver = await upgrades.deployProxy(AddressResolver, []);
+    });
 
+    async function ContentContractSetup() {
+        var tx = await contentFactory.createContracts(creator1Address.address, 20000, "arweave.net/tx-contract-uri");
+        var receipt = await tx.wait();
+        var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
+
+        // To figure out which log contains the ContractDeployed event
+        content = await Content.attach(deployedContracts[0].args.content);
+        contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
+            
         // Add 2 assets
+        // Asset 1 has 200 basis points towards creator 1
+        // Asset 2 has 200 basis points towards creator 1, 100 basis points towards creator 2
+        var asset = [
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, creator1Address.address, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+        ];
+
         await contentManager.addAssetBatch(asset);
-        
-        nftAssetData = [content.address, 2];
-
-        // Setup Content Escrow
-        escrowContent = await EscrowNFTs.new();
-        await escrowContent.__EscrowNFTs_init({from: deployerAddress});
-
-        // Setup RAWR token and Escrow
-        rawrToken = await RawrToken.new();
-        await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
-        escrowRawr = await EscrowERC20.new();
-        await escrowRawr.__EscrowERC20_init(rawrToken.address, {from: deployerAddress});
-        feePool = await ExchangeFeePool.new();
-        await feePool.__ExchangeFeePool_init(web3.utils.toWei('0.003', 'ether'), {from: deployerAddress});
-
-        // Setup Orderbook Storage
-        orderbookStorage = await OrderbookStorage.new();
-        await orderbookStorage.__OrderbookStorage_init({from: deployerAddress});
-
-        manager_role = await escrowRawr.MANAGER_ROLE();
-        default_admin_role = await escrowRawr.DEFAULT_ADMIN_ROLE();
-
-        // Setup Address Registry
-        registry = await AddressRegistry.new();
-        await registry.__AddressRegistry_init({from: deployerAddress});
-
-        // register the royalty manager
-        var addresses = [escrowRawr.address, escrowContent.address, orderbookStorage.address, feePool.address];
-        var escrowIds = ["0xd4df6855", "0x13534f58", "0xe22271ab", "0x018d6f5c"];
-        await registry.registerAddress(escrowIds, addresses, {from: deployerAddress});
-
-        // Create and Register the execution manager
-        executionManager = await ExecutionManager.new();
-        await executionManager.__ExecutionManager_init(registry.address, {from: deployerAddress});
-        await escrowContent.registerManager(executionManager.address, {from:deployerAddress});
-        await escrowRawr.registerManager(executionManager.address, {from:deployerAddress});
-        await orderbookStorage.registerManager(executionManager.address, {from:deployerAddress});
-        
-        // Create and Register the orderbook manager
-        orderbookManager = await OrderbookManager.new();
-        await orderbookManager.__OrderbookManager_init(registry.address, {from: deployerAddress});
-        await orderbookStorage.registerManager(orderbookManager.address, {from:deployerAddress})
-        
-        // Create and Register the Royalty Manager
-        royaltyManager = await RoyaltyManager.new();
-        await royaltyManager.__RoyaltyManager_init(registry.address, {from: deployerAddress});
-        await escrowRawr.registerManager(royaltyManager.address, {from:deployerAddress})
-        await feePool.registerManager(royaltyManager.address, {from:deployerAddress});
-        
-        // make deployer the manager of the fee pool
-        await feePool.registerManager(deployerAddress, {from:deployerAddress});
-
-        // add funds
-        await feePool.updateDistributionFunds([stakingFund], [web3.utils.toWei('1', 'ether')], {from:deployerAddress});
-
-        // Create the exchange contract
-        exchange = await Exchange.new();
-        await exchange.__Exchange_init(
-            royaltyManager.address,
-            orderbookManager.address,
-            executionManager.address,
-            {from: deployerAddress});
-        await royaltyManager.transferOwnership(exchange.address, {from: deployerAddress});
-        await orderbookManager.transferOwnership(exchange.address, {from: deployerAddress});
-        await executionManager.transferOwnership(exchange.address, {from: deployerAddress});
-        
-        // Give player 1 20000 RAWR tokens
-        await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
-        await rawrToken.transfer(player2Address, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
 
         // Mint an asset
-        var mintData = [playerAddress, [1, 2], [10, 1], 0, zeroAddress, []];
-        await contentManager.mintBatch(mintData, {from: deployerAddress});
+        var mintData = [playerAddress.address, [1, 2], [10, 1], 0, ethers.constants.AddressZero, []];
+        await contentManager.mintBatch(mintData);
         
-        mintData = [player2Address, [1, 2], [10, 10], 0, zeroAddress, []];
-        await contentManager.mintBatch(mintData, {from: deployerAddress});
+        mintData = [player2Address.address, [1, 2], [10, 10], 0, ethers.constants.AddressZero, []];
+        await contentManager.mintBatch(mintData);
+    }
 
-        // Set contract royalties
-        var assetRoyalty = [[creator2Address, web3.utils.toWei('0.02', 'ether')]];
-        await contentManager.setContractRoyalties(assetRoyalty);
-    });
-
-    it('Check if Exchange was deployed properly', async () => {
-        assert.equal(
-            exchange.address != 0x0,
-            true,
-            "Exchange was not deployed properly.");
-    });
-
-    it('Place buy order', async () => {
-        var orderData = [
-            [content.address, 1],
-            player2Address,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            1,
-            true
-        ];
-
-        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
-
-        var orderPlacedEvents = await exchange.placeOrder(orderData, {from: player2Address});
-        TruffleAssert.eventEmitted(
-            orderPlacedEvents,
-            'OrderPlaced'
-        );
-
-        var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
-
-        order = await exchange.getOrder(orderId);
-        assert.equal(
-            order.owner,
-            player2Address,
-            "Buy Order was placed");
-
-        assert.equal(
-            await escrowRawr.escrowedTokensByOrder(orderId),
-            web3.utils.toWei('1000', 'ether'),
-            "1000 RAWR tokens were not escrowed");
-
-        assert.equal(
-            await rawrToken.balanceOf(escrowRawr.address),
-            web3.utils.toWei('1000', 'ether'),
-            "Escrow Should own 1000 tokens");
-    });
-
-    it('Place sell order', async () => {
-        var orderData = [
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            1,
-            false
-        ];
-
-        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:playerAddress});
+    async function RawrTokenSetup() {
+        // Setup RAWR token
+        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
         
-        var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
-        TruffleAssert.eventEmitted(
-            orderPlacedEvents,
-            'OrderPlaced'
-        );
-
-        var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
-
-        order = await exchange.getOrder(orderId);
-        assert.equal(
-            order.owner,
-            playerAddress,
-            "Sell Order was placed");
-
-        assert.equal(
-            await escrowContent.escrowedAssetsByOrder(orderId),
-            1,
-            "1 NFT was not escrowed");
-
-        assert.equal(
-            await content.balanceOf(escrowContent.address, 1),
-            1,
-            "Escrow Should own 1 asset in the Content contract");
-    });
-
-    it('Delete Orders', async () => {
-        var orderData = [
-            [content.address, 1],
-            player2Address,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            1,
-            true
-        ];
-
-        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
-
-        var orderPlacedEvents = await exchange.placeOrder(orderData, {from: player2Address});
-        TruffleAssert.eventEmitted(
-            orderPlacedEvents,
-            'OrderPlaced'
-        );
-        var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
-
-        // var storedOrder = await exchange.getOrder(orderId);
-        // console.log(storedOrder);
-
-        var orderDeleted = await exchange.deleteOrders(orderId, {from: player2Address});
-        TruffleAssert.eventEmitted(
-            orderDeleted,
-            'OrderDeleted'
-        );
-
-        assert.equal(
-            await escrowRawr.escrowedTokensByOrder(orderId),
-            0,
-            "1000 RAWR tokens were not escrowed");
-
-        assert.equal(
-            await rawrToken.balanceOf(escrowRawr.address),
-            0,
-            "Escrow Should own 1000 tokens");
-            
-        assert.equal(
-            (await rawrToken.balanceOf(player2Address)).toString(),
-            web3.utils.toWei('10000', 'ether').toString(),
-            "Escrow Should own 1000 tokens");
-    });
-
-    it('Fill buy order', async () => {
-        var orderData = [
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            1,
-            true
-        ];
-
-        // Player 1 Creates a buy order for an asset
-        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
-        var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
-        TruffleAssert.eventEmitted(
-            orderPlacedEvents,
-            'OrderPlaced'
-        );
-        var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
-
-        // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:player2Address});
-        var buyOrderFilled = await exchange.fillBuyOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
-        TruffleAssert.eventEmitted(
-            buyOrderFilled,
-            'BuyOrdersFilled'
-        );
+        // Give player 1 20000 RAWR tokens
+        await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
+        await rawrToken.transfer(player2Address.address, ethers.BigNumber.from(10000).mul(_1e18));
         
-        // platform has 30 basis points and creator has 200 basis points from royalties so player2Address should only have
-        // 10000 (initial) + 977 from the sale of their asset
-        assert.equal(
-            (await rawrToken.balanceOf(player2Address)).toString(),
-            web3.utils.toWei('10977', 'ether').toString(),
-            "Player should have received the 977 tokens as payment");
+        // exchange.addToken
+        await exchange.addSupportedToken(rawrToken.address);
+    }
 
-        assert.equal(
-            await feePool.totalFeePool(rawrId),
-            web3.utils.toWei('3', 'ether'),
-            "Fee Pool didn't store the correct amount of RAWR tokens.");
-            
-        assert.equal(
-            await rawrToken.balanceOf(feePool.address),
-            web3.utils.toWei('3', 'ether'),
-            "Fee Pool doesn't hold the correct amount of RAWR tokens.");
+    async function ExchangeSetup() {
+        // Setup Content Escrow
+        nftEscrow = await upgrades.deployProxy(NftEscrow, []);
+        tokenEscrow = await upgrades.deployProxy(Erc20Escrow, []);
+        feesEscrow = await upgrades.deployProxy(ExchangeFeesEscrow, [resolver.address]);
+
+        orderbook = await upgrades.deployProxy(Orderbook, [resolver.address]);
+        executionManager = await upgrades.deployProxy(ExecutionManager, [resolver.address]);
+        royaltyManager = await upgrades.deployProxy(RoyaltyManager, [resolver.address]);
+        
+        staking = await MockStaking.deploy(resolver.address);
+
+        // register the exchange contracts on the address resolver
+        var addresses = [tokenEscrow.address, nftEscrow.address, feesEscrow.address, orderbook.address, executionManager.address, royaltyManager.address, staking.address];
+        var escrowIds = ["0x29a264aa", "0x87d4498b", "0x7f170836", "0xd9ff7618", "0x018869a9", "0x2c7e992e", "0x1b48faca"];
+        await resolver.registerAddress(escrowIds, addresses);
+
+        // Register the managers
+        await nftEscrow.registerManager(executionManager.address);
+        await tokenEscrow.registerManager(executionManager.address);
+        await tokenEscrow.registerManager(royaltyManager.address);
+        await feesEscrow.registerManager(royaltyManager.address);
+        await feesEscrow.registerManager(staking.address);
+        
+        // add stakers
+        await staking.connect(staker1).stake(ethers.BigNumber.from(100).mul(_1e18));
+        await feesEscrow.setRate(3000);
+
+        exchange = await upgrades.deployProxy(Exchange, [royaltyManager.address, orderbook.address, executionManager.address]);
+        await royaltyManager.transferOwnership(exchange.address);
+        await orderbook.transferOwnership(exchange.address);
+        await executionManager.transferOwnership(exchange.address);
+    }
+
+    beforeEach(async () => {
+        await ExchangeSetup();
     });
 
-    it('Fill sell order', async () => {
-        var orderData = [
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            1,
-            false
-        ];
+    describe("Basic Tests", () => {
+        it('Check if Exchange was deployed properly', async () => {
+            expect(exchange.address).not.equal(ethers.constants.AddressZero);
+        });
+    });
 
-        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:playerAddress});
-        var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
-        TruffleAssert.eventEmitted(
-            orderPlacedEvents,
-            'OrderPlaced'
-        );
-
-        var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
-
-        // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: player2Address});
-        var sellOrderFilled = await exchange.fillSellOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
+    describe("Functional Tests", () => {
+        it('Place buy order', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
     
-        TruffleAssert.eventEmitted(
-            sellOrderFilled,
-            'SellOrdersFilled'
-        );
-        
-        // Player 2 originally has 10, but after buying 1 more, he should have 11
-        assert.equal(
-            await content.balanceOf(player2Address, 1),
-            11,
-            "Player 2 didn't properly receive his purchased asset.");
+            var orderData = [
+                [content.address, 1],
+                player2Address.address,
+                rawrToken.address,
+                ethers.BigNumber.from(1000).mul(_1e18),
+                1,
+                true
+            ];
+    
+            await rawrToken.connect(player2Address).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
+    
+            var tx = await exchange.connect(player2Address).placeOrder(orderData);
+            var receipt = await tx.wait();
+            var ordersPlaced = receipt.events?.filter((x) => {return x.event == "OrderPlaced"});
+            var orderId = ordersPlaced[0].args.orderId;
+    
+            order = await exchange.getOrder(orderId);
+            expect(order.owner).to.equal(player2Address.address);
+    
+            var tokenEscrowAddr = await exchange.tokenEscrow();
+            expect(tokenEscrowAddr).to.equal(tokenEscrow.address);
+    
+            exchangeTokenEscrow = await Erc20Escrow.attach(tokenEscrowAddr);
+            expect(await exchangeTokenEscrow.escrowedTokensByOrder(orderId)).to.equal(ethers.BigNumber.from(1000).mul(_1e18));
+            expect(await rawrToken.balanceOf(exchangeTokenEscrow.address)).to.equal(ethers.BigNumber.from(1000).mul(_1e18));
+        });
+
+        it('Place sell order', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+            var orderData = [
+                [content.address, 1],
+                playerAddress.address,
+                rawrToken.address,
+                ethers.BigNumber.from(1000).mul(_1e18),
+                1,
+                false
+            ];
+    
+            await content.connect(playerAddress).setApprovalForAll(await exchange.nftsEscrow(), true);
             
-        assert.equal(
-            await feePool.totalFeePool(rawrId),
-            web3.utils.toWei('3', 'ether'),
-            "Fee Pool didn't store the correct amount of RAWR tokens.");
+            var tx = await exchange.connect(playerAddress).placeOrder(orderData);
+            var receipt = await tx.wait();
+            var ordersPlaced = receipt.events?.filter((x) => {return x.event == "OrderPlaced"});
+            var orderId = ordersPlaced[0].args.orderId;
+                
+            order = await exchange.getOrder(orderId);
+            expect(order.owner).to.equal(playerAddress.address);
+    
+            var nftEscrowAddr = await exchange.nftsEscrow();
+            expect(nftEscrowAddr).to.equal(nftEscrow.address);
+    
+            var exchangeNftEscrow = await NftEscrow.attach(nftEscrowAddr);
+            expect(await exchangeNftEscrow.escrowedAmounts(orderId)).to.equal(1);
+            expect(await content.balanceOf(exchangeNftEscrow.address, 1)).to.equal(1);
+        });
+        
+        it('Delete Orders', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+
+            var orderData = [
+                [content.address, 1],
+                player2Address.address,
+                rawrToken.address,
+                ethers.BigNumber.from(1000).mul(_1e18),
+                1,
+                true
+            ];
+
+            await rawrToken.connect(player2Address).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
+
+            var tx = await exchange.connect(player2Address).placeOrder(orderData);
+            var receipt = await tx.wait();
+            var ordersPlaced = receipt.events?.filter((x) => {return x.event == "OrderPlaced"});
+            var orderId = ordersPlaced[0].args.orderId;
+
+            expect(await exchange.connect(player2Address).cancelOrders([orderId]))
+                .to.emit(exchange, 'OrdersDeleted');
+
+            var tokenEscrowAddr = await exchange.tokenEscrow();
+            var exchangeTokenEscrow = await Erc20Escrow.attach(tokenEscrowAddr);
+            expect(await exchangeTokenEscrow.escrowedTokensByOrder(orderId)).to.equal(0);
+            expect(await rawrToken.balanceOf(exchangeTokenEscrow.address)).to.equal(0);
+            expect(await rawrToken.balanceOf(player2Address.address)).to.equal(ethers.BigNumber.from(10000).mul(_1e18));
+        });
+    });
+
+    describe("Fill Orders", () => {
+        it('Fill buy order', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+    
+            var orderData = [
+                [content.address, 1],
+                playerAddress.address,
+                rawrToken.address,
+                ethers.BigNumber.from(1000).mul(_1e18),
+                1,
+                true
+            ];
+    
+            // Player 1 Creates a buy order for an asset
+            await rawrToken.connect(playerAddress).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
+
+            var tx = await exchange.connect(playerAddress).placeOrder(orderData);
+            var receipt = await tx.wait();
+            var ordersPlaced = receipt.events?.filter((x) => {return x.event == "OrderPlaced"});
+            var orderId = ordersPlaced[0].args.orderId;
+
+    
+            // player 2 fills the buy order by selling the asset and receiving payment minus royalties
+            await content.connect(player2Address).setApprovalForAll(await exchange.nftsEscrow(), true);
             
-        assert.equal(
-            await rawrToken.balanceOf(feePool.address),
-            web3.utils.toWei('3', 'ether'),
-            "Fee Pool doesn't hold the correct amount of RAWR tokens.");
+            expect(await exchange.connect(player2Address).fillBuyOrder([orderId], [1]))
+                .to.emit(exchange, 'BuyOrdersFilled');
+            
+            // platform has 30 basis points and creator has 200 basis points from royalties so player2Address should only have
+            // 10000 (initial) + 977 from the sale of their asset
+            expect(await rawrToken.balanceOf(player2Address.address)).to.equal(ethers.BigNumber.from(10977).mul(_1e18));
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
+            expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
+        });
+
+        it('Fill sell order', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+    
+            var orderData = [
+                [content.address, 1],
+                playerAddress.address,
+                rawrToken.address,
+                ethers.BigNumber.from(1000).mul(_1e18),
+                1,
+                false
+            ];
+    
+            await content.connect(playerAddress).setApprovalForAll(await exchange.nftsEscrow(), true);
+            
+            var tx = await exchange.connect(playerAddress).placeOrder(orderData);
+            var receipt = await tx.wait();
+            var ordersPlaced = receipt.events?.filter((x) => {return x.event == "OrderPlaced"});
+            var orderId = ordersPlaced[0].args.orderId;
+    
+            // player 2 fills the buy order by selling the asset and receiving payment minus royalties
+            await rawrToken.connect(player2Address).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
+
+            expect(await exchange.connect(player2Address).fillSellOrder([orderId], [1]))
+                .to.emit(exchange, 'SellOrdersFilled');
+            
+            // Player 2 originally has 10, but after buying 1 more, he should have 11
+            expect(await content.balanceOf(player2Address.address, 1)).to.equal(11);
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
+            expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
+        });
     });
 
-    it('Claim Fulfilled order', async () => {
-        var orderData = [
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            1,
-            true
-        ];
+    describe("Claim Orders", () => {
+        it('Claim Fulfilled order', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+    
+            var orderData = [
+                [content.address, 1],
+                playerAddress.address,
+                rawrToken.address,
+                ethers.BigNumber.from(1000).mul(_1e18),
+                1,
+                true
+            ];
+    
+            // Player 1 Creates a buy order for an asset
+            await rawrToken.connect(playerAddress).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
 
-        // Player 1 Creates a buy order for an asset
-        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
-        var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
-        TruffleAssert.eventEmitted(
-            orderPlacedEvents,
-            'OrderPlaced'
-        );
-        var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
+            // Place order, get order id
+            var tx = await exchange.connect(playerAddress).placeOrder(orderData);
+            var receipt = await tx.wait();
+            var ordersPlaced = receipt.events?.filter((x) => {return x.event == "OrderPlaced"});
+            var orderId = ordersPlaced[0].args.orderId;
+    
+            // player 2 fills the buy order by selling the asset and receiving payment minus royalties
+            await content.connect(player2Address).setApprovalForAll(await exchange.nftsEscrow(), true);
+            
+            expect(await exchange.connect(player2Address).fillBuyOrder([orderId], [1]))
+                .to.emit(exchange, 'BuyOrdersFilled');
+            
+            // Claim player 1's purchased asset
+            await exchange.connect(playerAddress).claimOrders([orderId]);
+            
+            // Player 1 originally has 10, but after buying 1 more, he should have 11
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(11);
+        });
+    
+        it('Claim Creator Royalties', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+    
+            var orderData = [
+                [content.address, 1],
+                playerAddress.address,
+                rawrToken.address,
+                ethers.BigNumber.from(1000).mul(_1e18),
+                1,
+                true
+            ];
+    
+            // Player 1 Creates a buy order for an asset
+            await rawrToken.connect(playerAddress).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
 
-        // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:player2Address});
-        var buyOrderFilled = await exchange.fillBuyOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
-        TruffleAssert.eventEmitted(
-            buyOrderFilled,
-            'BuyOrdersFilled'
-        );
-        
-        // Claim player 1's purchased asset
-        await exchange.claimOrders([orderId], {from: playerAddress});
-        
-        // Player 1 originally has 10, but after buying 1 more, he should have 11
-        assert.equal(
-            await content.balanceOf(playerAddress, 1),
-            11,
-            "Player 1 didn't properly receive his purchased asset.");
+            // Place order, get order id
+            var tx = await exchange.connect(playerAddress).placeOrder(orderData);
+            var receipt = await tx.wait();
+            var ordersPlaced = receipt.events?.filter((x) => {return x.event == "OrderPlaced"});
+            var orderId = ordersPlaced[0].args.orderId;
+    
+            // player 2 fills the buy order by selling the asset and receiving payment minus royalties
+            await content.connect(player2Address).setApprovalForAll(await exchange.nftsEscrow(), true);
+            expect(await exchange.connect(player2Address).fillBuyOrder([orderId], [1]))
+                .to.emit(exchange, 'BuyOrdersFilled');
+            
+            expect(await rawrToken.balanceOf(player2Address.address)).to.equal(ethers.BigNumber.from(10977).mul(_1e18));
+    
+            // check claimable royalty for creator address
+            var claimable = await exchange.connect(creator1Address).claimableRoyalties();
+            expect(claimable.tokens[0]).to.equal(rawrToken.address);
+            expect(claimable.amounts[0]).to.equal(ethers.BigNumber.from(20).mul(_1e18));
+    
+            await exchange.connect(creator1Address).claimRoyalties();
+            expect(await rawrToken.balanceOf(creator1Address.address)).to.equal(ethers.BigNumber.from(20).mul(_1e18));
+        });
+
     });
 
-    it('Claim Creator Royalties', async () => {
-        var orderData = [
-            [content.address, 1],
-            playerAddress,
-            rawrId,
-            web3.utils.toWei('1000', 'ether'),
-            1,
-            true
-        ];
 
-        // Player 1 Creates a buy order for an asset
-        await rawrToken.approve(await exchange.tokenEscrow(rawrId), web3.utils.toWei('1000', 'ether'), {from: playerAddress});
-        var orderPlacedEvents = await exchange.placeOrder(orderData, {from: playerAddress});
-        TruffleAssert.eventEmitted(
-            orderPlacedEvents,
-            'OrderPlaced'
-        );
-        var orderId = orderPlacedEvents.logs[0].args.orderId.toString();
-
-        // player 2 fills the buy order by selling the asset and receiving payment minus royalties
-        await content.setApprovalForAll(await exchange.nftsEscrow(), true, {from:player2Address});
-        var buyOrderFilled = await exchange.fillBuyOrder([orderId], [1], [content.address, 1], rawrId, {from: player2Address});
-        TruffleAssert.eventEmitted(
-            buyOrderFilled,
-            'BuyOrdersFilled'
-        );
-        
-        assert.equal(
-            (await rawrToken.balanceOf(player2Address)).toString(),
-            web3.utils.toWei('10977', 'ether').toString(),
-            "Player should have received the 977 tokens as payment");
-
-        // check claimable royalty for creator address
-        assert.equal(
-            await exchange.claimableRoyaltyAmount(rawrId, {from: creator1Address}),
-            web3.utils.toWei('20', 'ether').toString(),
-            "Creator's address doesn't have the correct amount of royalty");
-
-        await exchange.claimRoyalties(rawrId, {from: creator1Address});
-        assert.equal(
-            (await rawrToken.balanceOf(creator1Address)).toString(),
-            web3.utils.toWei('20', 'ether').toString(),
-            "Creator's address should own 20 tokens");
-    });
     
 });

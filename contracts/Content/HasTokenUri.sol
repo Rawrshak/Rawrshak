@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -9,13 +9,6 @@ import "./ContentSubsystemBase.sol";
 
 abstract contract HasTokenUri is ContentSubsystemBase {
     using StringsUpgradeable for uint256;
-
-    // Todo: Fix this
-    /******************** Constants ********************/
-    /*
-     * bytes4(keccak256('getLatestUriVersion(uint256)')) == 0x0a64da48
-     */
-    bytes4 private constant _INTERFACE_ID_TOKEN_URI = 0xcac843cb;
 
     /***************** Stored Variables *****************/
     // Optional mapping for token URIs
@@ -28,7 +21,6 @@ abstract contract HasTokenUri is ContentSubsystemBase {
 
     /******************** Public API ********************/
     function __HasTokenUri_init_unchained() internal initializer {
-        _registerInterface(_INTERFACE_ID_TOKEN_URI);
     }
 
     /**
@@ -36,7 +28,7 @@ abstract contract HasTokenUri is ContentSubsystemBase {
      * @param _tokenId uint256 ID of the token to query
      * @param _isPublic bool get the private or public token id
      */
-    function getLatestUriVersion(uint256 _tokenId, bool _isPublic) public view returns (uint256) {
+    function _getLatestUriVersion(uint256 _tokenId, bool _isPublic) internal view returns (uint256) {
         if (_isPublic) {
             return publicUris[_tokenId].version;
         }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "./ContentSubsystemBase.sol";
@@ -9,9 +9,9 @@ abstract contract HasContractUri is IContractUri, ContentSubsystemBase {
 
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('contractUri()')) == 0xe8a3d485
+     * bytes4(keccak256('contractUri()')) == 0xc0e24d5e
      */
-    bytes4 private constant _INTERFACE_ID_CONTRACT_URI = 0xe8a3d485;
+    bytes4 private constant INTERFACE_ID_CONTRACT_URI = 0xc0e24d5e;
 
     /***************** Stored Variables *****************/
     // Contract Information Uri
@@ -23,7 +23,7 @@ abstract contract HasContractUri is IContractUri, ContentSubsystemBase {
     /******************** Public API ********************/
     function __HasContractUri_init_unchained(string memory _uri) internal initializer {
         contractUri = _uri;
-        _registerInterface(_INTERFACE_ID_CONTRACT_URI);
+        _registerInterface(INTERFACE_ID_CONTRACT_URI);
     }
 
     /**************** Internal Functions ****************/

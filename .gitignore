@@ -15,3 +15,10 @@ data
 /bin
 /obj/
 /Game
+
+# yarn
+yarn.lock
+
+# hardhat folders
+cache
+artifacts

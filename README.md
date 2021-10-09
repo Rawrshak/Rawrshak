@@ -17,26 +17,21 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     Get all packages:
         yarn install
 
-## Truffle and Ganache
-    [Truffle Suite](https://www.trufflesuite.com/truffle)
-    We're using Truffle as the development framework for ethereum
+## HardHat, Waffle, and Ethers.js
+    [Hardhat](https://hardhat.org/getting-started/)
+    [Waffle](https://ethereum-waffle.readthedocs.io/en/latest/getting-started.html)
+    [Ethers.js](https://docs.ethers.io/v5/getting-started/)
+    We're using Hardhat as the development framework for ethereum
 
     Install:
-        npm install truffle -g 
-        npm install -g truffle ganache-cli
-
-## Truffle Assertions (https://www.npmjs.com/package/truffle-assertions)
-    Helper functions for unit testing w/ truffle. Allows you to setup your test functions to pass on a failure (like function revert due to require statement failing).
-
-    Install: 
-        npm install truffle-assertions
-        
+        npm install --save-dev hardhat
+        npm install --save-dev @nomiclabs/hardhat-waffle ethereum-waffle chai @nomiclabs/hardhat-ethers ethers
 ## OpenZeppelin (https://github.com/OpenZeppelin/openzeppelin-contracts)
     Helpful standard solidity library
     
     Install:
-        npm install @openzeppelin/contracts
         npm install @openzeppelin/contracts-upgradeable
+        npm install @openzeppelin/test-helpers
 
 ## Visual Studio Code
     This is lightweight IDE that I use.
@@ -96,24 +91,22 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
 
     Everything should be configured properly. If you have any issues, contact [Christian](gcbsumid@gmail.com)
 
-### Truffle Commands
-    truffle develop
-        - starts the truffle server
-    truffle compile
-        - compiles the smart contracts in the contracts folder
-    truffle migrate --reset
-        - migrate and replace existing deployed contracts
-        - this compiles and runs the files in the migrations folder
-    truffle test
-        - runs all the tests in the test folder
-    truffle test ./test/<test>.js
-        - runs tests in the specific file
-    truffle migrate --network <ropsten>
-        - migrates and deploys contract to the ropsten test network
-    truffle run contract-size 
+### Hardhat Commands
+    npx hardhat compile
+        - compiles the smart contracts
+    npx hardhat node
+        - starts a local node
+    npx hardhat test
+        - runs all tests in the test folder
+    npx hardhat test <specific test>
+        - runs a specific test inside the test folder
 
-    Notes: if you start the truffle server, to use the commands above, you just need to omit the 'truffle'
-    ex. running 'compile' in the truffle server will compile the smart contracts in the contracts folder
+## To deploy to a local node
+    npx hardhat node
+    npx hardhat run --network localhost scripts/deploy.js
+
+## To deploy to a specific network
+    npx hardhat run --network <target network> scripts/deploy.js
 
 ## To run a Deterministic Ganache ethereum blockchain
     1. Open a new powershell/command prompt
@@ -125,11 +118,3 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     
 ## To set up the local graph node:
     1. refer to the [Rawrshak Graph Node project](https://github.com/gcbsumid/rawrshak-graphnode) for instructions
-
-## Running Tests
-    truffle develop
-        - to open the truffle server
-    test
-        - to run all the tests inside the truffle server
-    test <*.js>
-        - to run specific tests inside the javascript file inside the truffle server

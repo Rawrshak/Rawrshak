@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
-import "../utils/LibConstants.sol";
+import "../utils/LibInterfaces.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-
+import "../content/interfaces/IContent.sol";
 
 library LibOrder {
     using AddressUpgradeable for address;
@@ -17,35 +17,55 @@ library LibOrder {
         uint256 tokenId;
     }
 
-    struct OrderData {
+    enum OrderState {
+        READY,
+        PARTIALLY_FILLED,
+        FILLED,
+        CLAIMED,
+        CANCELLED
+    }
+
+    struct Order {
         AssetData asset;
         address owner;
-        bytes4 token;
+        address token;
+        uint256 price;
+        uint256 amountOrdered;
+        uint256 amountFilled;
+        bool isBuyOrder;
+        OrderState state;
+    }
+
+    struct OrderInput {
+        AssetData asset;
+        address owner;
+        address token;
         uint256 price;
         uint256 amount;
         bool isBuyOrder;
     }
 
-    function verifyOrderData(OrderData calldata _order, address _sender) public view {
+    function verifyOrderInput(OrderInput memory _order, address _sender) internal view {
         require(_order.owner == _sender, "Invalid sender.");
         require(_order.price > 0 && _order.amount > 0, "Invalid input price or amount");
         verifyAssetData(_order.asset);
     }
 
-    function verifyAssetData(AssetData calldata _asset) public view {
+    function verifyAssetData(AssetData memory _asset) internal view {
         require(_asset.contentAddress != address(0),"Invalid Address.");
         require(_asset.contentAddress.isContract(), "Invalid asset parameter.");
+
+        // require support for IERC1155Upgradeable
         require(
-            (_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_CONTENT)) || 
-            (_asset.contentAddress.supportsInterface(LibConstants._INTERFACE_ID_UNIQUE_CONTENT)),
+            _asset.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId),
             "Invalid contract interface.");
     }
 
     function _verifyOrders(
-        OrderData storage _order,
+        OrderInput storage _order,
         AssetData memory _asset,
-        bytes4 _token,
-        bool _isBuyOrder) public view returns (bool) {
+        address _token,
+        bool _isBuyOrder) internal view returns (bool) {
         if (_order.asset.contentAddress == _asset.contentAddress &&
             _order.asset.tokenId == _asset.tokenId && 
             _order.token == _token &&
@@ -54,5 +74,4 @@ library LibOrder {
             }
         return false;
     }
-
 }

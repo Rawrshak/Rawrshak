@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
-import "../../libraries/LibRoyalties.sol";
 import "../../libraries/LibAsset.sol";
-import "./IRoyaltyProvider.sol";
 import "./IContentSubsystemBase.sol";
 import "./IContractUri.sol";
 
-interface IContentStorage is IRoyaltyProvider, IContractUri {
+interface IContentStorage is IContractUri {
 
     /*********************** Events *********************/
     event AssetsAdded(address indexed parent, LibAsset.CreateData[] assets);
@@ -23,6 +21,12 @@ interface IContentStorage is IRoyaltyProvider, IContractUri {
 
     function hiddenUri(uint256 _tokenId, uint256 _version) external view  returns (string memory);
 
+    function getContractRoyalty() external view returns (address, uint24);
+    
+    function getRoyalty(uint256 _tokenId) external view returns (address, uint24);
+
+    function getLatestUriVersion(uint256 _tokenId, bool _isPublic) external view returns (uint256);
+
     /******** Mutative Functions ********/
     function updateSupply(uint256 _tokenId, uint256 _supply) external;
     
@@ -32,7 +36,7 @@ interface IContentStorage is IRoyaltyProvider, IContractUri {
 
     function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external;
 
-    function setContractRoyalties(LibRoyalties.Fees[] memory _fee) external;
+    function setContractRoyalty(address _receiver, uint24 _rate) external;
 
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external;
 }

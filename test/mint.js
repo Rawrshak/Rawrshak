@@ -1,4 +1,4 @@
-const EIP712 = require("./EIP712");
+const { ethers } = require("hardhat");
 
 const Types = {
 	MintData: [
@@ -10,15 +10,24 @@ const Types = {
 	]
 };
 
-async function sign(to, tokenIds, amounts, nonce, signer, verifyingContract) {
+async function sign(_to, _tokenIds, _amounts, _nonce, _signer, _contract) {
 	const chainId = Number(await web3.eth.getChainId());
-	const data = EIP712.createTypeData({
-		name: "MintData",
-		version: "1",
-		chainId,
-		verifyingContract
-	}, 'MintData', { to, tokenIds, amounts, nonce, signer }, Types);
-	return (await EIP712.signTypedData(web3, signer, data)).sig;
+    const domain = {
+        name: "MintData",
+        version: "1",
+        chainId: chainId,
+        verifyingContract: _contract
+    };
+
+    const value = {
+        to: _to,
+        tokenIds: _tokenIds,
+        amounts: _amounts,
+        nonce: _nonce,
+        signer: _signer
+    };
+
+    return await ethers.provider.getSigner(_signer)._signTypedData(domain, Types, value);
 }
 
 module.exports = { sign }

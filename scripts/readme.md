@@ -1,8 +1,22 @@
 # Subgraph Deployment Scripts
 
-You need to move these scripts to the migrations folder to be able to use them like so:
+## Hardhat commands
+    npx hardhat compile
+        - compiles the smart contracts
+    npx hardhat node
+        - starts a local node
 
-truffle migrate --compile-all --f 1 --to 16
+## Local Node
+    npx hardhat node
 
-This instruction runs the scripts from script 1 to script 16. Change the "from" and "to"
-parameters as needed.
+## Deploy System Contracts
+
+### Deploy to Local Node
+    npx hardhat run --network localhost scripts/deploy.js
+
+### Deploy to live network
+    npx hardhat run --network <network> scripts/deploy.js
+
+## Deploy Test Data
+    npx hardhat run --network localhost scripts/distribute_rawr_tokens.js
+    npx hardhat run --network localhost scripts/subgraph_data.js

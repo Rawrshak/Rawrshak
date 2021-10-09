@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
-import "../../libraries/LibRoyalties.sol";
-import "./IRoyaltyProvider.sol";
 import "../../libraries/LibAsset.sol";
 import "./IAccessControlManager.sol";
 import "./IContractUri.sol";
 
-interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
+interface IContent is IContractUri, IERC1155Upgradeable {
 
     /*********************** Events *********************/
     event Mint(address operator, LibAsset.MintData data);
@@ -16,17 +14,15 @@ interface IContent is IContractUri, IRoyaltyProvider, IERC1155Upgradeable {
     event Burn(address operator, LibAsset.BurnData data);
     
     /******** View Functions ********/
-    function name() external view returns (string memory);
-    
-    function symbol() external view returns (string memory);
-    
-    function accessControlManager() external view returns (IAccessControlManager);
-
-    function supply(uint256 _tokenId) external view returns (uint256);
+    function totalSupply(uint256 _tokenId) external view returns (uint256);
     
     function maxSupply(uint256 _tokenId) external view returns (uint256);
 
     function uri(uint256 _tokenId, uint256 _version) external view returns (string memory);
+
+    function contractRoyalty() external view returns (address receiver, uint24 rate);
+    
+    function userMintNonce() external view returns (uint256);
 
     /******** Mutative Functions ********/
 

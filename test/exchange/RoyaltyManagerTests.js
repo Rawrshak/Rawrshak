@@ -1,269 +1,179 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const RawrToken = artifacts.require("RawrToken");
-const Content = artifacts.require("Content");
-const ContentStorage = artifacts.require("ContentStorage");
-const ContentManager = artifacts.require("ContentManager");
-const AccessControlManager = artifacts.require("AccessControlManager");
-const EscrowERC20 = artifacts.require("EscrowERC20");
-const ExchangeFeePool = artifacts.require("ExchangeFeePool");
-const RoyaltyManager = artifacts.require("RoyaltyManager");
-const AddressRegistry = artifacts.require("AddressRegistry");
-const ContractRegistry = artifacts.require("ContractRegistry");
-const TagsManager = artifacts.require("TagsManager");
-const TruffleAssert = require("truffle-assertions");
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
 
-contract('Royalty Manager Contract', (accounts)=> {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        platformAddress,            // platform address fees
-        testManagerAddress,         // Only for putting in data for testing
-        creator1Address,            // content nft Address
-        creator2Address,            // creator Address
-        playerAddress,              // malicious address
-        stakingFund,                // staking fund address
-    ] = accounts;
+describe('Royalty Manager Contract', ()=> {
+    var deployerAddress, testManagerAddress, creatorAddress, playerAddress, staker1;
 
+    var resolver;
+    var contentFactory;
     var content;
-    var contentStorage;
     var contentManager;
-    var asset = [
-        [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 0, [[deployerAddress, web3.utils.toWei('0.02', 'ether')]]],
-        [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, []],
-    ];
 
-    var rawrId = "0xd4df6855";
     var rawrToken;
     var royaltyManager;
     var escrow;
-    var manager_role;
-    var default_admin_role;
-    var assetData;
+    const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
 
-    beforeEach(async () => {
-        registry = await ContractRegistry.new();
-        await registry.__ContractRegistry_init();
-        tagsManager = await TagsManager.new();
-        await tagsManager.__TagsManager_init(registry.address);
+    before(async () => {
+        [deployerAddress, testManagerAddress, creatorAddress, playerAddress, staker1] = await ethers.getSigners();
 
-        // Set up NFT Contract
-        accessControlManager = await AccessControlManager.new();
-        await accessControlManager.__AccessControlManager_init();
-        contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
-        content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
-        await contentStorage.setParent(content.address);
+        AccessControlManager = await ethers.getContractFactory("AccessControlManager");
+        ContentStorage = await ethers.getContractFactory("ContentStorage");
+        Content = await ethers.getContractFactory("Content");
+        ContentManager = await ethers.getContractFactory("ContentManager");
+        ContentFactory = await ethers.getContractFactory("ContentFactory");
+        AddressResolver = await ethers.getContractFactory("AddressResolver");
+        RawrToken = await ethers.getContractFactory("RawrToken");
+        MockStaking = await ethers.getContractFactory("MockStaking");
+        Erc20Escrow = await ethers.getContractFactory("Erc20Escrow");
+        ExchangeFeesEscrow = await ethers.getContractFactory("ExchangeFeesEscrow");
+        RoyaltyManager = await ethers.getContractFactory("RoyaltyManager");
+
+        originalAccessControlManager = await AccessControlManager.deploy();
+        originalContent = await Content.deploy();
+        originalContentStorage = await ContentStorage.deploy();
+        originalContentManager = await ContentManager.deploy();
+    
+        // Initialize Clone Factory
+        contentFactory = await upgrades.deployProxy(ContentFactory, [originalContent.address, originalContentManager.address, originalContentStorage.address, originalAccessControlManager.address]);
         
-        // Setup content manager
-        contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
-        await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.setParent(content.address);
+        resolver = await upgrades.deployProxy(AddressResolver, []);
+    });
 
+
+    async function ContentContractSetup() {
+        var tx = await contentFactory.createContracts(creatorAddress.address, 20000, "arweave.net/tx-contract-uri");
+        var receipt = await tx.wait();
+        var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
+
+        // To figure out which log contains the ContractDeployed event
+        content = await Content.attach(deployedContracts[0].args.content);
+        contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
+            
         // Add 2 assets
+        var asset = [
+            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+        ];
+
         await contentManager.addAssetBatch(asset);
-        
-        // Setup Content Contract Royalty
-        var assetRoyalty = [[creator1Address, web3.utils.toWei('0.02', 'ether')], [creator2Address, web3.utils.toWei('0.01', 'ether')]];
-        await contentManager.setContractRoyalties(assetRoyalty);
+    }
 
-        assetData = [content.address, 2];
-
+    async function RawrTokenSetup() {
         // Setup RAWR token
-        rawrToken = await RawrToken.new();
-        await rawrToken.__RawrToken_init(web3.utils.toWei('1000000000', 'ether'), {from: deployerAddress});
-        escrow = await EscrowERC20.new();
-        await escrow.__EscrowERC20_init(rawrToken.address, {from: deployerAddress});
-        feePool = await ExchangeFeePool.new();
-        await feePool.__ExchangeFeePool_init(web3.utils.toWei('0.003', 'ether'), {from: deployerAddress});
-
-        manager_role = await escrow.MANAGER_ROLE();
-        default_admin_role = await escrow.DEFAULT_ADMIN_ROLE();
-
-        registry = await AddressRegistry.new();
-        await registry.__AddressRegistry_init({from: deployerAddress});
-
-        // register the royalty manager
-        await registry.registerAddress(["0xd4df6855", "0x018d6f5c"], [escrow.address, feePool.address], {from: deployerAddress});
-
-        royaltyManager = await RoyaltyManager.new();
-        await royaltyManager.__RoyaltyManager_init(registry.address, {from: deployerAddress});
-        
-        // Register the royalty manager
-        await escrow.registerManager(royaltyManager.address, {from:deployerAddress});
-        await feePool.registerManager(royaltyManager.address, {from:deployerAddress});
-        
-        // Testing manager to create fake data
-        await escrow.registerManager(testManagerAddress, {from:deployerAddress})
-        await feePool.registerManager(testManagerAddress, {from:deployerAddress});
-
-        // add funds
-        await feePool.updateDistributionFunds([stakingFund], [web3.utils.toWei('1', 'ether')], {from:testManagerAddress});
+        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
         
         // Give player 1 20000 RAWR tokens
-        await rawrToken.transfer(playerAddress, web3.utils.toWei('20000', 'ether'), {from: deployerAddress});
-    });
+        await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
+    }
 
-    it('Check if Royalty Manager was deployed properly', async () => {
-        assert.equal(
-            royaltyManager.address != 0x0,
-            true,
-            "Royalty Manager was not deployed properly.");
-    });
-
-    it('Supports the Royalty Manager Interface', async () => {
-        // _INTERFACE_ID_ROYALTY_MANAGER = 0x0000000D
-        assert.equal(
-            await royaltyManager.supportsInterface("0x0000000D"),
-            true, 
-            "the Royalty manager doesn't support the RoyaltyManager interface");
-    });
-
-    it('Set Platform Fees and check', async () => {
-
-        TruffleAssert.eventEmitted(
-            await feePool.setRate(web3.utils.toWei('0.005', 'ether'), {from:testManagerAddress}),
-            'FeeUpdated'
-        );
-
-        assert.equal(
-            await feePool.rate(),
-            web3.utils.toWei('0.005', 'ether'), 
-            "updated Exchange Fees rate is incorrect.");
-    });
-
-    it('Deposit Royalty', async () => {
-        creators = [creator1Address, creator2Address];
-        amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
-
-        await rawrToken.approve(escrow.address, web3.utils.toWei('330', 'ether'), {from:playerAddress});
-        await royaltyManager.depositRoyalty(playerAddress, rawrId, creators, amounts, {from: deployerAddress});
-
-        assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
-            web3.utils.toWei('200', 'ether').toString(),
-            "Royalty was not deposited in Creator 1 address escrow."
-        );
+    async function RoyaltyManagerSetup() {
+        staking = await MockStaking.deploy(resolver.address);
+        await feesEscrow.registerManager(staking.address);
         
-        assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
-            web3.utils.toWei('100', 'ether').toString(),
-            "Royalty was not deposited in Creator 2 address escrow."
-        );
-
-        await royaltyManager.depositPlatformRoyalty(playerAddress, rawrId, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
+        // register the royalty manager
+        await resolver.registerAddress(["0x29a264aa", "0x7f170836", "0x1b48faca"], [escrow.address, feesEscrow.address, staking.address]);
         
-        assert.equal(
-            await rawrToken.balanceOf(feePool.address, {from: deployerAddress}),
-            web3.utils.toWei('30', 'ether').toString(),
-            "Exchange Fees not sent to the fee pool"
-        );
+        await staking.connect(staker1).stake(ethers.BigNumber.from(100).mul(_1e18));
+        await feesEscrow.setRate(3000);
 
-        assert.equal(
-            await feePool.totalFeePool(rawrId, {from: deployerAddress}),
-            web3.utils.toWei('30', 'ether').toString(),
-            "Exchange Fees not recorded in the fee pool"
-        );
-    });
-
-    it('Transfer Royalty from escrow to royalty owner', async () => {
-        // deposit 10000 RAWR tokens for Order 1 
+        // Register the royalty manager
+        await escrow.registerManager(royaltyManager.address);
+        await feesEscrow.registerManager(royaltyManager.address);
         
-        await rawrToken.approve(escrow.address, web3.utils.toWei('10000', 'ether'), {from:playerAddress});
-        await escrow.deposit(1, playerAddress, web3.utils.toWei('10000', 'ether'), {from: testManagerAddress});
+        // Testing manager to create fake data
+        await escrow.registerManager(testManagerAddress.address)
+        await feesEscrow.registerManager(testManagerAddress.address);
 
-        creators = [creator1Address, creator2Address];
-        amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
+        // add token support
+        await escrow.connect(testManagerAddress).addSupportedTokens(rawrToken.address);
+    }
 
-        await royaltyManager.transferRoyalty(rawrId, 1, creators, amounts, {from:deployerAddress});
-
-        await royaltyManager.transferPlatformRoyalty(rawrId, 1, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
-        assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
-            web3.utils.toWei('200', 'ether').toString(),
-            "Royalty was not deposited in Creator 1 address escrow."
-        );
-        
-        assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
-            web3.utils.toWei('100', 'ether').toString(),
-            "Royalty was not deposited in Creator 2 address escrow."
-        );
-        
-        // check if amounts were moved from the escrow for the order to claimable for the creator
-        assert.equal (
-            await escrow.escrowedTokensByOrder(1),
-            web3.utils.toWei('9670', 'ether').toString(), 
-            "Escrowed tokens for the Order was not updated."
-        );
-        
-        assert.equal(
-            await rawrToken.balanceOf(feePool.address, {from: deployerAddress}),
-            web3.utils.toWei('30', 'ether').toString(),
-            "Exchange Fees not sent to the fee pool"
-        );
-
-        assert.equal(
-            await feePool.totalFeePool(rawrId, {from: deployerAddress}),
-            web3.utils.toWei('30', 'ether').toString(),
-            "Exchange Fees not recorded in the fee pool"
-        );
-    });
-
-    it('Get Royalties for an asset', async () => {
-        var results = await royaltyManager.getRequiredRoyalties(assetData, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
-        assert.equal (
-            results[0].length, 2, 
-            "Incorrect amount of royalty accounts to pay"
-        );
-
-        assert.equal (
-            results[1][0].toString() == web3.utils.toWei('200', 'ether').toString() && 
-            results[1][1].toString() == web3.utils.toWei('100', 'ether').toString(), 
-            true, 
-            "Incorrect amount of royalty to pay"
-        );
-        
-        assert.equal (
-            results[2].toString() == web3.utils.toWei('9670', 'ether').toString(), 
-            true, 
-            "Incorrect amount remaining."
-        );
-
-    });
-
-    it('Claim Royalties', async () => {
-        creators = [creator1Address, creator2Address];
-        amounts = [web3.utils.toWei('200', 'ether'), web3.utils.toWei('100', 'ether')];
-
-        await rawrToken.approve(escrow.address, web3.utils.toWei('300', 'ether'), {from:playerAddress});
-        await royaltyManager.depositRoyalty(playerAddress, rawrId, creators, amounts, {from: deployerAddress});
-
-        // claim royalties
-        TruffleAssert.eventEmitted(
-            await royaltyManager.claimRoyalties(creator1Address, rawrId,  {from: deployerAddress}),
-            'RoyaltiesClaimed'
-        );
-
-        assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator1Address, rawrId, {from: creator1Address}),
-            0,
-            "Royalty was not claimed yet."
-        );
-        
-        TruffleAssert.eventEmitted(
-            await royaltyManager.claimRoyalties(creator2Address, rawrId,  {from: deployerAddress}),
-            'RoyaltiesClaimed'
-        );
-        
-        assert.equal(
-            await royaltyManager.claimableRoyaltyAmount(creator2Address, rawrId, {from: creator1Address}),
-            0,
-            "Royalty was not claimed yet."
-        );
+    beforeEach(async () => {
+        escrow = await upgrades.deployProxy(Erc20Escrow, []); 
+        feesEscrow = await upgrades.deployProxy(ExchangeFeesEscrow, [resolver.address]); 
+        royaltyManager = await upgrades.deployProxy(RoyaltyManager, [resolver.address]);
     });
     
+    describe("Basic Tests", () => {
+        it('Check if Royalty Manager was deployed properly', async () => {
+            expect(royaltyManager.address).not.equal(ethers.constants.AddressZero);
+        });
+    
+        it('Supports the Royalty Manager Interface', async () => {
+            // INTERFACE_ID_ROYALTY_MANAGER = 0x0000000D
+            expect(await royaltyManager.supportsInterface("0x0000000D")).to.equal(true);
+        });
+    });
+    
+    describe("Functional Tests", () => {
+        it('Deposit Royalty', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+            await RoyaltyManagerSetup();
+    
+            await rawrToken.connect(playerAddress).approve(escrow.address, ethers.BigNumber.from(230).mul(_1e18));
+            await royaltyManager['transferRoyalty(address,address,address,uint256)'](playerAddress.address, rawrToken.address, creatorAddress.address, ethers.BigNumber.from(200).mul(_1e18));
+    
+            var claimable = await escrow.connect(creatorAddress).claimableTokensByOwner(creatorAddress.address);
+            expect(claimable.amounts[0]).to.equal(ethers.BigNumber.from(200).mul(_1e18));
+    
+            await royaltyManager['transferPlatformFee(address,address,uint256)'](playerAddress.address, rawrToken.address, ethers.BigNumber.from(10000).mul(_1e18));
+    
+            expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(30).mul(_1e18));
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(30).mul(_1e18));
+        });
+        
+        it('Transfer Royalty from escrow to royalty owner', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+            await RoyaltyManagerSetup();
+
+            // deposit 10000 RAWR tokens for Order 1 
+            
+            await rawrToken.connect(playerAddress).approve(escrow.address, ethers.BigNumber.from(10000).mul(_1e18));
+            await escrow.connect(testManagerAddress).deposit(rawrToken.address, 1, playerAddress.address, ethers.BigNumber.from(10000).mul(_1e18));
+
+            await royaltyManager['transferRoyalty(uint256,address,uint256)'](1, creatorAddress.address, ethers.BigNumber.from(200).mul(_1e18));
+            await royaltyManager['transferPlatformFee(address,uint256,uint256)'](rawrToken.address, 1, ethers.BigNumber.from(10000).mul(_1e18));
+
+            claimable = await escrow.connect(creatorAddress).claimableTokensByOwner(creatorAddress.address);
+            expect(claimable.amounts[0]).to.equal(ethers.BigNumber.from(200).mul(_1e18));
+            
+            // check if amounts were moved from the escrow for the order to claimable for the creator
+            expect(await escrow.escrowedTokensByOrder(1)).to.equal(ethers.BigNumber.from(9770).mul(_1e18));
+            
+            expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(30).mul(_1e18));
+            expect(await escrow.escrowedTokensByOrder(1)).to.equal(ethers.BigNumber.from(9770).mul(_1e18));
+            expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(30).mul(_1e18));
+        });
+        
+        it('Get Royalties for an asset', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+            await RoyaltyManagerSetup();
+            
+            var assetData = [content.address, 2];
+            var results = await royaltyManager.payableRoyalties(assetData, ethers.BigNumber.from(10000).mul(_1e18));
+
+            expect(results.receiver).to.equal(creatorAddress.address);
+            expect(results.royaltyFee).to.equal(ethers.BigNumber.from(200).mul(_1e18));
+            expect(results.remaining).to.equal(ethers.BigNumber.from(9770).mul(_1e18));
+        });
+
+        it('Claim Royalties', async () => {
+            await ContentContractSetup();
+            await RawrTokenSetup();
+            await RoyaltyManagerSetup();
+    
+            await rawrToken.connect(playerAddress).approve(escrow.address, ethers.BigNumber.from(300).mul(_1e18));
+            await royaltyManager['transferRoyalty(address,address,address,uint256)'](playerAddress.address, rawrToken.address, creatorAddress.address, ethers.BigNumber.from(200).mul(_1e18));
+    
+            // claim royalties
+            await royaltyManager.claimRoyalties(creatorAddress.address);
+    
+            var claimable = await royaltyManager.connect(creatorAddress).claimableRoyalties(creatorAddress.address);
+            expect(claimable.amounts.length).to.equal(0);
+        });
+    });
 });
