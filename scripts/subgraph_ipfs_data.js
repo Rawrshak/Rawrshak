@@ -23,9 +23,9 @@ async function addRawrshakAssets(content, contentManager, developer) {
     var asset = [
         [0, "QmTgLKGxFapNAaKSoaXZkx3vq9xiarfag3cjcByUywzf7h", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Apprentice Title
         [1, "QmX1Epc144wovBa3i8LVy6JoVxUpVjuA7nQvDmigo8NAx7", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Creator Title
-        [2, "QmRhSwTE73L59aM7uBBDsj7HoZ2KbJ8dHRGz2ySDkAZY7P", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Gamer Pesant Title
+        [2, "QmaCGZKewUkJCw7nHtvMCTxxeeg1fNhF1BGKVowAAh5dJn", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Gamer Pesant Title
         [3, "QmeZ9t91M5AizHBwPHt7ZYEzvhS9ic98eQ8BUQ7bZrERBT", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Disciple Title
-        [4, "QmT1WYPi6f8m7HLBJCqSnLrTaKrfun8ANvDdWD9v93bD31", "", ethers.constants.MaxUint256, developer.address, 20000],          // Lord Title
+        [4, "QmUcUdn8Gf9hiwqvmN9SzP4JZsrC72CpPLptXwjyW8Nuv3", "", ethers.constants.MaxUint256, developer.address, 20000],          // Lord Title
         [5, "QmWGDc6HM4oXXmhkDYKLcL95anW5Wsxmw6daUrc2KL82fa", "", ethers.constants.MaxUint256, developer.address, 20000]           // Original Sinner Title
     ];
 
@@ -120,7 +120,7 @@ async function main() {
 
     // Note: for the URI, the developer has to add "https://ipfs.io/ipfs/" before downloading from ipfs
     // Developer 1 Rawrshak and Scream Fortress 2 Contract
-    var addresses = await deployContract(factory, dev1, 10000, "QmVekUedpvvizZmKfGKBvtE5rJgwMTYzrByKWRzFzNGaat");
+    var addresses = await deployContract(factory, dev1, 10000, "QmQigPDu4wChRtrdgnbCFJFuYHD55sioFztdu1r9bME46o");
     console.log(`Rawrshak Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
     await addRawrshakAssets(addresses.content, addresses.contentManager, dev1);
 
