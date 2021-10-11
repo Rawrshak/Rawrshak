@@ -96,7 +96,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         }
         
         // Get Total Payment
-        (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
+        (uint256 volume, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
 
         // Get Orderbook data
         LibOrder.Order memory order = orderbook.getOrder(_orderIds[0]);
@@ -120,7 +120,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Update Escrow records for the orders - will revert if the user doesn't have enough assets
         executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, orderAmounts, order.asset);
 
-        emit BuyOrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsSold, amountDue);
+        emit OrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsSold, volume);
     }
 
     function fillSellOrder(
@@ -159,7 +159,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         }
 
         // Get Total Payment
-        (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
+        (uint256 volume, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
         
         // get the order data
         LibOrder.Order memory order = orderbook.getOrder(_orderIds[0]);
@@ -184,7 +184,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Execute trade - will revert if buyer doesn't have enough funds
         executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, orderAmounts, order.token);
 
-        emit SellOrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsBought, amountDue);
+        emit OrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsBought, volume);
     }
 
     function cancelOrders(uint256[] memory _orderIds) external override {

@@ -30,7 +30,7 @@ interface IOrderbook {
     function getPaymentTotals(
         uint256[] calldata _orderIds,
         uint256[] calldata _amounts
-    ) external view returns(uint256 amountDue, uint256[] memory amountPerOrder);
+    ) external view returns(uint256 volume, uint256[] memory amountPerOrder);
 
     function getOrder(uint256 _orderId) external view returns(LibOrder.Order memory);
 

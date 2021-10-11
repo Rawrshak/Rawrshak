@@ -39,23 +39,14 @@ interface IExchange {
     /*********************** Events *********************/
     event OrderPlaced(address indexed from, uint256 indexed orderId, LibOrder.OrderInput order);
 
-    event BuyOrdersFilled(
+    event OrdersFilled(
         address indexed from,
         uint256[] orderIds,
         uint256[] amounts,
         LibOrder.AssetData asset,
         address token,
-        uint256 amountOfAssetsSold,
-        uint256 tokensReceived);
-
-    event SellOrdersFilled(
-        address indexed from,
-        uint256[] orderIds,
-        uint256[] amounts,
-        LibOrder.AssetData asset,
-        address token,
-        uint256 amountOfAssetsBought,
-        uint256 tokensPaid);
+        uint256 totalAssetsAmount,
+        uint256 volume);
 
     event OrdersDeleted(address indexed owner, uint256[] orderIds);
     
