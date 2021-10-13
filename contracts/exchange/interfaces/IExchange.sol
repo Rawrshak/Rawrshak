@@ -20,12 +20,12 @@ interface IExchange {
     
     function fillBuyOrder(
         uint256[] memory _orderIds,
-        uint256[] memory _amounts
+        uint256 amountToBuy
     ) external;
 
     function fillSellOrder(
         uint256[] memory _orderIds,
-        uint256[] memory _amounts
+        uint256 amountToSell
     ) external;
 
     function cancelOrders(uint256[] memory _orderIds) external;
@@ -39,21 +39,14 @@ interface IExchange {
     /*********************** Events *********************/
     event OrderPlaced(address indexed from, uint256 indexed orderId, LibOrder.OrderInput order);
 
-    event BuyOrdersFilled(
+    event OrdersFilled(
         address indexed from,
         uint256[] orderIds,
         uint256[] amounts,
         LibOrder.AssetData asset,
         address token,
-        uint256 amountOfAssetsSold);
-
-    event SellOrdersFilled(
-        address indexed from,
-        uint256[] orderIds,
-        uint256[] amounts,
-        LibOrder.AssetData asset,
-        address token,
-        uint256 amountPaid);
+        uint256 totalAssetsAmount,
+        uint256 volume);
 
     event OrdersDeleted(address indexed owner, uint256[] orderIds);
     

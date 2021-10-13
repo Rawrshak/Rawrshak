@@ -22,3 +22,4 @@ yarn.lock
 # hardhat folders
 cache
 artifacts
+typechain

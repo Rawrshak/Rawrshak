@@ -62,9 +62,9 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
 
     function fillBuyOrder(
         uint256[] memory _orderIds,
-        uint256[] memory _amounts
+        uint256 amountToSell
     ) external override {
-        require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
+        require(_orderIds.length > 0, "Invalid order length");
 
         // Verify orders exist
         require(orderbook.verifyOrdersExist(_orderIds), "Non-existent order");
@@ -72,46 +72,62 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Verify all orders are of the same asset and the same token payment
         require(orderbook.verifyAllOrdersData(_orderIds, true), "Invalid order data");
 
-        // Verify orders are still valid (ready or partially filled) 
-        require(orderbook.verifyOrdersReady(_orderIds), "An order has been filled");
+        // Get order amounts that are still available
+        uint256[] memory orderAmounts = orderbook.getOrderAmounts(_orderIds);
+        
+        // Get orders amount to sell; if there's more available that the amount to sell, set remaining to 0;
+        uint256 assetsSold = 0;
+        for (uint256 i = 0; i < orderAmounts.length; ++i) {
+            if (orderAmounts[i] > 0) {
+                if (orderAmounts[i] <= amountToSell) {
+                    // order amount exists but is less than amount remaining to sell
+                    amountToSell -= orderAmounts[i];
+                    assetsSold += orderAmounts[i];
+                } else if (amountToSell > 0) {
+                    // order amount exists but is more than amount remaining to sell
+                    orderAmounts[i] = amountToSell;
+                    assetsSold += amountToSell; // remainder
+                    amountToSell = 0;
+                } else {
+                    // no more orders to sell
+                    orderAmounts[i] = 0;
+                }
+            }
+        }
         
         // Get Total Payment
-        (, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
-        
-        // Get Total Assets to sell
-        uint256 totalAssetsToSell = 0;
-        for (uint256 i = 0; i < _amounts.length; ++i) {
-            totalAssetsToSell = totalAssetsToSell + _amounts[i];
-        }
+        (uint256 volume, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
 
         // Get Orderbook data
         LibOrder.Order memory order = orderbook.getOrder(_orderIds[0]);
 
         // Orderbook -> fill buy order
-        orderbook.fillOrders(_orderIds, _amounts);
+        orderbook.fillOrders(_orderIds, orderAmounts);
 
         // Deduct royalties from escrow per order and transfer to claimable in escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            (address receiver,
-             uint256 royaltyFee,
-             uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
-            
-            royaltyManager.transferRoyalty(_orderIds[i], receiver, royaltyFee);
-            royaltyManager.transferPlatformFee(order.token, _orderIds[i], amountPerOrder[i]);
-            amountPerOrder[i] = remaining;
+            if (orderAmounts[i] > 0) {
+                (address receiver,
+                uint256 royaltyFee,
+                uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
+                
+                royaltyManager.transferRoyalty(_orderIds[i], receiver, royaltyFee);
+                royaltyManager.transferPlatformFee(order.token, _orderIds[i], amountPerOrder[i]);
+                amountPerOrder[i] = remaining;
+            }
         }
 
         // Update Escrow records for the orders - will revert if the user doesn't have enough assets
-        executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.asset);
+        executionManager.executeBuyOrder(_msgSender(), _orderIds, amountPerOrder, orderAmounts, order.asset);
 
-        emit BuyOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, totalAssetsToSell);
+        emit OrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsSold, volume);
     }
 
     function fillSellOrder(
         uint256[] memory _orderIds,
-        uint256[] memory _amounts
+        uint256 amountToBuy
     ) external override {
-        require(_orderIds.length > 0 && _orderIds.length == _amounts.length, "Invalid order length");
+        require(_orderIds.length > 0, "Invalid order length");
 
         // Verify orders exist
         require(orderbook.verifyOrdersExist(_orderIds), "Non-existent order");
@@ -119,34 +135,56 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         // Verify all orders are of the same asset and the same token payment
         require(orderbook.verifyAllOrdersData(_orderIds, false), "Invalid order data");
 
-        // Verify orders are still valid (ready or partially filled) 
-        require(orderbook.verifyOrdersReady(_orderIds), "An order has been filled");
+        // Get order amounts that are still available
+        uint256[] memory orderAmounts = orderbook.getOrderAmounts(_orderIds);
+
+        // Get orders amount to buy; if there's more available that the amount to buy, set remaining to 0;
+        uint256 assetsBought = 0;
+        for (uint256 i = 0; i < orderAmounts.length; ++i) {
+            if (orderAmounts[i] > 0) {
+                if (orderAmounts[i] <= amountToBuy) {
+                    // order amount exists but is less than amount remaining to buy
+                    amountToBuy -= orderAmounts[i];
+                    assetsBought += orderAmounts[i];
+                } else if (amountToBuy > 0) {
+                    // order amount exists but is more than amount remaining to buy
+                    orderAmounts[i] = amountToBuy;
+                    assetsBought += amountToBuy; // remainder
+                    amountToBuy = 0;
+                } else {
+                    // no more assets to buy
+                    orderAmounts[i] = 0;
+                }
+            }
+        }
 
         // Get Total Payment
-        (uint256 amountDue, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, _amounts);
+        (uint256 volume, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
         
         // get the order data
         LibOrder.Order memory order = orderbook.getOrder(_orderIds[0]);
 
         // Orderbook -> fill sell order
-        orderbook.fillOrders(_orderIds, _amounts);
+        orderbook.fillOrders(_orderIds, orderAmounts);
 
         // Deduct royalties
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            (address receiver,
-             uint256 royaltyFee,
-             uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
+            if (orderAmounts[i] > 0) {
+                (address receiver,
+                uint256 royaltyFee,
+                uint256 remaining) = royaltyManager.payableRoyalties(order.asset, amountPerOrder[i]);
 
-            // for each order, update the royalty table for each creator to get paid
-            royaltyManager.transferRoyalty(_msgSender(), order.token, receiver, royaltyFee);
-            royaltyManager.transferPlatformFee(_msgSender(), order.token, amountPerOrder[i]);
-            amountPerOrder[i] = remaining;
+                // for each order, update the royalty table for each creator to get paid
+                royaltyManager.transferRoyalty(_msgSender(), order.token, receiver, royaltyFee);
+                royaltyManager.transferPlatformFee(_msgSender(), order.token, amountPerOrder[i]);
+                amountPerOrder[i] = remaining;
+            }
         }
 
         // Execute trade - will revert if buyer doesn't have enough funds
-        executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, _amounts, order.token);
+        executionManager.executeSellOrder(_msgSender(), _orderIds, amountPerOrder, orderAmounts, order.token);
 
-        emit SellOrdersFilled(_msgSender(), _orderIds, _amounts, order.asset, order.token, amountDue);
+        emit OrdersFilled(_msgSender(), _orderIds, orderAmounts, order.asset, order.token, assetsBought, volume);
     }
 
     function cancelOrders(uint256[] memory _orderIds) external override {

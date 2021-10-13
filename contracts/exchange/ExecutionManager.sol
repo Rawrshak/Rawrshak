@@ -42,11 +42,13 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input lenght");
         
         for (uint256 i = 0; i < _orderIds.length; ++i) {
-            // Send Assets to escrow
-            _nftEscrow().deposit(_orderIds[i], _user, _amounts[i], _asset);
-            
-            // send payment from escrow to user
-            _tokenEscrow().withdraw(_orderIds[i], _user, _paymentPerOrder[i]);
+            if (_amounts[i] > 0) {
+                // Send Assets to escrow
+                _nftEscrow().deposit(_orderIds[i], _user, _amounts[i], _asset);
+                
+                // send payment from escrow to user
+                _tokenEscrow().withdraw(_orderIds[i], _user, _paymentPerOrder[i]);
+            }
         }
     }
 
