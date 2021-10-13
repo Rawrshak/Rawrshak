@@ -31,10 +31,13 @@
     "@openzeppelin/contracts-upgradeable": "^4.0.0",
     "@openzeppelin/hardhat-upgrades": "^1.10.0",
     "@openzeppelin/test-helpers": "^0.5.13",
+    "@typechain/ethers-v5": "^7.2.0",
+    "@typechain/hardhat": "^2.3.1",
     "chai": "^4.3.4",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.7",
     "hardhat": "^2.6.4",
+    "typechain": "^5.2.0",
     "web3": "^1.5.3"
   },
   "dependencies": {
