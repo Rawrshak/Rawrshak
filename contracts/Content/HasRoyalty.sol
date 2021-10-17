@@ -22,7 +22,7 @@ abstract contract HasRoyalty is ContentSubsystemBase {
 
     /******************** Public API ********************/
     function __HasRoyalty_init_unchained(address _receiver, uint24 _rate) internal initializer {
-        _setContractRoyalty(_receiver, _rate);
+        _setContractRoyaltyHelper(_receiver, _rate);
     }
 
     /**************** Internal Functions ****************/
@@ -33,9 +33,7 @@ abstract contract HasRoyalty is ContentSubsystemBase {
      * pair
      */
     function _setContractRoyalty(address _receiver, uint24 _rate) internal {
-        LibRoyalty.validateFee(_receiver, _rate);
-        contractRoyalty.receiver = _receiver;
-        contractRoyalty.rate = _rate;
+        _setContractRoyaltyHelper(_receiver, _rate);
         emit ContractRoyaltyUpdated(_parent(), _receiver, _rate);
     }
 
@@ -67,6 +65,13 @@ abstract contract HasRoyalty is ContentSubsystemBase {
         }
         return (contractRoyalty.receiver, contractRoyalty.rate);
     }
+
+    function _setContractRoyaltyHelper(address _receiver, uint24 _rate) private {
+        LibRoyalty.validateFee(_receiver, _rate);
+        contractRoyalty.receiver = _receiver;
+        contractRoyalty.rate = _rate;
+    }
+    
     
     uint256[50] private __gap;
 }

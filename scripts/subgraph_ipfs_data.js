@@ -107,7 +107,7 @@ async function main() {
     console.log(`Deploying contracts with the account: ${deployer.address}`);
   
     var balance = await deployer.getBalance();
-    console.log(`Account Balance: ${balance.toString()}`);
+    console.log(`Account Balance: ${balance.toString()}\n`);
 
     // Get Content Contract Factory 
     Content = await ethers.getContractFactory("Content");
@@ -115,27 +115,24 @@ async function main() {
     const ContentFactory = await ethers.getContractFactory("ContentFactory");
     const factory = ContentFactory.attach("0x851356ae760d987E095750cCeb3bC6014560891C");
 
-    Content = await ethers.getContractFactory("Content");
-    ContentManager = await ethers.getContractFactory("ContentManager");
-
     // Note: for the URI, the developer has to add "https://ipfs.io/ipfs/" before downloading from ipfs
     // Developer 1 Rawrshak and Scream Fortress 2 Contract
     var addresses = await deployContract(factory, dev1, 10000, "QmQigPDu4wChRtrdgnbCFJFuYHD55sioFztdu1r9bME46o");
-    console.log(`Rawrshak Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
+    console.log(`Rawrshak Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addRawrshakAssets(addresses.content, addresses.contentManager, dev1);
 
     var addresses = await deployContract(factory, dev1, 10000, "QmP3Hnw72H4w7s4XEEa12vHAa7EYXSCGEd2KPcScrMvx9z");
-    console.log(`ScreamFortress2 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
+    console.log(`ScreamFortress2 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addScreamFortress2Assets(addresses.content, addresses.contentManager, dev1);
     
     // Developer 2 Deploys A Contract
     addresses = await deployContract(factory, dev2, 20000, "QmSkixBkwkEoMzEVcWsDxaYxVhEJDiatPjAEvHaJY383Ks");
-    console.log(`FightBuddy Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
+    console.log(`FightBuddy Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addFightBuddyAssets(addresses.content, addresses.contentManager, dev2);
     
     // Developer 3 Deploys A Contract
     addresses = await deployContract(factory, dev3, 15000, "QmY1cxbALonbMiSTWnnQooCJqKDcAMs69nqhmBP8jSyQP8");
-    console.log(`SuperScaryHorrorGame Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]`);
+    console.log(`SuperScaryHorrorGame Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addSuperScaryHorrorGameAssets(addresses.content, addresses.contentManager, dev3);
 
     balance = await deployer.getBalance();

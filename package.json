@@ -4,14 +4,12 @@
   "description": "This project will contain the implementation of the Rawrshak Smart Contracts",
   "main": "index.js",
   "scripts": {
-    "develop": "truffle develop",
-    "build": "truffle compile",
-    "deploy": "truffle migrate --compile-all",
-    "deploy:rawrtoken": "truffle migrate --compile-all --f 2 --to 2",
-    "deploy:content": "truffle migrate --compile-all --f 3 --to 3",
-    "deploy:exchange": "truffle migrate --compile-all --f 4 --to 4",
-    "upgrade:rawrtoken": "truffle migrate --compile-all --f 5 --to 5",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "server": "npx hardhat node",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy:local": "npx hardhat run --network localhost scripts/deploy.js",
+    "demo:local": "npx hardhat run --network localhost scripts/distribute_rawr_tokens.js && npx hardhat run --network localhost scripts/subgraph_ipfs_data.js",
+    "exchange:local": "npx hardhat run --network localhost scripts/exchange_data.js"
   },
   "repository": {
     "type": "git",
