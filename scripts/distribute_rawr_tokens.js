@@ -21,8 +21,7 @@ async function main() {
 
     // Get Rawr token stuff
     const MockToken = await ethers.getContractFactory("MockToken");
-    const rawr = MockToken.attach("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0");
-    await rawr.mint(deployer.address, ethers.BigNumber.from(100000000).mul(_1e18));
+    const rawr = MockToken.attach("0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f");
 
     const rawrBalance = web3.utils.fromWei((await rawr.balanceOf(deployer.address)).toString(), 'ether');
     console.log(`Deployer RAWR balance: ${rawrBalance.toString()}`);
