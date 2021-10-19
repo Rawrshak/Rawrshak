@@ -136,6 +136,11 @@ async function main() {
     balance = await deployer.getBalance();
     balance = web3.utils.fromWei(balance.toString(), 'ether');
     console.log(`Account Balance: ${balance.toString()}`);
+    
+    // Rawrshak Contracts: Content[ 0x3063527AEE58c9470AD00E31e4fc6A613b84a8b1 ], ContentManager[ 0xcfbe2694e9c033Cc6adbA084E51b6AfECfed09b7 ]
+    // ScreamFortress2 Contracts: Content[ 0x1216517D85581CC2901dC5d214f20b910910774f ], ContentManager[ 0xEEe51B3236219931DD0fdDc712c6cf9bA55bd110 ]
+    // FightBuddy Contracts: Content[ 0x7e5DC850470672b81b119cCFfEF595DFb6060cC7 ], ContentManager[ 0x0E89b24e46A7F30f018225b75A24b5cb000EBaE7 ]
+    // SuperScaryHorrorGame Contracts: Content[ 0x7d046EEA32043D36Fe6De42568A5EB0FAD946117 ], ContentManager[ 0x84206ECC24BC547276c59B40b04F63bd70CBFC7c ]
   }
   
 main()
