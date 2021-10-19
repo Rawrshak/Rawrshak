@@ -25,7 +25,7 @@ describe('Exchange Fees Escrow Contract tests', () => {
             staker2
         ] = await ethers.getSigners();
         ExchangeFeesEscrow = await ethers.getContractFactory("ExchangeFeesEscrow");
-        RawrToken = await ethers.getContractFactory("RawrToken");
+        MockToken = await ethers.getContractFactory("MockToken");
         AddressResolver = await ethers.getContractFactory("AddressResolver");
         MockStaking = await ethers.getContractFactory("MockStaking");
 
@@ -33,7 +33,8 @@ describe('Exchange Fees Escrow Contract tests', () => {
     });
 
     beforeEach(async () => {
-        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+        rawrToken = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+        await rawrToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
         feesEscrow =  await upgrades.deployProxy(ExchangeFeesEscrow, [resolver.address]);
         staking = await MockStaking.deploy(resolver.address);
     });
@@ -114,7 +115,8 @@ describe('Exchange Fees Escrow Contract tests', () => {
             await setup();
     
             // Create a 2nd token
-            var rawrV2Token = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+            rawrV2Token = await upgrades.deployProxy(MockToken, ["Rawrshak Token V2", "RAWR2"]);
+            await rawrV2Token.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
     
             // Give tokens to Player
             await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
@@ -201,7 +203,8 @@ describe('Exchange Fees Escrow Contract tests', () => {
             await setup();
     
             // Create a 2nd token
-            var rawrV2Token = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+            rawrV2Token = await upgrades.deployProxy(MockToken, ["Rawrshak Token V2", "RAWR2"]);
+            await rawrV2Token.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
     
             // Stakers
             await staking.connect(staker1).stake(ethers.BigNumber.from(25).mul(_1e18));
@@ -254,7 +257,8 @@ describe('Exchange Fees Escrow Contract tests', () => {
             await setup();
 
             // Create a 2nd token
-            var rawrV2Token = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+            rawrV2Token = await upgrades.deployProxy(MockToken, ["Rawrshak Token V2", "RAWR2"]);
+            await rawrV2Token.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
 
             await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));
             await rawrV2Token.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));

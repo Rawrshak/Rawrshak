@@ -2,11 +2,14 @@ const { ethers, upgrades } = require("hardhat");
 
 async function main() {
     const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
+
+    const [deployer] = await ethers.getSigners();
   
     console.log("Deploying RAWR token contract");
-    RawrToken = await ethers.getContractFactory("RawrToken");
-    rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
-    console.log("RAWR Token deployed to:", rawrToken.address);
+    MockToken = await ethers.getContractFactory("MockToken");
+    rawr = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+    await rawr.mint(deployer.address, ethers.BigNumber.from(100000000).mul(_1e18));
+    console.log("RAWR Token deployed to:", rawr.address);
     console.log("\n");
     
     console.log("Deploying Address Resolver Contract");
@@ -67,14 +70,14 @@ async function main() {
     await executionManager.transferOwnership(exchange.address);
     
     // Add RAWR token as a supported payment option
-    await exchange.addSupportedToken(rawrToken.address);
+    await exchange.addSupportedToken(rawr.address);
 
     console.log("Exchange deployed to:", exchange.address);
     console.log("\n");
 
     console.log("Deploying Staking Contracts");
     Staking = await ethers.getContractFactory("Staking");
-    staking = await upgrades.deployProxy(Staking, [rawrToken.address, resolver.address]);
+    staking = await upgrades.deployProxy(Staking, [rawr.address, resolver.address]);
     await feesEscrow.registerManager(staking.address);
     console.log("Staking deployed to:", staking.address);
     console.log("\n");
@@ -106,7 +109,7 @@ async function main() {
         exchange.address,
         staking.address,
         contentFactory.address,
-        rawrToken.address
+        rawr.address
     ];
 
     var escrowIds = [

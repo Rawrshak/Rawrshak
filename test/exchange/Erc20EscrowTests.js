@@ -24,7 +24,7 @@ describe('ERC20 Escrow Contract tests', () => {
             creatorAddress
         ] = await ethers.getSigners();
         Erc20Escrow = await ethers.getContractFactory("Erc20Escrow");
-        RawrToken = await ethers.getContractFactory("RawrToken");
+        MockToken = await ethers.getContractFactory("MockToken");
     });
 
     beforeEach(async () => {
@@ -32,7 +32,8 @@ describe('ERC20 Escrow Contract tests', () => {
     });
 
     async function setup() {
-        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+        rawrToken = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+        await rawrToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
 
         // Register the execution manager
         await escrow.registerManager(executionManagerAddress.address);
@@ -197,7 +198,8 @@ describe('ERC20 Escrow Contract tests', () => {
             await setup();
 
             // Set up second token
-            rawrToken2 = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+            rawrToken2 = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+            await rawrToken2.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
 
             // add token support
             await escrow.connect(executionManagerAddress).addSupportedTokens(rawrToken2.address);

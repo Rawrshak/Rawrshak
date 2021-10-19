@@ -7,11 +7,12 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "../tokens/RawrToken.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "../resolver/IAddressResolver.sol";
 import "./interfaces/IStaking.sol";
 import "./interfaces/IExchangeFeesEscrow.sol";
 import "../utils/LibContractHash.sol";
+import "../utils/LibInterfaces.sol";
 
 contract Staking is IStaking, ContextUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;
