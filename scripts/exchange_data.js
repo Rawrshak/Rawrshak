@@ -41,8 +41,8 @@ async function main() {
     ] = await ethers.getSigners();
     
     // Get Rawr token stuff
-    const RawrToken = await ethers.getContractFactory("RawrToken");
-    const rawr = RawrToken.attach("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0");
+    const MockToken = await ethers.getContractFactory("MockToken");
+    const rawr = MockToken.attach("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0");
 
     console.log(`Deploying contracts with the account: ${deployer.address}`);
   

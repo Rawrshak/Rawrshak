@@ -1,8 +1,3 @@
-// const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-// const RawrToken = artifacts.require("RawrToken");
-// const MockToken = artifacts.require("MockToken");
-// const LiquidityMining = artifacts.require("LiquidityMining");
-// const TruffleAssert = require("truffle-assertions")
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 const { time } = require('@openzeppelin/test-helpers');
@@ -37,14 +32,14 @@ describe('Liquidity Mining Contract Tests', () => {
         ] = await ethers.getSigners();
         
         LiquidityMining = await ethers.getContractFactory("LiquidityMining");
-        RawrToken = await ethers.getContractFactory("RawrToken");
         MockToken = await ethers.getContractFactory("MockToken");
 
         provider = waffle.provider;
     });
 
     beforeEach(async () => {
-        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+        rawrToken = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+        await rawrToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
 
         mockUSDC = await upgrades.deployProxy(MockToken, ["USDC", "USDC"]);
         mockUSDT = await upgrades.deployProxy(MockToken, ["USDT", "USDT"]);
@@ -351,7 +346,7 @@ describe('Liquidity Mining Contract Tests', () => {
             amountToRescue = await rawrToken.balanceOf(mining.address);
             await mining.rescueTokens(rawrToken.address, rescueWallet.address, amountToRescue);
     
-            // RawrToken tokens were rescued
+            // RAWR Token tokens were rescued
             expect(await rawrToken.balanceOf(rescueWallet.address)).is.equal(amountToRescue);
             expect(await rawrToken.balanceOf(mining.address)).is.equal(0);
         });

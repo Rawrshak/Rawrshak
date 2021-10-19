@@ -30,7 +30,7 @@ describe('Execution Manager Contract Tests', ()=> {
         ContentManager = await ethers.getContractFactory("ContentManager");
         ContentFactory = await ethers.getContractFactory("ContentFactory");
         NftEscrow = await ethers.getContractFactory("NftEscrow");
-        RawrToken = await ethers.getContractFactory("RawrToken");
+        MockToken = await ethers.getContractFactory("MockToken");
         Erc20Escrow = await ethers.getContractFactory("Erc20Escrow");
         Orderbook = await ethers.getContractFactory("Orderbook");
         ExecutionManager = await ethers.getContractFactory("ExecutionManager");
@@ -74,7 +74,8 @@ describe('Execution Manager Contract Tests', ()=> {
 
     async function RawrTokenSetup() {
         // Setup RAWR token
-        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+        rawrToken = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+        await rawrToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
         
         // Give player 1 20000 RAWR tokens
         await rawrToken.transfer(playerAddress.address, ethers.BigNumber.from(20000).mul(_1e18));

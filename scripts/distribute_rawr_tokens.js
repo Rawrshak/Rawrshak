@@ -20,8 +20,9 @@ async function main() {
     console.log(`Account Balance: ${balance.toString()}`);
 
     // Get Rawr token stuff
-    const RawrToken = await ethers.getContractFactory("RawrToken");
-    const rawr = RawrToken.attach("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0");
+    const MockToken = await ethers.getContractFactory("MockToken");
+    const rawr = MockToken.attach("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0");
+    await rawr.mint(deployer.address, ethers.BigNumber.from(100000000).mul(_1e18));
 
     const rawrBalance = web3.utils.fromWei((await rawr.balanceOf(deployer.address)).toString(), 'ether');
     console.log(`Deployer RAWR balance: ${rawrBalance.toString()}`);

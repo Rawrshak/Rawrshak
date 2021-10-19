@@ -24,7 +24,7 @@ describe('Staking Rewards Pool Contract Tests', () => {
         ] = await ethers.getSigners();
         
         ExchangeFeesEscrow = await ethers.getContractFactory("ExchangeFeesEscrow");
-        RawrToken = await ethers.getContractFactory("RawrToken");
+        MockToken = await ethers.getContractFactory("MockToken");
         AddressResolver = await ethers.getContractFactory("AddressResolver");
         Staking = await ethers.getContractFactory("Staking");
 
@@ -32,7 +32,8 @@ describe('Staking Rewards Pool Contract Tests', () => {
     });
 
     beforeEach(async () => {
-        rawrToken = await upgrades.deployProxy(RawrToken, [ethers.BigNumber.from(100000000).mul(_1e18)]);
+        rawrToken = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+        await rawrToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
         feesEscrow = await upgrades.deployProxy(ExchangeFeesEscrow, [resolver.address]);
         staking = await upgrades.deployProxy(Staking, [rawrToken.address, resolver.address]);
     });
