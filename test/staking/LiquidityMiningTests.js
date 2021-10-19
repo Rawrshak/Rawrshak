@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers, upgrades } = require("hardhat");
+const { ethers, upgrades, network } = require("hardhat");
 const { time } = require('@openzeppelin/test-helpers');
 const { waffle } = require("hardhat");
 
@@ -126,6 +126,11 @@ describe('Liquidity Mining Contract Tests', () => {
         });
 
         it('Multiple Token deposits', async function () {
+            if (network.name != "hardhat") {
+                // Skip time jump tests because it's not supported in live networks
+                return;
+            }
+            
             await setup();
     
             currentBlock = await provider.getBlockNumber();
@@ -153,6 +158,11 @@ describe('Liquidity Mining Contract Tests', () => {
 
     describe("Staking", () => {
         it('Two stakers with the same stakes', async function () {
+            if (network.name != "hardhat") {
+                // Skip time jump tests because it's not supported in live networks
+                return;
+            }
+            
             await setup();
     
             currentBlock = await provider.getBlockNumber();
@@ -179,6 +189,11 @@ describe('Liquidity Mining Contract Tests', () => {
         });
     
         it('Two stakers with the same stakes with payout after duration', async function () {
+            if (network.name != "hardhat") {
+                // Skip time jump tests because it's not supported in live networks
+                return;
+            }
+            
             await setup();
     
             currentBlock = await provider.getBlockNumber();
@@ -210,6 +225,11 @@ describe('Liquidity Mining Contract Tests', () => {
         });
     
         it('Two stakers, one comes in 50% duration finished', async function () {
+            if (network.name != "hardhat") {
+                // Skip time jump tests because it's not supported in live networks
+                return;
+            }
+            
             await setup();
     
             currentBlock = await provider.getBlockNumber();
@@ -243,6 +263,11 @@ describe('Liquidity Mining Contract Tests', () => {
         });
     
         it('Two stakers, one withdraws half way in', async function () {
+            if (network.name != "hardhat") {
+                // Skip time jump tests because it's not supported in live networks
+                return;
+            }
+            
             await setup();
     
             currentBlock = await provider.getBlockNumber();
@@ -278,6 +303,11 @@ describe('Liquidity Mining Contract Tests', () => {
         });
     
         it('Two stakers, both withdraws half way in', async function () {
+            if (network.name != "hardhat") {
+                // Skip time jump tests because it's not supported in live networks
+                return;
+            }
+            
             await setup();
     
             currentBlock = await provider.getBlockNumber();
@@ -313,6 +343,11 @@ describe('Liquidity Mining Contract Tests', () => {
         });
     
         it('Two stakers, both withdraws half way in, rescue remaining tokens', async function () {
+            if (network.name != "hardhat") {
+                // Skip time jump tests because it's not supported in live networks
+                return;
+            }
+
             await setup();
     
             currentBlock = await provider.getBlockNumber();

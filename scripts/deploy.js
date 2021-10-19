@@ -4,11 +4,20 @@ async function main() {
     const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
 
     const [deployer] = await ethers.getSigners();
+    
+    // Todo: Replace Private key with the Testnet Deployer wallet
+    // const deployer = new ethers.Wallet(process.env.KOVAN_PRIVATE_KEY, provider)
   
     console.log("Deploying RAWR token contract");
+
+    // Todo: Comment this out for Testnet deployment
     MockToken = await ethers.getContractFactory("MockToken");
     rawr = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
     await rawr.mint(deployer.address, ethers.BigNumber.from(100000000).mul(_1e18));
+
+    // Todo: Replace this with the correct RAWR token address
+    // const rawr = MockToken.attach("0x...");
+
     console.log("RAWR Token deployed to:", rawr.address);
     console.log("\n");
     
@@ -119,6 +128,13 @@ async function main() {
         "0x3d13c043"
     ];
     await resolver.registerAddress(escrowIds, addresses);
+
+    // Deployment Contracts on Optimism Local Node
+    // RAWR Token deployed to: 0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f
+    // AddressResolver deployed to: 0x09635F643e140090A9A8Dcd712eD6285858ceBef
+    // Exchange deployed to: 0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00
+    // Staking deployed to: 0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575
+    // ContentFactory deployed to: 0xFD471836031dc5108809D173A067e8486B9047A3
   }
   
   main()
