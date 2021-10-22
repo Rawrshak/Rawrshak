@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-import "../utils/LibInterfaces.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";

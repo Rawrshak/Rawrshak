@@ -8,7 +8,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "../utils/EIP712Extended.sol";
 import "../libraries/LibAsset.sol";
 import "./interfaces/IAccessControlManager.sol";
-import "../utils/LibInterfaces.sol";
 import "./ContentSubsystemBase.sol";
 import "hardhat/console.sol";
 

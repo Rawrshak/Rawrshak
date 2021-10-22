@@ -12,6 +12,12 @@ import "../libraries/LibStaking.sol";
 import "../utils/LibContractHash.sol";
 
 contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
+    
+    /******************** Constants ********************/
+    /*
+     * IExchangeFeesEscrow: 0xeca651f3
+     */
+
     using EnumerableMapsExtension for *;
 
     /***************** Stored Variables *****************/
@@ -37,7 +43,7 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     }
 
     function __ExchangeFeesEscrow_init_unchained(address _resolver) internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE_FEES_ESCROW);
+        _registerInterface(type(IExchangeFeesEscrow).interfaceId);
         resolver = IAddressResolver(_resolver);
         grantRole(MANAGER_ROLE, _msgSender());
         rate = 0;

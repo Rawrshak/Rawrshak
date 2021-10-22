@@ -51,8 +51,8 @@ describe('Staking Rewards Pool Contract Tests', () => {
 
     describe("Basic Tests", () => {
         it('Supports the Staking Interface', async () => {
-            // INTERFACE_ID_STAKING = 0x00000016
-            expect(await staking.supportsInterface("0x00000016")).to.equal(true);
+            // IStaking Interface
+            expect(await staking.supportsInterface("0x09891775")).to.equal(true);
         });
     
         it('Check Default variables', async () => {

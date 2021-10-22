@@ -3,10 +3,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
-import "../utils/LibInterfaces.sol";
 import "./interfaces/IEscrowBase.sol";
 
 abstract contract EscrowBase is IEscrowBase, AccessControlUpgradeable, ERC165StorageUpgradeable {
+
+    /******************** Constants ********************/
+    /*
+     * IEscrowBase: 0xc7aacb62
+     */
         
     /******************** Constants ********************/
     bytes32 public constant override MANAGER_ROLE = keccak256("MANAGER_ROLE");

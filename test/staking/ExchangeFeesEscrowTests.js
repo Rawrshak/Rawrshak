@@ -54,8 +54,14 @@ describe('Exchange Fees Escrow Contract tests', () => {
         });
     
         it('Supports the ExchangeFeesEscrow Interface', async () => {
-            // INTERFACE_ID_LibContractHash.CONTRACT_EXCHANGE_FEE_ESCROW = 0x00000012
-            expect(await feesEscrow.supportsInterface("0x00000012")).to.equal(true);
+            // IExchangeFeesEscrow Interface
+            expect(await feesEscrow.supportsInterface("0xeca651f3")).to.equal(true);
+
+            // IEscrowBase Interface
+            expect(await feesEscrow.supportsInterface("0xc7aacb62")).to.equal(true);
+
+            // IAccessControlUpgradeable Interface
+            expect(await feesEscrow.supportsInterface("0x7965db0b")).to.equal(true);
         });
 
         it('Deployer wallet must have default admin role', async () => {

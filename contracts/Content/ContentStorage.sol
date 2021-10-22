@@ -8,7 +8,6 @@ import "./HasContractUri.sol";
 import "./ContentSubsystemBase.sol";
 import "./interfaces/IContentStorage.sol";
 import "../libraries/LibAsset.sol";
-import "../utils/LibInterfaces.sol";
 
 contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty, HasContractUri, HasTokenUri {    
     /******************** Constants ********************/

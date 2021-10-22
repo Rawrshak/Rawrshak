@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../libraries/LibAsset.sol";
-import "../utils/LibInterfaces.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
