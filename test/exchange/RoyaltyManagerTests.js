@@ -102,8 +102,8 @@ describe('Royalty Manager Contract', ()=> {
         });
     
         it('Supports the Royalty Manager Interface', async () => {
-            // INTERFACE_ID_ROYALTY_MANAGER = 0x0000000D
-            expect(await royaltyManager.supportsInterface("0x0000000D")).to.equal(true);
+            // IRoyaltyManager Interface
+            expect(await royaltyManager.supportsInterface("0x96c4ccf4")).to.equal(true);
         });
     });
     

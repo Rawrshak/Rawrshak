@@ -19,21 +19,8 @@ library LibInterfaces {
     * => 0x40c10f19 ^ 0x9dc29fac == 0xdd0390b5
     */
 
-    // Token Interface 
-    bytes4 constant INTERFACE_ID_TOKENBASE = 0x00000004;
-
-
-    // Exchange Interfaces
-    bytes4 constant INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;
-    bytes4 constant INTERFACE_ID_NFT_ESCROW            = 0x00000007;
-    bytes4 constant INTERFACE_ID_ERC20_ESCROW          = 0x00000008;
-    bytes4 constant INTERFACE_ID_ORDERBOOK             = 0x0000000B;
-    bytes4 constant INTERFACE_ID_EXECUTION_MANAGER     = 0x0000000C;
-    bytes4 constant INTERFACE_ID_ROYALTY_MANAGER       = 0x0000000D;
-    bytes4 constant INTERFACE_ID_EXCHANGE              = 0x0000000E;
-    bytes4 constant INTERFACE_ID_EXCHANGE_FEES_ESCROW  = 0x00000012;
-
     // Staking Interfaces
     bytes4 constant INTERFACE_ID_STAKING               = 0x00000016;
+    bytes4 constant INTERFACE_ID_EXCHANGE_FEES_ESCROW  = 0x00000012;
 
 }

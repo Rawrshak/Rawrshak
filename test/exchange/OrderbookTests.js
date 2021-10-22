@@ -60,7 +60,8 @@ describe('Orderbook Contract tests', () => {
     });
 
     it('Supports the Address resolver Interface', async () => {
-      expect(await orderbook.supportsInterface("0x0000000B")).to.equal(true);
+      // IOrderbook Interface
+      expect(await orderbook.supportsInterface("0x0950d870")).to.equal(true);
     });
   });
 

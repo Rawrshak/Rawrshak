@@ -7,6 +7,10 @@ import "./interfaces/IOrderbook.sol";
 import "../utils/LibContractHash.sol";
 
 contract Orderbook is IOrderbook, ManagerBase {
+    /******************** Interfaces ********************/
+    /*
+     * IOrderbook == 0x0950d870
+     */
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.Order) orders;
@@ -21,7 +25,7 @@ contract Orderbook is IOrderbook, ManagerBase {
     }
 
     function __Orderbook_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_ORDERBOOK);
+        _registerInterface(type(IOrderbook).interfaceId);
         ordersLength = 0;
     }
 

@@ -11,6 +11,11 @@ import "./interfaces/INftEscrow.sol";
 import "../utils/LibContractHash.sol";
 
 contract ExecutionManager is IExecutionManager, ManagerBase {    
+    /******************** Interfaces ********************/
+    /*
+     * IExecutionManager == 0x0f1fb8dd
+     */
+
     /******************** Public API ********************/
     function initialize(address _resolver) public initializer {
         __Context_init_unchained();
@@ -20,7 +25,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
     }
 
     function __ExecutionManager_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_EXECUTION_MANAGER);
+        _registerInterface(type(IExecutionManager).interfaceId);
     }
 
     function placeBuyOrder(uint256 _orderId, address _token, address _sender, uint256 _tokenAmount) external override onlyOwner {

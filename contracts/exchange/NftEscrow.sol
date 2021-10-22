@@ -8,6 +8,14 @@ import "../libraries/LibOrder.sol";
 import "./interfaces/INftEscrow.sol";
 
 contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721HolderUpgradeable {
+    /******************** Constants ********************/
+    /*
+     * INftEscrow == 0x06265fe7
+     * IERC721ReceiverUpgradeable == 0x150b7a02
+     * IERC1155ReceiverUpgradeable == 0x4e2312e0
+     * IEscrowBase: 0x7965db0b
+     * IAccessControlUpgradeable: 0x7965db0b
+     */
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibOrder.AssetData) public override escrowedAsset;
@@ -25,7 +33,9 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
     }
 
     function __NftEscrow_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_NFT_ESCROW);
+        _registerInterface(type(INftEscrow).interfaceId);
+        _registerInterface(type(IERC721ReceiverUpgradeable).interfaceId);
+        _registerInterface(type(IERC1155ReceiverUpgradeable).interfaceId);
     }
 
     function deposit(

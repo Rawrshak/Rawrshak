@@ -4,21 +4,23 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "../utils/LibInterfaces.sol";
+import "./interfaces/IEscrowBase.sol";
 
-abstract contract EscrowBase is AccessControlUpgradeable, ERC165StorageUpgradeable {
+abstract contract EscrowBase is IEscrowBase, AccessControlUpgradeable, ERC165StorageUpgradeable {
         
     /******************** Constants ********************/
-    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
+    bytes32 public constant override MANAGER_ROLE = keccak256("MANAGER_ROLE");
 
     /*********************** Events *********************/
     event ManagerRegistered(address indexed _manager);
 
     /******************** Public API ********************/
     function __EscrowBase_init_unchained() internal initializer {
+        _registerInterface(type(IEscrowBase).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
-    function registerManager(address _manager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function registerManager(address _manager) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MANAGER_ROLE, _manager);
         emit ManagerRegistered(_manager);
     }

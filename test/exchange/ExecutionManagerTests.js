@@ -113,8 +113,8 @@ describe('Execution Manager Contract Tests', ()=> {
         });
     
         it('Supports the Execution Manager Interface', async () => {
-            // INTERFACE_ID_EXECUTION_MANAGER = 0x0000000C
-            expect(await executionManager.supportsInterface("0x0000000C")).to.equal(true);
+            // IExecutionManager Interface
+            expect(await executionManager.supportsInterface("0x0f1fb8dd")).to.equal(true);
         });
         
         it('Verify Escrows and token address', async () => {

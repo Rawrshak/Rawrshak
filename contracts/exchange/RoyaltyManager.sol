@@ -12,6 +12,11 @@ import "../staking/ExchangeFeesEscrow.sol";
 import "../utils/LibContractHash.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
+    /******************** Interfaces ********************/
+    /*
+     * IRoyaltyManager == 0x96c4ccf4
+     */
+
     using ERC165CheckerUpgradeable for address;
 
     /******************** Public API ********************/
@@ -23,7 +28,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     }
 
     function __RoyaltyManager_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_ROYALTY_MANAGER);
+        _registerInterface(type(IRoyaltyManager).interfaceId);
     }
 
     function claimRoyalties(address _user) external override onlyOwner {
