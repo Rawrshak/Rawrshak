@@ -13,21 +13,11 @@ import "../utils/LibInterfaces.sol";
 contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty, HasContractUri, HasTokenUri {    
     /******************** Constants ********************/
     /*
-     * IContractUri == 0xc0e24d5e
-     * IERC2981 == 0x2a55205a
-     * bytes4(keccak256('ids(uint256)')) == 0xfac333ac
-     * bytes4(keccak256('supply(uint256)')) == 0x35403023
-     * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
-     * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
-     * bytes4(keccak256('hiddenUri(uint256,uint256)')) == 0x47bb1ace
-     * bytes4(keccak256('updateSupply(uint256,uint256)')) == 0x9e2dcbfd
-     * bytes4(keccak256('addAssetBatch(LibAsset.CreateData[] memory)')) == 0x4c45670b
-     * bytes4(keccak256('setHiddenUriBatch(LibAsset.AssetUri[] memory)')) == 0x8c8e95fa
-     * bytes4(keccak256('setPublicUriBatch(LibAsset.AssetUri[] memory)')) == 0xc6c6617e
-     * bytes4(keccak256('setContractRoyalty(LibRoyalty.Fees[] memory)')) == 0xa2de9fbe
-     * bytes4(keccak256('setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory)')) == 0x5090ab4f
+     * IContractUri: 0xc0e24d5e
+     * IContentStorage: 0xac73f1f1
+     * IContentSubsystemBase: 0x7460af1d
+     * IAccessControlUpgradeable: 0x7965db0b
      */
-    // bytes4 private constant INTERFACE_ID_CONTENT_STORAGE = A133AF9C;
 
     /***************** Stored Variables *****************/
     mapping(uint256 => bool) public override ids;
@@ -50,7 +40,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     }
 
     function __ContentStorage_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_CONTENT_STORAGE);
+        _registerInterface(type(IContentStorage).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

@@ -23,12 +23,18 @@ describe('ContentStorage Contract Tests', () => {
             expect(contractFees.rate).to.equal(10000);
         });
         
-        it('Check StorageContract Interfaces', async () => {
-            // Content Storage interface
-            expect(await contentStorage.supportsInterface("0xA133AF9C")).to.equal(true);
+        it('Check ContentStorage Contract Interfaces', async () => {
+            // IContentStorage Interface
+            expect(await contentStorage.supportsInterface("0xac73f1f1")).to.equal(true);
+
+            // IContentSubsystemBase Interface
+            expect(await contentStorage.supportsInterface("0x7460af1d")).to.equal(true);
                 
-            // HasContractUri interface
+            // IContractUri interface
             expect(await contentStorage.supportsInterface("0xc0e24d5e")).to.equal(true);
+
+            // IAccessControlUpgradeable Interface
+            expect(await contentStorage.supportsInterface("0x7965db0b")).to.equal(true);
         });
     
         it('Check role permissions', async () => {

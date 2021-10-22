@@ -18,9 +18,8 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('MINTER_ROLE()')) == 0xd5391393
-     * bytes4(keccak256('userMintNonce(adderess)')) == 0x0514a32b
-     * bytes4(keccak256('verifyMint(LibAsset.MintData memory,address)')) == 0x0c794dd6
+     * IAccessControlManager Interface: 0x41f2c5c6
+     * IAccessControlUpgradeable Interface: 0x7965db0b
      */
     // bytes4 private constant INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E;
     bytes32 public constant override MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -35,11 +34,12 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         __ERC165Storage_init_unchained();
         __EIP712Extended_init_unchained("MintData", "1");
         __AccessControlManager_init_unchained();
+        __ContentSubsystemBase_init_unchained();
     }
     
     function __AccessControlManager_init_unchained() internal initializer
     {
-        _registerInterface(LibInterfaces.INTERFACE_ID_ACCESS_CONTROL_MANAGER);
+        _registerInterface(type(IAccessControlManager).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

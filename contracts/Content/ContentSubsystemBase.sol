@@ -9,18 +9,15 @@ abstract contract ContentSubsystemBase is IContentSubsystemBase, ERC165StorageUp
 
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('parent()')) == 0x60f96a8f
-     * bytes4(keccak256('setParent(address)')) == 0x1499c592
-     * bytes4(keccak256('transferOwnership()')) == 0x880ad0af
+     * IContentSubsystemBase: 0x7460af1d
      */
-    // bytes4 private constant INTERFACE_ID_CONTENT_SUBSYSTEM_BASE = 0xFC6A7FB2;
 
     /***************** Stored Variables *****************/
     address contentParent;
 
     /******************** Public API ********************/
     function __ContentSubsystemBase_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_CONTENT_SUBSYSTEM_BASE);
+        _registerInterface(type(IContentSubsystemBase).interfaceId);
     }
 
     function setParent(address) external virtual override {

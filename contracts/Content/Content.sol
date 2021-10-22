@@ -4,24 +4,19 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "../utils/LibInterfaces.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";
-import "./interfaces/IERC2981.sol";
 
-contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgradeable {
+contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
     /******************** Constants ********************/
     /*
      * ERC1155 interface == 0xd9b67a26
+     * IContent == 0x15f57ea0
      * IContractUri == 0xc0e24d5e
-     * IERC2981 == 0x2a55205a
-     * bytes4(keccak256('totalSupply(uint256)')) == 0x35403023 // Todo: update this
-     * bytes4(keccak256('maxSupply(uint256)')) == 0x869f7594
-     * bytes4(keccak256('uri(uint256,uint256)')) == 0xbe234d42
-     * bytes4(keccak256('mintBatch(LibAsset.MintData memory)')) == 0x9791d37a
-     * bytes4(keccak256('burnBatch(LibAsset.BurnData memory)')) == 0xa0a862d5
-     *      => 98AA21F4
+     * IERC2981Upgradeable == 0x2a55205a
      */
 
     /***************** Stored Variables *****************/
@@ -46,8 +41,9 @@ contract Content is IContent, IERC2981, ERC1155Upgradeable, ERC165StorageUpgrade
         address _accessControlManager)
         internal initializer
     {
-        _registerInterface(LibInterfaces.INTERFACE_ID_CONTENT);
-        _registerInterface(LibInterfaces.INTERFACE_ID_ERC2981);
+        _registerInterface(type(IContent).interfaceId);
+        _registerInterface(type(IERC2981Upgradeable).interfaceId);
+        _registerInterface(type(IContractUri).interfaceId);
 
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);

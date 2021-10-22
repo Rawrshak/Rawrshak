@@ -24,6 +24,17 @@ describe('AccessControlManager Contract Tests', () => {
 
             expect(await manager.hasRole(default_admin_role, deployerAddress.address)).to.equal(true);
         });
+        
+        it('Verify AccessControlManager Contract Interfaces', async () => {
+            // IAccessControlManager Interface
+            expect(await manager.supportsInterface("0x41f2c5c6")).to.equal(true);
+
+            // IAccessControlUpgradeable Interface
+            expect(await manager.supportsInterface("0x7965db0b")).to.equal(true);
+
+            // IContentSubsystemBase Interface
+            expect(await manager.supportsInterface("0x7460af1d")).to.equal(true);
+        });
     
         it('Change Parent and check roles', async () => {
             var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);

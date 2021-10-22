@@ -22,12 +22,6 @@ library LibInterfaces {
     // Token Interface 
     bytes4 constant INTERFACE_ID_TOKENBASE = 0x00000004;
 
-    // Content Interfaces
-    bytes4 constant INTERFACE_ID_CONTENT = 0x98AA21F4; // 0x94b3e03b;
-    bytes4 constant INTERFACE_ID_CONTENT_STORAGE = 0xA133AF9C; // 0x00000002;
-    bytes4 constant INTERFACE_ID_CONTENT_MANAGER = 0xEAD82167; // 0x00000003;
-    bytes4 constant INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E; // Prev: 0x00000011;
-    bytes4 constant INTERFACE_ID_CONTENT_SUBSYSTEM_BASE = 0xFC6A7FB2; // 0x00000018;
 
     // Exchange Interfaces
     bytes4 constant INTERFACE_ID_ADDRESS_REGISTRY      = 0x00000006;
@@ -42,6 +36,4 @@ library LibInterfaces {
     // Staking Interfaces
     bytes4 constant INTERFACE_ID_STAKING               = 0x00000016;
 
-    // ERC Interfaces
-    bytes4 constant INTERFACE_ID_ERC2981        = 0x2a55205a;
 }
