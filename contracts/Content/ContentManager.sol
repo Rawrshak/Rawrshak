@@ -48,12 +48,21 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         accessControlManager = IAccessControlManager(_accessControlManager);
     }
     
+    /**
+    * @dev adds a batch of new tokens, sets their supply and max supply,
+    * sets their first hidden and public uris and sets their royalties
+    * @param _assets array of LibAsset.CreateData structure objects
+    */
     function addAssetBatch(
         LibAsset.CreateData[] memory _assets
     ) external override onlyOwner {
         contentStorage.addAssetBatch(_assets);
     }
     
+    /**
+    * @dev Update the wallet's contract access roles
+    * @param _operators array of wallets whose roles are getting updated
+    */
     function registerOperators(LibAsset.SystemApprovalPair[] memory _operators) public override onlyOwner {
         for (uint256 i = 0; i < _operators.length; ++i) {
             if (_operators[i].approved) {
@@ -64,22 +73,43 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         }
     }
 
+    /**
+    * @dev adds new versions of tokens to the hiddenUris mapping
+    * @param _assets array of LibAsset.AssetUri structure objects
+    */
     function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
         contentStorage.setHiddenUriBatch(_assets);
     }
     
+    /**
+    * @dev adds new versions of tokens to the publicUris mapping
+    * @param _assets array of LibAsset.AssetUri structure objects
+    */
     function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyOwner {
         contentStorage.setPublicUriBatch(_assets);
     }
-
+    /**
+    * @dev sets the address of who receives the contract royalties and the rate
+    * @param _receiver address to receives the royalties
+    * @param _rate royalty fee percentage
+    */
     function setContractRoyalty(address _receiver, uint24 _rate) external override onlyOwner {
         contentStorage.setContractRoyalty(_receiver, _rate);
     }
     
+    /**
+    * @dev sets the address of the receiver and the royalty rate for each individual token in a batch
+    * @param _assets array of LibAsset.AssetRoyalties structure objects
+    */
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external override onlyOwner {
         contentStorage.setTokenRoyaltiesBatch(_assets);
     }
     
+    /**
+    * @dev verifies if the user has the requisite permissions, if the token exists,
+    * and if the max supply has not been reached. It then mints the asset and updates the supply.
+    * @param _data LibAsset.MintData structure object
+    */
     function mintBatch(LibAsset.MintData memory _data) external override onlyOwner {
         content.mintBatch(_data);
     }
