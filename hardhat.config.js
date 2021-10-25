@@ -36,8 +36,14 @@ module.exports = {
         optimistic_kovan: {
             chainId: 69,
             url: 'https://kovan.optimism.io',
-            accounts: [process.env.KOVAN_PRIVATE_KEY],
-            gasPrice: 15000000
+            accounts: [process.env.KOVAN_PRIVATE_KEY,
+                process.env.DEV1_PRIVATE_KEY,
+                process.env.DEV2_PRIVATE_KEY,
+                process.env.DEV3_PRIVATE_KEY,
+                process.env.PLAYER_1_PRIVATE_KEY,
+                process.env.PLAYER_2_PRIVATE_KEY,
+                process.env.PLAYER_3_PRIVATE_KEY,
+                process.env.PLAYER_4_PRIVATE_KEY]
         },
         kovan: {
             chainId: 42,

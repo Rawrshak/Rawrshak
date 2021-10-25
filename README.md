@@ -4,6 +4,31 @@ This project will contain the implementation of the Rawrshak Smart Contracts
 # Token: Rawrshak Token [RAWR]
 Rawrshak Token are the platform currency that will be used for Governance and transactions.
 
+# Alpha Testnet
+We've decided to launch the alpha testnet on Optimistic Kovan because of the following reasons:
+- Ease of deployment for Layer 2 solution
+- Scalability Testing
+- Chainsafe Gaming SDK L2 testing 
+
+## Rawrshak Contract Addresses
+Contract | Address | Version
+------- | ------- | -------
+RAWR Token | 0xdf973861836d3c5bf77e69f6ccab174445aa8363 | v.0.1
+AddressResolver | 0xdE156176f1f20FF7485FE2bFE84c64541A8639D1 | v.0.1
+Exchange | 0x36084B5E07B5A1Fa0Cb233C38E573c7C0653e6F4 | v.0.1
+Staking | 0x445497C91DC542bBCcCC9b27dE3caFc32E861780 | v.0.1
+ContentFactory | 0x2385547DAd794d7cddc46ecF9ab8CCa803981FAf | v.0.1
+
+## Sample Content Contract Addresses
+Contract | Content Contract | Content Manager Contract 
+------- | ------- | ------- 
+Rawrshak Contracts | 0xd0938b7fDB19de29c85f90BCBe33c094a29AE285
+ScreamFortress2 Contracts | 0x184d723b301C08401F200a4CDF221c5FC93Df3E5
+FightBuddy Contracts | 0x95aB4096a5a782Caa96D5dEC502fDD60b820E6AD
+SuperScaryHorrorGame Contracts | 0xeCa6268Da026dAc239E790044eE2eBe75e075F40
+
+Note: You will still need the private keys for the developer wallet in order to add new assets to the contract. Please feel free to launch your own test data contracts.
+
 # Tools
 ## Node JS and NPM
     Install [Node JS and NPM](https://nodejs.org/en/)

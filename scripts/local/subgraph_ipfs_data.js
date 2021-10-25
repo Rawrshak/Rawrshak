@@ -138,11 +138,6 @@ async function main() {
     balance = await deployer.getBalance();
     balance = web3.utils.fromWei(balance.toString(), 'ether');
     console.log(`Account Balance: ${balance.toString()}`);
-    
-    // Rawrshak Contracts: Content[ 0x3063527AEE58c9470AD00E31e4fc6A613b84a8b1 ], ContentManager[ 0xcfbe2694e9c033Cc6adbA084E51b6AfECfed09b7 ]
-    // ScreamFortress2 Contracts: Content[ 0x1216517D85581CC2901dC5d214f20b910910774f ], ContentManager[ 0xEEe51B3236219931DD0fdDc712c6cf9bA55bd110 ]
-    // FightBuddy Contracts: Content[ 0x7e5DC850470672b81b119cCFfEF595DFb6060cC7 ], ContentManager[ 0x0E89b24e46A7F30f018225b75A24b5cb000EBaE7 ]
-    // SuperScaryHorrorGame Contracts: Content[ 0x7d046EEA32043D36Fe6De42568A5EB0FAD946117 ], ContentManager[ 0x84206ECC24BC547276c59B40b04F63bd70CBFC7c ]
   }
   
   main()
@@ -151,3 +146,15 @@ async function main() {
       console.error(error);
       process.exit(1);
     });
+
+// // Optimism Local Contracts
+// Rawrshak Contracts: Content[ 0xC5999Ef9Fe837eDB1fE6611983fb1Bf8ceB477d4 ], ContentManager[ 0xA4C8495ba6243F718Aa01cE75Dbd0b63EFCe6f71 ]
+// ScreamFortress2 Contracts: Content[ 0xF4166C399b38A705B9edE285d2F2E76fF6d70468 ], ContentManager[ 0x52186FC20812e479d48bE61481fB26fF73Ed275f ]    
+// FightBuddy Contracts: Content[ 0x0FeeC7150b5a6C9653F18dc646718d0d5d02C244 ], ContentManager[ 0x3422d9927Dc5433f6874b3D32C297e636Dc388dE ]    
+// SuperScaryHorrorGame Contracts: Content[ 0xD40eeC93b5E823Cc17C6930eD248D96f6F869105 ], ContentManager[ 0x77297Eb9d9405a73d7fDab73af10B1e6ceE6Fd18 ]
+
+// // Contracts
+// Rawrshak Contracts: Content[ 0x3063527AEE58c9470AD00E31e4fc6A613b84a8b1 ], ContentManager[ 0xcfbe2694e9c033Cc6adbA084E51b6AfECfed09b7 ]
+// ScreamFortress2 Contracts: Content[ 0x1216517D85581CC2901dC5d214f20b910910774f ], ContentManager[ 0xEEe51B3236219931DD0fdDc712c6cf9bA55bd110 ]
+// FightBuddy Contracts: Content[ 0x7e5DC850470672b81b119cCFfEF595DFb6060cC7 ], ContentManager[ 0x0E89b24e46A7F30f018225b75A24b5cb000EBaE7 ]
+// SuperScaryHorrorGame Contracts: Content[ 0x7d046EEA32043D36Fe6De42568A5EB0FAD946117 ], ContentManager[ 0x84206ECC24BC547276c59B40b04F63bd70CBFC7c ]
