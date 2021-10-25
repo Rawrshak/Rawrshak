@@ -12,9 +12,14 @@ import "../resolver/IAddressResolver.sol";
 import "./interfaces/IStaking.sol";
 import "./interfaces/IExchangeFeesEscrow.sol";
 import "../utils/LibContractHash.sol";
-import "../utils/LibInterfaces.sol";
 
 contract Staking is IStaking, ContextUpgradeable, ERC165StorageUpgradeable {
+    
+    /******************** Constants ********************/
+    /*
+     * IStaking: 0x09891775
+     */
+
     using AddressUpgradeable for address;
     using EnumerableSetUpgradeable for *;
 
@@ -32,7 +37,7 @@ contract Staking is IStaking, ContextUpgradeable, ERC165StorageUpgradeable {
     }
 
     function __Staking_init_unchained(address _token, address _resolver) internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_STAKING);
+        _registerInterface(type(IStaking).interfaceId);
         token = _token;
         totalStakedTokens = 0;
         resolver = IAddressResolver(_resolver);

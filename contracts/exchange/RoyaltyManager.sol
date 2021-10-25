@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "./ManagerBase.sol";
 import "../content/Content.sol";
 import "./interfaces/IRoyaltyManager.sol";
@@ -11,6 +12,11 @@ import "../staking/ExchangeFeesEscrow.sol";
 import "../utils/LibContractHash.sol";
 
 contract RoyaltyManager is IRoyaltyManager, ManagerBase {
+    /******************** Interfaces ********************/
+    /*
+     * IRoyaltyManager == 0x96c4ccf4
+     */
+
     using ERC165CheckerUpgradeable for address;
 
     /******************** Public API ********************/
@@ -22,7 +28,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
     }
 
     function __RoyaltyManager_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_ROYALTY_MANAGER);
+        _registerInterface(type(IRoyaltyManager).interfaceId);
     }
 
     function claimRoyalties(address _user) external override onlyOwner {
@@ -94,8 +100,8 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
             remaining -= platformFees;
         }
 
-        if (_asset.contentAddress.supportsInterface(LibInterfaces.INTERFACE_ID_ERC2981)) {
-            (receiver, royaltyFee) = IERC2981(_asset.contentAddress).royaltyInfo(_asset.tokenId, _total);
+        if (_asset.contentAddress.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
+            (receiver, royaltyFee) = IERC2981Upgradeable(_asset.contentAddress).royaltyInfo(_asset.tokenId, _total);
             remaining -= royaltyFee;
         }
         

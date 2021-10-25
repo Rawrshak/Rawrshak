@@ -53,8 +53,8 @@ describe('Content Manager Contract Tests', () => {
         });
 
         it('Check Supported interfaces', async () => {
-            // Content Storage interface
-            expect(await contentManager.supportsInterface("0xEAD82167")).to.equal(true);
+            // Content Manager interface
+            expect(await contentManager.supportsInterface("0x250b1d27")).to.equal(true);
         });
     });
 

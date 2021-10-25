@@ -8,6 +8,13 @@ import "./interfaces/IErc20Escrow.sol";
 import "../utils/EnumerableMapsExtension.sol";
 
 contract Erc20Escrow is IErc20Escrow, EscrowBase {
+    /******************** Constants ********************/
+    /*
+     * IErc20Escrow == 0xfeb2d5c7
+     * IEscrowBase: 0x7965db0b
+     * IAccessControlUpgradeable: 0x7965db0b
+     */
+
     using EnumerableSetUpgradeable for *;
     using EnumerableMapsExtension for *;
     
@@ -31,7 +38,7 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
     }
 
     function __Erc20Escrow_init_unchained() internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_ERC20_ESCROW);
+        _registerInterface(type(IErc20Escrow).interfaceId);
     }
 
     function addSupportedTokens(address token) external override onlyRole(MANAGER_ROLE) {

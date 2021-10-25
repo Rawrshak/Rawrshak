@@ -20,7 +20,7 @@ describe('Address Resolver Contract tests', () => {
         });
 
         it('Supports the Address resolver Interface', async () => {
-            expect(await resolver.supportsInterface("0x00000006")).to.equal(true);
+            expect(await resolver.supportsInterface("0x9c7ff313")).to.equal(true);
         });
     });
 

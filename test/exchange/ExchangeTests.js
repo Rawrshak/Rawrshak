@@ -129,6 +129,11 @@ describe('Exchange Contract', () => {
     it('Check if Exchange was deployed properly', async () => {
       expect(exchange.address).not.equal(ethers.constants.AddressZero);
     });
+
+    it('Supports the Exchange Interface', async () => {
+        // IExchange Interface
+        expect(await exchange.supportsInterface("0xdf858c9f")).to.equal(true);
+    });
   });
 
   describe("Functional Tests", () => {

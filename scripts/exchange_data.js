@@ -54,7 +54,7 @@ async function main() {
     // Get Contracts 
     Content = await ethers.getContractFactory("Content");
     ContentManager = await ethers.getContractFactory("ContentManager");
-    const rawrshakContract = Content.attach("0xB955b6c65Ff69bfe07A557aa385055282b8a5eA3");
+    const rawrshakContract = Content.attach("0x55652FF92Dc17a21AD6810Cce2F4703fa2339CAE");
     // const rawrshakContractManager = Content.attach("0xBf5A316F4303e13aE92c56D2D8C9F7629bEF5c6e");
 
     // Developer mints Asset 3 and 4 to player 1
@@ -65,7 +65,7 @@ async function main() {
     var mintData = [player2.address, [1,2,5], [5,5,5], 0, ethers.constants.AddressZero, []];
     await rawrshakContract.connect(dev1).mintBatch(mintData);
 
-    const screamContract = Content.attach("0x25c71B0B48AE6e8478B3404CEC960a4387f4fDF3");
+    const screamContract = Content.attach("0x79E4D62d828379720db8E0E9511e10e6Bac05351");
     // Developer mints Asset 3 and 4 to player 1
     var mintData = [player1.address, [0,1,2,3,4], [5,5,5,5,5], 0, ethers.constants.AddressZero, []];
     await screamContract.connect(dev1).mintBatch(mintData);
@@ -75,7 +75,7 @@ async function main() {
     await screamContract.connect(dev1).mintBatch(mintData);
 
     Exchange = await ethers.getContractFactory("Exchange");
-    const exchange = Exchange.attach("0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44");
+    const exchange = Exchange.attach("0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f");
 
     if (exchange != null) {
         console.log(`Exchange exists!`);

@@ -51,8 +51,14 @@ describe('ERC20 Escrow Contract tests', () => {
         });
     
         it('Supports the Erc20Escrow Interface', async () => {
-            // INTERFACE_ID_ERC20_ESCROW = 0x00000008
-            expect(await escrow.supportsInterface("0x00000008")).to.equal(true);
+            // IErc20Escrow Interface
+            expect(await escrow.supportsInterface("0xfeb2d5c7")).to.equal(true);
+
+            // IEscrowBase Interface
+            expect(await escrow.supportsInterface("0xc7aacb62")).to.equal(true);
+
+            // IAccessControlUpgradeable Interface
+            expect(await escrow.supportsInterface("0x7965db0b")).to.equal(true);
         });
     
         it('Deployer wallet must have default admin role', async () => {

@@ -12,6 +12,11 @@ import "./interfaces/IExecutionManager.sol";
 import "./interfaces/IExchange.sol";
 
 contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165StorageUpgradeable {    
+    /******************** Interfaces ********************/
+    /*
+     * IExchange == 0xdf858c9f
+     */
+
     /***************** Stored Variables *****************/
     IRoyaltyManager royaltyManager;
     IOrderbook orderbook;
@@ -27,7 +32,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
     }
 
     function __Exchange_init_unchained(address _royaltyManager, address _orderbook, address _executionManager) internal initializer {
-        _registerInterface(LibInterfaces.INTERFACE_ID_EXCHANGE);
+        _registerInterface(type(IExchange).interfaceId);
           
         royaltyManager = IRoyaltyManager(_royaltyManager);
         orderbook = IOrderbook(_orderbook);

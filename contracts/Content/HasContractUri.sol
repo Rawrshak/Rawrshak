@@ -9,9 +9,8 @@ abstract contract HasContractUri is IContractUri, ContentSubsystemBase {
 
     /******************** Constants ********************/
     /*
-     * bytes4(keccak256('contractUri()')) == 0xc0e24d5e
+     * IContractUri == 0xc0e24d5e
      */
-    bytes4 private constant INTERFACE_ID_CONTRACT_URI = 0xc0e24d5e;
 
     /***************** Stored Variables *****************/
     // Contract Information Uri
@@ -23,7 +22,7 @@ abstract contract HasContractUri is IContractUri, ContentSubsystemBase {
     /******************** Public API ********************/
     function __HasContractUri_init_unchained(string memory _uri) internal initializer {
         contractUri = _uri;
-        _registerInterface(INTERFACE_ID_CONTRACT_URI);
+        _registerInterface(type(IContractUri).interfaceId);
     }
 
     /**************** Internal Functions ****************/

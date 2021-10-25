@@ -5,9 +5,14 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "./IAddressResolver.sol";
-import "../utils/LibInterfaces.sol";
 
 contract AddressResolver is IAddressResolver, OwnableUpgradeable, ERC165StorageUpgradeable {
+    
+    /******************** Constants ********************/
+    /*
+     * IAddressResolver == 0x9c7ff313
+     */
+
     using AddressUpgradeable for address;
 
     /***************** Stored Variables *****************/
@@ -17,7 +22,7 @@ contract AddressResolver is IAddressResolver, OwnableUpgradeable, ERC165StorageU
     function initialize() public initializer {
         __Context_init_unchained();
         __Ownable_init_unchained();
-        _registerInterface(LibInterfaces.INTERFACE_ID_ADDRESS_REGISTRY);
+        _registerInterface(type(IAddressResolver).interfaceId);
     }
 
     function registerAddress(bytes4[] calldata _ids, address[] calldata _addresses) external override onlyOwner {

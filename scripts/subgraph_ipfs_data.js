@@ -113,7 +113,7 @@ async function main() {
     Content = await ethers.getContractFactory("Content");
     ContentManager = await ethers.getContractFactory("ContentManager");
     const ContentFactory = await ethers.getContractFactory("ContentFactory");
-    const factory = ContentFactory.attach("0x851356ae760d987E095750cCeb3bC6014560891C");
+    const factory = ContentFactory.attach("0xf5059a5D33d5853360D16C683c16e67980206f36");
 
     // Note: for the URI, the developer has to add "https://ipfs.io/ipfs/" before downloading from ipfs
     // Developer 1 Rawrshak and Scream Fortress 2 Contract

@@ -70,8 +70,20 @@ describe('NFT Escrow Contract', () => {
         });
     
         it('Supports the NftEscrow Interface', async () => {
-            // INTERFACE_ID_NFT_ESCROW = 0x00000007
-            expect(await escrow.supportsInterface("0x00000007")).to.equal(true);
+            // INftEscrow Interface
+            expect(await escrow.supportsInterface("0x06265fe7")).to.equal(true);
+            
+            // IERC721ReceiverUpgradeable Interface
+            expect(await escrow.supportsInterface("0x150b7a02")).to.equal(true);
+            
+            // IERC1155ReceiverUpgradeable Interface
+            expect(await escrow.supportsInterface("0x4e2312e0")).to.equal(true);
+
+            // IEscrowBase Interface
+            expect(await escrow.supportsInterface("0xc7aacb62")).to.equal(true);
+
+            // IAccessControlUpgradeable Interface
+            expect(await escrow.supportsInterface("0x7965db0b")).to.equal(true);
         });
     
         it('Deployer wallet must have default admin role', async () => {
