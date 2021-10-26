@@ -51,7 +51,7 @@ describe('Content Contract Tests', () => {
             expect(await content.supportsInterface("0xd9b67a26")).to.equal(true);
 
             // IContent Interface
-            expect(await content.supportsInterface("0x15f57ea0")).to.equal(true);
+            expect(await content.supportsInterface("0x6a3af2b5")).to.equal(true);
 
             // IContractUri Interface
             expect(await content.supportsInterface("0xc0e24d5e")).to.equal(true);

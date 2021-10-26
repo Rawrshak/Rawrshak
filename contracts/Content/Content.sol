@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";
+import "hardhat/console.sol";
 
 contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
     /******************** Constants ********************/
@@ -105,8 +106,8 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
         return contentStorage.getContractRoyalty();
     }
     
-    function userMintNonce() external view override returns (uint256) {
-        return accessControlManager.userMintNonce(_msgSender());
+    function userMintNonce(address _user) external view override returns (uint256) {
+        return accessControlManager.userMintNonce(_user);
     }
     
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount) {
