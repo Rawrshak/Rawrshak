@@ -43,11 +43,9 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     }
     
     /**
-    * @dev assigns the address of contentParent and
-    * transfers role of DEFAULT_ADMIN_ROLE to the _newParent parameter
+    * @dev assigns the address of contentParent and transfers role of DEFAULT_ADMIN_ROLE to the _newParent parameter
     * @param _newParent address to be granted roles
     */
-    
     function setParent(address _newParent) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         _setParent(_newParent);
         grantRole(DEFAULT_ADMIN_ROLE, _newParent);
@@ -59,7 +57,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     /**
     * @dev verifies whether the caller has permission to mint an asset
     * @param _data LibAsset.MintData structure object
-    * @param _caller address of who called this function
+    * @param _caller address of the wallet who is minting
     */
     function verifyMint(LibAsset.MintData memory _data, address _caller) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_data.tokenIds.length == _data.amounts.length, "Invalid token input");

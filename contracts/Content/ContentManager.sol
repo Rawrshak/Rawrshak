@@ -49,8 +49,8 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     }
     
     /**
-    * @dev adds a batch of new tokens, sets their supply and max supply,
-    * sets their first hidden and public uris and sets their royalties
+    * @dev adds a batch of new tokens, sets their supply and max supply, sets their first hidden and public uris and sets their 
+    * royalties
     * @param _assets array of LibAsset.CreateData structure objects
     */
     function addAssetBatch(
@@ -89,7 +89,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         contentStorage.setPublicUriBatch(_assets);
     }
     /**
-    * @dev sets the address of who receives the contract royalties and the rate
+    * @dev sets the address of who receives the contract royalties and the rate, which must be between 0 and 1,000,000 (100%). This is used as the defaulty royalty for assets when token royalties are not set.
     * @param _receiver address to receives the royalties
     * @param _rate royalty fee percentage
     */
@@ -106,8 +106,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     }
     
     /**
-    * @dev verifies if the user has the requisite permissions, if the token exists,
-    * and if the max supply has not been reached. It then mints the asset and updates the supply.
+    * @dev verifies if the user has the requisite permissions, if the token exists, and if the max supply has not been reached. It then * mints the asset and updates the supply.
     * @param _data LibAsset.MintData structure object
     */
     function mintBatch(LibAsset.MintData memory _data) external override onlyOwner {

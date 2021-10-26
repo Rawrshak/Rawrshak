@@ -49,8 +49,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     }
 
     /** Asset Minting
-    * @dev Mints a batch of assets if the caller is verified, if the token exist,
-    * and if the max supply has not been reached
+    * @dev Mints a batch of assets if the caller is verified, if the token exists, and if the max supply has not been reached.
     * @param _data LibAsset.MintData structure object
     */
     function mintBatch(LibAsset.MintData memory _data) external override {
@@ -72,7 +71,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     }
 
     /** Asset Burning
-    * @dev Burns a batch of assets if the caller is approved, and if the tokens exist
+    * @dev Burns a batch of assets if the caller is the owner or is approved by the owner, and if the tokens exist
     * @param _data LibAsset.BurnData structure object
     */
     function burnBatch(LibAsset.BurnData memory _data) external override {
@@ -91,7 +90,9 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     }
 
     // CONTRACT URI
-    /** @dev returns the contract uri */
+    /**
+    * @dev returns the contract uri
+    */
     function contractUri() external view override returns (string memory) {
         return contentStorage.contractUri();
     }
@@ -131,12 +132,16 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
         return _maxSupply(_tokenId);
     }
 
-    /** @dev returns the default royalty for the contract assets */
+    /**
+    * @dev returns the default royalty for the contract assets
+    */
     function contractRoyalty() external view override returns (address receiver, uint24 rate) {
         return contentStorage.getContractRoyalty();
     }
     
-    /** @dev returns the nonce of the user for this contract */
+    /**
+    * @dev returns the nonce of the user for this contract
+    */
     function userMintNonce() external view override returns (uint256) {
         return accessControlManager.userMintNonce(_msgSender());
     }

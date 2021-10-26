@@ -44,8 +44,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
 
      
     /**
-    * @dev assigns the address of contentParent and transfers role of 
-    * DEFAULT_ADMIN_ROLE to the _contentParent parameter
+    * @dev assigns the address of contentParent and transfers role of DEFAULT_ADMIN_ROLE to the _contentParent parameter
     * @param _contentParent address to be granted roles
      */
     function setParent(address _contentParent) external override onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -57,8 +56,8 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     }
 
     /**
-    * @dev adds a batch of new tokens, sets their supply and max supply,
-    * sets their first hidden and public uris, and sets their royalties
+    * @dev adds a batch of new tokens, sets their supply and max supply, sets their first hidden and public uris, and sets their 
+    * royalties
     * @param _assets an array of LibAsset.CreateData structure objects
     */
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -116,7 +115,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     }
 
     /**
-    * @dev sets the address of who receives the contract royalties and the rate
+    * @dev sets the address of who receives the contract royalties and the rate, which must be between 0 and 1,000,000 (100%). This is used as the defaulty royalty for assets when token royalties are not set.
     * @param _receiver address to receive the royalties
     * @param _rate royalty fee percentage
     */
@@ -156,12 +155,16 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
         return _tokenUri(_tokenId, _version, false);
     }
     
-    /** @dev returns the default royalty for the contract assets */
+    /**
+    * @dev returns the default royalty for the contract assets
+    */
     function getContractRoyalty() external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (address receiver, uint24 rate) {
         return (contractRoyalty.receiver, contractRoyalty.rate);
     }
     
-    /** @dev returns the royalty receiver address and rate for a token */
+    /**
+    * @dev returns the royalty receiver address and rate for a token
+    */
     function getRoyalty(uint256 _tokenId) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (address receiver, uint24 rate) {
         // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
         // _getRoyalty() will return the contract's default royalty fee. However, that can also
