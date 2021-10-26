@@ -18,11 +18,16 @@ abstract contract ContentSubsystemBase is IContentSubsystemBase, ERC165StorageUp
     function __ContentSubsystemBase_init_unchained() internal initializer {
         _registerInterface(type(IContentSubsystemBase).interfaceId);
     }
-
+    /**
+    * @dev assigns the address of contentParent
+    */
     function setParent(address) external virtual override {
         // No-op
     }
 
+    /**
+    * @dev returns the contentParent address 
+    */
     function parent() external view override returns (address) {
         return _parent();
     }
