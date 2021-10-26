@@ -14,7 +14,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     /******************** Constants ********************/
     /*
      * ERC1155 interface == 0xd9b67a26
-     * IContent == 0x15f57ea0
+     * IContent == 0x6a3af2b5
      * IContractUri == 0xc0e24d5e
      * IERC2981Upgradeable == 0x2a55205a
      */
