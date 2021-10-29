@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -14,8 +14,8 @@ import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";
 import "../tokens/LootboxCredit.sol";
-import "../tokens/interfaces/ITokenBase.sol";
-import "../utils/LibConstants.sol";
+//import "../tokens/optimism/IL2StandardERC20Latest.sol";
+import "../tokens/optimism/L2NativeRawrshakERC20Token.sol";
 
 contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable, ERC165StorageUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, StorageBase {
     using AddressUpgradeable for address;
@@ -41,7 +41,7 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibConstants._INTERFACE_ID_LOOTBOX_BY_ITEM);
+        _registerInterface(type(ILootbox).interfaceId);
 
         seed = _seed;
         lootboxCreditAddress = _lootboxCreditAddress;
@@ -69,7 +69,7 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         uint256 cost = dataStorage.getCost(_tokenId);
         require(cost != 0, "Zero cost");
         cost = SafeMathUpgradeable.mul(cost, _amount);
-        require(IERC20Upgradeable(LootboxCredit(lootboxCreditAddress)).balanceOf(msg.sender) >= cost, "Not enough credit");
+        require(L2NativeRawrshakERC20Token(LootboxCredit(lootboxCreditAddress)).balanceOf(msg.sender) >= cost, "Not enough credit");
 
         bool enabled = dataStorage.getEnabled(_tokenId);
         require(enabled, "Lootbox not enabled");

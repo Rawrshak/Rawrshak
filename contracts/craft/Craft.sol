@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "./interfaces/ICraft.sol";
 import "./CraftBase.sol";
 import "../content/interfaces/IContent.sol";
-import "../utils/LibConstants.sol";
 import "../libraries/LibCraft.sol";
 
 contract Craft is ICraft, CraftBase {
@@ -31,7 +30,7 @@ contract Craft is ICraft, CraftBase {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __CraftBase_init_unchained(_seed);
-        _registerInterface(LibConstants._INTERFACE_ID_CRAFT);
+        _registerInterface(type(ICraft).interfaceId);
     }
 
     function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
@@ -52,7 +51,7 @@ contract Craft is ICraft, CraftBase {
             for (uint256 j = 0; j < _recipes[i].materials.length; ++j) {
                 // Todo: Should we assume that these are content/ERC1155 contracts by default? Can we move
                 //       this check to the UI side?
-                require(_recipes[i].materials[j].content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Contract is not a Content Contract");
+                require(_recipes[i].materials[j].content.supportsInterface(type(IContent).interfaceId), "Contract is not a Content Contract");
 
                 recipeData.materials.push(_recipes[i].materials[j]);
                 recipeData.materialAmounts.push(_recipes[i].materialAmounts[j]);
@@ -61,7 +60,7 @@ contract Craft is ICraft, CraftBase {
             for (uint256 j = 0; j < _recipes[i].rewards.length; ++j) {
                 // Todo: Should we assume that these are content/ERC1155 contracts by default? Can we move
                 //       this check to the UI side?
-                require(_recipes[i].rewards[j].content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Contract is not a Content Contract");
+                require(_recipes[i].rewards[j].content.supportsInterface(type(IContent).interfaceId), "Contract is not a Content Contract");
 
                 recipeData.rewards.push(_recipes[i].rewards[j]);
                 recipeData.rewardAmounts.push(_recipes[i].rewardAmounts[j]);

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import "../utils/LibConstants.sol";
 import "./LibCraft.sol";
 
 library LibLootbox {
@@ -94,9 +93,6 @@ library LibLootbox {
     function random(address _sender, uint256 _seed) internal view returns (uint256) {
         return uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), _sender, _seed)));
     }
-
-    // TODO: Write randomBatch()
-    // So if there are 6 items that need randomization we return an array of 6 randomly seeded (non-unique) values.
 
     // TODO: Make this class upgradeable somehow. Will want to upgrade randomization logic post deployment.
 }

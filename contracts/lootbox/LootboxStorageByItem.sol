@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
@@ -9,8 +9,7 @@ import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";
 import "../tokens/LootboxCredit.sol";
-import "../tokens/interfaces/ITokenBase.sol";
-import "../utils/LibConstants.sol";
+//import "../tokens/optimism/IL2StandardERC20Latest.sol";
 
 contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable, ERC165StorageUpgradeable, StorageBase {
     using LibLootbox for *;
@@ -33,7 +32,7 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __StorageBase_init_unchained();
-        _registerInterface(LibConstants._INTERFACE_ID_LOOTBOX_STORAGE_BY_ITEM);
+        _registerInterface(type(ILootboxStorageByItem).interfaceId);
 
         tokenId = 0;
     }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -13,8 +13,7 @@ import "../content/interfaces/IContent.sol";
 import "../libraries/LibCraft.sol";
 import "../libraries/LibLootbox.sol";
 import "../tokens/LootboxCredit.sol";
-import "../tokens/interfaces/ITokenBase.sol";
-import "../utils/LibConstants.sol";
+import "../tokens/optimism/IL2StandardERC20Latest.sol";
 
 contract Salvage is ISalvage, CraftBase {
     using AddressUpgradeable for address;
@@ -32,7 +31,7 @@ contract Salvage is ISalvage, CraftBase {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __CraftBase_init_unchained(_seed);
-        _registerInterface(LibConstants._INTERFACE_ID_SALVAGE);
+        _registerInterface(type(ISalvage).interfaceId);
     }
 
     function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _assets) external override whenPaused() checkPermissions(MANAGER_ROLE) {
@@ -40,7 +39,7 @@ contract Salvage is ISalvage, CraftBase {
 
         uint256[] memory ids = new uint256[](_assets.length);
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(_assets[i].asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Asset's Contract is not a Content Contract");
+            require(_assets[i].asset.content.supportsInterface(type(IContent).interfaceId), "Asset's Contract is not a Content Contract");
 
             _assets[i].verifySalvageableAsset();
             uint256 id = _getId(_assets[i].asset.content, _assets[i].asset.tokenId);
@@ -54,7 +53,7 @@ contract Salvage is ISalvage, CraftBase {
             }
 
             for (uint256 j = 0; j < _assets[i].rewards.length; ++j) {
-                require(_assets[i].rewards[j].asset.content.supportsInterface(LibConstants._INTERFACE_ID_CONTENT), "Reward's Contract is not a Content Contract");
+                require(_assets[i].rewards[j].asset.content.supportsInterface(type(IContent).interfaceId), "Reward's Contract is not a Content Contract");
 
                 salvageableAssets[id].rewards.push(_assets[i].rewards[j]);
             }
@@ -83,7 +82,7 @@ contract Salvage is ISalvage, CraftBase {
         {
             LibLootbox.verifyLootboxCreditReward(salvageableAssets[id].lootboxCredits);
             uint256 lootCredit = LibLootbox.salvageCredit(salvageableAssets[id].lootboxCredits, seed);
-            ITokenBase(salvageableAssets[id].lootboxCredits.tokenAddress).mint(_msgSender(), lootCredit);
+            IL2StandardERC20Latest(salvageableAssets[id].lootboxCredits.tokenAddress).mint(_msgSender(), lootCredit);
             emit LootboxCreditEarned(_msgSender(), lootCredit);
         }
 

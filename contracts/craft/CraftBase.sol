@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.6.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "./interfaces/ICraftBase.sol";
 import "../content/Content.sol";
-import "../utils/LibConstants.sol";
 import "../libraries/LibCraft.sol";
 
 abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpgradeable, ERC165StorageUpgradeable {
