@@ -42,7 +42,7 @@ async function main() {
     
     // Get Rawr token stuff
     const MockToken = await ethers.getContractFactory("MockToken");
-    const rawr = MockToken.attach("0xdf973861836d3c5bf77e69f6ccab174445aa8363");
+    const rawr = MockToken.attach("0x7c6b91d9be155a6db01f749217d76ff02a7227f2");
 
     console.log(`Deploying contracts with the account: ${deployer.address}`);
   
@@ -54,7 +54,7 @@ async function main() {
     // Get Contracts 
     Content = await ethers.getContractFactory("Content");
     ContentManager = await ethers.getContractFactory("ContentManager");
-    const rawrshakContract = Content.attach("0xd0938b7fDB19de29c85f90BCBe33c094a29AE285");
+    const rawrshakContract = Content.attach("0xc9EBafF8237740353E0dEd89130fB83be4bd3F90");
 
     // Developer mints Asset 3 and 4 to player 1
     var mintData = [player1.address, [3,4], [5,5], 0, ethers.constants.AddressZero, []];
@@ -64,7 +64,7 @@ async function main() {
     var mintData = [player2.address, [1,2,5], [5,5,5], 0, ethers.constants.AddressZero, []];
     await rawrshakContract.connect(dev1).mintBatch(mintData);
 
-    const screamContract = Content.attach("0x184d723b301C08401F200a4CDF221c5FC93Df3E5");
+    const screamContract = Content.attach("0x393d8E12Aa7F22f8999bf9DDAc6842Db2bb6F096");
     // Developer mints Asset 3 and 4 to player 1
     var mintData = [player1.address, [0,1,2,3,4], [5,5,5,5,5], 0, ethers.constants.AddressZero, []];
     await screamContract.connect(dev1).mintBatch(mintData);
@@ -74,7 +74,7 @@ async function main() {
     await screamContract.connect(dev1).mintBatch(mintData);
 
     Exchange = await ethers.getContractFactory("Exchange");
-    const exchange = Exchange.attach("0x36084B5E07B5A1Fa0Cb233C38E573c7C0653e6F4");
+    const exchange = Exchange.attach("0x8b62eC86AddDc6Fd9741D3A307f36b06FD3A89D5");
 
     if (exchange != null) {
         console.log(`Exchange exists!`);

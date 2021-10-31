@@ -10,7 +10,7 @@ async function main() {
     console.log(`Account Balance: ${web3.utils.fromWei(balance.toString(), 'ether')}`);
     
     // Get RAWR Token
-    var rawrAddress = "0xdf973861836d3c5bf77e69f6ccab174445aa8363";
+    var rawrAddress = "0x7c6b91d9be155a6db01f749217d76ff02a7227f2";
     console.log("RAWR Token deployed to:", rawrAddress);
     
     console.log("Deploying Address Resolver Contract");
@@ -129,8 +129,8 @@ main()
     });
 
 // Optimistic Kovan Addresses
-// RAWR Token deployed to: 0xdf973861836d3c5bf77e69f6ccab174445aa8363
-// AddressResolver deployed to: 0xdE156176f1f20FF7485FE2bFE84c64541A8639D1
-// Exchange deployed to: 0x36084B5E07B5A1Fa0Cb233C38E573c7C0653e6F4
-// Staking deployed to: 0x445497C91DC542bBCcCC9b27dE3caFc32E861780
-// ContentFactory deployed to: 0x2385547DAd794d7cddc46ecF9ab8CCa803981FAf
+// RAWR Token deployed to: 0x7c6b91d9be155a6db01f749217d76ff02a7227f2
+// AddressResolver deployed to: 0x6196F2bc15F90bb35b8e38f2170BB2C101e3A0B1
+// Exchange deployed to: 0x8b62eC86AddDc6Fd9741D3A307f36b06FD3A89D5
+// Staking deployed to: 0x23e6e13AaE049f7dcc570177960Ff5023187a59A
+// ContentFactory deployed to: 0xbe479c85e81B34BcA13F613DfF4f3F9D9eC6d715

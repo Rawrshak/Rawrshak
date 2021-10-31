@@ -13,19 +13,19 @@ We've decided to launch the alpha testnet on Optimistic Kovan because of the fol
 ## Rawrshak Contract Addresses
 Contract | Address | Version
 ------- | ------- | -------
-RAWR Token | 0xdf973861836d3c5bf77e69f6ccab174445aa8363 | v.0.1
-AddressResolver | 0xdE156176f1f20FF7485FE2bFE84c64541A8639D1 | v.0.1
-Exchange | 0x36084B5E07B5A1Fa0Cb233C38E573c7C0653e6F4 | v.0.1
-Staking | 0x445497C91DC542bBCcCC9b27dE3caFc32E861780 | v.0.1
-ContentFactory | 0x2385547DAd794d7cddc46ecF9ab8CCa803981FAf | v.0.1
+RAWR Token | 0x7c6b91d9be155a6db01f749217d76ff02a7227f2 | v.0.1
+AddressResolver | 0x6196F2bc15F90bb35b8e38f2170BB2C101e3A0B1 | v.0.1
+Exchange | 0x8b62eC86AddDc6Fd9741D3A307f36b06FD3A89D5 | v.0.1
+Staking | 0x23e6e13AaE049f7dcc570177960Ff5023187a59A | v.0.1
+ContentFactory | 0xbe479c85e81B34BcA13F613DfF4f3F9D9eC6d715 | v.0.1
 
 ## Sample Content Contract Addresses
 Contract | Content Contract | Content Manager Contract 
 ------- | ------- | ------- 
-Rawrshak Contracts | 0xd0938b7fDB19de29c85f90BCBe33c094a29AE285
-ScreamFortress2 Contracts | 0x184d723b301C08401F200a4CDF221c5FC93Df3E5
-FightBuddy Contracts | 0x95aB4096a5a782Caa96D5dEC502fDD60b820E6AD
-SuperScaryHorrorGame Contracts | 0xeCa6268Da026dAc239E790044eE2eBe75e075F40
+Rawrshak Contracts | 0xc9EBafF8237740353E0dEd89130fB83be4bd3F90
+ScreamFortress2 Contracts | 0x393d8E12Aa7F22f8999bf9DDAc6842Db2bb6F096
+FightBuddy Contracts | 0x8896fD674aE91340570129BB9391F533ec2e9aa4
+SuperScaryHorrorGame Contracts | 0x2bf2685c0Cf29FF00bDFc66041fE8efA1bcf5D7F
 
 Note: You will still need the private keys for the developer wallet in order to add new assets to the contract. Please feel free to launch your own test data contracts.
 

@@ -111,7 +111,7 @@ async function main() {
     Content = await ethers.getContractFactory("Content");
     ContentManager = await ethers.getContractFactory("ContentManager");
     const ContentFactory = await ethers.getContractFactory("ContentFactory");
-    const factory = ContentFactory.attach("0x2385547DAd794d7cddc46ecF9ab8CCa803981FAf");
+    const factory = ContentFactory.attach("0xbe479c85e81B34BcA13F613DfF4f3F9D9eC6d715");
 
     // Note: for the URI, the developer has to add "https://ipfs.io/ipfs/" before downloading from ipfs
     // Developer 1 Rawrshak and Scream Fortress 2 Contract
@@ -147,7 +147,7 @@ main()
 
 
 // // Optimism Kovan Contracts
-// Rawrshak Contracts: Content[ 0xd0938b7fDB19de29c85f90BCBe33c094a29AE285 ], ContentManager[ 0x3118d2EA613ae7659b3861680D3B470Db16Cc0d8 ]
-// ScreamFortress2 Contracts: Content[ 0x184d723b301C08401F200a4CDF221c5FC93Df3E5 ], ContentManager[ 0x147047C2d6F3a4dBa809B2B4E6703A58f6a8B933 ]
-// FightBuddy Contracts: Content[ 0x95aB4096a5a782Caa96D5dEC502fDD60b820E6AD ], ContentManager[ 0xF0C40E2853Cdf0eDdeB86cc82d6C4c3300bCAcdd ]
-// SuperScaryHorrorGame Contracts: Content[ 0xeCa6268Da026dAc239E790044eE2eBe75e075F40 ], ContentManager[ 0x7155f181138C8bd2FC010eD7aEA976f278cC4D5b ]
+// Rawrshak Contracts: Content[ 0xc9EBafF8237740353E0dEd89130fB83be4bd3F90 ], ContentManager[ 0x79058587a4D5f2b705C9B315ADd23c56A6607508 ]
+// ScreamFortress2 Contracts: Content[ 0x393d8E12Aa7F22f8999bf9DDAc6842Db2bb6F096 ], ContentManager[ 0x579e73C522b8Dca7007a341D06E6B2394C23644c ]
+// FightBuddy Contracts: Content[ 0x8896fD674aE91340570129BB9391F533ec2e9aa4 ], ContentManager[ 0xadeB62FCC2BB7979DC7848968f46E30eFe62d8F8 ]
+// SuperScaryHorrorGame Contracts: Content[ 0x2bf2685c0Cf29FF00bDFc66041fE8efA1bcf5D7F ], ContentManager[ 0x0a821abfb0c5c9db497d5d0468D10e7c17e8BfF5 ]
