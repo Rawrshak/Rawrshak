@@ -21,12 +21,12 @@ async function deployContract(factory, developer, rate, uri) {
 
 async function addRawrshakAssets(content, contentManager, developer) {
     var asset = [
-        [0, "QmTgLKGxFapNAaKSoaXZkx3vq9xiarfag3cjcByUywzf7h", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Apprentice Title
-        [1, "QmX1Epc144wovBa3i8LVy6JoVxUpVjuA7nQvDmigo8NAx7", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Creator Title
-        [2, "QmaCGZKewUkJCw7nHtvMCTxxeeg1fNhF1BGKVowAAh5dJn", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Gamer Pesant Title
-        [3, "QmeZ9t91M5AizHBwPHt7ZYEzvhS9ic98eQ8BUQ7bZrERBT", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Disciple Title
-        [4, "QmUcUdn8Gf9hiwqvmN9SzP4JZsrC72CpPLptXwjyW8Nuv3", "", ethers.constants.MaxUint256, developer.address, 20000],          // Lord Title
-        [5, "QmWGDc6HM4oXXmhkDYKLcL95anW5Wsxmw6daUrc2KL82fa", "", ethers.constants.MaxUint256, developer.address, 20000]           // Original Sinner Title
+        [0, "QmNaxBen5gBMLMi944tChJidrak8L5ZscUjmg5GF1M1H9x", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Apprentice Title
+        [1, "QmXNJccAKXhH9skRajE5jx6tpfMHqzhYXnuxH4j7LkAhVk", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Creator Title
+        [2, "QmZ3YGRe3xRDVn6jf4Vx9usLdNkd8sPKqUuBUtWAEMoKfA", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Gamer Pesant Title
+        [3, "QmXDmHoijMKzGAoLEytgncQUCigrTWsRjeMUXvkdy5DrYs", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Disciple Title
+        [4, "QmdTES2ZbdcEr4nWqEUqVGnEkm8N5yDqfBoRtmCpEVVGPT", "", ethers.constants.MaxUint256, developer.address, 20000],          // Lord Title
+        [5, "QmSfQtVpzmrKsxxPok8dGVzYMEN6hg3k9JevCLxVBnGdu4", "", ethers.constants.MaxUint256, developer.address, 20000]           // Original Sinner Title
     ];
 
     // add assets
@@ -39,15 +39,15 @@ async function addRawrshakAssets(content, contentManager, developer) {
 
 async function addScreamFortress2Assets(content, contentManager, developer) {
     var asset = [
-        [0, "QmPdzEWnW1PAxm4LFe5pRw3g5kNee8oKKtbs92sVekMce4", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Demoman
-        [1, "QmPC6iFFc1ewqVCcfPyyG4YssL6zwX9DW2VQDD5K6P3PLD", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Engineer
-        [2, "QmXVeyvvDhknXuH2CevPUGxjDFXDPRTxS7k6Ehm7jRVSHH", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Heavy
-        [3, "QmVqWJPhcchCSp22FQSxxzRZMFVpae2fMSa3sPbmHywXCC", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Medic
-        [4, "QmbTvdvL2CUPpBVf7LvFb25t2JdqqGjumed5bVaSpyCZYx", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Pyro
-        [5, "QmWroKamTeD2hr66ERDGXG7axLzagK2p48BBuBwjN7TFrF", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Scout
-        [6, "QmaUz6wBvxTFJBdcJRy59nMPNm78CKMjwuqYgfvGBUwZ52", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Sniper
-        [7, "QmNbQxN82JweyESPP9tCVMroVA1itf974pLknMjkt3Eo2k", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Soldier
-        [8, "QmSPTeM11qMLKWMtqrvPDV1FxEDEkjQ5HZjJmQfkGq4DZt", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0]    // Spy
+        [0, "QmQwS6y19S31ffzhzyRDESvBfgFNczKzU7fGc4e8Pexqja", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Demoman
+        [1, "QmWTGqXv8anJBbQ4PMnixEn6UxTVh1kPSKE1N32MMcthJR", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Engineer
+        [2, "QmU299Sj8Pdu2TZbvfPHRMQ3jECtfn6d4ij4a6FseeCPSQ", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Heavy
+        [3, "QmPJixpZMSXtSfmGD4BQGAvh6cpoYB5JDfLkXyMnMy5yn6", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Medic
+        [4, "QmQzzjAeGgjhRwRvQj35m85QPDNLgi7NPWKRvydSEzu7T2", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Pyro
+        [5, "QmfHqXE8ugthD4DtbdJpd7tNovP9Gw3QpkYt3rWcfsjFW6", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Scout
+        [6, "QmRmA5TM9yfue3nSkqq8AguGUraiy8eA38xb7CRCbdj8mn", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Sniper
+        [7, "QmesGcGFbASfNwuaF7nYtKjcvpCfRswvC6FcuqQA6UZLDv", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Soldier
+        [8, "QmUUMejnjWRp1sE47mt9VDiUuxTV7Zf5VPfR1m1LPGizLG", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0]    // Spy
     ];
 
     // add assets
@@ -60,10 +60,10 @@ async function addScreamFortress2Assets(content, contentManager, developer) {
 
 async function addFightBuddyAssets(content, contentManager, developer) {
     var asset = [
-        [0, "QmPFJoS7UKXmmXeA4HMes1K5GRNM2QQ94hf6dSUqH3i2wF", "", 1000, developer.address, 10000],         // Nikolai
-        [1, "Qma3cwsq1kqcAP6zudnr1WyWWkXhVnYa1wgRAun8op9nGa", "", 1000, developer.address, 20000],         // Didier
-        [2, "Qma7QXrm9wUFmdxBWT32fWccfQ6kvNeZS598eMdVuBvthU", "", 500, ethers.constants.AddressZero, 0],   // Josip
-        [3, "QmRde9qaDmyDrxEpHPC5ycnt36S375WUaBpSrDuemE68Vn", "", 50, developer.address, 30000]            // Glenn
+        [0, "QmcLLgGc8FsDBc7C4Kpctc36CbAgpPtt4SzodKHXurzsFo", "", 1000, developer.address, 10000],         // Nikolai
+        [1, "QmVbnJ4D9753hLSFjxL6b5742EtFWSkGVsmazNDjKHS4GZ", "", 1000, developer.address, 20000],         // Didier
+        [2, "QmVuurqFHU6CTgZsTKBeHkXNbPUENnP4tomk3gT9Geuf2m", "", 500, ethers.constants.AddressZero, 0],   // Josip
+        [3, "QmTgSQooZLebGgq53XwwMbUvwkDjTMdt1XhKVuyN1zWg1m", "", 50, developer.address, 30000]            // Glenn
     ];
 
     // add assets
@@ -76,10 +76,10 @@ async function addFightBuddyAssets(content, contentManager, developer) {
 
 async function addSuperScaryHorrorGameAssets(content, contentManager, developer) {
     var asset = [
-        [0, "QmXnMAmDwKuMsmWLc6dnccwaGqLMXyGHBjEvC9oHePNvFX", "", 10000, ethers.constants.AddressZero, 0], // Scary Terry
-        [1, "QmfMoQt1LGs7PN5UYP2kikkuYpHJiFHGx2EHCPaEuLZ7Kt", "", 50, ethers.constants.AddressZero, 0],    // Casper the Ghost
-        [2, "QmRpA8dRsLhzwGifk2yV4fcTJpAP89s3Mmm5X1qqH5Xwza", "", 50, ethers.constants.AddressZero, 0],    // Screamer
-        [3, "QmZMpYizqKeSVFtQrWWYSmPK93yWHJgFsvFYZuKaQz8QXn", "", 25, ethers.constants.AddressZero, 0]     // Headless Canadian
+        [0, "QmQQnG8VKwaPCjhPT4jNWQ837BGvTtbFwjaZ9A9hhFigGj", "", 10000, ethers.constants.AddressZero, 0], // Scary Terry
+        [1, "QmZ4qX68qpc7GSu9RQp52MwCmwWF8g7kKpgh5DSEEcHJT1", "", 50, ethers.constants.AddressZero, 0],    // Casper the Ghost
+        [2, "QmYzK48VvLvdxNhbk8vGz9XsbBdufRYDgqcZvfMRafDMgj", "", 50, ethers.constants.AddressZero, 0],    // Screamer
+        [3, "QmRyL3BycWsSKgoDz9Cq3sawnq5A4m6towY4dMV8ENkQcC", "", 25, ethers.constants.AddressZero, 0]     // Headless Canadian
     ];
 
     // add assets
@@ -113,25 +113,25 @@ async function main() {
     Content = await ethers.getContractFactory("Content");
     ContentManager = await ethers.getContractFactory("ContentManager");
     const ContentFactory = await ethers.getContractFactory("ContentFactory");
-    const factory = ContentFactory.attach("0xFD471836031dc5108809D173A067e8486B9047A3");
+    const factory = ContentFactory.attach("0xf5059a5D33d5853360D16C683c16e67980206f36");
 
     // Note: for the URI, the developer has to add "https://ipfs.io/ipfs/" before downloading from ipfs
     // Developer 1 Rawrshak and Scream Fortress 2 Contract
-    var addresses = await deployContract(factory, dev1, 10000, "QmQigPDu4wChRtrdgnbCFJFuYHD55sioFztdu1r9bME46o");
+    var addresses = await deployContract(factory, dev1, 10000, "QmUdkSH5xeSXu1aqSL6nHd7nDude2JagZzAGSHJg4eTaWZ");
     console.log(`Rawrshak Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addRawrshakAssets(addresses.content, addresses.contentManager, dev1);
 
-    var addresses = await deployContract(factory, dev1, 10000, "QmP3Hnw72H4w7s4XEEa12vHAa7EYXSCGEd2KPcScrMvx9z");
+    var addresses = await deployContract(factory, dev1, 10000, "QmP3yu5W6hBcoNNSdbvShPec2QmWcG2wMMLo7BH4jz1hTx");
     console.log(`ScreamFortress2 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addScreamFortress2Assets(addresses.content, addresses.contentManager, dev1);
     
     // Developer 2 Deploys A Contract
-    addresses = await deployContract(factory, dev2, 20000, "QmSkixBkwkEoMzEVcWsDxaYxVhEJDiatPjAEvHaJY383Ks");
+    addresses = await deployContract(factory, dev2, 20000, "Qmdz9Y8zEfD7Wr69y4YY3rqLvRC2JRvdgacjjYxVMbfsrX");
     console.log(`FightBuddy Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addFightBuddyAssets(addresses.content, addresses.contentManager, dev2);
     
     // Developer 3 Deploys A Contract
-    addresses = await deployContract(factory, dev3, 15000, "QmY1cxbALonbMiSTWnnQooCJqKDcAMs69nqhmBP8jSyQP8");
+    addresses = await deployContract(factory, dev3, 15000, "QmYBZAEBjSJAJhqKcSUT7ZLjamp5k8VG8kLoja6dXgwadM");
     console.log(`SuperScaryHorrorGame Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
     await addSuperScaryHorrorGameAssets(addresses.content, addresses.contentManager, dev3);
 
@@ -154,7 +154,7 @@ async function main() {
 // SuperScaryHorrorGame Contracts: Content[ 0xD40eeC93b5E823Cc17C6930eD248D96f6F869105 ], ContentManager[ 0x77297Eb9d9405a73d7fDab73af10B1e6ceE6Fd18 ]
 
 // // Contracts
-// Rawrshak Contracts: Content[ 0x3063527AEE58c9470AD00E31e4fc6A613b84a8b1 ], ContentManager[ 0xcfbe2694e9c033Cc6adbA084E51b6AfECfed09b7 ]
-// ScreamFortress2 Contracts: Content[ 0x1216517D85581CC2901dC5d214f20b910910774f ], ContentManager[ 0xEEe51B3236219931DD0fdDc712c6cf9bA55bd110 ]
-// FightBuddy Contracts: Content[ 0x7e5DC850470672b81b119cCFfEF595DFb6060cC7 ], ContentManager[ 0x0E89b24e46A7F30f018225b75A24b5cb000EBaE7 ]
-// SuperScaryHorrorGame Contracts: Content[ 0x7d046EEA32043D36Fe6De42568A5EB0FAD946117 ], ContentManager[ 0x84206ECC24BC547276c59B40b04F63bd70CBFC7c ]
+// Rawrshak Contracts: Content[ 0x55652FF92Dc17a21AD6810Cce2F4703fa2339CAE ], ContentManager[ 0x6DDFF2dF38D87DC8CCDfCFCDFDb3608bc296eD60 ]
+// ScreamFortress2 Contracts: Content[ 0x79E4D62d828379720db8E0E9511e10e6Bac05351 ], ContentManager[ 0x29d06C5C563607DBB712aC75780Ba0eACB0B0cf1 ]
+// FightBuddy Contracts: Content[ 0x0c9D7DEbA226e5743f5DA3bB398Bf6B1611Cbc51 ], ContentManager[ 0x7AE28c8398b47ef70eB7004392E337885d1c2de0 ]
+// SuperScaryHorrorGame Contracts: Content[ 0xce67A98AbDbCa375B649c2BE30cFE24AFdA32b48 ], ContentManager[ 0x3A3021e237D11Bd9a60973Ba94e8c8d6FFC6d1aE ]

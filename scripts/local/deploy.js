@@ -144,3 +144,10 @@ async function main() {
 // Exchange deployed to: 0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00
 // Staking deployed to: 0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575
 // ContentFactory deployed to: 0xFD471836031dc5108809D173A067e8486B9047A3
+
+// Deployment Contracts on Local Node
+// RAWR Token deployed to: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+// AddressResolver deployed to: 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+// Exchange deployed to: 0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f
+// Staking deployed to: 0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E
+// ContentFactory deployed to: 0xf5059a5D33d5853360D16C683c16e67980206f36
