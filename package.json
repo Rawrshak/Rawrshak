@@ -24,6 +24,7 @@
   "homepage": "https://github.com/gcbsumid/Rawrshak#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-truffle5": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/contracts-upgradeable": "^4.0.0",
@@ -37,7 +38,7 @@
     "ethers": "^5.4.7",
     "hardhat": "^2.6.7",
     "typechain": "^5.2.0",
-    "web3": "^1.5.3"
+    "web3": "^1.6.0"
   },
   "dependencies": {
     "bn.js": "^5.2.0"

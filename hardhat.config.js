@@ -3,6 +3,7 @@ require('@openzeppelin/hardhat-upgrades');
 require("@nomiclabs/hardhat-web3");
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
+require("@nomiclabs/hardhat-truffle5");
 
 // Load environment variables from .env
 require('dotenv').config();
