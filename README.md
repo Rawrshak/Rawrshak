@@ -132,14 +132,14 @@ Note: You will still need the private keys for the developer wallet in order to 
 
 ## To deploy to a specific network
     npx hardhat run --network <target network> scripts/deploy.js
-
-## To run a Deterministic Ganache ethereum blockchain
-    1. Open a new powershell/command prompt
-    2. run:
-        ganache-cli -h 0.0.0.0 -m "violin couple forest beyond despair spray wide badge buddy thunder menu same"
-        The seed phrase above is a test seed phrase that I use to make the first deployed contract addresses match
-        the addresses in the graph node. Addresses need to be updated if you decide to use a different set of seed
-        words.
     
 ## To set up the local graph node:
     1. refer to the [Rawrshak Graph Node project](https://github.com/gcbsumid/rawrshak-graphnode) for instructions
+
+# Deploying To Optimistic Kovan Testnet
+    1. Update RAWR token address in the scripts/optimistic-kovan folder
+    2. run: `npx hardhat run --network optimistic_kovan scripts/optimistic-kovan/deploy.js`
+    3. Update addresses in the subgraph_ipfs_data.js
+    4. run: `npx hardhat run --network optimistic_kovan .\scripts\optimistic-kovan\subgraph_ipfs_data.js`
+    5. Update addresses in the exchange_data.js
+    6. run: `npx hardhat run --network optimistic_kovan .\scripts\optimistic-kovan\exchange_data.js`
