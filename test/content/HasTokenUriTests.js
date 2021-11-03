@@ -81,7 +81,7 @@ describe('HasTokenUri Contract Tests', () => {
                 .to.equal("arweave.net/tx/publictoken-2");
         });
 
-        it('Set Multiple tokens with the same id', async () => {
+        it('Set Multiple tokens with the same id for private uri', async () => {
             var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
             var events = await testContract.setHiddenUri(tokenUris);
     
@@ -98,8 +98,26 @@ describe('HasTokenUri Contract Tests', () => {
             expect(await testContract.tokenUri(1, 1, false))
                 .to.equal("arweave.net/tx/hiddentoken-1v2");
         });
+            
+        it('Set Multiple tokens with the same id for public uri', async () => {
+            var tokenUris = [[1, "arweave.net/tx/publictoken-1"], [1, "arweave.net/tx/publictoken-1v2"]];
+            var events = await testContract.setPublicUri(tokenUris);
+    
+            expect(events)
+                .to.emit(testContract, 'PublicUriUpdated')
+                .withArgs(ethers.constants.AddressZero, 1, 0);
+            expect(events)
+                .to.emit(testContract, 'PublicUriUpdated')
+                .withArgs(ethers.constants.AddressZero, 1, 1);
+            
+            // check the two versions
+            expect(await testContract.tokenUri(1, 0, true))
+                .to.equal("arweave.net/tx/publictoken-1");
+            expect(await testContract.tokenUri(1, 1, true))
+                .to.equal("arweave.net/tx/publictoken-1v2");
+        });
 
-        it('Token Uri with invalid version', async () => {
+        it('Token Uri with invalid version for private uri', async () => {
             var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
             await testContract.setHiddenUri(tokenUris);
     
@@ -111,10 +129,23 @@ describe('HasTokenUri Contract Tests', () => {
             expect(await testContract.tokenUri(1, 2, false))
                 .to.equal("arweave.net/tx/hiddentoken-1v2");
         });
+
+        it('Token Uri with invalid version for public uri', async () => {
+            var tokenUris = [[1, "arweave.net/tx/publictoken-1"], [1, "arweave.net/tx/publictoken-1v2"]];
+            await testContract.setPublicUri(tokenUris);
+    
+            // check latest version
+            expect(await testContract.tokenUri(1, 1, true))
+                .to.equal("arweave.net/tx/publictoken-1v2");
+    
+            // check invalid version
+            expect(await testContract.tokenUri(1, 2, true))
+                .to.equal("arweave.net/tx/publictoken-1v2");
+        });
     });
 
     describe("Latest URI Version", () => {
-        it('Get Latest version', async () => {
+        it('Get Latest Hidden Uri version', async () => {
             var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
             await testContract.setHiddenUri(tokenUris);
     
@@ -125,6 +156,19 @@ describe('HasTokenUri Contract Tests', () => {
             // check latest version for public token uri
             expect(await testContract.getLatestUriVersion(1, true))
                 .to.equal(0);
+        });
+
+        it('Get Latest Public Uri version', async () => {
+            var tokenUris = [[1, "arweave.net/tx/publictoken-1"], [1, "arweave.net/tx/publictoken-1v2"]];
+            await testContract.setPublicUri(tokenUris);
+    
+            // check latest version for hidden token uri
+            expect(await testContract.getLatestUriVersion(1, false))
+                .to.equal(0);
+                
+            // check latest version for public token uri
+            expect(await testContract.getLatestUriVersion(1, true))
+                .to.equal(1);
         }); 
     });
 });
