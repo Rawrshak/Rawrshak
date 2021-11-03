@@ -56,6 +56,7 @@ abstract contract HasRoyalty is ContentSubsystemBase {
     /**
      * @dev Internal function to set the royalties for a token
      * @param _tokenId uint256 ID of the token to query
+     * If the token id's royalty pair is not set (receiver = address(0)), then contract royalties is returned
      * contractRoyalty and tokenRoyalty[tokenId] can both be null
      */
     function _getRoyalty(uint256 _tokenId) internal view returns (address receiver, uint24 rate) {

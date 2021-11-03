@@ -81,8 +81,7 @@ describe('HasTokenUri Contract Tests', () => {
                 .to.equal("arweave.net/tx/publictoken-2");
         });
 
-        it('Set Multiple tokens with the same id', async () => {
-            // public uris
+        it('Set Multiple tokens with the same id for private uri', async () => {
             var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
             var events = await testContract.setHiddenUri(tokenUris);
     
@@ -98,8 +97,9 @@ describe('HasTokenUri Contract Tests', () => {
                 .to.equal("arweave.net/tx/hiddentoken-1");
             expect(await testContract.tokenUri(1, 1, false))
                 .to.equal("arweave.net/tx/hiddentoken-1v2");
+        });
             
-            // private uris
+        it('Set Multiple tokens with the same id for public uri', async () => {
             var tokenUris = [[1, "arweave.net/tx/publictoken-1"], [1, "arweave.net/tx/publictoken-1v2"]];
             var events = await testContract.setPublicUri(tokenUris);
     
@@ -117,8 +117,7 @@ describe('HasTokenUri Contract Tests', () => {
                 .to.equal("arweave.net/tx/publictoken-1v2");
         });
 
-        it('Token Uri with invalid version', async () => {
-            // private uris
+        it('Token Uri with invalid version for private uri', async () => {
             var tokenUris = [[1, "arweave.net/tx/hiddentoken-1"], [1, "arweave.net/tx/hiddentoken-1v2"]];
             await testContract.setHiddenUri(tokenUris);
     
@@ -129,8 +128,9 @@ describe('HasTokenUri Contract Tests', () => {
             // check invalid version
             expect(await testContract.tokenUri(1, 2, false))
                 .to.equal("arweave.net/tx/hiddentoken-1v2");
+        });
 
-            // public uris
+        it('Token Uri with invalid version for public uri', async () => {
             var tokenUris = [[1, "arweave.net/tx/publictoken-1"], [1, "arweave.net/tx/publictoken-1v2"]];
             await testContract.setPublicUri(tokenUris);
     
