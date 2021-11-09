@@ -68,10 +68,9 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
 
             // If max supply is set to 0, this means there is no mint limit. Set max supply to uint256.max
             if (_assets[i].maxSupply == 0) {
-                maxSupply[_assets[i].tokenId] = type(uint256).max;
-            } else {
-                maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
-            }
+                _assets[i].maxSupply = type(uint256).max; 
+            } 
+            maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
 
             _setPublicUri(_assets[i].tokenId, _assets[i].publicDataUri);
             _setHiddenUri(_assets[i].tokenId, _assets[i].hiddenDataUri);
