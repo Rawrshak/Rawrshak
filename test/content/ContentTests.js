@@ -177,7 +177,6 @@ describe('Content Contract Tests', () => {
             const signature2 = await sign(playerAddress.address, [2], [90], 2, craftingSystemAddress.address, content.address);
             var invalidSupplyData = [playerAddress.address, [2], [90], 2, craftingSystemAddress.address, signature2];
             
-            
             await expect(content.connect(playerAddress).mintBatch(invalidSupplyData)).to.be.reverted;
             expect(await content.totalSupply(2)).to.equal(30);
             expect(await content.balanceOf(playerAddress.address, 2)).to.equal(30);

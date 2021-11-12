@@ -289,8 +289,10 @@ describe('ContentStorage Contract Tests', () => {
             expect((await contentStorage.getRoyalty(2)).rate).to.equal(10000);
             expect((await contentStorage.getRoyalty(3)).rate).to.equal(15000);
 
-            var tokenRoyalty = [[1, deployerAddress.address, 0], [2, deployerAddress.address, 30000], 
-            [3, ethers.constants.AddressZero, 5]];
+            var tokenRoyalty = [
+                [1, deployerAddress.address, 0], [2, deployerAddress.address, 30000], 
+                [3, ethers.constants.AddressZero, 5]
+            ];
             await expect(contentStorage.setTokenRoyaltiesBatch(tokenRoyalty))
                 .to.emit(contentStorage, 'TokenRoyaltyUpdated');
 
