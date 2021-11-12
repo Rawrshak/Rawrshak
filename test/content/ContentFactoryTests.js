@@ -87,5 +87,49 @@ describe('Content Clone Factory Tests', () => {
             // URIs should not be the same
             expect(await dev1Content.contractUri()).not.equal(await dev2Content.contractUri());
         });
+
+        it('Invalid Create Contract parameters', async () => {
+            // Check initializer parameters
+            var uri1 = "arweave.net/tx-contract-uri";
+
+            await expect(contentFactory.connect(developer1Address).createContracts(developer1Address.address, 1500000, uri1))
+                .to.be.reverted;
+            await expect(contentFactory.connect(developer1Address).createContracts(null, 10000, uri1))
+                .to.be.reverted;
+            await expect(contentFactory.connect(developer1Address).createContracts(ethers.constants.AddressZero, 20000, uri1))
+                .to.be.reverted;
+        });
+
+        it('Update Contracts', async () => {
+            expect(await contentFactory.contentImplementation()).to.equal(contentImpl.address);
+            expect(await contentFactory.contentManagerImplementation()).to.equal(contentManagerImpl.address);
+            expect(await contentFactory.contentStorageImplementation()).to.equal(contentStorageImpl.address);
+            expect(await contentFactory.accessControlManagerImplementation()).to.equal(accessControlManagerImpl.address);
+            // when ContentFactory is initialized it uses updateContracts() which increments the contractVersion to 1
+            expect(await contentFactory.contractVersion()).to.equal(1);
+
+            // new versions of the contracts         
+            newAccessControlManagerImpl = await AccessControlManager.deploy();
+            newContentImpl = await Content.deploy();
+            newContentStorageImpl = await ContentStorage.deploy();
+            newContentManagerImpl = await ContentManager.deploy();
+
+            // update contract implementations with the new versions
+            await contentFactory.connect(deployerAddress).updateContracts(newContentImpl.address, newContentManagerImpl.address, newContentStorageImpl.address, newAccessControlManagerImpl.address);
+
+            // checks that the contract implementations do not equal the old versions
+            expect(await contentFactory.contentImplementation()).not.equal(contentImpl.address);
+            expect(await contentFactory.contentManagerImplementation()).not.equal(contentManagerImpl.address);
+            expect(await contentFactory.contentStorageImplementation()).not.equal(contentStorageImpl.address);
+            expect(await contentFactory.accessControlManagerImplementation()).not.equal(accessControlManagerImpl.address);
+
+            // checks that the contract implementations equal the new versions
+            expect(await contentFactory.contentImplementation()).to.equal(newContentImpl.address);
+            expect(await contentFactory.contentManagerImplementation()).to.equal(newContentManagerImpl.address);
+            expect(await contentFactory.contentStorageImplementation()).to.equal(newContentStorageImpl.address);
+            expect(await contentFactory.accessControlManagerImplementation()).to.equal(newAccessControlManagerImpl.address);
+
+            expect(await contentFactory.contractVersion()).to.equal(2);
+        });
     });
 });
