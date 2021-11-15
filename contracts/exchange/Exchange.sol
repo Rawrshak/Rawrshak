@@ -67,7 +67,8 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
 
     function fillBuyOrder(
         uint256[] memory _orderIds,
-        uint256 amountToSell
+        uint256 amountToSell,
+        uint256 maxSpend
     ) external override {
         require(_orderIds.length > 0, "Invalid order length");
 
@@ -78,27 +79,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         require(orderbook.verifyAllOrdersData(_orderIds, true), "Invalid order data");
 
         // Get order amounts that are still available
-        uint256[] memory orderAmounts = orderbook.getOrderAmounts(_orderIds);
-        
-        // Get orders amount to sell; if there's more available that the amount to sell, set remaining to 0;
-        uint256 assetsSold = 0;
-        for (uint256 i = 0; i < orderAmounts.length; ++i) {
-            if (orderAmounts[i] > 0) {
-                if (orderAmounts[i] <= amountToSell) {
-                    // order amount exists but is less than amount remaining to sell
-                    amountToSell -= orderAmounts[i];
-                    assetsSold += orderAmounts[i];
-                } else if (amountToSell > 0) {
-                    // order amount exists but is more than amount remaining to sell
-                    orderAmounts[i] = amountToSell;
-                    assetsSold += amountToSell; // remainder
-                    amountToSell = 0;
-                } else {
-                    // no more orders to sell
-                    orderAmounts[i] = 0;
-                }
-            }
-        }
+        (uint256[] memory orderAmounts, uint256 assetsSold) = orderbook.getOrderAmounts(_orderIds, amountToSell, maxSpend);
         
         // Get Total Payment
         (uint256 volume, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
@@ -130,7 +111,8 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
 
     function fillSellOrder(
         uint256[] memory _orderIds,
-        uint256 amountToBuy
+        uint256 amountToBuy,
+        uint256 maxSpend
     ) external override {
         require(_orderIds.length > 0, "Invalid order length");
 
@@ -141,27 +123,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         require(orderbook.verifyAllOrdersData(_orderIds, false), "Invalid order data");
 
         // Get order amounts that are still available
-        uint256[] memory orderAmounts = orderbook.getOrderAmounts(_orderIds);
-
-        // Get orders amount to buy; if there's more available that the amount to buy, set remaining to 0;
-        uint256 assetsBought = 0;
-        for (uint256 i = 0; i < orderAmounts.length; ++i) {
-            if (orderAmounts[i] > 0) {
-                if (orderAmounts[i] <= amountToBuy) {
-                    // order amount exists but is less than amount remaining to buy
-                    amountToBuy -= orderAmounts[i];
-                    assetsBought += orderAmounts[i];
-                } else if (amountToBuy > 0) {
-                    // order amount exists but is more than amount remaining to buy
-                    orderAmounts[i] = amountToBuy;
-                    assetsBought += amountToBuy; // remainder
-                    amountToBuy = 0;
-                } else {
-                    // no more assets to buy
-                    orderAmounts[i] = 0;
-                }
-            }
-        }
+        (uint256[] memory orderAmounts, uint256 assetsBought) = orderbook.getOrderAmounts(_orderIds, amountToBuy, maxSpend);
 
         // Get Total Payment
         (uint256 volume, uint256[] memory amountPerOrder) = orderbook.getPaymentTotals(_orderIds, orderAmounts);
