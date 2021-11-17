@@ -99,7 +99,9 @@ describe('Content Clone Factory Tests', () => {
             await expect(contentFactory.connect(developer1Address).createContracts(ethers.constants.AddressZero, 20000, uri1))
                 .to.be.reverted;
         });
+    });
 
+    describe("Update Contracts tests", () => {
         it('Update Contracts', async () => {
             expect(await contentFactory.contentImplementation()).to.equal(contentImpl.address);
             expect(await contentFactory.contentManagerImplementation()).to.equal(contentManagerImpl.address);
@@ -130,6 +132,43 @@ describe('Content Clone Factory Tests', () => {
             expect(await contentFactory.accessControlManagerImplementation()).to.equal(newAccessControlManagerImpl.address);
 
             expect(await contentFactory.contractVersion()).to.equal(2);
+        });
+
+        it('Invalid parameters', async () => {
+            // new versions of the contracts         
+            newAccessControlManagerImpl = await AccessControlManager.deploy();
+            newContentImpl = await Content.deploy();
+            newContentStorageImpl = await ContentStorage.deploy();
+            newContentManagerImpl = await ContentManager.deploy();
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(newContentImpl, newContentManagerImpl, newContentStorageImpl, newAccessControlManagerImpl)).to.be.reverted;
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts("", newContentManagerImpl, "", newAccessControlManagerImpl)).to.be.reverted;
+
+            // Checks for Address Zero
+            await expect(contentFactory.connect(deployerAddress).updateContracts(ethers.constants.AddressZero, newContentManagerImpl.address, newContentStorageImpl.address, newAccessControlManagerImpl.address)).to.be.reverted;
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(newContentImpl.address, ethers.constants.AddressZero, newContentStorageImpl.address, newAccessControlManagerImpl.address)).to.be.reverted;
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(newContentImpl.address, newContentManagerImpl.address, ethers.constants.AddressZero, newAccessControlManagerImpl.address)).to.be.reverted;
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(newContentImpl.address, newContentManagerImpl.address, newContentStorageImpl.address, ethers.constants.AddressZero)).to.be.reverted;
+        });
+
+        it('Null parameters', async () => {
+            // new versions of the contracts         
+            newAccessControlManagerImpl = await AccessControlManager.deploy();
+            newContentImpl = await Content.deploy();
+            newContentStorageImpl = await ContentStorage.deploy();
+            newContentManagerImpl = await ContentManager.deploy();
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(null, newContentManagerImpl.address, newContentStorageImpl.address, newAccessControlManagerImpl.address)).to.be.reverted;
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(newContentImpl.address, null, newContentStorageImpl.address, newAccessControlManagerImpl.address)).to.be.reverted;
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(newContentImpl.address, newContentManagerImpl.address, null, newAccessControlManagerImpl.address)).to.be.reverted;
+
+            await expect(contentFactory.connect(deployerAddress).updateContracts(newContentImpl.address, newContentManagerImpl.address, newContentStorageImpl.address, null)).to.be.reverted;
         });
     });
 });

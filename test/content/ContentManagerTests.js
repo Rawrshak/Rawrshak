@@ -131,7 +131,8 @@ describe('Content Manager Contract Tests', () => {
 
             // craftingSystemAddress should have minter role revoked
             var approvalPairs1 = [
-                [craftingSystemAddress.address, true], [craftingSystemAddress.address, true],
+                [craftingSystemAddress.address, true],
+                [craftingSystemAddress.address, true],
                 [craftingSystemAddress.address, false]
             ];
 
@@ -142,7 +143,8 @@ describe('Content Manager Contract Tests', () => {
 
             // craftingSystemAddress should have minter role granted
             var approvalPairs2 = [
-                [craftingSystemAddress.address, false], [craftingSystemAddress.address, false],
+                [craftingSystemAddress.address, false],
+                [craftingSystemAddress.address, false],
                 [craftingSystemAddress.address, true]
             ];
 
@@ -151,20 +153,17 @@ describe('Content Manager Contract Tests', () => {
             expect(await content.totalSupply(2)).to.equal(5);
         });
 
-        it('Other parameter inputs', async () => {
+        it('Edge case parameters', async () => {
             var mintData = [playerAddress.address, [1], [100], 1, ethers.constants.AddressZero, []];
 
             var approvalPairs1 = [[null, true]];
             var approvalPairs2 = [["", false]];
             var approvalPairs3 = [[ethers.constants.AddressZero, true], [craftingSystemAddress.address, true]];
             // setting boolean to null would work as if it was set to false
-            var approvalPairs4 = [[deployerAddress.address, null]];
-
             
             await expect(contentManager.registerOperators(approvalPairs1)).to.be.reverted;
             await expect(contentManager.registerOperators(approvalPairs2)).to.be.reverted;
             await contentManager.registerOperators(approvalPairs3);
-            await contentManager.registerOperators(approvalPairs4);
             
             await content.connect(craftingSystemAddress).mintBatch(mintData);
             expect(await content.totalSupply(1)).to.equal(100);

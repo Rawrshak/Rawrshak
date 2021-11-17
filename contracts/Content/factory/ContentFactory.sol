@@ -57,6 +57,16 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
     )
         public onlyOwner
     {
+        // We can't check for supported interface Ids, because these contracts have not been initialized yet, and intializations is 
+        // where the custom interfaces are registered
+        require(
+            _content != address(0) &&
+            _contentManager != address(0) &&
+            _contentStorage != address(0) &&
+            _accessControlManager != address(0),
+            "contract address cannot be address zero"
+        );
+
         contractVersion += 1;
         // Only the deployer and owner can update the implementation for newer content contracts
         contentImplementation = _content;
