@@ -152,11 +152,11 @@ contract Orderbook is IOrderbook, ManagerBase {
             if (orderAmounts[i] > 0) {
                 amountSpentOnOrder = orders[_orderIds[i]].price * orderAmounts[i];
                 
-                // Check if there's you're still under tha max Spend
+                // Check if the transaction is still under tha Max Spend
                 if (maxSpend == 0) {
                     orderAmounts[i] = 0;
                     continue;
-                } else if (maxSpend > amountSpentOnOrder) {
+                } else if (maxSpend >= amountSpentOnOrder) {
                     maxSpend -= amountSpentOnOrder;
                 } else if (maxSpend < amountSpentOnOrder) {
                     orderAmounts[i] = maxSpend / orders[_orderIds[i]].price;
@@ -164,11 +164,11 @@ contract Orderbook is IOrderbook, ManagerBase {
                 }
 
                 if (orderAmounts[i] <= amountToFill) {
-                    // order amount exists but is less than amount remaining to sell
+                    // order amount exists but is less than amount remaining to fill
                     amountToFill -= orderAmounts[i];
                     amountFilled += orderAmounts[i];
                 } else if (amountToFill > 0) {
-                    // order amount exists but is more than amount remaining to sell
+                    // order amount exists but is greater than amount remaining to fill
                     orderAmounts[i] = amountToFill;
                     amountFilled += amountToFill; // remainder
                     amountToFill = 0;

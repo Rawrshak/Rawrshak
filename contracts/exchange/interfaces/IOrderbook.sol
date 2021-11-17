@@ -27,7 +27,7 @@ interface IOrderbook {
 
     function getOrderAmounts(
         uint256[] memory _orderIds,
-        uint256 amountToSell,
+        uint256 amountToFill,
         uint256 maxSpend
     ) external view returns(uint256[] memory orderAmounts, uint256 amountFilled);
 
