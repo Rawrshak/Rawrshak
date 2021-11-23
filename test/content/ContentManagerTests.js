@@ -54,7 +54,7 @@ describe('Content Manager Contract Tests', () => {
 
         it('Check Supported interfaces', async () => {
             // Content Manager interface
-            expect(await contentManager.supportsInterface("0x250b1d27")).to.equal(true);
+            expect(await contentManager.supportsInterface("0xa15f6002")).to.equal(true);
         });
     });
 
@@ -168,7 +168,7 @@ describe('Content Manager Contract Tests', () => {
             await content.connect(craftingSystemAddress).mintBatch(mintData);
             expect(await content.totalSupply(1)).to.equal(100);
 
-            await expect(content.connect(deployerAddress).mintBatch(mintData)).to.be.reverted;
+            await expect(content.connect(playerAddress).mintBatch(mintData)).to.be.reverted;
             expect(await content.totalSupply(1)).to.equal(100);
         });
     });
