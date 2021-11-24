@@ -68,10 +68,10 @@ describe('Exchange Contract', () => {
 
     // Mint an asset
     var mintData = [playerAddress.address, [1, 2], [10, 1], 0, ethers.constants.AddressZero, []];
-    await contentManager.mintBatch(mintData);
+    await content.connect(deployerAddress).mintBatch(mintData);
 
     mintData = [player2Address.address, [1, 2], [10, 10], 0, ethers.constants.AddressZero, []];
-    await contentManager.mintBatch(mintData);
+    await content.connect(deployerAddress).mintBatch(mintData);
   }
 
   async function RawrTokenSetup() {

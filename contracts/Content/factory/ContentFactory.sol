@@ -103,6 +103,7 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
         contentStorage.grantRole(contentStorage.DEFAULT_ADMIN_ROLE(), address(contentManager));
         contentStorage.setParent(address(content));
         accessControlManager.grantRole(accessControlManager.DEFAULT_ADMIN_ROLE(), address(contentManager));
+        accessControlManager.grantRole(accessControlManager.MINTER_ROLE(), _msgSender());
         accessControlManager.setParent(address(content));
         
         // transfer ownership to message sender
