@@ -8,9 +8,7 @@ import "../exchange/StorageBase.sol";
 import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";
-//import "../tokens/LootboxCredit.sol";
 import "hardhat/console.sol";
-//import "../tokens/optimism/IL2StandardERC20Latest.sol";
 
 contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable, ERC165StorageUpgradeable, StorageBase {
     using LibLootbox for *;

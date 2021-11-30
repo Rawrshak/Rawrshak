@@ -119,6 +119,7 @@ describe('Lootbox Contract', () => {
         quarterProb = 250000;
         rareProb =    100000;
 
+        // Each entry is type LibLootbox.LootboxReward
         rewards = [
             [
                 [ [content.address, 1] /*LibCraft.AssetData*/, fullProb /*probability*/, 1 /*amount*/, 0 /*class*/],
@@ -133,35 +134,14 @@ describe('Lootbox Contract', () => {
                 [ [content.address, 6] /*LibCraft.AssetData*/, halfProb /*probability*/, 1 /*amount*/, 0 /*class*/],
                 [ [content.address, 7] /*LibCraft.AssetData*/, rareProb /*probability*/, 1 /*amount*/, 0 /*class*/]
             ],
-        ];  // LibLootbox.LootboxReward
+        ];  
 
-        /*struct LootboxReward {
-            LibCraft.AssetData asset;   // asset to be minted when a Lootbox is burned
-            uint256 probability;        // stored in ETH (1 ETH is 100%, 0.5 ETH is 50%, etc)
-            uint256 amount;             // amount of asset minted when dice roll probability is met
-            uint8   class;              // number signifying the rarity/class that an asset belongs to. the lower the number the more common the asset is. 
-                                        // 0 means no class set (i.e. unused). 1 is most common, 2 is uncommon, 3 is rare, etc. What each of these classes
-                                        // are called is entirely up to the developer.
-        }*/
-
-        /*struct AssetData {
-            address content;
-            uint256 tokenId;
-        }*/
-
+        // Each entry is type LibLootbox.Blueprint
         blueprints = [
             [true /*enabled*/, ethers.BigNumber.from(50).mul(_1e18) /*cost*/, 2 /*maxAssetsGiven*/, true /*hasGuaranteedItems*/],
             [true /*enabled*/, ethers.BigNumber.from(100).mul(_1e18) /*cost*/, 3 /*maxAssetsGiven*/, true /*hasGuaranteedItems*/],
             [true /*enabled*/, ethers.BigNumber.from(25).mul(_1e18) /*cost*/, 2 /*maxAssetsGiven*/, false /*hasGuaranteedItems*/]
         ];
-
-        /*
-        struct Blueprint {
-            bool enabled;               // whether or not this lootbox can be minted yet
-            uint256 cost;               // lootbox credit cost to buy the lootbox
-            uint16 maxAssetsGiven;      // Max number of reward items the lootbox will randomly pick from the assets list when burned. Doesn't count guaranteed items.
-            bool hasGuaranteedItems;    // Whether or not we have any items that are guaranteed to be given.
-        }*/
     }
 
     it('Check if Lootbox Contract was deployed properly', async () => {
@@ -195,8 +175,8 @@ describe('Lootbox Contract', () => {
         expect(lootboxBlueprint.maxAssetsGiven, "Incorrect max assets").to.be.equal(2);
         console.log("| HasGuaranteedItems: " + lootboxBlueprint.hasGuaranteedItems);
         expect(lootboxBlueprint.hasGuaranteedItems, "Incorrect guaranteed items").to.be.equal(true);
-        //console.log("| Blueprint: ");
-        //console.log(lootboxBlueprint);
+        console.log("| Blueprint: ");
+        console.log(lootboxBlueprint);
 
         var lootboxCost = await lootboxStorage.getCost(tokenId);
         lootboxCost = lootboxCost.toString();

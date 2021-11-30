@@ -46,11 +46,9 @@ describe('Salvage Contract', () => {
     beforeEach(async () => {
         salvage = await upgrades.deployProxy(TestSalvage, [1000]);
 
-        //rawrToken = await upgrades.deployProxy(RawrToken, [zeroAddress, "RawrToken", "RAWR", web3.utils.toWei('1000000000', 'ether')]);
         rawrToken = await upgrades.deployProxy(MockToken, ["RawrToken", "RAWR"]);
         await rawrToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
 
-        //lootboxCreditToken = await upgrades.deployProxy(LootboxCredit, [zeroAddress, "Rawrshak Lootbox Credit", "RAWRLOOT", web3.utils.toWei('10000000', 'ether')]);
         lootboxCreditToken = await upgrades.deployProxy(MockToken, ["Rawrshak Lootbox Credit", "RAWRLOOT"]);
         await lootboxCreditToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
     });
