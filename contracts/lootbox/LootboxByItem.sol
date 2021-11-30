@@ -13,9 +13,9 @@ import "../exchange/StorageBase.sol";
 import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";
-import "../tokens/LootboxCredit.sol";
 //import "../tokens/optimism/IL2StandardERC20Latest.sol";
 import "../tokens/optimism/L2NativeRawrshakERC20Token.sol";
+import "hardhat/console.sol";
 
 contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable, ERC165StorageUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, StorageBase {
     using AddressUpgradeable for address;
@@ -35,8 +35,12 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
     ILootboxStorageByItem dataStorage;
     
     /******************** Public API ********************/
-    function __LootboxByItem_init(uint256 _seed, address _lootboxCreditAddress, address _lootboxStorageAddress) public initializer {
-        __AccessControl_init_unchained();
+    function initialize(
+        uint256 _seed, 
+        address _lootboxCreditAddress, 
+        address _lootboxStorageAddress
+    ) public initializer {
+         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __Pausable_init_unchained();
         __ReentrancyGuard_init_unchained();
@@ -69,13 +73,13 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         uint256 cost = dataStorage.getCost(_tokenId);
         require(cost != 0, "Zero cost");
         cost = SafeMathUpgradeable.mul(cost, _amount);
-        require(L2NativeRawrshakERC20Token(LootboxCredit(lootboxCreditAddress)).balanceOf(msg.sender) >= cost, "Not enough credit");
+        require(L2NativeRawrshakERC20Token(lootboxCreditAddress).balanceOf(msg.sender) >= cost, "Not enough credit");
 
         bool enabled = dataStorage.getEnabled(_tokenId);
         require(enabled, "Lootbox not enabled");
 
         // 2) Grab the required LootboxCredit amount from the user and burn it.
-        LootboxCredit(lootboxCreditAddress).burn(msg.sender, cost);
+        IL2StandardERC20Latest(lootboxCreditAddress).burn(msg.sender, cost);
 
         // 3) Send the lootbox(es) to the caller.
         _mint(msg.sender, _tokenId, _amount, "");
@@ -96,7 +100,7 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         if(blueprint.hasGuaranteedItems) {
             // TODO: Store this in a separate array (i.e. cache it)?
             for (uint256 i = 0; i < rewards.length; ++i) {
-                if(rewards[i].probability >= 1 ether) {
+                if(rewards[i].probability >= 1000000) {
                     LibAsset.MintData memory mintData;
                     mintData.to = msg.sender;
                     mintData.tokenIds = new uint256[](1);
@@ -116,9 +120,9 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
             }
 
             // Don't double count guaranteed items.
-            if(rewards[i].probability < 1 ether) {
+            if(rewards[i].probability < 1000000) {
                 uint256 randomVal = LibLootbox.random(msg.sender, seed);
-                if (randomVal.mod(1 ether) <= rewards[i].probability) {
+                if (randomVal.mod(1000000) <= rewards[i].probability) {
                     LibAsset.MintData memory mintData;
                     mintData.to = msg.sender;
                     mintData.tokenIds = new uint256[](1);

@@ -24,7 +24,7 @@ library LibCraft {
 
     struct SalvageReward {
         AssetData asset;
-        uint256 probability;
+        uint24  probability;
         uint256 amount;
     }
 
@@ -36,7 +36,7 @@ library LibCraft {
     }
 
     struct Recipe {
-        uint256 craftingRate;
+        uint24 craftingRate;
         bool enabled;
         AssetData[] materials;
         uint256[] materialAmounts;
@@ -50,7 +50,7 @@ library LibCraft {
         require(_asset.salvageType < uint256(SalvageType.Max), "Invalid Salvage Type");
         require(_asset.rewards.length > 0, "Invalid rewards length");
         for (uint256 i = 0; i < _asset.rewards.length; ++i) {
-            require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 1 ether, "Invalid probability");
+            require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 1000000, "Invalid probability");
             require(_asset.rewards[i].amount > 0, "Invalid reward amount");
             require(_asset.rewards[i].asset.content != address(0), "Invalid content address");
             require(_asset.rewards[i].asset.tokenId != 0, "Invalid token id");

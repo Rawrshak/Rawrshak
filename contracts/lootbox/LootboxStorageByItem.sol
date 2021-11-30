@@ -8,7 +8,8 @@ import "../exchange/StorageBase.sol";
 import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";
-import "../tokens/LootboxCredit.sol";
+//import "../tokens/LootboxCredit.sol";
+import "hardhat/console.sol";
 //import "../tokens/optimism/IL2StandardERC20Latest.sol";
 
 contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable, ERC165StorageUpgradeable, StorageBase {
@@ -28,7 +29,7 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
     mapping(uint256 => LibLootbox.LootboxReward[]) lootboxRewards;
     
     /******************** Public API ********************/
-    function __LootboxStorageByItem_init() public initializer {
+    function initialize() public initializer {
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
         __StorageBase_init_unchained();

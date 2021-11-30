@@ -1,44 +1,19 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const LootboxCredit = artifacts.require("LootboxCredit");
-const LootboxByItem = artifacts.require("LootboxByItem");
-const LootboxStorageByItem = artifacts.require("LootboxStorageByItem");
-const Content = artifacts.require("Content");
-const ContentStorage = artifacts.require("ContentStorage");
-const ContentManager = artifacts.require("ContentManager");
-const AccessControlManager = artifacts.require("AccessControlManager");
-//const TestSalvage = artifacts.require("TestSalvage");
-const ContractRegistry = artifacts.require("ContractRegistry");
-const TagsManager = artifacts.require("TagsManager");
-const TruffleAssert = require("truffle-assertions");
+const { expect } = require("chai");
+const { ethers, upgrades } = require("hardhat");
+const { sign } = require("../mint");
 
-contract('Lootbox Contract', (accounts)=> {
-    const [
-        deployerAddress,            // Address that deployed contracts
-        managerAddress,            // platform address fees
-        creatorAddress,             // content nft Address
-        playerAddress,              // player 1 address
-        player2Address,              // player 2 address
-    ] = accounts;
+describe('Lootbox Contract', () => {
+    var deployerAddress, managerAddress, creatorAddress, playerAddress, player2Address;
+    var contentFactory;
+    var contentManager;
+    var accessControlManager;
+    var AccessControlManager, ContentManager, ContentStorage, Content, L2NativeRawrshakERC20Token, LootboxByItem, LootboxStorageByItem;
+
+    var l2Bridge = "0x50EB44e3a68f1963278b4c74c6c343508d31704C";
 
     var lootbox;
     var lootboxStorage;
-    var asset = [
-        [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, []],
-        [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, []],
-        [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1",10000, []],
-        [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, []],
-        [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, []],
-        [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, []],
-        [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, []],
-    ];
-
-    /*struct CreateData {
-        uint256 tokenId;
-        string publicDataUri;
-        string hiddenDataUri;
-        uint256 maxSupply;
-        LibRoyalties.Fees[] fees;
-    }*/
+    var lootboxCreditToken;
 
     var rewards;
     var blueprints;
@@ -48,92 +23,101 @@ contract('Lootbox Contract', (accounts)=> {
     var quarterProb;
     var rareProb;
 
-    // Lootbox Credit Token 
-    var lootboxCreditToken;
+    const _1e18 = ethers.BigNumber.from('10').pow(ethers.BigNumber.from('18'));
 
-    var nftAssetData;
-    var manager_role;
+    before(async () => {
+        [deployerAddress, managerAddress, creatorAddress, playerAddress, player2Address] = await ethers.getSigners();
+        AccessControlManager = await ethers.getContractFactory("AccessControlManager");
+        ContentFactory = await ethers.getContractFactory("ContentFactory");
+        ContentManager = await ethers.getContractFactory("ContentManager");
+        ContentStorage = await ethers.getContractFactory("ContentStorage");
+        Content = await ethers.getContractFactory("Content");
+        L2NativeRawrshakERC20Token = await ethers.getContractFactory("L2NativeRawrshakERC20Token");
+        LootboxByItem = await ethers.getContractFactory("LootboxByItem");
+        LootboxStorageByItem = await ethers.getContractFactory("LootboxStorageByItem");
 
-    const zeroAddress = "0x0000000000000000000000000000000000000000";
+        originalAccessControlManager = await AccessControlManager.deploy();
+        originalContent = await Content.deploy();
+        originalContentStorage = await ContentStorage.deploy();
+        originalContentManager = await ContentManager.deploy();
+
+        // Initialize Clone Factory
+        contentFactory = await upgrades.deployProxy(ContentFactory, [originalContent.address, originalContentManager.address, originalContentStorage.address, originalAccessControlManager.address]);
+    });
 
     beforeEach(async () => {
-        registry = await ContractRegistry.new();
-        await registry.__ContractRegistry_init();
-        tagsManager = await TagsManager.new();
-        await tagsManager.__TagsManager_init(registry.address);
-
-        accessControlManager = await AccessControlManager.new();
-        await accessControlManager.__AccessControlManager_init();
-        contentStorage = await ContentStorage.new();
-        await contentStorage.__ContentStorage_init([[deployerAddress, web3.utils.toWei('0.01', 'ether')]], "arweave.net/tx-contract-uri");
-        content = await Content.new();
-        await content.__Content_init("Test Content Contract", "TEST", contentStorage.address, accessControlManager.address);
-        await contentStorage.setParent(content.address);
-        
-        // Setup content manager
-        contentManager = await ContentManager.new();
-        await contentManager.__ContentManager_init(content.address, contentStorage.address, accessControlManager.address, tagsManager.address);
-        await contentStorage.grantRole(await contentStorage.OWNER_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.grantRole(await accessControlManager.DEFAULT_ADMIN_ROLE(), contentManager.address, {from: deployerAddress});
-        await accessControlManager.setParent(content.address);
-
-        // Add 7 assets
-        await contentManager.addAssetBatch(asset);
-
-        nftAssetData = [content.address, 1];
-
-        // Setup Lootbox Credit Token
-        lootboxCreditToken = await LootboxCredit.new();
-        await lootboxCreditToken.__LootboxCredit_init(web3.utils.toWei('1000000000', 'ether'), "Rawrshak Lootbox Credit", "RAWRLOOT", {from: deployerAddress});
-
-        // Give player 1 10000 Credit tokens
-        await lootboxCreditToken.transfer(playerAddress, web3.utils.toWei('10000', 'ether'), {from: deployerAddress});
-
-        // Mint assets
-        var mintData = [playerAddress, [1, 2], [10, 10], 1, zeroAddress, []];   // LibAsset.MintData
-        await contentManager.mintBatch(mintData, {from: deployerAddress});
-
-        /*struct MintData {
-            address to;
-            uint256[] tokenIds;
-            uint256[] amounts;
-            uint256 nonce;
-            address signer;
-            bytes signature;
-        }*/
-
-        // Set contract royalties
-        var assetRoyalty = [[creatorAddress, web3.utils.toWei('0.02', 'ether')]];
-        await contentManager.setContractRoyalties(assetRoyalty, {from: deployerAddress});
-
-        /*salvage = await TestSalvage.new();
-        await salvage.__TestSalvage_init(1000);*/
-
         // Setup LootboxStorage
-        lootboxStorage = await LootboxStorageByItem.new();
-        await lootboxStorage.__LootboxStorageByItem_init();
+        lootboxStorage = await upgrades.deployProxy(LootboxStorageByItem, []);
+
+        lootboxCreditToken = await L2NativeRawrshakERC20Token.deploy(l2Bridge, "Rawrshak Lootbox Credit", "RAWRLOOT", ethers.BigNumber.from(100000000).mul(_1e18));
+        await lootboxCreditToken.grantRole(await lootboxCreditToken.MINTER_ROLE(), deployerAddress.address);
+        await lootboxCreditToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
         
         // Setup Lootbox 
-        lootbox = await LootboxByItem.new();
-        await lootbox.__LootboxByItem_init(1000, lootboxCreditToken.address, lootboxStorage.address);
-        manager_role = await lootbox.MANAGER_ROLE();
+        lootbox = await upgrades.deployProxy(LootboxByItem, [1000, lootboxCreditToken.address, lootboxStorage.address]);
 
+        await createContentContract();
+        await createLootboxContract();
+    });
+
+    async function createContentContract() {
+        var uri = "arweave.net/tx-contract-uri";
+
+        // deploy contracts
+        var tx = await contentFactory.createContracts(deployerAddress.address, 10000, uri);
+        var receipt = await tx.wait();
+        var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
+
+        // To figure out which log contains the ContractDeployed event
+        content = await Content.attach(deployedContracts[0].args.content);
+        contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
+
+        // Type LibAsset.CreateData
+        var assets = [
+            [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, deployerAddress.address, 20000],
+            [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, deployerAddress.address, 0],
+            [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1", 10000, deployerAddress.address, 150],
+            [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, deployerAddress.address, 200],
+            [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, deployerAddress.address, 250],
+            [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, deployerAddress.address, 300],
+            [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, deployerAddress.address, 350],
+        ];
+
+        // Add assets
+        await contentManager.addAssetBatch(assets);
+
+        // Mint assets
+        // Type of LibAsset.MintData
+        var mintData = [playerAddress.address, [1, 2], [10, 10], 0, ethers.constants.AddressZero, []];
+        
+        var approvalPair = [[deployerAddress.address, true]];
+        await contentManager.registerOperators(approvalPair);
+
+        await content.mintBatch(mintData);
+    }
+
+    async function createLootboxContract() {
         // Allow the lootbox contract to be able to burn on the lootbox credit token contract.
-        await lootboxCreditToken.grantRole(await lootboxCreditToken.BURNER_ROLE(), lootbox.address, {from: deployerAddress});
+        await lootboxCreditToken.grantRole(await lootboxCreditToken.BURNER_ROLE(), lootbox.address);
+
+        // Give player 1 10000 Credit tokens
+        var results = await lootboxCreditToken.approve(playerAddress.address, ethers.BigNumber.from(10000).mul(_1e18));
+        await expect(results).to.emit(lootboxCreditToken, 'Approval');
+        await lootboxCreditToken.transfer(playerAddress.address, ethers.BigNumber.from(10000).mul(_1e18));
         
         // Register the lootbox as a system on the content contract
-        var approvalPair = [[lootbox.address, true], [creatorAddress, true]];
-        await contentManager.registerOperators(approvalPair, {from: deployerAddress});
+        var approvalPair = [[lootbox.address, true], [creatorAddress.address, true]];
+        await contentManager.registerOperators(approvalPair);
 
         // Register manager
-        await lootboxStorage.registerManager(managerAddress, {from: deployerAddress});
-        await lootbox.registerManager(managerAddress, {from: deployerAddress});
+        await lootboxStorage.registerManager(managerAddress.address);
+        await lootbox.registerManager(managerAddress.address);
 
         // Setup probabilities.
-        fullProb = web3.utils.toWei('1', 'ether');
-        halfProb = web3.utils.toWei('0.5', 'ether');
-        quarterProb = web3.utils.toWei('0.25', 'ether');
-        rareProb = web3.utils.toWei('0.1', 'ether');
+        fullProb =   1000000;
+        halfProb =    500000;
+        quarterProb = 250000;
+        rareProb =    100000;
 
         rewards = [
             [
@@ -166,9 +150,9 @@ contract('Lootbox Contract', (accounts)=> {
         }*/
 
         blueprints = [
-            [true /*enabled*/, web3.utils.toWei('50', 'ether') /*cost*/, 2 /*maxAssetsGiven*/, true /*hasGuaranteedItems*/],
-            [true /*enabled*/, web3.utils.toWei('100', 'ether') /*cost*/, 3 /*maxAssetsGiven*/, true /*hasGuaranteedItems*/],
-            [true /*enabled*/, web3.utils.toWei('25', 'ether') /*cost*/, 2 /*maxAssetsGiven*/, false /*hasGuaranteedItems*/]
+            [true /*enabled*/, ethers.BigNumber.from(50).mul(_1e18) /*cost*/, 2 /*maxAssetsGiven*/, true /*hasGuaranteedItems*/],
+            [true /*enabled*/, ethers.BigNumber.from(100).mul(_1e18) /*cost*/, 3 /*maxAssetsGiven*/, true /*hasGuaranteedItems*/],
+            [true /*enabled*/, ethers.BigNumber.from(25).mul(_1e18) /*cost*/, 2 /*maxAssetsGiven*/, false /*hasGuaranteedItems*/]
         ];
 
         /*
@@ -178,496 +162,435 @@ contract('Lootbox Contract', (accounts)=> {
             uint16 maxAssetsGiven;      // Max number of reward items the lootbox will randomly pick from the assets list when burned. Doesn't count guaranteed items.
             bool hasGuaranteedItems;    // Whether or not we have any items that are guaranteed to be given.
         }*/
-
-    });
+    }
 
     it('Check if Lootbox Contract was deployed properly', async () => {
-        assert.equal(
-            lootbox.address != 0x0,
-            true,
-            "Lootbox Contract was not deployed properly.");
+        expect(lootbox.address != 0x0, "Lootbox Contract was not deployed properly.").to.equal(true);
     });
 
     it('Add Blueprint to Lootbox Storage', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
-        //console.log(results);
-        //console.log(results.logs[0]);
-        //console.log("args is next");
-        //console.log(results.logs[0].args);
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
+        var tokenId = updatedBlueprint[0].args.tokenId;
         console.log("| Blueprint Token Id: " + tokenId);
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Make sure we start with no rewards.
         var lootboxRewards = await lootboxStorage.getRewards(tokenId);
-        assert.equal(lootboxRewards.length, 0, "rewards length incorrect");
+        expect(lootboxRewards.length, "Rewards length incorrect").to.be.equal(0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[0][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[0][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
         var lootboxBlueprint = await lootboxStorage.getBlueprint(tokenId);
         console.log("| Enabled: " + lootboxBlueprint.enabled);
         console.log("| MaxAssetsGiven: " + lootboxBlueprint.maxAssetsGiven);
-        assert.equal(lootboxBlueprint.maxAssetsGiven, 2, "incorrect max assets");
+        expect(lootboxBlueprint.maxAssetsGiven, "Incorrect max assets").to.be.equal(2);
         console.log("| HasGuaranteedItems: " + lootboxBlueprint.hasGuaranteedItems);
-        assert.equal(lootboxBlueprint.hasGuaranteedItems, true, "incorrect guaranteed items");
+        expect(lootboxBlueprint.hasGuaranteedItems, "Incorrect guaranteed items").to.be.equal(true);
         //console.log("| Blueprint: ");
         //console.log(lootboxBlueprint);
 
         var lootboxCost = await lootboxStorage.getCost(tokenId);
         lootboxCost = lootboxCost.toString();
         console.log("| Blueprint Cost: " + lootboxCost);
-        assert.notEqual(lootboxCost, 0x0, "Cost is empty");
-        assert.equal(lootboxCost, web3.utils.toWei('50', 'ether'), "incorrect cost");
+        expect(lootboxCost, "Cost is empty").to.not.equal(0x0);
+        expect(lootboxCost, "Incorrect cost").to.be.equal(ethers.BigNumber.from(50).mul(_1e18));
 
         var lootboxRewards = await lootboxStorage.getRewards(tokenId);
         console.log("| Blueprint Number of Rewards: " + lootboxRewards.length);
-        assert.equal(lootboxRewards.length, 2, "rewards length incorrect");
+        expect(lootboxRewards.length, "Rewards length incorrect").to.be.equal(2);
 
         for (var i = 0; i < lootboxRewards.length; ++i) {
-            assert.equal(lootboxRewards[i].asset.content, content.address, "Invalid Reward Address");
-            assert.equal(lootboxRewards[i].probability, web3.utils.toWei('1', 'ether'), "Invalid Reward probability");
+            expect(lootboxRewards[i].asset.content, "Invalid Reward Address").to.be.equal(content.address);
+            expect(lootboxRewards[i].probability, "Invalid Reward probability").to.be.equal(fullProb);
         }
     });
 
     it('Mint Blueprint in Lootbox Storage', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[0][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[0][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+        var results = await lootbox.connect(playerAddress).mint(tokenId, 1);
+        await expect(results).to.emit(lootbox, 'LootboxCreated');
 
-        var balance = await lootboxCreditToken.balanceOf(playerAddress);
-        assert.equal(
-            balance.valueOf().toString(),
-            web3.utils.toWei('9950', 'ether').toString(),
-            "Player's Lootbox Credit Incorrect");
-
-        var balanceLootbox = await lootbox.balanceOf(playerAddress, tokenId);
-        assert.equal(
-            balanceLootbox.valueOf().toString(),
-            1,
-            "Player's Lootbox Amount Incorrect");
+        expect(await lootboxCreditToken.balanceOf(playerAddress.address), "Player's Lootbox Credit Incorrect").to.be.equal(ethers.BigNumber.from(9950).mul(_1e18));
+        expect(await lootbox.balanceOf(playerAddress.address, tokenId), "Player's Lootbox Amount Incorrect").to.be.equal(1);
     });
 
     it('Burn Blueprint', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[0][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[0][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+        var results = await lootbox.connect(playerAddress).mint(tokenId, 1);
+        await expect(results).to.emit(lootbox, 'LootboxCreated');
 
-        var results = await lootbox.burn(tokenId, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxOpened');
+        var results = await lootbox.connect(playerAddress).burn(tokenId);
+        await expect(results).to.emit(lootbox, 'LootboxOpened');
 
-        var balanceLootbox = await lootbox.balanceOf(playerAddress, tokenId);
-        assert.equal(
-            balanceLootbox.valueOf().toString(),
-            0,
-            "Player's Lootbox Amount Incorrect");
-
-        var balanceAsset = await content.balanceOf(playerAddress, 1);
-        assert.equal(balanceAsset.valueOf().toString(), 11, "Asset was not minted");
-
-        var balanceAsset = await content.balanceOf(playerAddress, 2);
-        assert.equal(balanceAsset.valueOf().toString(), 11, "Asset was not minted");
+        expect(await lootbox.balanceOf(playerAddress.address, tokenId), "Player's Lootbox Amount Incorrect").to.be.equal(0);
+        expect(await content.balanceOf(playerAddress.address, 1), "Asset 1 was not minted").to.be.equal(11);
+        expect(await content.balanceOf(playerAddress.address, 2), "Asset 2 was not minted").to.be.equal(11);
     });
 
     it('Burn Blueprint 2', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[1][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[1][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[1][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[1][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[1][2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[1][2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+        var results = await lootbox.connect(playerAddress).mint(tokenId, 1);
+        await expect(results).to.emit(lootbox, 'LootboxCreated');
 
-        var balance = await lootboxCreditToken.balanceOf(playerAddress);
-        assert.equal(
-            balance.valueOf().toString(),
-            web3.utils.toWei('9900', 'ether').toString(),
-            "Player's Lootbox Credit Incorrect");
+        expect(await lootboxCreditToken.balanceOf(playerAddress.address), "Player's Lootbox Credit Incorrect").to.be.equal(ethers.BigNumber.from(9900).mul(_1e18));
+        var balance = await lootboxCreditToken.balanceOf(playerAddress.address);
 
-        var results = await lootbox.burn(tokenId, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxOpened');
-        //console.log(results);
-        //console.log(results.logs.length);
-        //console.log(results.logs[results.logs.length - 1]);
+        var results = await lootbox.connect(playerAddress).burn(tokenId);
+        await expect(results).to.emit(lootbox, 'LootboxOpened');
 
-        var balanceLootbox = await lootbox.balanceOf(playerAddress, tokenId);
-        assert.equal(
-            balanceLootbox.valueOf().toString(),
-            0,
-            "Player's Lootbox Amount Incorrect");
+        var receipt = await results.wait();
+        var lootboxOpenedEvent = receipt.events?.filter((x) => {return x.event == "LootboxOpened"});
 
-        var balanceAsset = await content.balanceOf(playerAddress, 3);
-        assert.equal(balanceAsset.valueOf().toString(), 1, "Asset 3 was not minted");
-        console.log("| balanceof(3):  " + balanceAsset.valueOf().toString());
+        expect(await lootbox.balanceOf(playerAddress.address, tokenId), "Player's Lootbox Amount Incorrect").to.be.equal(0);
+        var balanceAsset = await content.balanceOf(playerAddress.address, 3);
+        expect(balanceAsset.valueOf(), "Asset 3 was not minted").to.be.equal(1);
 
-        var balanceAsset = await content.balanceOf(playerAddress, 4);
-        console.log("| balanceof(4):  " + balanceAsset.valueOf().toString());
-
-        var balanceAsset = await content.balanceOf(playerAddress, 5);
-        console.log("| balanceof(5):  " + balanceAsset.valueOf().toString());
-
-        // The LootboxOpened event will always be the last one when calling mint().
-        var numAssetsGiven = results.logs[results.logs.length - 1].args.numAssetsGiven.toString();
-        assert.notEqual(numAssetsGiven, 0x0, "numAssetsGiven is empty");
+        var numAssetsGiven = lootboxOpenedEvent[0].args.numAssetsGiven;
+        expect(numAssetsGiven, "numAssetsGiven is empty").to.not.equal(0x0);
         console.log("| Number of Rewards Given: " + numAssetsGiven);
     });
 
     it('Burn Blueprint 3', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+        var results = await lootbox.connect(playerAddress).mint(tokenId, 1);
+        await expect(results).to.emit(lootbox, 'LootboxCreated');
 
-        var balance = await lootboxCreditToken.balanceOf(playerAddress);
-        assert.equal(
-            balance.valueOf().toString(),
-            web3.utils.toWei('9975', 'ether').toString(),
-            "Player's Lootbox Credit Incorrect");
+        expect(await lootboxCreditToken.balanceOf(playerAddress.address), "Player's Lootbox Credit Incorrect").to.be.equal(ethers.BigNumber.from(9975).mul(_1e18));
 
-        var results = await lootbox.burn(tokenId, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxOpened');
-        //console.log(results);
-        //console.log(results.logs.length);
-        //console.log(results.logs[results.logs.length - 1]);
+        var results = await lootbox.connect(playerAddress).burn(tokenId);
+        await expect(results).to.emit(lootbox, 'LootboxOpened');
 
-        var balanceLootbox = await lootbox.balanceOf(playerAddress, tokenId);
-        assert.equal(
-            balanceLootbox.valueOf().toString(),
-            0,
-            "Player's Lootbox Amount Incorrect");
+        var receipt = await results.wait();
+        var lootboxOpenedEvent = receipt.events?.filter((x) => {return x.event == "LootboxOpened"});
 
-        var balanceAsset = await content.balanceOf(playerAddress, 6);
+        expect(await lootbox.balanceOf(playerAddress.address, tokenId), "Player's Lootbox Amount Incorrect").to.be.equal(0);
+
+        var balanceAsset = await content.balanceOf(playerAddress.address, 6);
         console.log("| balanceof(6):  " + balanceAsset.valueOf().toString());
 
-        var balanceAsset = await content.balanceOf(playerAddress, 7);
+        var balanceAsset = await content.balanceOf(playerAddress.address, 7);
         console.log("| balanceof(7):  " + balanceAsset.valueOf().toString());
 
-        // The LootboxOpened event will always be the last one when calling mint().
-        var numAssetsGiven = results.logs[results.logs.length - 1].args.numAssetsGiven.toString();
+        var numAssetsGiven = lootboxOpenedEvent[0].args.numAssetsGiven.toString();
+        expect(numAssetsGiven, "numAssetsGiven is empty").to.not.equal(0x0);
         console.log("| Number of Rewards Given: " + numAssetsGiven);
     });
 
     it('Do not let broke user mint lootbox', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        await TruffleAssert.fails(
-            lootbox.mint(tokenId, 1, {from: player2Address}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootbox.connect(player2Address).mint(tokenId, 1), "Player 2 lootbox mint should fail").to.be.reverted;
     });
 
     it('Operations stop working when entire lootbox system paused and operations resume when unpaused', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Pause the lootbox contract.
-        await lootbox.managerSetPause(true, {from: managerAddress});
+        await lootbox.connect(managerAddress).managerSetPause(true);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        await TruffleAssert.fails(
-            lootbox.mint(tokenId, 1, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootbox.connect(playerAddress).mint(tokenId, 1), "Player 1 lootbox mint should fail").to.be.reverted;
 
         // Unpause the lootbox contract so we can mint one, to pause again and test failing on burning.
-        await lootbox.managerSetPause(false, {from: managerAddress});
+        await lootbox.connect(managerAddress).managerSetPause(false);
 
-        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+        var results = await lootbox.connect(playerAddress).mint(tokenId, 1);
+        await expect(results).to.emit(lootbox, 'LootboxCreated');
 
         // Pause the lootbox contract.
-        await lootbox.managerSetPause(true, {from: managerAddress});
+        await lootbox.connect(managerAddress).managerSetPause(true);
 
-        await TruffleAssert.fails(
-            lootbox.burn(tokenId, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootbox.connect(playerAddress).burn(tokenId), "Player 1 lootbox burn should fail").to.be.reverted;
     });
 
     it('Operations stop working when single lootbox blueprint disabled and operations resume when re-enabled', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
         // Pause the specific lootbox contract.
-        await lootboxStorage.setBlueprintEnabled(tokenId, false, {from: managerAddress});
+        await lootboxStorage.connect(managerAddress).setBlueprintEnabled(tokenId, false);
 
-        await TruffleAssert.fails(
-            lootbox.mint(tokenId, 1, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootbox.connect(playerAddress).mint(tokenId, 1), "Player 1 lootbox mint should fail").to.be.reverted;
 
         // Unpause the lootbox contract so we can mint one, to pause again and test failing on burning.
-        await lootboxStorage.setBlueprintEnabled(tokenId, true, {from: managerAddress});
+        await lootboxStorage.connect(managerAddress).setBlueprintEnabled(tokenId, true);
 
-        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+        var results = await lootbox.connect(playerAddress).mint(tokenId, 1);
+        await expect(results).to.emit(lootbox, 'LootboxCreated');
 
         // Pause the lootbox contract.
-        await lootboxStorage.setBlueprintEnabled(tokenId, false, {from: managerAddress});
+        await lootboxStorage.connect(managerAddress).setBlueprintEnabled(tokenId, false);
 
-        await TruffleAssert.fails(
-            lootbox.burn(tokenId, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootbox.connect(playerAddress).burn(tokenId), "Player 1 lootbox burn should fail").to.be.reverted;
     });
 
     it('Test setting blueprint cost', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
         var lootboxCost = await lootboxStorage.getCost(tokenId);
         lootboxCost = lootboxCost.toString();
-        assert.notEqual(lootboxCost, 0x0, "Cost is empty");
-        assert.equal(lootboxCost, web3.utils.toWei('25', 'ether'), "incorrect cost");
+        expect(lootboxCost, "Cost is empty").to.not.equal(0x0);
+        expect(lootboxCost, "Incorrect cost").to.equal(web3.utils.toWei('25', 'ether'));
 
         // Change the cost of the blueprint.
-        await lootboxStorage.setBlueprintCost(tokenId, web3.utils.toWei('33', 'ether'), {from: managerAddress});
+        await lootboxStorage.connect(managerAddress).setBlueprintCost(tokenId, web3.utils.toWei('33', 'ether'));
 
         lootboxCost = await lootboxStorage.getCost(tokenId);
         lootboxCost = lootboxCost.toString();
-        assert.equal(lootboxCost, web3.utils.toWei('33', 'ether'), "incorrect changed cost");
+        expect(lootboxCost, "Incorrect changed cost").to.equal(web3.utils.toWei('33', 'ether'));
 
-        var results = await lootbox.mint(tokenId, 1, {from: playerAddress});
-        TruffleAssert.eventEmitted(results, 'LootboxCreated');
+        var results = await lootbox.connect(playerAddress).mint(tokenId, 1);
+        await expect(results).to.emit(lootbox, 'LootboxCreated');
 
-        var balance = await lootboxCreditToken.balanceOf(playerAddress);
-        assert.equal(
-            balance.valueOf().toString(),
-            web3.utils.toWei('9967', 'ether').toString(),
-            "Player's Lootbox Credit Incorrect");
+        expect(await lootboxCreditToken.balanceOf(playerAddress.address), "Player's Lootbox Credit Incorrect").to.be.equal(web3.utils.toWei('9967', 'ether'));
     });
 
     it('Test setting max rewards', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
         var lootboxNumRewards = await lootboxStorage.getMaxRewardAssetsGiven(tokenId);
-        lootboxNumRewards = lootboxNumRewards.toString();
-        assert.notEqual(lootboxNumRewards, 0x0, "Max Rewards is empty");
-        assert.equal(lootboxNumRewards, 2, "incorrect max rewards");
+        expect(lootboxNumRewards, "Max Rewards is empty").to.not.equal(0x0);
+        expect(lootboxNumRewards, "Incorrect max rewards").to.equal(2);
 
         // Change the max rewards of the blueprint.
-        await lootboxStorage.setMaxRewardAssetsGiven(tokenId, 3, {from: managerAddress});
+        await lootboxStorage.connect(managerAddress).setMaxRewardAssetsGiven(tokenId, 3);
 
         var lootboxNumRewards = await lootboxStorage.getMaxRewardAssetsGiven(tokenId);
-        lootboxNumRewards = lootboxNumRewards.toString();
-        assert.equal(lootboxNumRewards, 3, "incorrect changed max rewards");
+        expect(lootboxNumRewards, "Incorrect changed max rewards").to.equal(3);
     });
 
     it('Test clearing rewards', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
         var lootboxNumRewards = await lootboxStorage.getNumAddedRewards(tokenId);
-        lootboxNumRewards = lootboxNumRewards.toString();
-        assert.notEqual(lootboxNumRewards, 0x0, "Num Rewards is empty");
-        assert.equal(lootboxNumRewards, 2, "incorrect num rewards");
+        expect(lootboxNumRewards, "Num Rewards is empty").to.not.equal(0x0);
+        expect(lootboxNumRewards, "Incorrect max rewards").to.equal(2);
 
-        await lootboxStorage.clearLootboxRewards(tokenId, {from: managerAddress});
+        await lootboxStorage.connect(managerAddress).clearLootboxRewards(tokenId);
 
         lootboxNumRewards = await lootboxStorage.getNumAddedRewards(tokenId);
-        lootboxNumRewards = lootboxNumRewards.toString();
-        assert.equal(lootboxNumRewards, 0, "incorrect changed num rewards");
+        expect(lootboxNumRewards, "Incorrect changed num rewards").to.equal(0);
     });
 
     it('Fail adding rewards as non-manager', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
 
-        // Add some rewards as a player.
-        await TruffleAssert.fails(
-            lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
+
+        // Add some rewards as a player and fail
+        await expect(lootboxStorage.connect(playerAddress).addLootboxReward(tokenId, rewards[2][0]), "Player 1 add lootbox reward should fail").to.be.reverted;
     });
 
     it('Fail clearing rewards as non-manager', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][0], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][0]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        var results = await lootboxStorage.addLootboxReward(tokenId, rewards[2][1], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintRewardAdded');
+        var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[2][1]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintRewardAdded');
 
-        await TruffleAssert.fails(
-            lootboxStorage.clearLootboxRewards(tokenId, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootboxStorage.connect(playerAddress).clearLootboxRewards(tokenId), "Player 1 clear lootbox rewards should fail").to.be.reverted;
     });
 
     it('Fail disabling blueprint as non-manager', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
+
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // As a player, try to disable a blueprint.
-        await TruffleAssert.fails(
-            lootboxStorage.setBlueprintEnabled(tokenId, false, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootboxStorage.connect(playerAddress).setBlueprintEnabled(tokenId, false), "Player 1 disable blueprint should fail").to.be.reverted;
     });
 
     it('Fail adding blueprint as non-manager', async () => {
-        await TruffleAssert.fails(
-            lootboxStorage.setBlueprint(blueprints[2], {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootboxStorage.connect(playerAddress).setBlueprint(blueprints[2]), "Player 1 set blueprint should fail").to.be.reverted;
     });
 
     it('Fail changing blueprint as non-manager', async () => {
-        var results = await lootboxStorage.setBlueprint(blueprints[2], {from: managerAddress});
-        TruffleAssert.eventEmitted(results, 'BlueprintUpdated');
+        var results = await lootboxStorage.connect(managerAddress).setBlueprint(blueprints[2]);
+        await expect(results).to.emit(lootboxStorage, 'BlueprintUpdated');
 
-        // results.logs[0].args are the arguments sent forth in the BlueprintUpdated event.
-        var tokenId = results.logs[0].args.tokenId.toString();
-        assert.notEqual(tokenId, 0x0, "Id is empty");
+        var receipt = await results.wait();
+        var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
 
-        await TruffleAssert.fails(
-            lootboxStorage.setBlueprintCost(tokenId, web3.utils.toWei('25', 'ether'), {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        var tokenId = updatedBlueprint[0].args.tokenId;
+        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
-        await TruffleAssert.fails(
-            lootboxStorage.setMaxRewardAssetsGiven(tokenId, 10, {from: playerAddress}),
-            TruffleAssert.ErrorType.REVERT
-        );
+        await expect(lootboxStorage.connect(playerAddress).setBlueprintCost(tokenId, web3.utils.toWei('25', 'ether')), "Player 1 set blueprint cost should fail").to.be.reverted;
+
+        await expect(lootboxStorage.connect(playerAddress).setMaxRewardAssetsGiven(tokenId, 10), "Player 1 set max reward assets should fail").to.be.reverted;
     });
 
     // TODO: Test against invalid data inputs.

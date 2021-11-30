@@ -12,8 +12,8 @@ import "./CraftBase.sol";
 import "../content/interfaces/IContent.sol";
 import "../libraries/LibCraft.sol";
 import "../libraries/LibLootbox.sol";
-import "../tokens/LootboxCredit.sol";
 import "../tokens/optimism/IL2StandardERC20Latest.sol";
+import "hardhat/console.sol";
 
 contract Salvage is ISalvage, CraftBase {
     using AddressUpgradeable for address;

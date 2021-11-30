@@ -22,7 +22,7 @@ contract Craft is ICraft, CraftBase {
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibCraft.Recipe) recipes;
-    uint256 public override recipesLength = 0;
+    uint256 public override recipesLength;
 
     /******************** Public API ********************/
     function __Craft_init(uint256 _seed) public initializer {
@@ -31,6 +31,8 @@ contract Craft is ICraft, CraftBase {
         __ERC165Storage_init_unchained();
         __CraftBase_init_unchained(_seed);
         _registerInterface(type(ICraft).interfaceId);
+
+        recipesLength = 0;
     }
 
     function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
@@ -41,7 +43,7 @@ contract Craft is ICraft, CraftBase {
         for (uint256 i = 0; i < _recipes.length; ++i) {
             require(_recipes[i].materials.length > 0 && _recipes[i].materials.length == _recipes[i].materialAmounts.length, "Invalid materials length");
             require(_recipes[i].rewards.length > 0 && _recipes[i].rewards.length == _recipes[i].rewardAmounts.length, "Invalid rewards length");
-            require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 1 ether, "Invalid crafting rate.");
+            require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 1000000, "Invalid crafting rate.");
 
             LibCraft.Recipe storage recipeData = recipes[recipesLength];
             ids[i] = recipesLength;
@@ -87,10 +89,10 @@ contract Craft is ICraft, CraftBase {
         _burn(_id, _amount);
         
         // check crafting rate if it's less than 100%, then get a random number
-        if (recipes[_id].craftingRate < 1 ether) {
+        if (recipes[_id].craftingRate < 1000000) {
             for (uint256 i = 0; i < _amount; ++i) {
                 seed = LibCraft.random(_msgSender(), seed);
-                if (seed.mod(1 ether) > recipes[_id].craftingRate) {
+                if (seed.mod(1000000) > recipes[_id].craftingRate) {
                     // if crafting fails, deduct the number of rolls that failed
                     --_amount;
                 }
