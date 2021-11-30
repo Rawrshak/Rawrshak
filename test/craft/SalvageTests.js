@@ -6,7 +6,9 @@ describe('Salvage Contract', () => {
     var deployerAddress, managerAddress, creatorAddress, playerAddress, player2Address;
     var contentFactory;
     var contentManager;
-    var AccessControlManager, ContentManager, ContentStorage, Content, LootboxCredit, MockToken;
+    var AccessControlManager, ContentManager, ContentStorage, Content, LootboxCredit, L2NativeRawrshakERC20Token;
+
+    var l2Bridge = "0x50EB44e3a68f1963278b4c74c6c343508d31704C";
 
     // NFT
     var content;
@@ -31,7 +33,7 @@ describe('Salvage Contract', () => {
         ContentManager = await ethers.getContractFactory("ContentManager");
         ContentStorage = await ethers.getContractFactory("ContentStorage");
         Content = await ethers.getContractFactory("Content");
-        MockToken = await ethers.getContractFactory("MockToken");
+        L2NativeRawrshakERC20Token = await ethers.getContractFactory("L2NativeRawrshakERC20Token");
         LootboxCredit = await ethers.getContractFactory("LootboxCredit");
 
         originalAccessControlManager = await AccessControlManager.deploy();
@@ -46,10 +48,12 @@ describe('Salvage Contract', () => {
     beforeEach(async () => {
         salvage = await upgrades.deployProxy(TestSalvage, [1000]);
 
-        rawrToken = await upgrades.deployProxy(MockToken, ["RawrToken", "RAWR"]);
+        rawrToken = await L2NativeRawrshakERC20Token.deploy(l2Bridge, "RawrToken", "RAWR", ethers.BigNumber.from(100000000).mul(_1e18));
+        await rawrToken.grantRole(await rawrToken.MINTER_ROLE(), deployerAddress.address);
         await rawrToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
 
-        lootboxCreditToken = await upgrades.deployProxy(MockToken, ["Rawrshak Lootbox Credit", "RAWRLOOT"]);
+        lootboxCreditToken = await L2NativeRawrshakERC20Token.deploy(l2Bridge, "Rawrshak Lootbox Credit", "RAWRLOOT", ethers.BigNumber.from(100000000).mul(_1e18));
+        await lootboxCreditToken.grantRole(await lootboxCreditToken.MINTER_ROLE(), deployerAddress.address);
         await lootboxCreditToken.mint(deployerAddress.address, ethers.BigNumber.from(100000000).mul(_1e18));
     });
 
