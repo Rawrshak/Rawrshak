@@ -13,7 +13,6 @@ import "../exchange/StorageBase.sol";
 import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";
-//import "../tokens/optimism/IL2StandardERC20Latest.sol";
 import "../tokens/optimism/L2NativeRawrshakERC20Token.sol";
 import "hardhat/console.sol";
 
@@ -65,8 +64,6 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         }
     }
 
-    /*function open(uint256 _optionId, address _toAddress, uint256 _amount) external;*/
-
     // Mints new lootbox(es) and sends to the caller.
     function mint(uint256 _tokenId, uint256 _amount) external override nonReentrant whenNotPaused {
         // 1) Make sure the user has enough LootboxCredit to mint this lootbox.
@@ -98,7 +95,6 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         uint16 maxAssetsGiven = blueprint.maxAssetsGiven;
 
         if(blueprint.hasGuaranteedItems) {
-            // TODO: Store this in a separate array (i.e. cache it)?
             for (uint256 i = 0; i < rewards.length; ++i) {
                 if(rewards[i].probability >= 1000000) {
                     LibAsset.MintData memory mintData;
