@@ -15,14 +15,6 @@ interface ILootbox is IERC1155Upgradeable {
     function mint(uint256 _tokenId, uint256 _amount) external;
 
     function burn(uint256 _tokenId) external;
-
-    /*function setClassForTokenId(uint256 _tokenId, uint256 _class) external;
-
-    function setTokenIdsForClass(uint256 _class, uint256[] memory _tokenIds) external;
-
-    function resetClass(uint256 _class) external;*/
-
-    //function open(uint256 _optionId, address _toAddress, uint256 _amount) external;
     
     /*********************** Events *********************/
     event StorageRegistered(address indexed operator, address indexed storageAddress);
