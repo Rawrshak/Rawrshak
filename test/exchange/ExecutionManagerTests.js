@@ -66,10 +66,10 @@ describe('Execution Manager Contract Tests', ()=> {
         
         // Mint an asset
         var mintData = [playerAddress.address, [1], [10], 0, ethers.constants.AddressZero, []];
-        await contentManager.mintBatch(mintData);
+        await content.connect(deployerAddress).mintBatch(mintData);
         
         mintData = [player2Address.address, [2], [5], 0, ethers.constants.AddressZero, []];
-        await contentManager.mintBatch(mintData);
+        await content.connect(deployerAddress).mintBatch(mintData);
     }
 
     async function RawrTokenSetup() {

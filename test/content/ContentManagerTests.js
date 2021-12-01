@@ -54,12 +54,12 @@ describe('Content Manager Contract Tests', () => {
 
         it('Check Supported interfaces', async () => {
             // Content Manager interface
-            expect(await contentManager.supportsInterface("0x250b1d27")).to.equal(true);
+            expect(await contentManager.supportsInterface("0xa15f6002")).to.equal(true);
         });
     });
 
     describe("Add Assets", () => {
-        it('Add Assets', async () => {
+        it('Add Single Asset', async () => {
             // Add 1 asset
             var newAssets = [
                 [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, ethers.constants.AddressZero, 0]
@@ -72,6 +72,25 @@ describe('Content Manager Contract Tests', () => {
             await content.connect(craftingSystemAddress).mintBatch(mintData);
 
             expect(await content['uri(uint256)'](3)).to.equal("arweave.net/tx/public-uri-3");
+        });
+
+        it('Add Mulitple Assets', async () => {
+            // Add 3 assets
+            var newAssets = [
+                [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, deployerAddress.address, 10000],
+                [4, "arweave.net/tx/public-uri-4", "arweave.net/tx/private-uri-4", 20, ethers.constants.AddressZero, 0],
+                [5, "arweave.net/tx/public-uri-5", "arweave.net/tx/private-uri-5", 1, deployerAddress.address, 50000]
+            ];
+            
+            await contentManager.addAssetBatch(newAssets);
+
+            // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
+            var mintData = [playerAddress.address, [3, 4, 5], [10, 2, 1], 1, ethers.constants.AddressZero, []];
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
+
+            expect(await content['uri(uint256)'](3)).to.equal("arweave.net/tx/public-uri-3");
+            expect(await content.totalSupply(4)).to.equal(2);
+            expect(await content.maxSupply(5)).to.equal(1);
         });
 
         it('Set Token URI', async () => {
@@ -103,6 +122,51 @@ describe('Content Manager Contract Tests', () => {
             var fees = await content.royaltyInfo(2, 1000);
             expect(fees.receiver).to.equal(deployerAddress.address);
             expect(fees.royaltyAmount).to.equal(10);
+        });
+    });
+
+    describe("Register Operator Tests", () => {
+        it('Same operator address', async () => {
+            var mintData = [playerAddress.address, [2], [5], 1, ethers.constants.AddressZero, []];
+
+            // craftingSystemAddress should have minter role revoked
+            var approvalPairs1 = [
+                [craftingSystemAddress.address, true],
+                [craftingSystemAddress.address, true],
+                [craftingSystemAddress.address, false]
+            ];
+
+            await contentManager.registerOperators(approvalPairs1);
+            await expect(content.connect(craftingSystemAddress).mintBatch(mintData)).to.be.reverted;
+
+            expect(await content.totalSupply(2)).to.equal(0);
+
+            // craftingSystemAddress should have minter role granted
+            var approvalPairs2 = [
+                [craftingSystemAddress.address, false],
+                [craftingSystemAddress.address, false],
+                [craftingSystemAddress.address, true]
+            ];
+
+            await contentManager.registerOperators(approvalPairs2);
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
+            expect(await content.totalSupply(2)).to.equal(5);
+        });
+
+        it('Edge case parameters', async () => {
+            var mintData = [playerAddress.address, [1], [100], 1, ethers.constants.AddressZero, []];
+
+            var approvalPairs1 = [[null, true]];
+            var approvalPairs2 = [["", false]];
+            var approvalPairs3 = [[ethers.constants.AddressZero, true], [craftingSystemAddress.address, true]];
+            // setting boolean to null would work as if it was set to false
+            
+            await expect(contentManager.registerOperators(approvalPairs1)).to.be.reverted;
+            await expect(contentManager.registerOperators(approvalPairs2)).to.be.reverted;
+            await contentManager.registerOperators(approvalPairs3);
+            
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
+            expect(await content.totalSupply(1)).to.equal(100);
         });
     });
 });

@@ -32,5 +32,17 @@ describe('HasContractUri Contract Tests', () => {
             await testContract.setContractUri("");
             expect(await testContract.contractUri()).to.equal("");
         });
+
+        it('Set Update Contract Uri', async () => {
+            const TestHasContractUri = await ethers.getContractFactory("TestHasContractUri");
+            testContract = await upgrades.deployProxy(TestHasContractUri, ["ipfs:/TestContractInfo.json"]); 
+            // test emitted event
+            await expect(testContract.setContractUri("ipfs:/TestContractInfo.json"))
+                .to.emit(testContract, 'ContractUriUpdated')
+                .withArgs(ethers.constants.AddressZero, "ipfs:/TestContractInfo.json");
+
+            expect(await testContract.contractUri())
+                .to.equal("ipfs:/TestContractInfo.json");
+        });
     });
 });

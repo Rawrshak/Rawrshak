@@ -4,11 +4,11 @@ const { sign } = require("../mint");
 
 describe('AccessControlManager Contract Tests', () => {
     var manager;
-    var deployerAddress, deployerAltAddress, minterAddress, playerAddress;
+    var deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address;
     var AccessControlManager, ContentStorage, Content;
 
     before(async () => {
-        [deployerAddress, deployerAltAddress, minterAddress, playerAddress] = await ethers.getSigners();
+        [deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address] = await ethers.getSigners();
         AccessControlManager = await ethers.getContractFactory("AccessControlManager");
         ContentStorage = await ethers.getContractFactory("ContentStorage");
         Content = await ethers.getContractFactory("Content");
@@ -40,7 +40,11 @@ describe('AccessControlManager Contract Tests', () => {
             var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
             var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
 
-            await manager.setParent(content.address);
+            var results = await manager.setParent(content.address);
+
+            await expect(results)
+                .to.emit(manager, 'ParentSet')
+                .withArgs(content.address);
     
             var default_admin_role = await contentStorage.DEFAULT_ADMIN_ROLE();
             expect(await manager.hasRole(default_admin_role, content.address)).to.equal(true);
@@ -140,8 +144,10 @@ describe('AccessControlManager Contract Tests', () => {
             // user nonce changed because user made the call
             expect(await manager.userMintNonce(playerAddress.address)).to.equal(1);
         });
+    });
     
-        it('VerifyMint() failure from signed message', async () => {
+    describe("VerifyMint() failure from signed message", () => {
+        it('Minter address does not have minter role', async () => {
             var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
@@ -152,26 +158,107 @@ describe('AccessControlManager Contract Tests', () => {
             // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
             await manager.setParent(content.address);
             
-            // minter address doesn't have the minter role
             var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
             await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+        });
+
+        it('Revoked minter role', async () => {
+            var minter_role = await manager.MINTER_ROLE();
+            var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
+            await manager.grantRole(minter_role, minterAddress.address);
+            await manager.revokeRole(minter_role, minterAddress.address);
+            await manager.grantRole(default_admin_role, deployerAltAddress.address);
+            
+            // Set Content Contract as parent & verifying contract
+            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
     
-            // Invalid Nonce
-            signature = await sign(playerAddress.address, [1], [1], 0, minterAddress.address, content.address);
-            mintData = [playerAddress.address, [1], [1], 0, minterAddress.address, signature];
+            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(content.address);
+            
+            const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
             await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+        });
+        
+        it('Invalid Nonce', async () => {
+            var minter_role = await manager.MINTER_ROLE();
+            var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
+            await manager.grantRole(minter_role, minterAddress.address);
+            await manager.grantRole(default_admin_role, deployerAltAddress.address);
+            
+            // Set Content Contract as parent & verifying contract
+            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
     
-            // Signer doesn't match
-            signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
-            mintData = [playerAddress.address, [1], [1], 1, playerAddress.address, signature];
+            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(content.address);
+
+            var signature = await sign(playerAddress.address, [1], [1], 0, minterAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [1], 0, minterAddress.address, signature];
+    
             await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+        });
+
+        it('Signer does not match', async () => {
+            var minter_role = await manager.MINTER_ROLE();
+            var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
+            await manager.grantRole(minter_role, minterAddress.address);
+            await manager.grantRole(default_admin_role, deployerAltAddress.address);
+            
+            // Set Content Contract as parent & verifying contract
+            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
     
-            // Invalid Caller
-            signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
-            mintData = [playerAddress.address, [1], [1], 1, playerAddress.address, signature];
+            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(content.address);
+
+            var signature = await sign(playerAddress.address, [1], [1], 1, playerAddress.address, content.address);
+            var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
+            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+        });
+
+        it('Invalid caller', async () => {
+            var minter_role = await manager.MINTER_ROLE();
+            var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
+            await manager.grantRole(minter_role, minterAddress.address);
+            await manager.grantRole(default_admin_role, deployerAltAddress.address);
+            
+            // Set Content Contract as parent & verifying contract
+            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+    
+            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(content.address);
+            
+            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            var mintData = [player2Address.address, [1], [1], 1, minterAddress.address, signature];
+            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, player2Address.address)).to.be.reverted;
+        });
+
+        it('Invalid mint data', async () => {
+            var minter_role = await manager.MINTER_ROLE();
+            var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
+            await manager.grantRole(minter_role, minterAddress.address);
+            await manager.grantRole(default_admin_role, deployerAltAddress.address);
+            
+            // Set Content Contract as parent & verifying contract
+            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+    
+            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(content.address);
+            
+            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            // tries to mint more than the signature authorizes
+            var mintData = [playerAddress.address, [1], [1000], 1, minterAddress.address, signature];
+            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+
+            // tries to mint a different asset
+            var mintData = [playerAddress.address, [2], [1], 1, minterAddress.address, signature];
             await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
         });
     });

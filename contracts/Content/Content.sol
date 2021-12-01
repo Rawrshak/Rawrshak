@@ -8,12 +8,13 @@ import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IContentStorage.sol";
+import "hardhat/console.sol";
 
 contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165StorageUpgradeable {
     /******************** Constants ********************/
     /*
      * ERC1155 interface == 0xd9b67a26
-     * IContent == 0x15f57ea0
+     * IContent == 0x6a3af2b5
      * IContractUri == 0xc0e24d5e
      * IERC2981Upgradeable == 0x2a55205a
      */
@@ -141,9 +142,10 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     
     /**
     * @dev returns the nonce of the user for this contract
+    * @param _user address of the user whose nonce is being queried
     */
-    function userMintNonce() external view override returns (uint256) {
-        return accessControlManager.userMintNonce(_msgSender());
+    function userMintNonce(address _user) external view override returns (uint256) {
+        return accessControlManager.userMintNonce(_user);
     }
     
     /**

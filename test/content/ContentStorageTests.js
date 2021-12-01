@@ -43,6 +43,17 @@ describe('ContentStorage Contract Tests', () => {
             expect(await contentStorage.hasRole(default_admin_role, deployerAddress.address)).to.equal(true);
             expect(await contentStorage.hasRole(default_admin_role, playerAddress.address)).to.equal(false);
         });
+
+        it('Unauthorized caller', async () => {
+            var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1",  100, deployerAddress.address, 20000]];
+            await contentStorage.addAssetBatch(asset);
+
+            await expect(contentStorage.connect(playerAddress).updateSupply(1, 50)).to.be.reverted;
+            await expect(contentStorage.connect(playerAddress).setPublicUriBatch([[1, ""]])).to.be.reverted;
+            await expect(contentStorage.connect(playerAddress).setHiddenUriBatch([[1, ""]])).to.be.reverted;
+            await expect(contentStorage.connect(playerAddress).setContractRoyalty(playerAddress.address, 1000000)).to.be.reverted;
+            await expect(contentStorage.connect(playerAddress).setTokenRoyaltiesBatch([[1, playerAddress.address, 500000]])).to.be.reverted;
+        });
     });
     
     describe("Assets Info", () => {
@@ -75,12 +86,22 @@ describe('ContentStorage Contract Tests', () => {
                 .to.emit(contentStorage, 'HiddenUriUpdated')
                 .withArgs(ethers.constants.AddressZero, 1, 0);
             
+            await expect(results)
+                .to.emit(contentStorage, 'AssetsAdded');
+            
             expect(await contentStorage.ids(1))
                 .to.equal(true);
             expect(await contentStorage.supply(1))
                 .to.equal(0);
             expect(await contentStorage.maxSupply(1))
                 .to.equal(100);
+            
+            tokenFees = await contentStorage.getRoyalty(1);
+            expect(tokenFees.receiver).to.equal(deployerAddress.address);
+            expect(tokenFees.rate).to.equal(20000);
+            
+            expect(await contentStorage.uri(1, 0)).to.equal("arweave.net/tx/public-uri-1");
+            expect(await contentStorage.hiddenUri(1, 0)).to.equal("arweave.net/tx/private-uri-1");
         });
 
         it('Add multiple assets', async () => {
@@ -89,7 +110,7 @@ describe('ContentStorage Contract Tests', () => {
                 [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, ethers.constants.AddressZero, 0]
             ];
             var results = await contentStorage.addAssetBatch(asset);
-    
+            
             // Check the token URIs
             await expect(results)
                 .to.emit(contentStorage, 'HiddenUriUpdated')
@@ -102,6 +123,48 @@ describe('ContentStorage Contract Tests', () => {
             await expect(results)
                 .to.emit(contentStorage, 'TokenRoyaltyUpdated')
                 .withArgs(ethers.constants.AddressZero, 1, deployerAddress.address, 20000);
+            
+            await expect(results)
+                .to.emit(contentStorage, 'AssetsAdded');
+            
+            expect(await contentStorage.ids(2))
+                .to.equal(true);
+            expect(await contentStorage.supply(1))
+                .to.equal(0);
+            expect(await contentStorage.maxSupply(2))
+                .to.equal(10);
+        });
+
+        it('Add mutliple assets, one with invalid fee', async () => {
+            var asset = [
+                [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 1000, deployerAddress.address, 2000000],
+                [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, deployerAddress.address, 0]
+            ];
+            await expect(contentStorage.addAssetBatch(asset)).to.be.reverted;
+        });
+
+        it('Add an already existing token', async () => {
+            var asset1 = [
+                [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000]];
+            await contentStorage.addAssetBatch(asset1);
+
+            var asset2 = [
+                [1, "arweave.net/tx/public-uri-1v2", "arweave.net/tx/private-uri-1v2", 1, deployerAddress.address, 30000],
+                [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+                [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 0, deployerAddress.address, 1000000]
+            ];
+            await expect(contentStorage.addAssetBatch(asset2)).to.be.reverted;
+            
+            expect(await contentStorage.ids(2)).to.equal(false);
+            expect(await contentStorage.ids(3)).to.equal(false);
+        });
+
+        it('Set max supply to zero', async () => {
+            var asset = [[1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1",  0, deployerAddress.address, 30000]];
+            var results = await contentStorage.addAssetBatch(asset);
+    
+            expect(await contentStorage.maxSupply(1))
+                .to.equal(ethers.constants.MaxUint256);
         });
     });
     
@@ -176,6 +239,66 @@ describe('ContentStorage Contract Tests', () => {
                 .to.emit(contentStorage, 'PublicUriUpdated');
                 
             expect(await contentStorage.uri(3, 1)).to.equal("arweave.net/tx/public-uri-3v1");
+        });
+
+        it('Set multiple public uri', async () => {
+            var asset = [
+                [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+                [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, ethers.constants.AddressZero, 0],
+            ];
+            await contentStorage.addAssetBatch(asset);
+
+            expect(await contentStorage.uri(1, 0)).to.equal("arweave.net/tx/public-uri-1");
+            expect(await contentStorage.uri(2, 0)).to.equal("arweave.net/tx/public-uri-2");
+
+            var assetUri = [[1, "arweave.net/tx/public-uri-1v2"],[2, "arweave.net/tx/public-uri-2v2"]];
+            await expect(contentStorage.setPublicUriBatch(assetUri))
+                .to.emit(contentStorage, 'PublicUriUpdated');
+
+            expect(await contentStorage.uri(1, 1)).to.equal("arweave.net/tx/public-uri-1v2");
+            expect(await contentStorage.uri(2, 1)).to.equal("arweave.net/tx/public-uri-2v2"); 
+        });
+
+        it('Set multiple hidden uri', async () => {
+            var asset = [
+                [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+                [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, ethers.constants.AddressZero, 0],
+            ];
+            await contentStorage.addAssetBatch(asset);
+
+            expect(await contentStorage.hiddenUri(1, 0)).to.equal("arweave.net/tx/private-uri-1");
+            expect(await contentStorage.hiddenUri(2, 0)).to.equal("arweave.net/tx/private-uri-2");
+
+            var assetUri = [[1, "arweave.net/tx/private-uri-1v2"],[2, "arweave.net/tx/private-uri-2v2"]];
+            await expect(contentStorage.setHiddenUriBatch(assetUri))
+                .to.emit(contentStorage, 'HiddenUriUpdated');
+
+            expect(await contentStorage.hiddenUri(1, 1)).to.equal("arweave.net/tx/private-uri-1v2");
+            expect(await contentStorage.hiddenUri(2, 1)).to.equal("arweave.net/tx/private-uri-2v2");
+        });
+
+        it('Set multiple token royalties', async () => {
+            var asset = [
+                [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+                [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 10, ethers.constants.AddressZero, 0],
+                [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, deployerAddress.address, 15000],
+            ];
+            await contentStorage.addAssetBatch(asset);
+
+            expect((await contentStorage.getRoyalty(1)).rate).to.equal(20000);
+            expect((await contentStorage.getRoyalty(2)).rate).to.equal(10000);
+            expect((await contentStorage.getRoyalty(3)).rate).to.equal(15000);
+
+            var tokenRoyalty = [
+                [1, deployerAddress.address, 0], [2, deployerAddress.address, 30000], 
+                [3, ethers.constants.AddressZero, 5]
+            ];
+            await expect(contentStorage.setTokenRoyaltiesBatch(tokenRoyalty))
+                .to.emit(contentStorage, 'TokenRoyaltyUpdated');
+
+            expect((await contentStorage.getRoyalty(1)).rate).to.equal(0);
+            expect((await contentStorage.getRoyalty(2)).rate).to.equal(30000);
+            expect((await contentStorage.getRoyalty(3)).rate).to.equal(10000);
         });
     });
 

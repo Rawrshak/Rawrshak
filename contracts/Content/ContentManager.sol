@@ -104,14 +104,6 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external override onlyOwner {
         contentStorage.setTokenRoyaltiesBatch(_assets);
     }
-    
-    /**
-    * @dev verifies if the user has the requisite permissions, if the token exists, and if the max supply has not been reached. It then * mints the asset and updates the supply.
-    * @param _data LibAsset.MintData structure object
-    */
-    function mintBatch(LibAsset.MintData memory _data) external override onlyOwner {
-        content.mintBatch(_data);
-    }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);

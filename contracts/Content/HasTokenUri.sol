@@ -67,14 +67,6 @@ abstract contract HasTokenUri is ContentSubsystemBase {
         // Assets are permanent and therefore the urls must be permanent. To account for updating assets,
         // we introduce a versioning system. As game assets can break and get updated, asset owners can
         // opt to use older versions of assets.
-
-        // Check if _uri is an empty string. If it is, return early and don't add anything. This means that
-        // the developer cannot delete a uri that has been set.
-        bytes memory tempEmptyStringTest = bytes(_uri); // Uses memory
-        if (tempEmptyStringTest.length == 0) {
-            return;
-        }
-
         if (hiddenUris[_tokenId].dataUri.length == 0) {
             hiddenUris[_tokenId].version = 0;
         } else {

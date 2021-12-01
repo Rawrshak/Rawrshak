@@ -129,7 +129,12 @@ contract Orderbook is IOrderbook, ManagerBase {
         return true;
     }
 
-    function getOrderAmounts(uint256[] calldata _orderIds) external view override returns(uint256[] memory orderAmounts) {
+    function getOrderAmounts(
+        uint256[] memory _orderIds,
+        uint256 amountToFill,
+        uint256 maxSpend
+    ) external view override returns(uint256[] memory orderAmounts, uint256 amountFilled) {
+        // Get Available Orders
         orderAmounts = new uint256[](_orderIds.length); // default already at 0
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             if (orders[_orderIds[i]].state == LibOrder.OrderState.READY) {
@@ -137,6 +142,40 @@ contract Orderbook is IOrderbook, ManagerBase {
                 orderAmounts[i] = orders[_orderIds[i]].amountOrdered;
             } else if (orders[_orderIds[i]].state == LibOrder.OrderState.PARTIALLY_FILLED) {
                 orderAmounts[i] = orders[_orderIds[i]].amountOrdered - orders[_orderIds[i]].amountFilled;
+            }
+        }
+
+        // get amounts ordered based on AmountToFill and Max Spend
+        amountFilled = 0;
+        uint256 amountSpentOnOrder = 0;
+        for (uint256 i = 0; i < orderAmounts.length; ++i) {
+            if (orderAmounts[i] > 0) {
+                amountSpentOnOrder = orders[_orderIds[i]].price * orderAmounts[i];
+                
+                // Check if the transaction is still under tha Max Spend
+                if (maxSpend == 0) {
+                    orderAmounts[i] = 0;
+                    continue;
+                } else if (maxSpend >= amountSpentOnOrder) {
+                    maxSpend -= amountSpentOnOrder;
+                } else if (maxSpend < amountSpentOnOrder) {
+                    orderAmounts[i] = maxSpend / orders[_orderIds[i]].price;
+                    maxSpend = 0;
+                }
+
+                if (orderAmounts[i] <= amountToFill) {
+                    // order amount exists but is less than amount remaining to fill
+                    amountToFill -= orderAmounts[i];
+                    amountFilled += orderAmounts[i];
+                } else if (amountToFill > 0) {
+                    // order amount exists but is greater than amount remaining to fill
+                    orderAmounts[i] = amountToFill;
+                    amountFilled += amountToFill; // remainder
+                    amountToFill = 0;
+                } else {
+                    // no more orders to sell
+                    orderAmounts[i] = 0;
+                }
             }
         }
     }

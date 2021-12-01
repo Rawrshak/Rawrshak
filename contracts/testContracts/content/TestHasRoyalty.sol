@@ -11,8 +11,7 @@ contract TestHasRoyalty is HasRoyalty {
     }
     
     function getRoyalty(uint256 _tokenId) external view returns (address receiver, uint24 rate) {
-        // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
-        // _getRoyalty() will return the contract's default royalty fee. However, that can also
+        // If token id doesn't exist _getRoyalty() will return the contract's default royalty fee. However, that can also
         // be null. In the case of null, there are no royalty fees. 
         return _getRoyalty(_tokenId);
     }

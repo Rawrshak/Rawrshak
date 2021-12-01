@@ -51,7 +51,7 @@ describe('Content Contract Tests', () => {
             expect(await content.supportsInterface("0xd9b67a26")).to.equal(true);
 
             // IContent Interface
-            expect(await content.supportsInterface("0x15f57ea0")).to.equal(true);
+            expect(await content.supportsInterface("0x6a3af2b5")).to.equal(true);
 
             // IContractUri Interface
             expect(await content.supportsInterface("0xc0e24d5e")).to.equal(true);
@@ -135,7 +135,8 @@ describe('Content Contract Tests', () => {
         it('Mint Assets', async () => {
             const signature = await sign(playerAddress.address, [1, 2], [10, 1], 1, craftingSystemAddress.address, content.address);
             var mintData = [playerAddress.address, [1, 2], [10, 1], 1, craftingSystemAddress.address, signature];
-            await content.connect(playerAddress).mintBatch(mintData);
+            expect (await content.connect(playerAddress).mintBatch(mintData))
+                .to.emit(content, "Mint");
             
             expect(await content.totalSupply(1)).to.equal(10);
             expect(await content.totalSupply(2)).to.equal(1);
@@ -163,24 +164,45 @@ describe('Content Contract Tests', () => {
             
             await expect(content.connect(playerAddress).mintBatch(invalidSupplyData)).to.be.reverted;
         });
+
+        it('Mint invalid supply 2', async () => {
+            const signature = await sign(playerAddress.address, [2], [30], 1, craftingSystemAddress.address, content.address);
+            var validSupplyData = [playerAddress.address, [2], [30], 1, craftingSystemAddress.address, signature];
+            
+            await content.connect(playerAddress).mintBatch(validSupplyData);
+
+            expect(await content.totalSupply(2)).to.equal(30);
+            expect(await content.balanceOf(playerAddress.address, 2)).to.equal(30);
+
+            const signature2 = await sign(playerAddress.address, [2], [90], 2, craftingSystemAddress.address, content.address);
+            var invalidSupplyData = [playerAddress.address, [2], [90], 2, craftingSystemAddress.address, signature2];
+            
+            await expect(content.connect(playerAddress).mintBatch(invalidSupplyData)).to.be.reverted;
+            expect(await content.totalSupply(2)).to.equal(30);
+            expect(await content.balanceOf(playerAddress.address, 2)).to.equal(30);
+        });
     });
 
     describe("Burn", () => {
         it('Burn Assets', async () => {
-            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
-            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [1, 2], [10, 75], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [1, 2], [10, 75], 1, craftingSystemAddress.address, signature];
             await content.connect(playerAddress).mintBatch(mintData);
     
-            var burnData = [playerAddress.address, [1], [5]];
-            await content.connect(playerAddress).burnBatch(burnData);
+            var burnData = [playerAddress.address, [1, 2], [5, 25]];
+            expect (await content.connect(playerAddress).burnBatch(burnData))
+                .to.emit(content, "Burn");
 
             expect(await content.connect(playerAddress).totalSupply(1)).to.equal(5);
+            expect(await content.connect(playerAddress).totalSupply(2)).to.equal(50);
     
             await content.connect(playerAddress).setApprovalForAll(craftingSystemAddress.address, true);
             await content.connect(craftingSystemAddress).burnBatch(burnData);
             expect(await content.connect(playerAddress).totalSupply(1)).to.equal(0);
+            expect(await content.connect(playerAddress).totalSupply(2)).to.equal(25);
             
             expect(await content.balanceOf(playerAddress.address, 1)).to.equal(0);
+            expect(await content.balanceOf(playerAddress.address, 2)).to.equal(25);
         });
         
         it('Invalid burns', async () => {
@@ -189,10 +211,14 @@ describe('Content Contract Tests', () => {
             await content.connect(playerAddress).mintBatch(mintData);
     
             var burnData = [playerAddress.address, [1], [5]];
+
             await expect(content.connect(lootboxSystemAddress).mintBatch(burnData)).to.be.reverted;
-            
             await expect(content.connect(player2Address).mintBatch(burnData)).to.be.reverted;
-            
+
+            // player tries to burn more assets than they have
+            var burnData2 = [playerAddress.address, [1], [11]];
+            await expect (content.connect(playerAddress).burnBatch(burnData2)).to.be.reverted;
+
             expect(await content.balanceOf(playerAddress.address, 1)).to.equal(10);
         });
     });
@@ -205,7 +231,6 @@ describe('Content Contract Tests', () => {
     
             await expect(content.connect(playerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 1, 1, 0))
                 .to.emit(content, 'TransferSingle');
-
         });
     
         it('Invalid Transfer Assets', async () => {
@@ -213,7 +238,10 @@ describe('Content Contract Tests', () => {
             var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
             await content.connect(playerAddress).mintBatch(mintData);
             
-            await expect(content.connect(deployerAddress).safeTransferFrom(playerAddress, player2Address, 1, 1, 0)).to.be.reverted;
+            // insufficient balance
+            await expect(content.connect(playerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 1, 15, 0)).to.be.reverted;
+            await expect(content.connect(player2Address).safeTransferFrom(playerAddress.address, player2Address.address, 1, 1, 0)).to.be.reverted;
+            await expect(content.connect(deployerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 1, 1, 0)).to.be.reverted;
         });
     });
 });
