@@ -16,8 +16,8 @@ describe('Content Contract Tests', () => {
         ContentStorage = await ethers.getContractFactory("ContentStorage");
         Content = await ethers.getContractFactory("Content");
         asset = [
-            [1, "arweave.net/tx/public-uri-1", "", ethers.constants.MaxUint256, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-uri-2", "", 100, ethers.constants.AddressZero, 0],
+            ["arweave.net/tx/public-uri-0", "", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-uri-1", "", 100, ethers.constants.AddressZero, 0],
         ];
     });
 
@@ -36,7 +36,7 @@ describe('Content Contract Tests', () => {
         // Set the content contract as the new parent
         await accessControlManager.setParent(content.address);
 
-        // Add 1 asset
+        // Add 2 assets
         await contentStorage.addAssetBatch(asset);
     });
 
@@ -61,18 +61,17 @@ describe('Content Contract Tests', () => {
         });
     
         it('Check Supply', async () => {
-            expect(await content.totalSupply(1)).to.equal(0);
-            expect(await content.maxSupply(1)).to.equal(ethers.constants.MaxUint256);
+            expect(await content.totalSupply(0)).to.equal(0);
+            expect(await content.maxSupply(0)).to.equal(ethers.constants.MaxUint256);
             
-            expect(await content.totalSupply(2)).to.equal(0);
-            expect(await content.maxSupply(2)).to.equal(100);
+            expect(await content.totalSupply(1)).to.equal(0);
+            expect(await content.maxSupply(1)).to.equal(100);
         });
     });
 
     describe("Storage", () => {
         // CreateData
         // {
-        //     tokenId,
         //     publicDataUri,
         //     hiddenDataUri,
         //     maxSupply
@@ -85,21 +84,21 @@ describe('Content Contract Tests', () => {
             // Note: we use content.methods['function()']() below because it hiddenUri() is an
             //       overloaded function
             
-            const signature = await sign(playerAddress.address, [1], [1], 1, craftingSystemAddress.address, content.address);
-            var mintData = [playerAddress.address, [1], [1], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [0], [1], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [0], [1], 1, craftingSystemAddress.address, signature];
             await content.connect(playerAddress).mintBatch(mintData);
     
-            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(1);
+            expect(await content.balanceOf(playerAddress.address, 0)).to.equal(1);
         });
 
         it("Uri", async () => {
-            expect(await content['uri(uint256,uint256)'](1, 0))
-                .to.equal("arweave.net/tx/public-uri-1");
+            expect(await content['uri(uint256,uint256)'](0, 0))
+                .to.equal("arweave.net/tx/public-uri-0");
         });
     
         it('Royalty', async () => {
             // test royalties (ERC2981)
-            var fees = await content.royaltyInfo(1, 1000);
+            var fees = await content.royaltyInfo(0, 1000);
             expect(fees.receiver).to.equal(deployerAddress.address);
             expect(fees.royaltyAmount).to.equal(20);
         });
@@ -107,14 +106,14 @@ describe('Content Contract Tests', () => {
         it('Add Assets', async () => {
             // invalid add because asset already exists
             var newAssets = [
-                [3, "arweave.net/tx/public-uri-3", "", 1000, ethers.constants.AddressZero, 0]
+                ["arweave.net/tx/public-uri-2", "", 1000, ethers.constants.AddressZero, 0]
             ];
             
             await expect(contentStorage.addAssetBatch(newAssets))
                 .to.emit(contentStorage, 'AssetsAdded');
             
-            expect(await content.totalSupply(3)).to.equal(0);
-            expect(await content.maxSupply(3)).to.equal(1000);
+            expect(await content.totalSupply(2)).to.equal(0);
+            expect(await content.maxSupply(2)).to.equal(1000);
         });
     });
 
@@ -133,20 +132,20 @@ describe('Content Contract Tests', () => {
         // }
 
         it('Mint Assets', async () => {
-            const signature = await sign(playerAddress.address, [1, 2], [10, 1], 1, craftingSystemAddress.address, content.address);
-            var mintData = [playerAddress.address, [1, 2], [10, 1], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [0, 1], [10, 1], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [0, 1], [10, 1], 1, craftingSystemAddress.address, signature];
             expect (await content.connect(playerAddress).mintBatch(mintData))
                 .to.emit(content, "Mint");
             
-            expect(await content.totalSupply(1)).to.equal(10);
-            expect(await content.totalSupply(2)).to.equal(1);
+            expect(await content.totalSupply(0)).to.equal(10);
+            expect(await content.totalSupply(1)).to.equal(1);
 
-            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(10);
+            expect(await content.balanceOf(playerAddress.address, 0)).to.equal(10);
         });
 
         it('Mint data length input mismatch', async () => {
-            const signature = await sign(playerAddress.address, [1, 2], [10], 1, craftingSystemAddress.address, content.address);
-            var invalidLengthData = [playerAddress.address, [1, 2], [10], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [0, 1], [10], 1, craftingSystemAddress.address, content.address);
+            var invalidLengthData = [playerAddress.address, [0, 1], [10], 1, craftingSystemAddress.address, signature];
 
             await expect(content.connect(playerAddress).mintBatch(invalidLengthData)).to.be.reverted;
         });
@@ -159,89 +158,89 @@ describe('Content Contract Tests', () => {
         });
 
         it('Mint invalid supply', async () => {
-            const signature = await sign(playerAddress.address, [2], [300], 1, craftingSystemAddress.address, content.address);
-            var invalidSupplyData = [playerAddress.address, [2], [300], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [1], [300], 1, craftingSystemAddress.address, content.address);
+            var invalidSupplyData = [playerAddress.address, [1], [300], 1, craftingSystemAddress.address, signature];
             
             await expect(content.connect(playerAddress).mintBatch(invalidSupplyData)).to.be.reverted;
         });
 
         it('Mint invalid supply 2', async () => {
-            const signature = await sign(playerAddress.address, [2], [30], 1, craftingSystemAddress.address, content.address);
-            var validSupplyData = [playerAddress.address, [2], [30], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [1], [30], 1, craftingSystemAddress.address, content.address);
+            var validSupplyData = [playerAddress.address, [1], [30], 1, craftingSystemAddress.address, signature];
             
             await content.connect(playerAddress).mintBatch(validSupplyData);
 
-            expect(await content.totalSupply(2)).to.equal(30);
-            expect(await content.balanceOf(playerAddress.address, 2)).to.equal(30);
+            expect(await content.totalSupply(1)).to.equal(30);
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(30);
 
-            const signature2 = await sign(playerAddress.address, [2], [90], 2, craftingSystemAddress.address, content.address);
-            var invalidSupplyData = [playerAddress.address, [2], [90], 2, craftingSystemAddress.address, signature2];
+            const signature2 = await sign(playerAddress.address, [21], [90], 2, craftingSystemAddress.address, content.address);
+            var invalidSupplyData = [playerAddress.address, [1], [90], 2, craftingSystemAddress.address, signature2];
             
             await expect(content.connect(playerAddress).mintBatch(invalidSupplyData)).to.be.reverted;
-            expect(await content.totalSupply(2)).to.equal(30);
-            expect(await content.balanceOf(playerAddress.address, 2)).to.equal(30);
+            expect(await content.totalSupply(1)).to.equal(30);
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(30);
         });
     });
 
     describe("Burn", () => {
         it('Burn Assets', async () => {
-            const signature = await sign(playerAddress.address, [1, 2], [10, 75], 1, craftingSystemAddress.address, content.address);
-            var mintData = [playerAddress.address, [1, 2], [10, 75], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [0, 1], [10, 75], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [0, 1], [10, 75], 1, craftingSystemAddress.address, signature];
             await content.connect(playerAddress).mintBatch(mintData);
     
-            var burnData = [playerAddress.address, [1, 2], [5, 25]];
+            var burnData = [playerAddress.address, [0, 1], [5, 25]];
             expect (await content.connect(playerAddress).burnBatch(burnData))
                 .to.emit(content, "Burn");
 
-            expect(await content.connect(playerAddress).totalSupply(1)).to.equal(5);
-            expect(await content.connect(playerAddress).totalSupply(2)).to.equal(50);
+            expect(await content.connect(playerAddress).totalSupply(0)).to.equal(5);
+            expect(await content.connect(playerAddress).totalSupply(1)).to.equal(50);
     
             await content.connect(playerAddress).setApprovalForAll(craftingSystemAddress.address, true);
             await content.connect(craftingSystemAddress).burnBatch(burnData);
-            expect(await content.connect(playerAddress).totalSupply(1)).to.equal(0);
-            expect(await content.connect(playerAddress).totalSupply(2)).to.equal(25);
+            expect(await content.connect(playerAddress).totalSupply(0)).to.equal(0);
+            expect(await content.connect(playerAddress).totalSupply(1)).to.equal(25);
             
-            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(0);
-            expect(await content.balanceOf(playerAddress.address, 2)).to.equal(25);
+            expect(await content.balanceOf(playerAddress.address, 0)).to.equal(0);
+            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(25);
         });
         
         it('Invalid burns', async () => {
-            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
-            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [0], [10], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [0], [10], 1, craftingSystemAddress.address, signature];
             await content.connect(playerAddress).mintBatch(mintData);
     
-            var burnData = [playerAddress.address, [1], [5]];
+            var burnData = [playerAddress.address, [0], [5]];
 
             await expect(content.connect(lootboxSystemAddress).mintBatch(burnData)).to.be.reverted;
             await expect(content.connect(player2Address).mintBatch(burnData)).to.be.reverted;
 
             // player tries to burn more assets than they have
-            var burnData2 = [playerAddress.address, [1], [11]];
+            var burnData2 = [playerAddress.address, [0], [11]];
             await expect (content.connect(playerAddress).burnBatch(burnData2)).to.be.reverted;
 
-            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(10);
+            expect(await content.balanceOf(playerAddress.address, 0)).to.equal(10);
         });
     });
 
     describe("Transfer", () => {
         it('Transfer Assets', async () => {
-            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
-            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [0], [10], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [0], [10], 1, craftingSystemAddress.address, signature];
             await content.connect(playerAddress).mintBatch(mintData);
     
-            await expect(content.connect(playerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 1, 1, 0))
+            await expect(content.connect(playerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 0, 1, 0))
                 .to.emit(content, 'TransferSingle');
         });
     
         it('Invalid Transfer Assets', async () => {
-            const signature = await sign(playerAddress.address, [1], [10], 1, craftingSystemAddress.address, content.address);
-            var mintData = [playerAddress.address, [1], [10], 1, craftingSystemAddress.address, signature];
+            const signature = await sign(playerAddress.address, [0], [10], 1, craftingSystemAddress.address, content.address);
+            var mintData = [playerAddress.address, [0], [10], 1, craftingSystemAddress.address, signature];
             await content.connect(playerAddress).mintBatch(mintData);
             
             // insufficient balance
-            await expect(content.connect(playerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 1, 15, 0)).to.be.reverted;
-            await expect(content.connect(player2Address).safeTransferFrom(playerAddress.address, player2Address.address, 1, 1, 0)).to.be.reverted;
-            await expect(content.connect(deployerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 1, 1, 0)).to.be.reverted;
+            await expect(content.connect(playerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 0, 15, 0)).to.be.reverted;
+            await expect(content.connect(player2Address).safeTransferFrom(playerAddress.address, player2Address.address, 0, 1, 0)).to.be.reverted;
+            await expect(content.connect(deployerAddress).safeTransferFrom(playerAddress.address, player2Address.address, 0, 1, 0)).to.be.reverted;
         });
     });
 });
