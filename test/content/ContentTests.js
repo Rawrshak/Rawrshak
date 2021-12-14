@@ -173,7 +173,7 @@ describe('Content Contract Tests', () => {
             expect(await content.totalSupply(1)).to.equal(30);
             expect(await content.balanceOf(playerAddress.address, 1)).to.equal(30);
 
-            const signature2 = await sign(playerAddress.address, [21], [90], 2, craftingSystemAddress.address, content.address);
+            const signature2 = await sign(playerAddress.address, [1], [90], 2, craftingSystemAddress.address, content.address);
             var invalidSupplyData = [playerAddress.address, [1], [90], 2, craftingSystemAddress.address, signature2];
             
             await expect(content.connect(playerAddress).mintBatch(invalidSupplyData)).to.be.reverted;
@@ -211,8 +211,8 @@ describe('Content Contract Tests', () => {
     
             var burnData = [playerAddress.address, [0], [5]];
 
-            await expect(content.connect(lootboxSystemAddress).mintBatch(burnData)).to.be.reverted;
-            await expect(content.connect(player2Address).mintBatch(burnData)).to.be.reverted;
+            await expect(content.connect(lootboxSystemAddress).burnBatch(burnData)).to.be.reverted;
+            await expect(content.connect(player2Address).burnBatch(burnData)).to.be.reverted;
 
             // player tries to burn more assets than they have
             var burnData2 = [playerAddress.address, [0], [11]];

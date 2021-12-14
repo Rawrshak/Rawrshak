@@ -60,8 +60,8 @@ describe('Exchange Contract', () => {
     // Asset 1 has 200 basis points towards creator 1
     // Asset 2 has 200 basis points towards creator 1, 100 basis points towards creator 2
     var asset = [
-      ["arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, creator1Address.address, 20000],
-      ["arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+      ["arweave.net/tx/public-uri-0", "arweave.net/tx/private-uri-0", ethers.constants.MaxUint256, creator1Address.address, 20000],
+      ["arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, ethers.constants.AddressZero, 0],
     ];
 
     await contentManager.addAssetBatch(asset);
