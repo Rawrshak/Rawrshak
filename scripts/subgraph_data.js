@@ -21,12 +21,12 @@ async function deployContract(factory, developer, rate, uri) {
 
 async function addRawrshakAssets(content, contentManager, developer) {
     var asset = [
-        [0, "https://arweave.net/oYnTrb5bUIm1lgbTpBFZ9LLPVeDpDxb_vW1XBNfzlgI", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Apprentice Title
-        [1, "https://arweave.net/GFVxBPSj-bSQ_bi5ZIaxJV1fKm63pI0Dcc_qwMZIvg0", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Creator Title
-        [2, "https://arweave.net/y2b16LSQOqmjUeckSCltiH4_8XP3GVZVgps0N6eG6HI", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Gamer Pesant Title
-        [3, "https://arweave.net/pIXtTejDqULTO16tOhcA5goEoeC8kMufmxZrpUkAZPA", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Disciple Title
-        [4, "https://arweave.net/BT067qgPxUoMQOogSvxPRIwwIwv-eKf7xb-rzeRWvSU", "", ethers.constants.MaxUint256, developer.address, 20000],          // Lord Title
-        [5, "https://arweave.net/pOiwYzVm9_VVuVtdWqgaw57A1A9c3vdxeNG9d3cgZuM", "", ethers.constants.MaxUint256, developer.address, 20000]           // Original Sinner Title
+        ["https://arweave.net/oYnTrb5bUIm1lgbTpBFZ9LLPVeDpDxb_vW1XBNfzlgI", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Apprentice Title
+        ["https://arweave.net/GFVxBPSj-bSQ_bi5ZIaxJV1fKm63pI0Dcc_qwMZIvg0", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Creator Title
+        ["https://arweave.net/y2b16LSQOqmjUeckSCltiH4_8XP3GVZVgps0N6eG6HI", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Gamer Pesant Title
+        ["https://arweave.net/pIXtTejDqULTO16tOhcA5goEoeC8kMufmxZrpUkAZPA", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Disciple Title
+        ["https://arweave.net/BT067qgPxUoMQOogSvxPRIwwIwv-eKf7xb-rzeRWvSU", "", ethers.constants.MaxUint256, developer.address, 20000],          // Lord Title
+        ["https://arweave.net/pOiwYzVm9_VVuVtdWqgaw57A1A9c3vdxeNG9d3cgZuM", "", ethers.constants.MaxUint256, developer.address, 20000]           // Original Sinner Title
     ];
 
     // add assets
@@ -39,15 +39,15 @@ async function addRawrshakAssets(content, contentManager, developer) {
 
 async function addScreamFortress2Assets(content, contentManager, developer) {
     var asset = [
-        [0, "https://arweave.net/Rg_ldKekDpRydL52p0EQeG7LnCHAzd6_ehE59omkl38", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Demoman
-        [1, "https://arweave.net/Z90dMMhDYK5d9vP0LDMdDDd4lnwEXCwJjHcbXfdIySw", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Engineer
-        [2, "https://arweave.net/xSQgeZmVwzQjWfad6AfrIWXPcvivMXXFa_GaynnvliY", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Heavy
-        [3, "https://arweave.net/QOu6LWgWwoOpSfKJC21Zc8HgRKdpamMLpgRciWLzcQw", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Medic
-        [4, "https://arweave.net/uJxDoYDITlNAH14tXIOP8he_AuGHZ5ZHW_XL342Laj0", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Pyro
-        [5, "https://arweave.net/TmSZJve-3-Ckpa-zlWgksIT2A-dqDxdnxdUBitxB1Lw", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Scout
-        [6, "https://arweave.net/W3h0XvASvmYZfuX6JV1s2AHEoAbTXxSpEarjFLi65Nc", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Sniper
-        [7, "https://arweave.net/OFpQMdO9D9VNh0CYg3lfJNtOT_l3XpTAFq19-saDkJU", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Soldier
-        [8, "https://arweave.net/NS-yuTTqq_wCY5wVwdSv_cipRM5GgUirL8rN4jesDfg", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0]    // Spy
+        ["https://arweave.net/Rg_ldKekDpRydL52p0EQeG7LnCHAzd6_ehE59omkl38", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Demoman
+        ["https://arweave.net/Z90dMMhDYK5d9vP0LDMdDDd4lnwEXCwJjHcbXfdIySw", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Engineer
+        ["https://arweave.net/xSQgeZmVwzQjWfad6AfrIWXPcvivMXXFa_GaynnvliY", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Heavy
+        ["https://arweave.net/QOu6LWgWwoOpSfKJC21Zc8HgRKdpamMLpgRciWLzcQw", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Medic
+        ["https://arweave.net/uJxDoYDITlNAH14tXIOP8he_AuGHZ5ZHW_XL342Laj0", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Pyro
+        ["https://arweave.net/TmSZJve-3-Ckpa-zlWgksIT2A-dqDxdnxdUBitxB1Lw", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Scout
+        ["https://arweave.net/W3h0XvASvmYZfuX6JV1s2AHEoAbTXxSpEarjFLi65Nc", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Sniper
+        ["https://arweave.net/OFpQMdO9D9VNh0CYg3lfJNtOT_l3XpTAFq19-saDkJU", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Soldier
+        ["https://arweave.net/NS-yuTTqq_wCY5wVwdSv_cipRM5GgUirL8rN4jesDfg", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0]    // Spy
     ];
 
     // add assets
@@ -60,10 +60,10 @@ async function addScreamFortress2Assets(content, contentManager, developer) {
 
 async function addFightBuddyAssets(content, contentManager, developer) {
     var asset = [
-        [0, "https://arweave.net/cg2N77GOOcKriioxIwEeeW3mU-a4XlTa6GOt1BQixIE", "", 1000, developer.address, 10000],         // Nikolai
-        [1, "https://arweave.net/ULuMJ7q_8uomd-tG2FWb-n2ZnlX_4deteFGzsv1MzkY", "", 1000, developer.address, 20000],         // Didier
-        [2, "https://arweave.net/qT_Se_bUb-HVE3JIOVzNFLgKc3m0t5hmEhml7X1WWLg", "", 500, ethers.constants.AddressZero, 0],   // Josip
-        [3, "https://arweave.net/tWfM7C5a-mC1Q6mU76Ik62iE3jYsl9QrB9mgvTAwsm8", "", 50, developer.address, 30000]            // Glenn
+        ["https://arweave.net/cg2N77GOOcKriioxIwEeeW3mU-a4XlTa6GOt1BQixIE", "", 1000, developer.address, 10000],         // Nikolai
+        ["https://arweave.net/ULuMJ7q_8uomd-tG2FWb-n2ZnlX_4deteFGzsv1MzkY", "", 1000, developer.address, 20000],         // Didier
+        ["https://arweave.net/qT_Se_bUb-HVE3JIOVzNFLgKc3m0t5hmEhml7X1WWLg", "", 500, ethers.constants.AddressZero, 0],   // Josip
+        ["https://arweave.net/tWfM7C5a-mC1Q6mU76Ik62iE3jYsl9QrB9mgvTAwsm8", "", 50, developer.address, 30000]            // Glenn
     ];
 
     // add assets
@@ -76,10 +76,10 @@ async function addFightBuddyAssets(content, contentManager, developer) {
 
 async function addSuperScaryHorrorGameAssets(content, contentManager, developer) {
     var asset = [
-        [0, "https://arweave.net/lfLN2kypyClSFDXV_UbcDAr-IkNUNTHykCVx2uZueCg", "", 10000, ethers.constants.AddressZero, 0], // Scary Terry
-        [1, "https://arweave.net/CtIZH6MptmKwZJ0h1QgRYZ3LxTmYRn52dHOkdn5OQyc", "", 50, ethers.constants.AddressZero, 0],    // Casper the Ghost
-        [2, "https://arweave.net/62GxTC26d3ZuD67hXHWFSCbyIfgw6bRIkavumyRGt9M", "", 50, ethers.constants.AddressZero, 0],    // Screamer
-        [3, "https://arweave.net/dCI3wOGGNXQb_WzwsNik7gzKQ5YDZFp_Q_Fqvw0aYI8", "", 25, ethers.constants.AddressZero, 0]     // Headless Canadian
+        ["https://arweave.net/lfLN2kypyClSFDXV_UbcDAr-IkNUNTHykCVx2uZueCg", "", 10000, ethers.constants.AddressZero, 0], // Scary Terry
+        ["https://arweave.net/CtIZH6MptmKwZJ0h1QgRYZ3LxTmYRn52dHOkdn5OQyc", "", 50, ethers.constants.AddressZero, 0],    // Casper the Ghost
+        ["https://arweave.net/62GxTC26d3ZuD67hXHWFSCbyIfgw6bRIkavumyRGt9M", "", 50, ethers.constants.AddressZero, 0],    // Screamer
+        ["https://arweave.net/dCI3wOGGNXQb_WzwsNik7gzKQ5YDZFp_Q_Fqvw0aYI8", "", 25, ethers.constants.AddressZero, 0]     // Headless Canadian
     ];
 
     // add assets
