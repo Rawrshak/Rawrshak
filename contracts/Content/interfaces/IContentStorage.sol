@@ -8,10 +8,10 @@ import "./IContractUri.sol";
 interface IContentStorage is IContractUri {
 
     /*********************** Events *********************/
-    event AssetsAdded(address indexed parent, LibAsset.CreateData[] assets);
+    event AssetsAdded(address indexed parent, uint256[] tokenIds, LibAsset.CreateData[] assets);
 
     /******** View Functions ********/
-    function ids(uint256 _tokenId) external view returns (bool);
+    function assetCounter() external view returns (uint256);
 
     function supply(uint256 _tokenId) external view returns (uint256);
 

@@ -52,8 +52,8 @@ describe('Royalty Manager Contract', ()=> {
             
         // Add 2 assets
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+            ["arweave.net/tx/public-uri-0", "arweave.net/tx/private-uri-0", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, ethers.constants.AddressZero, 0]
         ];
 
         await contentManager.addAssetBatch(asset);
@@ -154,7 +154,7 @@ describe('Royalty Manager Contract', ()=> {
             await RawrTokenSetup();
             await RoyaltyManagerSetup();
             
-            var assetData = [content.address, 2];
+            var assetData = [content.address, 1];
             var results = await royaltyManager.payableRoyalties(assetData, ethers.BigNumber.from(10000).mul(_1e18));
 
             expect(results.receiver).to.equal(creatorAddress.address);
