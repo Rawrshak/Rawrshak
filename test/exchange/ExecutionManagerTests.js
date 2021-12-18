@@ -58,18 +58,18 @@ describe('Execution Manager Contract Tests', ()=> {
             
         // Add 2 assets
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+            ["arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
         ];
 
         await contentManager.addAssetBatch(asset);
         
         // Mint an asset
-        var mintData = [playerAddress.address, [1], [10], 0, ethers.constants.AddressZero, []];
-        await contentManager.mintBatch(mintData);
+        var mintData = [playerAddress.address, [0], [10], 0, ethers.constants.AddressZero, []];
+        await content.connect(deployerAddress).mintBatch(mintData);
         
-        mintData = [player2Address.address, [2], [5], 0, ethers.constants.AddressZero, []];
-        await contentManager.mintBatch(mintData);
+        mintData = [player2Address.address, [1], [5], 0, ethers.constants.AddressZero, []];
+        await content.connect(deployerAddress).mintBatch(mintData);
     }
 
     async function RawrTokenSetup() {
@@ -158,7 +158,7 @@ describe('Execution Manager Contract Tests', ()=> {
             var orders = [1];
             var paymentPerOrder = [ethers.BigNumber.from(1000).mul(_1e18)];
             var amounts = [1];
-            var asset = [content.address, 2];
+            var asset = [content.address, 1];
 
             await content.connect(player2Address).setApprovalForAll(nftEscrow.address, true);
             await executionManager.executeBuyOrder(player2Address.address, orders, paymentPerOrder, amounts, asset);
@@ -168,7 +168,7 @@ describe('Execution Manager Contract Tests', ()=> {
 
             var assetData = await nftEscrow.escrowedAsset(1);
             expect(assetData.contentAddress).to.equal(content.address);
-            expect(assetData.tokenId).to.equal(2);
+            expect(assetData.tokenId).to.equal(1);
         });
         
         it('Invalid Execute Buy Order', async () => {
@@ -182,7 +182,7 @@ describe('Execution Manager Contract Tests', ()=> {
             var orders = [1, 2];
             var paymentPerOrder = [ethers.BigNumber.from(1000).mul(_1e18)];
             var amounts = [1];
-            var asset = [content.address, 1];
+            var asset = [content.address, 2];
 
             await content.connect(player2Address).setApprovalForAll(nftEscrow.address, true);
             await expect(executionManager.executeBuyOrder(player2Address.address, orders, paymentPerOrder, amounts, asset)).to.be.reverted;
@@ -200,7 +200,7 @@ describe('Execution Manager Contract Tests', ()=> {
             await ContentContractSetup();
     
             await content.connect(playerAddress).setApprovalForAll(nftEscrow.address, true);
-            await executionManager.placeSellOrder(1, playerAddress.address, [content.address, 1], 2);
+            await executionManager.placeSellOrder(1, playerAddress.address, [content.address, 0], 2);
             
             expect(await nftEscrow.escrowedAmounts(1)).to.equal(2);
         });
@@ -211,7 +211,7 @@ describe('Execution Manager Contract Tests', ()=> {
             await ContentContractSetup();
     
             await content.connect(playerAddress).setApprovalForAll(nftEscrow.address, true);
-            await executionManager.placeSellOrder(1, playerAddress.address, [content.address, 1], 2);
+            await executionManager.placeSellOrder(1, playerAddress.address, [content.address, 0], 2);
     
             var orders = [1];
             var paymentPerOrder = [ethers.BigNumber.from(1000).mul(_1e18)];
@@ -229,7 +229,7 @@ describe('Execution Manager Contract Tests', ()=> {
             await ContentContractSetup();
     
             await content.connect(playerAddress).setApprovalForAll(nftEscrow.address, true);
-            await executionManager.placeSellOrder(1, playerAddress.address, [content.address, 1], 2);
+            await executionManager.placeSellOrder(1, playerAddress.address, [content.address, 0], 2);
     
             var orders = [1, 2];
             var paymentPerOrder = [ethers.BigNumber.from(1000).mul(_1e18)];
@@ -249,7 +249,7 @@ describe('Execution Manager Contract Tests', ()=> {
             await ContentContractSetup();
     
             var sellOrderData = [ 
-                [content.address, 1],
+                [content.address, 0],
                 playerAddress.address,
                 rawrToken.address,
                 ethers.BigNumber.from(1000).mul(_1e18),
@@ -260,13 +260,13 @@ describe('Execution Manager Contract Tests', ()=> {
             var id = await orderbook.ordersLength();
             await orderbook.placeOrder(sellOrderData);
             await content.connect(playerAddress).setApprovalForAll(nftEscrow.address, true);
-            await executionManager.placeSellOrder(id, playerAddress.address, [content.address, 1], 2);
+            await executionManager.placeSellOrder(id, playerAddress.address, [content.address, 0], 2);
             await executionManager.cancelOrders([id]);
     
             expect(await nftEscrow.escrowedAmounts(id)).to.equal(0);
             
             var buyOrderData = [ 
-                [content.address, 2],
+                [content.address, 1],
                 playerAddress.address,
                 rawrToken.address,
                 web3.utils.toWei('1000', 'ether'),
@@ -291,7 +291,7 @@ describe('Execution Manager Contract Tests', ()=> {
     
             // Create and fill a buy order
             var buyOrderData = [ 
-                [content.address, 2],
+                [content.address, 1],
                 playerAddress.address,
                 rawrToken.address,
                 ethers.BigNumber.from(1000).mul(_1e18),
@@ -308,7 +308,7 @@ describe('Execution Manager Contract Tests', ()=> {
             var orders = [orderId];
             var paymentPerOrder = [ethers.BigNumber.from(1000).mul(_1e18)];
             var amounts = [2];
-            var asset = [content.address, 2];
+            var asset = [content.address, 1];
     
             await content.connect(player2Address).setApprovalForAll(nftEscrow.address, true);
             await executionManager.executeBuyOrder(player2Address.address, orders, paymentPerOrder, amounts, asset);
@@ -326,7 +326,7 @@ describe('Execution Manager Contract Tests', ()=> {
 
             // Create and fill a sell order
             var sellOrderData = [ 
-                [content.address, 1],
+                [content.address, 0],
                 playerAddress.address,
                 rawrToken.address,
                 ethers.BigNumber.from(1000).mul(_1e18),
@@ -338,7 +338,7 @@ describe('Execution Manager Contract Tests', ()=> {
             await orderbook.placeOrder(sellOrderData);
 
             await content.connect(playerAddress).setApprovalForAll(nftEscrow.address, true);
-            await executionManager.placeSellOrder(id, playerAddress.address, [content.address, 1], 2);
+            await executionManager.placeSellOrder(id, playerAddress.address, [content.address, 0], 2);
 
             var orders = [id];
             var paymentPerOrder = [ethers.BigNumber.from(1000).mul(_1e18)];

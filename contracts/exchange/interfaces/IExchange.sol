@@ -20,12 +20,14 @@ interface IExchange {
     
     function fillBuyOrder(
         uint256[] memory _orderIds,
-        uint256 amountToBuy
+        uint256 amountToSell,
+        uint256 maxSpend
     ) external;
 
     function fillSellOrder(
         uint256[] memory _orderIds,
-        uint256 amountToSell
+        uint256 amountToBuy,
+        uint256 maxSpend
     ) external;
 
     function cancelOrders(uint256[] memory _orderIds) external;

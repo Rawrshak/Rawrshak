@@ -60,18 +60,18 @@ describe('Exchange Contract', () => {
     // Asset 1 has 200 basis points towards creator 1
     // Asset 2 has 200 basis points towards creator 1, 100 basis points towards creator 2
     var asset = [
-      [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, creator1Address.address, 20000],
-      [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+      ["arweave.net/tx/public-uri-0", "arweave.net/tx/private-uri-0", ethers.constants.MaxUint256, creator1Address.address, 20000],
+      ["arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, ethers.constants.AddressZero, 0],
     ];
 
     await contentManager.addAssetBatch(asset);
 
     // Mint an asset
-    var mintData = [playerAddress.address, [1, 2], [10, 1], 0, ethers.constants.AddressZero, []];
-    await contentManager.mintBatch(mintData);
+    var mintData = [playerAddress.address, [0, 1], [10, 1], 0, ethers.constants.AddressZero, []];
+    await content.connect(deployerAddress).mintBatch(mintData);
 
-    mintData = [player2Address.address, [1, 2], [10, 10], 0, ethers.constants.AddressZero, []];
-    await contentManager.mintBatch(mintData);
+    mintData = [player2Address.address, [0, 1], [10, 10], 0, ethers.constants.AddressZero, []];
+    await content.connect(deployerAddress).mintBatch(mintData);
   }
 
   async function RawrTokenSetup() {
@@ -132,7 +132,7 @@ describe('Exchange Contract', () => {
 
     it('Supports the Exchange Interface', async () => {
         // IExchange Interface
-        expect(await exchange.supportsInterface("0xdf858c9f")).to.equal(true);
+        expect(await exchange.supportsInterface("0x581b76ff")).to.equal(true);
     });
   });
 
@@ -142,7 +142,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         player2Address.address,
         rawrToken.address,
         ethers.BigNumber.from(1000).mul(_1e18),
@@ -172,7 +172,7 @@ describe('Exchange Contract', () => {
       await ContentContractSetup();
       await RawrTokenSetup();
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(1000).mul(_1e18),
@@ -195,7 +195,7 @@ describe('Exchange Contract', () => {
 
       var exchangeNftEscrow = await NftEscrow.attach(nftEscrowAddr);
       expect(await exchangeNftEscrow.escrowedAmounts(orderId)).to.equal(1);
-      expect(await content.balanceOf(exchangeNftEscrow.address, 1)).to.equal(1);
+      expect(await content.balanceOf(exchangeNftEscrow.address, 0)).to.equal(1);
     });
 
     it('Delete Orders', async () => {
@@ -203,7 +203,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         player2Address.address,
         rawrToken.address,
         ethers.BigNumber.from(1000).mul(_1e18),
@@ -235,7 +235,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(1000).mul(_1e18),
@@ -255,7 +255,7 @@ describe('Exchange Contract', () => {
       // player 2 fills the buy order by selling the asset and receiving payment minus royalties
       await content.connect(player2Address).setApprovalForAll(await exchange.nftsEscrow(), true);
 
-      expect(await exchange.connect(player2Address).fillBuyOrder([orderId], 1))
+      expect(await exchange.connect(player2Address).fillBuyOrder([orderId], 1, ethers.BigNumber.from(1000).mul(_1e18)))
         .to.emit(exchange, 'OrdersFilled');
 
       // platform has 30 basis points and creator has 200 basis points from royalties so player2Address should only have
@@ -270,7 +270,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(1000).mul(_1e18),
@@ -288,11 +288,11 @@ describe('Exchange Contract', () => {
       // player 2 fills the buy order by selling the asset and receiving payment minus royalties
       await rawrToken.connect(player2Address).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
 
-      expect(await exchange.connect(player2Address).fillSellOrder([orderId], 1))
+      expect(await exchange.connect(player2Address).fillSellOrder([orderId], 1, ethers.BigNumber.from(1000).mul(_1e18)))
         .to.emit(exchange, 'OrdersFilled');
 
       // Player 2 originally has 10, but after buying 1 more, he should have 11
-      expect(await content.balanceOf(player2Address.address, 1)).to.equal(11);
+      expect(await content.balanceOf(player2Address.address, 0)).to.equal(11);
       expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
       expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
     });
@@ -302,7 +302,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(100).mul(_1e18),
@@ -310,7 +310,7 @@ describe('Exchange Contract', () => {
         false
       ];
       var order2Data = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(100).mul(_1e18),
@@ -334,12 +334,12 @@ describe('Exchange Contract', () => {
       await rawrToken.connect(player2Address).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(400).mul(_1e18));
 
       // Player 2 buys 4 items from the 2 orders
-      expect(await exchange.connect(player2Address).fillSellOrder([order1Id, order2Id], 4))
+      expect(await exchange.connect(player2Address).fillSellOrder([order1Id, order2Id], 4, ethers.BigNumber.from(400).mul(_1e18)))
         .to.emit(exchange, 'OrdersFilled')
-        .withArgs(player2Address.address, [order1Id, order2Id], [2, 2], [content.address, 1], rawrToken.address, 4, ethers.BigNumber.from(400).mul(_1e18));
+        .withArgs(player2Address.address, [order1Id, order2Id], [2, 2], [content.address, 0], rawrToken.address, 4, ethers.BigNumber.from(400).mul(_1e18));
 
       // player 2 should now have 4 assets
-      expect(await content.balanceOf(player2Address.address, 1)).to.equal(14);
+      expect(await content.balanceOf(player2Address.address, 0)).to.equal(14);
 
       // check order data
       order = await exchange.getOrder(order1Id);
@@ -354,7 +354,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(100).mul(_1e18),
@@ -362,7 +362,7 @@ describe('Exchange Contract', () => {
         false
       ];
       var order2Data = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(100).mul(_1e18),
@@ -386,17 +386,17 @@ describe('Exchange Contract', () => {
       await rawrToken.connect(player2Address).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(400).mul(_1e18));
 
       // Fill Order 1 first
-      expect(await exchange.connect(player2Address).fillSellOrder([order1Id], 2))
+      expect(await exchange.connect(player2Address).fillSellOrder([order1Id], 2, ethers.BigNumber.from(100).mul(_1e18)))
         .to.emit(exchange, 'OrdersFilled')
-        .withArgs(player2Address.address, [order1Id], [1], [content.address, 1], rawrToken.address, 1, ethers.BigNumber.from(100).mul(_1e18));
+        .withArgs(player2Address.address, [order1Id], [1], [content.address, 0], rawrToken.address, 1, ethers.BigNumber.from(100).mul(_1e18));
 
       // // Player 2 buys 2 items from the 2 orders, ignoring order
-      expect(await exchange.connect(player2Address).fillSellOrder([order1Id, order2Id], 3))
+      expect(await exchange.connect(player2Address).fillSellOrder([order1Id, order2Id], 3, ethers.BigNumber.from(300).mul(_1e18)))
         .to.emit(exchange, 'OrdersFilled')
-        .withArgs(player2Address.address, [order1Id, order2Id], [0, 3], [content.address, 1], rawrToken.address, 3, ethers.BigNumber.from(300).mul(_1e18));
+        .withArgs(player2Address.address, [order1Id, order2Id], [0, 3], [content.address, 0], rawrToken.address, 3, ethers.BigNumber.from(300).mul(_1e18));
 
       // player 2 should now have 4 assets
-      expect(await content.balanceOf(player2Address.address, 1)).to.equal(14);
+      expect(await content.balanceOf(player2Address.address, 0)).to.equal(14);
 
       // check order data
       order = await exchange.getOrder(order1Id);
@@ -413,7 +413,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(1000).mul(_1e18),
@@ -433,14 +433,14 @@ describe('Exchange Contract', () => {
       // player 2 fills the buy order by selling the asset and receiving payment minus royalties
       await content.connect(player2Address).setApprovalForAll(await exchange.nftsEscrow(), true);
 
-      expect(await exchange.connect(player2Address).fillBuyOrder([orderId], 1))
+      expect(await exchange.connect(player2Address).fillBuyOrder([orderId], 1, ethers.BigNumber.from(1000).mul(_1e18)))
         .to.emit(exchange, 'OrdersFilled');
 
       // Claim player 1's purchased asset
       await exchange.connect(playerAddress).claimOrders([orderId]);
 
       // Player 1 originally has 10, but after buying 1 more, he should have 11
-      expect(await content.balanceOf(playerAddress.address, 1)).to.equal(11);
+      expect(await content.balanceOf(playerAddress.address, 0)).to.equal(11);
     });
 
     it('Claim Creator Royalties', async () => {
@@ -448,7 +448,7 @@ describe('Exchange Contract', () => {
       await RawrTokenSetup();
 
       var orderData = [
-        [content.address, 1],
+        [content.address, 0],
         playerAddress.address,
         rawrToken.address,
         ethers.BigNumber.from(1000).mul(_1e18),
@@ -467,7 +467,7 @@ describe('Exchange Contract', () => {
 
       // player 2 fills the buy order by selling the asset and receiving payment minus royalties
       await content.connect(player2Address).setApprovalForAll(await exchange.nftsEscrow(), true);
-      expect(await exchange.connect(player2Address).fillBuyOrder([orderId], 1))
+      expect(await exchange.connect(player2Address).fillBuyOrder([orderId], 1, ethers.BigNumber.from(1000).mul(_1e18)))
         .to.emit(exchange, 'OrdersFilled');
 
       expect(await rawrToken.balanceOf(player2Address.address)).to.equal(ethers.BigNumber.from(10977).mul(_1e18));

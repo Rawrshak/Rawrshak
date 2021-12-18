@@ -61,7 +61,7 @@ describe('Orderbook Contract tests', () => {
 
     it('Supports the Address resolver Interface', async () => {
       // IOrderbook Interface
-      expect(await orderbook.supportsInterface("0x0950d870")).to.equal(true);
+      expect(await orderbook.supportsInterface("0x2a24311c")).to.equal(true);
     });
   });
 
@@ -132,11 +132,13 @@ describe('Orderbook Contract tests', () => {
       id3 = await orderbook.ordersLength();
       await orderbook.placeOrder(orderData3);
 
-      var amounts = await orderbook.getOrderAmounts([id, id2, id3]);
+      var order1 = await orderbook.getOrder(id);
+      var order2 = await orderbook.getOrder(id2);
+      var order3 = await orderbook.getOrder(id3);
 
-      expect(amounts[0]).is.equal(5);
-      expect(amounts[1]).is.equal(5);
-      expect(amounts[2]).is.equal(3);
+      expect(order1.amountOrdered).is.equal(5);
+      expect(order2.amountOrdered).is.equal(5);
+      expect(order3.amountOrdered).is.equal(3);
     });
 
     it('Get Order Amounts with partially filled orders', async () => {
@@ -151,11 +153,16 @@ describe('Orderbook Contract tests', () => {
 
       await orderbook.fillOrders([id, id2], [3, 3]);
 
-      var amounts = await orderbook.getOrderAmounts([id, id2, id3]);
+      var order1 = await orderbook.getOrder(id);
+      var order2 = await orderbook.getOrder(id2);
+      var order3 = await orderbook.getOrder(id3);
 
-      expect(amounts[0]).is.equal(2);
-      expect(amounts[1]).is.equal(2);
-      expect(amounts[2]).is.equal(3);
+      expect(order1.amountOrdered).is.equal(5);
+      expect(order2.amountOrdered).is.equal(5);
+      expect(order3.amountOrdered).is.equal(3);
+      expect(order1.amountFilled).is.equal(3);
+      expect(order2.amountFilled).is.equal(3);
+      expect(order3.amountFilled).is.equal(0);
     });
 
     it('Get Order Amounts with all filled orders', async () => {
@@ -170,11 +177,16 @@ describe('Orderbook Contract tests', () => {
 
       await orderbook.fillOrders([id, id2, id3], [3, 5, 3]);
 
-      var amounts = await orderbook.getOrderAmounts([id, id2, id3]);
+      var order1 = await orderbook.getOrder(id);
+      var order2 = await orderbook.getOrder(id2);
+      var order3 = await orderbook.getOrder(id3);
 
-      expect(amounts[0]).is.equal(2);
-      expect(amounts[1]).is.equal(0);
-      expect(amounts[2]).is.equal(0);
+      expect(order1.amountOrdered).is.equal(5);
+      expect(order2.amountOrdered).is.equal(5);
+      expect(order3.amountOrdered).is.equal(3);
+      expect(order1.amountFilled).is.equal(3);
+      expect(order2.amountFilled).is.equal(5);
+      expect(order3.amountFilled).is.equal(3);
     });
 
     it('Verifies orders are of the same asset', async () => {
@@ -189,6 +201,74 @@ describe('Orderbook Contract tests', () => {
   });
 
   describe("Transaction Orders", () => {
+
+    it('Get Order Amounts with proper AmountToFill and MaxSpend', async () => {
+      id = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData1);
+  
+      id3 = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData3);
+
+      var amounts = await orderbook.getOrderAmounts([id, id3], 6, ethers.BigNumber.from(52000).mul(_1e18));
+    
+      // Expect orderAmounts to equal [5, 1] 
+      expect(amounts[0][0]).is.equal(5);
+      expect(amounts[0][1]).is.equal(1);
+
+      // Expect amounts filled to equal 6
+      expect(amounts[1]).is.equal(6);
+    });
+
+    it('Get Order Amounts with small AmountToFill', async () => {
+      id = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData1);
+  
+      id3 = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData3);
+
+      var amounts = await orderbook.getOrderAmounts([id, id3], 3, ethers.BigNumber.from(52000).mul(_1e18));
+    
+      // Expect orderAmounts to equal [3, 0] 
+      expect(amounts[0][0]).is.equal(3);
+      expect(amounts[0][1]).is.equal(0);
+
+      // Expect amounts filled to equal 3
+      expect(amounts[1]).is.equal(3);
+    });
+
+    it('Get Order Amounts with small MaxSpend', async () => {
+      id = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData1);
+  
+      id3 = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData3);
+
+      var amounts = await orderbook.getOrderAmounts([id, id3], 6, ethers.BigNumber.from(40000).mul(_1e18));
+    
+      // Expect orderAmounts to equal [4, 0] 
+      expect(amounts[0][0]).is.equal(4);
+      expect(amounts[0][1]).is.equal(0);
+
+      // Expect amounts filled to equal 4
+      expect(amounts[1]).is.equal(4);
+    });
+
+    it('Get Order Amounts with non-exact MaxSpend', async () => {
+      id = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData1);
+  
+      id3 = await orderbook.ordersLength();
+      await orderbook.placeOrder(orderData3);
+
+      var amounts = await orderbook.getOrderAmounts([id, id3], 6, ethers.BigNumber.from(25000).mul(_1e18));
+    
+      // Expect orderAmounts to equal [2, 0] 
+      expect(amounts[0][0]).is.equal(2);
+      expect(amounts[0][1]).is.equal(0);
+
+      // Expect amounts filled to equal 2
+      expect(amounts[1]).is.equal(2);
+    });
 
     it('Get Payment totals', async () => {
       id = await orderbook.ordersLength();

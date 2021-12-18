@@ -16,8 +16,8 @@ describe('Content Manager Contract Tests', () => {
         ContentManager = await ethers.getContractFactory("ContentManager");
         ContentFactory = await ethers.getContractFactory("ContentFactory");
         asset = [
-            [1, "arweave.net/tx/public-uri-1", "", ethers.constants.MaxUint256, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-uri-2", "", 100, ethers.constants.AddressZero, 0],
+            ["arweave.net/tx/public-uri-0", "", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-uri-1", "", 100, ethers.constants.AddressZero, 0],
         ];
     });
 
@@ -43,7 +43,7 @@ describe('Content Manager Contract Tests', () => {
         var approvalPair = [[craftingSystemAddress.address, true]];
         await contentManager.registerOperators(approvalPair);
 
-        // // Add 1 asset
+        // Add 2 assets
         await contentManager.addAssetBatch(asset);
     });
 
@@ -54,55 +54,119 @@ describe('Content Manager Contract Tests', () => {
 
         it('Check Supported interfaces', async () => {
             // Content Manager interface
-            expect(await contentManager.supportsInterface("0x250b1d27")).to.equal(true);
+            expect(await contentManager.supportsInterface("0x007a1753")).to.equal(true);
         });
     });
 
     describe("Add Assets", () => {
-        it('Add Assets', async () => {
+        it('Add Single Asset', async () => {
             // Add 1 asset
             var newAssets = [
-                [3, "arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 1000, ethers.constants.AddressZero, 0]
+                ["arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 1000, ethers.constants.AddressZero, 0]
             ];
             
             await contentManager.addAssetBatch(newAssets);
 
             // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
-            var mintData = [playerAddress.address, [3], [10], 1, ethers.constants.AddressZero, []];
+            var mintData = [playerAddress.address, [2], [10], 1, ethers.constants.AddressZero, []];
             await content.connect(craftingSystemAddress).mintBatch(mintData);
 
-            expect(await content['uri(uint256)'](3)).to.equal("arweave.net/tx/public-uri-3");
+            expect(await content['uri(uint256)'](2)).to.equal("arweave.net/tx/public-uri-2");
+        });
+
+        it('Add Mulitple Assets', async () => {
+            // Add 3 assets
+            var newAssets = [
+                ["arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 1000, deployerAddress.address, 10000],
+                ["arweave.net/tx/public-uri-3", "arweave.net/tx/private-uri-3", 20, ethers.constants.AddressZero, 0],
+                ["arweave.net/tx/public-uri-4", "arweave.net/tx/private-uri-4", 1, deployerAddress.address, 50000]
+            ];
+            
+            await contentManager.addAssetBatch(newAssets);
+
+            // const signature = await sign(playerAddress, [1], [1], 1, null, content.address);
+            var mintData = [playerAddress.address, [2, 3, 4], [10, 2, 1], 1, ethers.constants.AddressZero, []];
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
+
+            expect(await content['uri(uint256)'](2)).to.equal("arweave.net/tx/public-uri-2");
+            expect(await content.totalSupply(3)).to.equal(2);
+            expect(await content.maxSupply(4)).to.equal(1);
         });
 
         it('Set Token URI', async () => {
             var assetUri = [
-                [2, "arweave.net/tx/public-uri-2-v1"]
+                [1, "arweave.net/tx/public-uri-1-v1"]
             ];
             await contentManager.setPublicUriBatch(assetUri);
 
-            var mintData = [playerAddress.address, [2], [1], 1, ethers.constants.AddressZero, []];
+            var mintData = [playerAddress.address, [1], [1], 1, ethers.constants.AddressZero, []];
             await content.connect(craftingSystemAddress).mintBatch(mintData);
 
-            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](2, 0)).to.equal("arweave.net/tx/public-uri-2");
-            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](2, 1)).to.equal("arweave.net/tx/public-uri-2-v1");
-            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](2, 2)).to.equal("arweave.net/tx/public-uri-2-v1");
+            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](1, 0)).to.equal("arweave.net/tx/public-uri-1");
+            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](1, 1)).to.equal("arweave.net/tx/public-uri-1-v1");
+            expect(await content.connect(playerAddress)['uri(uint256,uint256)'](1, 2)).to.equal("arweave.net/tx/public-uri-1-v1");
         });
 
         it('Set Token Contract Royalties', async () => {
             await contentManager.setContractRoyalty(deployerAddress.address, 20000);
 
-            var fees = await content.royaltyInfo(2, 1000);
+            var fees = await content.royaltyInfo(1, 1000);
             expect(fees.receiver).to.equal(deployerAddress.address);
             expect(fees.royaltyAmount).to.equal(20);
         });
 
         it('Set Token Royalties', async () => {
-            var assetRoyalty = [[1, deployerAddress.address, 10000]];
+            var assetRoyalty = [[0, deployerAddress.address, 10000]];
             await contentManager.setTokenRoyaltiesBatch(assetRoyalty);
 
-            var fees = await content.royaltyInfo(2, 1000);
+            var fees = await content.royaltyInfo(1, 1000);
             expect(fees.receiver).to.equal(deployerAddress.address);
             expect(fees.royaltyAmount).to.equal(10);
+        });
+    });
+
+    describe("Register Operator Tests", () => {
+        it('Same operator address', async () => {
+            var mintData = [playerAddress.address, [1], [5], 1, ethers.constants.AddressZero, []];
+
+            // craftingSystemAddress should have minter role revoked
+            var approvalPairs1 = [
+                [craftingSystemAddress.address, true],
+                [craftingSystemAddress.address, true],
+                [craftingSystemAddress.address, false]
+            ];
+
+            await contentManager.registerOperators(approvalPairs1);
+            await expect(content.connect(craftingSystemAddress).mintBatch(mintData)).to.be.reverted;
+
+            expect(await content.totalSupply(1)).to.equal(0);
+
+            // craftingSystemAddress should have minter role granted
+            var approvalPairs2 = [
+                [craftingSystemAddress.address, false],
+                [craftingSystemAddress.address, false],
+                [craftingSystemAddress.address, true]
+            ];
+
+            await contentManager.registerOperators(approvalPairs2);
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
+            expect(await content.totalSupply(1)).to.equal(5);
+        });
+
+        it('Edge case parameters', async () => {
+            var mintData = [playerAddress.address, [0], [100], 1, ethers.constants.AddressZero, []];
+
+            var approvalPairs1 = [[null, true]];
+            var approvalPairs2 = [["", false]];
+            var approvalPairs3 = [[ethers.constants.AddressZero, true], [craftingSystemAddress.address, true]];
+            // setting boolean to null would work as if it was set to false
+            
+            await expect(contentManager.registerOperators(approvalPairs1)).to.be.reverted;
+            await expect(contentManager.registerOperators(approvalPairs2)).to.be.reverted;
+            await contentManager.registerOperators(approvalPairs3);
+            
+            await content.connect(craftingSystemAddress).mintBatch(mintData);
+            expect(await content.totalSupply(0)).to.equal(100);
         });
     });
 });

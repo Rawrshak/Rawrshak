@@ -176,7 +176,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     }
 
     function _tokenExists(uint256 _tokenId) internal view returns(bool) {
-        return contentStorage.ids(_tokenId);
+        return _tokenId < contentStorage.assetCounter();
     }
 
     function _updateSupply(uint256 _tokenId, uint256 _newSupply) internal {

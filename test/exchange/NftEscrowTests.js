@@ -47,18 +47,18 @@ describe('NFT Escrow Contract', () => {
         contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
         
         var asset = [
-            [1, "arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", ethers.constants.MaxUint256, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-uri-2", "arweave.net/tx/private-uri-2", 100, ethers.constants.AddressZero, 0],
+            ["arweave.net/tx/public-uri-0", "arweave.net/tx/private-uri-0", ethers.constants.MaxUint256, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 100, ethers.constants.AddressZero, 0]
         ];
 
         // Add 2 assets
         await contentManager.addAssetBatch(asset);
 
         // Mint an assets
-        var mintData = [playerAddress.address, [1, 2], [10, 1], 0, ethers.constants.AddressZero, []];
-        await contentManager.mintBatch(mintData);
+        var mintData = [playerAddress.address, [0, 1], [10, 1], 0, ethers.constants.AddressZero, []];
+        await content.connect(deployerAddress).mintBatch(mintData);
 
-        assetData = [content.address, 1];
+        assetData = [content.address, 0];
 
         // approve player
         await content.connect(playerAddress).setApprovalForAll(escrow.address, true);
@@ -114,8 +114,8 @@ describe('NFT Escrow Contract', () => {
             await escrow.connect(executionManagerAddress).deposit(1, playerAddress.address, 1, assetData);
     
             expect(await escrow.escrowedAmounts(1)).to.equal(1);
-            expect(await content.balanceOf(escrow.address, 1)).to.equal(1);
-            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(9);
+            expect(await content.balanceOf(escrow.address, 0)).to.equal(1);
+            expect(await content.balanceOf(playerAddress.address, 0)).to.equal(9);
             
             var internalAssetData = await escrow.escrowedAsset(1);
             expect(internalAssetData[0]).to.equal(assetData[0]);
@@ -129,8 +129,8 @@ describe('NFT Escrow Contract', () => {
             await escrow.connect(executionManagerAddress).withdraw(1, playerAddress.address, 1);
     
             expect(await escrow.escrowedAmounts(1)).to.equal(0);
-            expect(await content.balanceOf(escrow.address, 1)).to.equal(0);
-            expect(await content.balanceOf(playerAddress.address, 1)).to.equal(10);
+            expect(await content.balanceOf(escrow.address, 0)).to.equal(0);
+            expect(await content.balanceOf(playerAddress.address, 0)).to.equal(10);
         });
     
         it('Invalid Withdraws', async () => {
