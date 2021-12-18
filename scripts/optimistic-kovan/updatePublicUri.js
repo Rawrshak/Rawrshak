@@ -13,21 +13,21 @@ async function main() {
     ] = await ethers.getSigners();
 
     const ContentManager = await ethers.getContractFactory("ContentManager");
-    // const rawrshakContractManager = ContentManager.attach("0x79058587a4D5f2b705C9B315ADd23c56A6607508");
+    const rawrshakContractManager = ContentManager.attach("0xc8f1BA89c1af36b19fC940963540A8b454a0037f");
 
-    // var rawrshakUpdatePublicUri = [
-    //     [0, "QmNQecdZ5CkwnmCZXhaZQCHzcVofZiuDCMHUKQnDfyqZ9i"],
-    //     [1, "QmZpLYhd1BLFZREpKLYxxPJ1WKHjKz1H9QN71eiByXJztL"],
-    //     [2, "QmZZeefCU617nbnsCNvXKYrZ6n8xADM2tAtuefQPVocxPx"],
-    //     [3, "QmUgDTwCthUvMmq8ij9AcbB97PYFQY8HHU73QbjwLAJTvC"],
-    //     [4, "QmbkUs6QEZUVkQJWQhVRs3e6K8YrNURgH5TxAnRVS6CVjt"],
-    //     [5, "QmXSDQuyUBBNHQ5XqEfwG8eCYL2FNscUa1azb5AfetZZ87"]
-    // ];
+    var rawrshakUpdatePublicUri = [
+        [0, "QmNQecdZ5CkwnmCZXhaZQCHzcVofZiuDCMHUKQnDfyqZ9i"],
+        [1, "QmZpLYhd1BLFZREpKLYxxPJ1WKHjKz1H9QN71eiByXJztL"],
+        [2, "QmZZeefCU617nbnsCNvXKYrZ6n8xADM2tAtuefQPVocxPx"],
+        [3, "QmUgDTwCthUvMmq8ij9AcbB97PYFQY8HHU73QbjwLAJTvC"],
+        [4, "QmbkUs6QEZUVkQJWQhVRs3e6K8YrNURgH5TxAnRVS6CVjt"],
+        [5, "QmXSDQuyUBBNHQ5XqEfwG8eCYL2FNscUa1azb5AfetZZ87"]
+    ];
 
-    // await rawrshakContractManager.connect(dev1).setPublicUriBatch(rawrshakUpdatePublicUri);
+    await rawrshakContractManager.connect(dev1).setPublicUriBatch(rawrshakUpdatePublicUri);
     
     // scream fortress asset updates
-    const screamFortressContractManager = ContentManager.attach("0x579e73C522b8Dca7007a341D06E6B2394C23644c");
+    const screamFortressContractManager = ContentManager.attach("0x44A6Bd295a345180c870fa0717A8b6DD5dF8Fc50");
 
     var screamFortressUpdatePublicUri = [
         [0, "Qmb9gJTV4scpXX1n1QiPiWoEAw77VBXX3u7nESihs1SVv9"],
@@ -44,7 +44,7 @@ async function main() {
     await screamFortressContractManager.connect(dev1).setPublicUriBatch(screamFortressUpdatePublicUri);
     
     // fight buddy asset updates
-    const fightBuddyContractManager = ContentManager.attach("0xadeB62FCC2BB7979DC7848968f46E30eFe62d8F8");
+    const fightBuddyContractManager = ContentManager.attach("0x2292EB6167bb485E3A09816f78898B69Ef856F04");
 
     var fightBuddyUpdatePublicUri = [
         [0, "QmPdtxxeUd9VZmWymbKk5JPCDu5kD8zzW1scqD8LP6Lnsg"],
@@ -56,7 +56,7 @@ async function main() {
     await fightBuddyContractManager.connect(dev2).setPublicUriBatch(fightBuddyUpdatePublicUri);
     
     // SuperScaryHorrorGame asset updates
-    const superScaryHorrorGameContractManager = ContentManager.attach("0x0a821abfb0c5c9db497d5d0468D10e7c17e8BfF5");
+    const superScaryHorrorGameContractManager = ContentManager.attach("0x0a41C607e0Fac559fC47900bA1bB9d1C74751c71");
 
     var superScaryHorrorGameUpdatePublicUri = [
         [0, "QmUoqmCgQshxtHPjeuMmQTWhJhf6PFCtzzTXzs1YSANmG7"],

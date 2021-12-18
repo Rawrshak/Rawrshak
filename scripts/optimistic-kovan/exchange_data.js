@@ -1,7 +1,6 @@
 const { ethers, upgrades } = require("hardhat");
 
 var Content;
-var ContentManager;
 var Exchange;
 
 async function createOrder(exchange, account, orderData) {
@@ -40,21 +39,20 @@ async function main() {
         player4
     ] = await ethers.getSigners();
     
-    // Get Rawr token stuff
+    // Get DAI token 
     const MockToken = await ethers.getContractFactory("MockToken");
-    const rawr = MockToken.attach("0x7c6b91d9be155a6db01f749217d76ff02a7227f2");
+    const dai = MockToken.attach("0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1");
 
     console.log(`Deploying contracts with the account: ${deployer.address}`);
   
     var balance = await deployer.getBalance();
     console.log(`Account Balance: ${balance.toString()}`);
-    balance = await rawr.balanceOf(player1.address);
+    balance = await dai.balanceOf(player1.address);
     console.log(`RawrshakAccount Balance [Player 1]: ${balance.toString()}`);
 
     // Get Contracts 
     Content = await ethers.getContractFactory("Content");
-    ContentManager = await ethers.getContractFactory("ContentManager");
-    const rawrshakContract = Content.attach("0xc9EBafF8237740353E0dEd89130fB83be4bd3F90");
+    const rawrshakContract = Content.attach("0xeEB6e92f132c26d3D8dc852A73094b55d1ec3d59");
 
     // Developer mints Asset 3 and 4 to player 1
     var mintData = [player1.address, [3,4], [5,5], 0, ethers.constants.AddressZero, []];
@@ -64,7 +62,7 @@ async function main() {
     var mintData = [player2.address, [1,2,5], [5,5,5], 0, ethers.constants.AddressZero, []];
     await rawrshakContract.connect(dev1).mintBatch(mintData);
 
-    const screamContract = Content.attach("0x393d8E12Aa7F22f8999bf9DDAc6842Db2bb6F096");
+    const screamContract = Content.attach("0x878b9327Fc8b0351802BE1f9Ed8b8B47a630aEf4");
     // Developer mints Asset 3 and 4 to player 1
     var mintData = [player1.address, [0,1,2,3,4], [5,5,5,5,5], 0, ethers.constants.AddressZero, []];
     await screamContract.connect(dev1).mintBatch(mintData);
@@ -74,15 +72,15 @@ async function main() {
     await screamContract.connect(dev1).mintBatch(mintData);
 
     Exchange = await ethers.getContractFactory("Exchange");
-    const exchange = Exchange.attach("0x8b62eC86AddDc6Fd9741D3A307f36b06FD3A89D5");
+    const exchange = Exchange.attach("0xfb07c1Fc6f931e90a907C7b7c0c842F8a4a4e158");
 
     if (exchange != null) {
         console.log(`Exchange exists!`);
 
         // Approve the exchange escrow for the rawrshak content contract
         // Approve the exchange escrow for the rawr token
-        await rawr.connect(player1).approve(await exchange.tokenEscrow(), web3.utils.toWei('300', 'ether'));
-        await rawr.connect(player2).approve(await exchange.tokenEscrow(), web3.utils.toWei('300', 'ether'));
+        await dai.connect(player1).approve(await exchange.tokenEscrow(), web3.utils.toWei('50', 'ether'));
+        await dai.connect(player2).approve(await exchange.tokenEscrow(), web3.utils.toWei('50', 'ether'));
         await rawrshakContract.connect(player1).setApprovalForAll(await exchange.nftsEscrow(), true);
         await rawrshakContract.connect(player2).setApprovalForAll(await exchange.nftsEscrow(), true);
 
@@ -90,42 +88,42 @@ async function main() {
         console.log("Creating Demo Orders");
 
         // Place Order:  Unfilled Sell Orders
-        var orderData = [ [rawrshakContract.address, 3], player1.address, rawr.address, web3.utils.toWei('10', 'ether'), 1, false];
+        var orderData = [ [rawrshakContract.address, 3], player1.address, dai.address, web3.utils.toWei('2', 'ether'), 1, false];
         await createOrder(exchange, player1, orderData);
-        orderData = [ [rawrshakContract.address, 3], player1.address, rawr.address, web3.utils.toWei('11', 'ether'), 2, false];
+        orderData = [ [rawrshakContract.address, 3], player1.address, dai.address, web3.utils.toWei('2.5', 'ether'), 2, false];
         await createOrder(exchange, player1, orderData);
 
         // Place Order: Partially Filled Sell Orders
-        orderData = [ [rawrshakContract.address, 4], player1.address, rawr.address, web3.utils.toWei('10', 'ether'), 4, false];
+        orderData = [ [rawrshakContract.address, 4], player1.address, dai.address, web3.utils.toWei('1.5', 'ether'), 4, false];
         await createOrder(exchange, player1, orderData);
 
         // Place Order: Filled Sell Orders
-        orderData = [ [rawrshakContract.address, 2], player2.address, rawr.address, web3.utils.toWei('14', 'ether'), 2, false];
+        orderData = [ [rawrshakContract.address, 2], player2.address, dai.address, web3.utils.toWei('3', 'ether'), 2, false];
         await createOrder(exchange, player2, orderData);
 
         // Place Order: Filled Sell Orders
-        orderData = [ [rawrshakContract.address, 1], player2.address, rawr.address, web3.utils.toWei('20', 'ether'), 1, false];
+        orderData = [ [rawrshakContract.address, 1], player2.address, dai.address, web3.utils.toWei('5', 'ether'), 1, false];
         await createOrder(exchange, player2, orderData);
         
-        await rawr.connect(player3).approve(await exchange.tokenEscrow(), web3.utils.toWei('300', 'ether'));
-        await rawr.connect(player4).approve(await exchange.tokenEscrow(), web3.utils.toWei('300', 'ether'));
+        await dai.connect(player3).approve(await exchange.tokenEscrow(), web3.utils.toWei('50', 'ether'));
+        await dai.connect(player4).approve(await exchange.tokenEscrow(), web3.utils.toWei('50', 'ether'));
         // Players 3 and 4 are buyers
         // Place Order:  Unfilled Buy Orders
-        var orderData = [ [screamContract.address, 0], player3.address, rawr.address, web3.utils.toWei('10', 'ether'), 1, true];
+        var orderData = [ [screamContract.address, 0], player3.address, dai.address, web3.utils.toWei('2', 'ether'), 1, true];
         await createOrder(exchange, player3, orderData);
-        orderData = [ [screamContract.address, 1], player3.address, rawr.address, web3.utils.toWei('11', 'ether'), 2, true];
+        orderData = [ [screamContract.address, 1], player3.address, dai.address, web3.utils.toWei('2.5', 'ether'), 2, true];
         await createOrder(exchange, player3, orderData);
 
         // Place Order: Partially Filled Buy Orders
-        orderData = [ [screamContract.address, 2], player3.address, rawr.address, web3.utils.toWei('10', 'ether'), 4, true];
+        orderData = [ [screamContract.address, 2], player3.address, dai.address, web3.utils.toWei('1.75', 'ether'), 4, true];
         await createOrder(exchange, player3, orderData);
 
         // Place Order: Filled Buy Orders
-        orderData = [ [screamContract.address, 5], player4.address, rawr.address, web3.utils.toWei('14', 'ether'), 2, true];
+        orderData = [ [screamContract.address, 5], player4.address, dai.address, web3.utils.toWei('3', 'ether'), 2, true];
         await createOrder(exchange, player4, orderData);
 
         // Place Order: Filled Buy Orders
-        orderData = [ [screamContract.address, 6], player4.address, rawr.address, web3.utils.toWei('20', 'ether'), 1, true];
+        orderData = [ [screamContract.address, 6], player4.address, dai.address, web3.utils.toWei('5', 'ether'), 1, true];
         await createOrder(exchange, player4, orderData);
 
         console.log("Approving Scream Contract");
@@ -134,14 +132,14 @@ async function main() {
         
         // Filling some Sell Orders
         console.log("Filling Some Sell Orders");
-        await exchange.connect(player3).fillSellOrder([0, 1], 2); // Fill 0, partial fill 1
-        await exchange.connect(player3).fillSellOrder([4], 1); // Fill 4 (to be claimed)
+        await exchange.connect(player3).fillSellOrder([0, 1], 2, web3.utils.toWei('5', 'ether')); // Fill 0, partial fill 1
+        await exchange.connect(player3).fillSellOrder([4], 1, web3.utils.toWei('5', 'ether')); // Fill 4 (to be claimed)
 
         // Fill some Buy Orders
         console.log("Filling Some Buy Orders");
-        await exchange.connect(player1).fillBuyOrder([5], 1); // Fill 5
-        await exchange.connect(player1).fillBuyOrder([6], 1); // Partially Fill 6
-        await exchange.connect(player2).fillBuyOrder([8], 2); // Fill Fill 8 (to be claimed)
+        await exchange.connect(player1).fillBuyOrder([5], 1, web3.utils.toWei('2', 'ether')); // Fill 5
+        await exchange.connect(player1).fillBuyOrder([6], 1, web3.utils.toWei('5', 'ether')); // Partially Fill 6
+        await exchange.connect(player2).fillBuyOrder([8], 2, web3.utils.toWei('6', 'ether')); // Fill Fill 8 (to be claimed)
 
         // Claim Buy Order
         console.log("Claiming a Buy Order");

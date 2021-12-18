@@ -20,4 +20,6 @@ library LibContractHash {
     bytes4 constant public CONTRACT_RAWR_TOKEN = 0x3d13c043;
     
     bytes4 constant public CONTRACT_LIQUIDITY_MINING = 0x385742b9;
+    
+    bytes4 constant public CONTRACT_DAI_TOKEN = 0x4170d96f;
 }

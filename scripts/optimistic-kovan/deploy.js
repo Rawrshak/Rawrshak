@@ -12,6 +12,10 @@ async function main() {
     // Get RAWR Token
     var rawrAddress = "0x7c6b91d9be155a6db01f749217d76ff02a7227f2";
     console.log("RAWR Token deployed to:", rawrAddress);
+
+    // DAI Token Address
+    var daiAddress = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1";
+    console.log("DAI Token deployed to:", daiAddress);
     
     console.log("Deploying Address Resolver Contract");
     const AddressResolver = await ethers.getContractFactory("AddressResolver");
@@ -69,8 +73,8 @@ async function main() {
     await orderbook.transferOwnership(exchange.address);
     await executionManager.transferOwnership(exchange.address);
     
-    // Add RAWR token as a supported payment option
-    await exchange.addSupportedToken(rawrAddress);
+    // Add DAI token as a supported payment option
+    await exchange.addSupportedToken(daiAddress);
 
     console.log("Exchange deployed to:", exchange.address);
     console.log("\n");
@@ -109,14 +113,16 @@ async function main() {
         exchange.address,
         staking.address,
         contentFactory.address,
-        rawrAddress
+        rawrAddress,
+        daiAddress
     ];
 
     escrowIds = [
         "0xeef64103",
         "0x1b48faca",
         "0xdb337f7d",
-        "0x3d13c043"
+        "0x3d13c043",
+        "0x4170d96f"
     ];
     await resolver.registerAddress(escrowIds, addresses);
 }
@@ -130,7 +136,8 @@ main()
 
 // Optimistic Kovan Addresses
 // RAWR Token deployed to: 0x7c6b91d9be155a6db01f749217d76ff02a7227f2
-// AddressResolver deployed to: 0x6196F2bc15F90bb35b8e38f2170BB2C101e3A0B1
-// Exchange deployed to: 0x8b62eC86AddDc6Fd9741D3A307f36b06FD3A89D5
-// Staking deployed to: 0x23e6e13AaE049f7dcc570177960Ff5023187a59A
-// ContentFactory deployed to: 0xbe479c85e81B34BcA13F613DfF4f3F9D9eC6d715
+// DAI Token address: 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1
+// AddressResolver deployed to: 0xB641ceb6F68fd7b82DDaeF24dDd0D45001d2beeE
+// Exchange deployed to: 0xfb07c1Fc6f931e90a907C7b7c0c842F8a4a4e158
+// Staking deployed to: 0xAA522054FeE820030eE8d82F4b7509c37190A4C7
+// ContentFactory deployed to: 0x5c4c21fbdaB3BE631d3DA131cA4588e218eEB1F6
