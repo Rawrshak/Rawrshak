@@ -137,7 +137,7 @@ main()
 // Optimistic Kovan Addresses
 // RAWR Token deployed to: 0x7c6b91d9be155a6db01f749217d76ff02a7227f2
 // DAI Token address: 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1
-// AddressResolver deployed to: 0xB641ceb6F68fd7b82DDaeF24dDd0D45001d2beeE
-// Exchange deployed to: 0xfb07c1Fc6f931e90a907C7b7c0c842F8a4a4e158
-// Staking deployed to: 0xAA522054FeE820030eE8d82F4b7509c37190A4C7
-// ContentFactory deployed to: 0x5c4c21fbdaB3BE631d3DA131cA4588e218eEB1F6
+// AddressResolver deployed to: 0x0f8AF298f1bF349e32d7e9a7afa9F028E62987D5
+// Exchange deployed to: 0xd73651871aCc74657e51A7233edf247C7C7495eE
+// Staking deployed to: 0xF4cB5c7ac4f61FB485E2250255C8D2C1b8660dD2
+// ContentFactory deployed to: 0x35c18b621c5B5ccf29e3EdeC5AE0AC98B26192d3

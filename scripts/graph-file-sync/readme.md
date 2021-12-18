@@ -6,4 +6,4 @@ they need to be sync'd to over to the graph's ipfs node.
     npm install -g @graphprotocol/ipfs-sync
 
 ## Sync single file
-    ipfs-sync sync-files --from	http://127.0.0.1:8080 --to https://api.thegraph.com/ipfs/ --file-list ./single-file
+    ipfs-sync sync-files --from http://127.0.0.1:8080 --to https://api.thegraph.com/ipfs/ --file-list ./single-file

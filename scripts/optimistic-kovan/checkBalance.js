@@ -13,7 +13,7 @@ async function main() {
     ] = await ethers.getSigners();
 
     const Content = await ethers.getContractFactory("Content");
-    const rawrshakContract = Content.attach("0xeEB6e92f132c26d3D8dc852A73094b55d1ec3d59");
+    const rawrshakContract = Content.attach("0x899753A7055093B1Dc32422cfFD55186a5C18198");
 
     var balance = await rawrshakContract.connect(player1).balanceOf(player1.address, "3");
     console.log(`Balance: ${balance.toString()}`);

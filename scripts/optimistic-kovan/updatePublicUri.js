@@ -13,7 +13,7 @@ async function main() {
     ] = await ethers.getSigners();
 
     const ContentManager = await ethers.getContractFactory("ContentManager");
-    const rawrshakContractManager = ContentManager.attach("0xc8f1BA89c1af36b19fC940963540A8b454a0037f");
+    const rawrshakContractManager = ContentManager.attach("0x4941DCDB7BeD6CA1F6E5A3fFAdB9f9B74736cf82");
 
     var rawrshakUpdatePublicUri = [
         [0, "QmNQecdZ5CkwnmCZXhaZQCHzcVofZiuDCMHUKQnDfyqZ9i"],
@@ -27,7 +27,7 @@ async function main() {
     await rawrshakContractManager.connect(dev1).setPublicUriBatch(rawrshakUpdatePublicUri);
     
     // scream fortress asset updates
-    const screamFortressContractManager = ContentManager.attach("0x44A6Bd295a345180c870fa0717A8b6DD5dF8Fc50");
+    const screamFortressContractManager = ContentManager.attach("0x499ad3Df0E89A42322a603f7baFD2BaDB00fe695");
 
     var screamFortressUpdatePublicUri = [
         [0, "Qmb9gJTV4scpXX1n1QiPiWoEAw77VBXX3u7nESihs1SVv9"],
@@ -44,7 +44,7 @@ async function main() {
     await screamFortressContractManager.connect(dev1).setPublicUriBatch(screamFortressUpdatePublicUri);
     
     // fight buddy asset updates
-    const fightBuddyContractManager = ContentManager.attach("0x2292EB6167bb485E3A09816f78898B69Ef856F04");
+    const fightBuddyContractManager = ContentManager.attach("0x489FF8D093c6C44d948964A2535cfbDA53E1c87b");
 
     var fightBuddyUpdatePublicUri = [
         [0, "QmPdtxxeUd9VZmWymbKk5JPCDu5kD8zzW1scqD8LP6Lnsg"],
@@ -56,7 +56,7 @@ async function main() {
     await fightBuddyContractManager.connect(dev2).setPublicUriBatch(fightBuddyUpdatePublicUri);
     
     // SuperScaryHorrorGame asset updates
-    const superScaryHorrorGameContractManager = ContentManager.attach("0x0a41C607e0Fac559fC47900bA1bB9d1C74751c71");
+    const superScaryHorrorGameContractManager = ContentManager.attach("0x9D0Fa91D3bf89F06A6E37c60c7e2140f613CF0Fd");
 
     var superScaryHorrorGameUpdatePublicUri = [
         [0, "QmUoqmCgQshxtHPjeuMmQTWhJhf6PFCtzzTXzs1YSANmG7"],
