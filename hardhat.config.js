@@ -4,6 +4,7 @@ require("@nomiclabs/hardhat-web3");
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-truffle5");
+require('hardhat-contract-sizer');
 
 // Load environment variables from .env
 require('dotenv').config();
@@ -64,5 +65,11 @@ module.exports = {
             accounts: [process.env.KOVAN_PRIVATE_KEY]
         }
     },
+    contractSizer: {
+        alphaSort: true,
+        disambiguatePaths: false,
+        runOnCompile: false,
+        strict: true,
+      },
     solidity: "0.8.3"
 };

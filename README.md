@@ -100,11 +100,15 @@ Note: You will still need the private keys for the developer wallet in order to 
         npm install -g json-server
 
 ## Other Helpful tools
-### [truffle-contract-size](https://www.npmjs.com/package/truffle-contract-size) 
+### [hardhat-contract-sizer](https://www.skypack.dev/view/hardhat-contract-sizer) 
     Displays the contract size for all or a selection of your smart contracts in kilobytes. The limit for a smart 
     contract is roughly 24.5 kb, so this is a good tool to use to figure out if we need to cut down on the smart 
     contract size. 
-    Install: npm install truffle-contract-size
+    Install: 
+        yarn add --dev hardhat-contract-sizer
+    use:
+        yarn run hardhat size-contracts
+
 
 
 # Quick-start Guide
