@@ -7,12 +7,12 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";    
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
+import "@rawrshak/rawr-token/contracts/optimism/IL2StandardERC20Latest.sol";
 import "./interfaces/ISalvage.sol";
 import "./CraftBase.sol";
 import "../content/interfaces/IContent.sol";
 import "../libraries/LibCraft.sol";
 import "../libraries/LibLootbox.sol";
-import "../tokens/optimism/IL2StandardERC20Latest.sol";
 import "hardhat/console.sol";
 
 contract Salvage is ISalvage, CraftBase {

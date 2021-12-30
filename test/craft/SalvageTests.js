@@ -6,7 +6,7 @@ describe('Salvage Contract', () => {
     var deployerAddress, managerAddress, creatorAddress, playerAddress, player2Address;
     var contentFactory;
     var contentManager;
-    var AccessControlManager, ContentManager, ContentStorage, Content, LootboxCredit, L2NativeRawrshakERC20Token;
+    var AccessControlManager, ContentManager, ContentStorage, Content, L2NativeRawrshakERC20Token;
 
     var l2Bridge = "0x50EB44e3a68f1963278b4c74c6c343508d31704C";
 
@@ -34,7 +34,6 @@ describe('Salvage Contract', () => {
         ContentStorage = await ethers.getContractFactory("ContentStorage");
         Content = await ethers.getContractFactory("Content");
         L2NativeRawrshakERC20Token = await ethers.getContractFactory("L2NativeRawrshakERC20Token");
-        LootboxCredit = await ethers.getContractFactory("LootboxCredit");
 
         originalAccessControlManager = await AccessControlManager.deploy();
         originalContent = await Content.deploy();

@@ -8,12 +8,12 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@rawrshak/rawr-token/contracts/optimism/L2NativeRawrshakERC20Token.sol";
 import "../content/interfaces/IContent.sol";
 import "../exchange/StorageBase.sol";
 import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";
-import "../tokens/optimism/L2NativeRawrshakERC20Token.sol";
 import "hardhat/console.sol";
 
 contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable, ERC165StorageUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, StorageBase {
