@@ -44,7 +44,9 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         // No need to do checks. these values are returned from requiredRoyalties()
         // This is called in a fill sell order where Tokens are sent from the buyer to the escrow. We 
         // need to update the royalties table internally 
-        _tokenEscrow().transferRoyalty(_token, _sender, _receiver, _royaltyFee);
+        if (_royaltyFee > 0) {
+            _tokenEscrow().transferRoyalty(_token, _sender, _receiver, _royaltyFee);
+        }
     }
 
     function transferRoyalty(
@@ -55,7 +57,9 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         // No need to do checks. these values are returned from requiredRoyalties()
         // This is called in a fill buy order where Tokens are stored in the escrow and need to be "moved"
         // to the "claimable" table for the asset creator
-        _tokenEscrow().transferRoyalty(_orderId, _receiver, _fee);
+        if (_fee > 0) {
+            _tokenEscrow().transferRoyalty(_orderId, _receiver, _fee);
+        }
     }
 
     function transferPlatformFee(
