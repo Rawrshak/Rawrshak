@@ -9,11 +9,19 @@ contract TestMultipleRoyalties is MultipleRoyalties {
         _setTokenRoyalties(_uniqueId, _royaltyReceivers, _royaltyRates);
     }
 
-    function multipleRoyaltyInfo(uint256 _uniqueId) external view returns(address[] memory _receivers, uint24[] memory _rates) {
+    function getMultipleRoyalties(uint256 _uniqueId) external view returns (address[] memory _receivers, uint24[] memory _rates) {
         return _getMultipleRoyalties(_uniqueId);
     }
 
-    function verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external pure {
-        _verifyRoyalties(_royaltyReceivers, _royaltyRates);
+    function verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates, uint256 _originalRoyaltyRate) external pure returns (bool) {
+        return _verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate);
+    }
+
+    function deleteTokenRoyalties(uint256 _uniqueId) external {
+        _deleteTokenRoyalties(_uniqueId);
+    }
+
+    function getTokenRoyaltiesLength(uint256 _uniqueId) external view returns (uint256) {
+        return _getTokenRoyaltiesLength(_uniqueId);
     }
 }

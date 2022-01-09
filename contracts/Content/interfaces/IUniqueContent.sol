@@ -5,7 +5,7 @@ import "../../libraries/LibAsset.sol";
 
 interface IUniqueContent {
     /*********************** Events *********************/
-    event Mint(address operator, LibAsset.UniqueAssetCreateData data);
+    event Mint(address operator, LibAsset.UniqueAssetCreateData data, uint256 uniqueId);
 
     event Burn(address operator, uint256 uniqueId);
 
@@ -14,7 +14,7 @@ interface IUniqueContent {
     /******** View Functions ********/
     function originalAssetUri(uint256 _uniqueId, uint256 _version) external view returns(string memory);
 
-    function uri(uint256 _uniqueId, uint256 _version) external view returns(string memory);
+    function tokenURI(uint256 _uniqueId, uint256 _version) external view returns(string memory);
 
     /******** Mutative Functions ********/
     function mint(LibAsset.UniqueAssetCreateData memory _data) external;
