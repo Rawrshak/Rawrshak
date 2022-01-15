@@ -6,7 +6,8 @@ import "../libraries/LibRoyalty.sol";
 abstract contract MultipleRoyalties{
 
     /***************** Stored Variables *****************/
-    mapping(uint256 => LibRoyalty.Fee[]) private tokenRoyalties;
+    mapping(uint256 => address[]) private royaltyReceivers;
+    mapping(uint256 => uint24[]) private royaltyRates;
 
     /*********************** Events *********************/
     event TokenRoyaltiesUpdated(uint256 indexed uniqueId, address[] royaltyReceivers, uint24[] royaltyRates);
@@ -17,7 +18,7 @@ abstract contract MultipleRoyalties{
      * @param _uniqueId uint256 ID of the unique asset to query
      */
     function _getTokenRoyaltiesLength(uint256 _uniqueId) internal view returns (uint256) {
-        return tokenRoyalties[_uniqueId].length;
+        return royaltyReceivers[_uniqueId].length;
     }
     
     /**
@@ -25,15 +26,7 @@ abstract contract MultipleRoyalties{
      * @param _uniqueId uint256 ID of the unique asset to query
      */
     function _getMultipleRoyalties(uint256 _uniqueId) internal view returns (address[] memory receivers, uint24[] memory rates) {
-        uint256 length = _getTokenRoyaltiesLength(_uniqueId);
-        receivers = new address[](length);
-        rates = new uint24[](length);
-
-        for (uint256 i = 0; i < length; ++i) {
-            receivers[i] = tokenRoyalties[_uniqueId][i].receiver;
-            rates[i] = tokenRoyalties[_uniqueId][i].rate;
-        }
-        return (receivers, rates);
+        return (royaltyReceivers[_uniqueId], royaltyRates[_uniqueId]);
     }
 
     /**
@@ -41,7 +34,8 @@ abstract contract MultipleRoyalties{
      * @param _uniqueId uint256 ID of the unique asset whose royalties are to be deleted
      */
     function _deleteTokenRoyalties(uint256 _uniqueId) internal {
-        delete tokenRoyalties[_uniqueId];
+        delete royaltyReceivers[_uniqueId];
+        delete royaltyRates[_uniqueId];
     }
 
     /**
@@ -53,19 +47,16 @@ abstract contract MultipleRoyalties{
     function _setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) internal {
         _deleteTokenRoyalties(_uniqueId);
         for (uint256 i = 0; i < _royaltyReceivers.length; ++i) {
-            if (_royaltyReceivers[i] == address(0) || _royaltyRates[i] == 0) {
-            } else {
-                LibRoyalty.Fee memory fee;
-                fee.receiver = _royaltyReceivers[i];
-                fee.rate = _royaltyRates[i];
-                tokenRoyalties[_uniqueId].push(fee);
+            if (_royaltyReceivers[i] != address(0) && _royaltyRates[i] > 0) {
+                royaltyReceivers[_uniqueId].push(_royaltyReceivers[i]);
+                royaltyRates[_uniqueId].push(_royaltyRates[i]);
             }
         }
-        emit TokenRoyaltiesUpdated(_uniqueId, _royaltyReceivers, _royaltyRates);
+        emit TokenRoyaltiesUpdated(_uniqueId, royaltyReceivers[_uniqueId], royaltyRates[_uniqueId]);
     }
 
     /**
-    * @dev Verifies whether the sum of the royalties exceed 1e6 and whether the number of royalties are receivers match
+    * @dev Verifies whether the sum of the royalties exceed 1e6 and whether the number of royalties and receivers match
     * @param _royaltyReceivers addresses to receive the royalties
     * @param _royaltyRates royalty fee percentages
     * @param _originalRoyaltyRate royalty rate of the original item

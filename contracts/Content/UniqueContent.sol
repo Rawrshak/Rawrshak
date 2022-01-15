@@ -21,9 +21,9 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, MultipleRoyalties,
     * @param _data LibAsset.UniqueAssetCreateData structure object
     */
     function mint(LibAsset.UniqueAssetCreateData memory _data) external override {
+        require((IERC1155Upgradeable(_data.contentAddress).balanceOf(_msgSender(), _data.tokenId)) >= 1, "You must have the original item in your wallet");
         (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(_data.contentAddress).royaltyInfo(_data.tokenId, 1e6);
         require(_verifyRoyalties(_data.royaltyReceivers, _data.royaltyRates, _originalRoyaltyRate), "The royalties entered are invalid");
-        require((IERC1155Upgradeable(_data.contentAddress).balanceOf(_msgSender(), _data.tokenId)) >= 1, "You must have the original item in your wallet");
         // transfers the original asset to be locked in the unique content contract
         IERC1155Upgradeable(_data.contentAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, 1, "");
         // mint() is a mint and transfer function, if _data.to != msgSender, the caller would be sending the token to someone else
@@ -36,7 +36,7 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, MultipleRoyalties,
         uniqueAssetInfo[uniqueIdsCounter].creatorLocked = _data.creatorLocked;
         _setTokenRoyalties(uniqueIdsCounter, _data.royaltyReceivers, _data.royaltyRates);
         
-        emit Mint(_msgSender(), _data, uniqueIdsCounter);
+        emit Mint(uniqueIdsCounter, _msgSender(), _data);
 
         // increment uniqueIdsCounter for next minting process
         uniqueIdsCounter++;
@@ -61,7 +61,7 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, MultipleRoyalties,
         delete uniqueAssetInfo[_uniqueId].uniqueAssetUri;
         _deleteTokenRoyalties(_uniqueId);
         
-        emit Burn(_msgSender(), _uniqueId);
+        emit Burn(_uniqueId, _msgSender());
     }
 
     /**
@@ -71,8 +71,7 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, MultipleRoyalties,
     */
     function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
         require(_exists(_uniqueId), "Unique Id does not exist");
-        uint256 _tokenId = uniqueAssetInfo[_uniqueId].tokenId;
-        return IContent(uniqueAssetInfo[_uniqueId].contentAddress).uri(_tokenId, _version);
+        return IContent(uniqueAssetInfo[_uniqueId].contentAddress).uri(uniqueAssetInfo[_uniqueId].tokenId, _version);
     }
 
     /**
@@ -94,9 +93,7 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, MultipleRoyalties,
     */
     function tokenURI(uint256 _uniqueId) public view override returns (string memory) {
         require(_exists(_uniqueId), "Unique Id does not exist");
-        uint256 _version = uniqueAssetInfo[_uniqueId].version;
-        
-        return uniqueAssetInfo[_uniqueId].uniqueAssetUri[_version];
+        return uniqueAssetInfo[_uniqueId].uniqueAssetUri[uniqueAssetInfo[_uniqueId].version];
     }
 
     /**

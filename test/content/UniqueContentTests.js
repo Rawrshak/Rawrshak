@@ -162,7 +162,7 @@ describe('Unique Content Contract Tests', () => {
             // the creator can burn a creator locked asset
             expect(await uniqueContent.connect(creatorAddress).burn(0))
                 .to.emit(uniqueContent, "Burn")
-                .withArgs(creatorAddress.address, 0);
+                .withArgs(0, creatorAddress.address);
 
             expect(await uniqueContent.balanceOf(creatorAddress.address)).to.equal(0);
             await expect(uniqueContent.ownerOf(0)).to.be.reverted; // non-existent token
@@ -179,7 +179,7 @@ describe('Unique Content Contract Tests', () => {
 
             expect(await uniqueContent.connect(playerAddress).burn(1))
                 .to.emit(uniqueContent, "Burn")
-                .withArgs(playerAddress.address, 1);
+                .withArgs(1, playerAddress.address);
 
             expect(await uniqueContent.balanceOf(playerAddress.address)).to.equal(0);
             await expect(uniqueContent.ownerOf(1)).to.be.reverted; // non-existent token
