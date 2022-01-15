@@ -5,9 +5,9 @@ import "../../libraries/LibAsset.sol";
 
 interface IUniqueContent {
     /*********************** Events *********************/
-    event Mint(uint256 uniqueId, address operator, LibAsset.UniqueAssetCreateData data);
+    event Mint(uint256 indexed uniqueId, address operator, LibAsset.UniqueAssetCreateData data);
 
-    event Burn(uint256 uniqueId, address operator);
+    event Burn(uint256 indexed uniqueId, address operator);
 
     event UniqueUriUpdated(uint256 indexed uniqueId, uint256 indexed version);
 
