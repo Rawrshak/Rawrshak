@@ -406,12 +406,12 @@ describe('Exchange Contract', () => {
       expect(order.amountFilled).to.equal(3);
     });
 
-    it('Edge case royalty rate', async () => {
+    it('Max royalty rate', async () => {
       await ContentContractSetup();
       await RawrTokenSetup();
 
       // set royalty rate to max
-      await contentManager.setTokenRoyaltiesBatch([[0, creator1Address.address, 1000000]]);
+      await contentManager.setTokenRoyaltiesBatch([[0, creator1Address.address, 200000]]);
 
       var orderData = [
         [content.address, 0],
@@ -440,9 +440,10 @@ describe('Exchange Contract', () => {
       expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
       expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
 
-      // receiver should claim payment adjusted after platform fee
       await exchange.connect(creator1Address).claimRoyalties();
-      expect(await rawrToken.balanceOf(creator1Address.address)).to.equal(ethers.BigNumber.from(997).mul(_1e18));
+      expect(await rawrToken.balanceOf(creator1Address.address)).to.equal(ethers.BigNumber.from(200).mul(_1e18));
+      await exchange.connect(playerAddress).claimOrders([orderId]);
+      expect(await rawrToken.balanceOf(playerAddress.address)).to.equal(ethers.BigNumber.from(20797).mul(_1e18));
     });
   });
 

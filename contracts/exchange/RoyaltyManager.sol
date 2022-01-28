@@ -106,12 +106,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
 
         if (_asset.contentAddress.supportsInterface(type(IERC2981Upgradeable).interfaceId)) {
             (receiver, royaltyFee) = IERC2981Upgradeable(_asset.contentAddress).royaltyInfo(_asset.tokenId, _total);
-            if (remaining >= royaltyFee) {
-                remaining -= royaltyFee;
-            } else {
-                royaltyFee = remaining;
-                remaining = 0;
-            }
+            remaining -= royaltyFee;
         }
         
         // If contract doesn't support the NFT royalty standard or IContent interface is not supported, ignore royalties

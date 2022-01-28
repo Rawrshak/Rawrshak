@@ -51,7 +51,7 @@ describe('HasRoyalty Contract Tests', () => {
         });
         
         it('Contract royalty rate too high', async () => {
-            await expect(testContract.setContractRoyalty(deployerAddress.address, 1000001)).to.be.reverted;
+            await expect(testContract.setContractRoyalty(deployerAddress.address, 200001)).to.be.reverted;
         });
 
         it('Invalid contract royalty receiver address', async () => {
@@ -130,7 +130,7 @@ describe('HasRoyalty Contract Tests', () => {
         });
 
         it('Token royalty rate too high', async () => {
-            var assetRoyalty = [[1, deployerAddress.address, 1000001]];
+            var assetRoyalty = [[1, deployerAddress.address, 200001]];
             await expect(testContract.setTokenRoyaltiesBatch(assetRoyalty)).to.be.reverted;
         });
 
