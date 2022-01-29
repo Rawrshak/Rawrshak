@@ -50,7 +50,7 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
     }
  
     function setRate(uint24 _rate) public override onlyRole(MANAGER_ROLE) {
-        require(_rate > 0 && _rate <= 1e6, "Invalid rate");
+        require(_rate > 0 && _rate <= 50000, "Invalid rate");
         require(_staking().totalStakedTokens() > 0, "No staked amount");
 
         // We cannot set the rate unless there are already tokens being staked
