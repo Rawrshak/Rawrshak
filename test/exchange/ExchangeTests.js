@@ -405,6 +405,46 @@ describe('Exchange Contract', () => {
       order = await exchange.getOrder(order2Id);
       expect(order.amountFilled).to.equal(3);
     });
+
+    it('Max royalty rate', async () => {
+      await ContentContractSetup();
+      await RawrTokenSetup();
+
+      // set royalty rate to max
+      await contentManager.setTokenRoyaltiesBatch([[0, creator1Address.address, 200000]]);
+
+      var orderData = [
+        [content.address, 0],
+        playerAddress.address,
+        rawrToken.address,
+        ethers.BigNumber.from(1000).mul(_1e18),
+        1,
+        false
+      ];
+
+      await content.connect(playerAddress).setApprovalForAll(await exchange.nftsEscrow(), true);
+
+      var tx = await exchange.connect(playerAddress).placeOrder(orderData);
+      var receipt = await tx.wait();
+      var ordersPlaced = receipt.events?.filter((x) => { return x.event == "OrderPlaced" });
+      var orderId = ordersPlaced[0].args.orderId;
+
+      // player 2 fills the sell order by buying the asset and sending payment
+      await rawrToken.connect(player2Address).approve(await exchange.tokenEscrow(), ethers.BigNumber.from(1000).mul(_1e18));
+
+      expect(await exchange.connect(player2Address).fillSellOrder([orderId], 1, ethers.BigNumber.from(1000).mul(_1e18)))
+        .to.emit(exchange, 'OrdersFilled');
+
+      // Player 2 originally has 10, but after buying 1 more, he should have 11
+      expect(await content.balanceOf(player2Address.address, 0)).to.equal(11);
+      expect(await feesEscrow.totalFees(rawrToken.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
+      expect(await rawrToken.balanceOf(feesEscrow.address)).to.equal(ethers.BigNumber.from(3).mul(_1e18));
+
+      await exchange.connect(creator1Address).claimRoyalties();
+      expect(await rawrToken.balanceOf(creator1Address.address)).to.equal(ethers.BigNumber.from(200).mul(_1e18));
+      await exchange.connect(playerAddress).claimOrders([orderId]);
+      expect(await rawrToken.balanceOf(playerAddress.address)).to.equal(ethers.BigNumber.from(20797).mul(_1e18));
+    });
   });
 
   describe("Claim Orders", () => {

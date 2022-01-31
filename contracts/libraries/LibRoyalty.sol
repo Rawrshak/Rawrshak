@@ -11,6 +11,6 @@ library LibRoyalty {
     function validateFee(address _receiver, uint24 _rate) internal pure {
         // Note: _rate can be 0; This signifies no royalty
         require(_receiver != address(0), "Invalid Account Address");
-        require(_rate <= 1e6, "Invalid Fee Rate");
+        require(_rate <= 2e5, "Invalid Fee Rate");
     }
 }

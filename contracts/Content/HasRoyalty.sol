@@ -46,7 +46,7 @@ abstract contract HasRoyalty is ContentSubsystemBase {
     function _setTokenRoyalty(uint256 _tokenId, address _receiver, uint24 _rate) internal {
         // _receiver can be address(0) and _rate can be 0. It indicates to use the contract
         // rates
-        require(_rate <= 1e6, "Invalid Fee Rate");
+        require(_rate <= 2e5, "Invalid Fee Rate");
         tokenRoyalty[_tokenId].receiver = _receiver;
         tokenRoyalty[_tokenId].rate = _rate;
         emit TokenRoyaltyUpdated(_parent(), _tokenId, _receiver, _rate);

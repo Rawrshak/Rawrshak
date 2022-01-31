@@ -74,7 +74,7 @@ contract Orderbook is IOrderbook, ManagerBase {
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             // If the state is Partially Filled, we don't set the order state as claimed. Claimed state 
             // only occurs for when the order is completely filled and the order owner claims.
-            if (orders[i].state == LibOrder.OrderState.FILLED) {
+            if (orders[_orderIds[i]].state == LibOrder.OrderState.FILLED) {
                 orders[_orderIds[i]].state = LibOrder.OrderState.CLAIMED;
             }
         }

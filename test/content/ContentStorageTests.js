@@ -51,8 +51,8 @@ describe('ContentStorage Contract Tests', () => {
             await expect(contentStorage.connect(playerAddress).updateSupply(0, 50)).to.be.reverted;
             await expect(contentStorage.connect(playerAddress).setPublicUriBatch([[0, ""]])).to.be.reverted;
             await expect(contentStorage.connect(playerAddress).setHiddenUriBatch([[0, ""]])).to.be.reverted;
-            await expect(contentStorage.connect(playerAddress).setContractRoyalty(playerAddress.address, 1000000)).to.be.reverted;
-            await expect(contentStorage.connect(playerAddress).setTokenRoyaltiesBatch([[0, playerAddress.address, 500000]])).to.be.reverted;
+            await expect(contentStorage.connect(playerAddress).setContractRoyalty(playerAddress.address, 200000)).to.be.reverted;
+            await expect(contentStorage.connect(playerAddress).setTokenRoyaltiesBatch([[0, playerAddress.address, 50000]])).to.be.reverted;
         });
     });
     
@@ -133,7 +133,7 @@ describe('ContentStorage Contract Tests', () => {
 
         it('Add mutliple assets, one with invalid fee', async () => {
             var asset = [
-                ["arweave.net/tx/public-uri-0", "arweave.net/tx/private-uri-0", 1000, deployerAddress.address, 2000000],
+                ["arweave.net/tx/public-uri-0", "arweave.net/tx/private-uri-0", 1000, deployerAddress.address, 400000],
                 ["arweave.net/tx/public-uri-1", "arweave.net/tx/private-uri-1", 10, deployerAddress.address, 0]
             ];
             await expect(contentStorage.addAssetBatch(asset)).to.be.reverted;
