@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../libraries/LibRoyalty.sol";
 import "./ContentSubsystemBase.sol";
 
+// Todo: Update Comments and tests
 abstract contract HasRoyalty is ContentSubsystemBase {
 
     /***************** Stored Variables *****************/
@@ -53,7 +54,7 @@ abstract contract HasRoyalty is ContentSubsystemBase {
     }
 
     /**
-     * @dev Internal function which returns the royalty receiver address and rate for a token
+     * @dev Internal function to set the royalties for a token
      * @param _tokenId uint256 ID of the token to query
      * If the token id's royalty pair is not set (receiver = address(0)), then contract royalties is returned
      * contractRoyalty and tokenRoyalty[tokenId] can both be null
