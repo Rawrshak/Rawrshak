@@ -56,7 +56,7 @@ abstract contract MultipleRoyalties{
     }
 
     /**
-    * @dev Verifies whether the sum of the royalties exceed 1e6 and whether the number of royalties and receivers match
+    * @dev Verifies whether the sum of the royalties exceed 2e5 and whether the number of royalties and receivers match
     * @param _royaltyReceivers addresses to receive the royalties
     * @param _royaltyRates royalty fee percentages
     * @param _originalRoyaltyRate royalty rate of the original item
@@ -69,7 +69,7 @@ abstract contract MultipleRoyalties{
         for (uint256 i = 0; i < _royaltyReceivers.length; ++i) {
             sum += _royaltyRates[i];
         }
-        return (sum <= 1e6);
+        return (sum <= 2e5);
     }
 
     uint256[50] private __gap;

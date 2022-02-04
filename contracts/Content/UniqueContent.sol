@@ -152,14 +152,14 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, MultipleRoyalties,
                 royaltyAmounts[i + 1] = _salePrice * _rates[i] / 1e6;
             }
         } else {
-            // if the total royalties exceed 1e6, split the remainder proportionally to the remaining receivers
+            // if the total royalties exceed 2e5, split the remainder proportionally to the remaining receivers
             uint256 sum;
             for (uint256 i = 0; i < length; ++i) {
                 sum += _rates[i];
             }
             for (uint256 i = 0; i < length; ++i) {
                 receivers[i + 1] = _receivers[i];
-                royaltyAmounts[i + 1] = (_salePrice * _rates[i] / 1e6) * (1e6 - _originalRoyaltyAmount) / sum;
+                royaltyAmounts[i + 1] = (_salePrice * _rates[i] / 1e6) * (2e5 - _originalRoyaltyRate) / sum;
             }
         }
     }

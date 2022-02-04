@@ -135,7 +135,7 @@ describe('Unique Content Contract Tests', () => {
 
         it('Invalid mints', async () => {
             var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [1], false];
-            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [980001], false];
+            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [180001], false];
             var uniqueAssetCreateData3 = [playerAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
             var uniqueAssetCreateData4 = [creatorAddress.address, content.address, 1, "arweave.net/tx/unique-uri-1", [], [], false];
 
@@ -344,7 +344,7 @@ describe('Unique Content Contract Tests', () => {
 
         it('Original royalty update pushes total over limit', async () => {
             var receivers = [creatorAddress.address, receiverAddress.address, playerAddress.address];
-            var rates = [300000, 150000, 50000];
+            var rates = [60000, 30000, 10000];
             var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", receivers, rates, false];
 
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
@@ -353,28 +353,28 @@ describe('Unique Content Contract Tests', () => {
             expect(tokenFees.receiver).to.equal(developerAddress.address);
             expect(tokenFees.royaltyAmount).to.equal(20000);
 
-            // original royalty updates pushes total to 100,000 over the limit of 1e6
-            await contentStorage.setTokenRoyaltiesBatch([[0, developerAltAddress.address, 600000]]);
+            // original royalty updates pushes total to 20,000 over the limit of 2e5
+            await contentStorage.setTokenRoyaltiesBatch([[0, developerAltAddress.address, 120000]]);
 
-            var tokenFees2 = await uniqueContent.multipleRoyaltyInfo(0, 1000000);
+            var tokenFees2 = await uniqueContent.multipleRoyaltyInfo(0, 20000);
             expect(tokenFees2[0][0]).to.equal(developerAltAddress.address);
             expect(tokenFees2[0][1]).to.equal(creatorAddress.address);
             expect(tokenFees2[0][2]).to.equal(receiverAddress.address);
             expect(tokenFees2[0][3]).to.equal(playerAddress.address);
-            expect(tokenFees2[1][0]).to.equal(600000);
+            expect(tokenFees2[1][0]).to.equal(2400);
             // remaining royalties have to be split
-            expect(tokenFees2[1][1]).to.equal(240000);
-            expect(tokenFees2[1][2]).to.equal(120000);
-            expect(tokenFees2[1][3]).to.equal(40000);
+            expect(tokenFees2[1][1]).to.equal(960);
+            expect(tokenFees2[1][2]).to.equal(480);
+            expect(tokenFees2[1][3]).to.equal(160);
 
-            await contentStorage.setTokenRoyaltiesBatch([[0, developerAddress.address, 999995]]);
+            await contentStorage.setTokenRoyaltiesBatch([[0, developerAddress.address, 199995]]);
 
             var tokenFees3 = await uniqueContent.multipleRoyaltyInfo(0, 1000000);
             expect(tokenFees3[0][0]).to.equal(developerAddress.address);
             expect(tokenFees3[0][1]).to.equal(creatorAddress.address);
             expect(tokenFees3[0][2]).to.equal(receiverAddress.address);
             expect(tokenFees3[0][3]).to.equal(playerAddress.address);
-            expect(tokenFees3[1][0]).to.equal(999995);
+            expect(tokenFees3[1][0]).to.equal(199995);
             expect(tokenFees3[1][1]).to.equal(3);
             expect(tokenFees3[1][2]).to.equal(1);
             expect(tokenFees3[1][3]).to.equal(0);
@@ -385,7 +385,7 @@ describe('Unique Content Contract Tests', () => {
 
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             var receivers = [developerAltAddress.address, creatorAddress.address, receiverAddress.address];
-            var invalidRates1 = [500000, 500000, 1];
+            var invalidRates1 = [90000, 90000, 1];
             var invalidRates2 = [10000, 20000];
             var validRates = [10000, 20000, 30000];
 
