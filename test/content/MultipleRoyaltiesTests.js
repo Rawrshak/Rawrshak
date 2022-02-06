@@ -45,7 +45,7 @@ describe('Multiple Royalties Contract Tests', () => {
         it('Invalid royalties', async () => {
             var originalRoyalty = 7500;
             var receivers = [creatorAddress.address, creatorAltAddress.address, receiverAddress.address];
-            var rates1 = [497500, 495000, 1];
+            var rates1 = [96250, 96250, 1];
             var rates2 = [10000, 30000, 20000, 10000];
             var rates3 = [20000];
 
