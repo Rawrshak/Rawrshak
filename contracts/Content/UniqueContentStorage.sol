@@ -1,0 +1,129 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+
+import "./MultipleRoyalties.sol";
+import "./interfaces/IUniqueContentStorage.sol";
+import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import "../libraries/LibAsset.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+
+contract UniqueContentStorage is IUniqueContentStorage, ContextUpgradeable, MultipleRoyalties {
+
+    /***************** Stored Variables *****************/
+
+    mapping(uint256 => LibAsset.UniqueAsset) uniqueAssetInfo;
+
+    function setUniqueAssetInfo(LibAsset.UniqueAssetCreateData memory _data, uint256 _uniqueIdsCounter, address _caller) external override {
+        uniqueAssetInfo[_uniqueIdsCounter].creator = _caller;
+        uniqueAssetInfo[_uniqueIdsCounter].contentAddress = _data.contentAddress;
+        uniqueAssetInfo[_uniqueIdsCounter].tokenId = _data.tokenId;
+        uniqueAssetInfo[_uniqueIdsCounter].uniqueAssetUri.push(_data.uniqueAssetUri);
+        uniqueAssetInfo[_uniqueIdsCounter].creatorLocked = _data.creatorLocked;
+
+        _setTokenRoyalties(_uniqueIdsCounter, _data.royaltyReceivers, _data.royaltyRates);
+    }
+
+    function burnUniqueAssetInfo(uint256 _uniqueId) external override {
+        uniqueAssetInfo[_uniqueId].creator = address(0);
+        uniqueAssetInfo[_uniqueId].contentAddress = address(0);
+        uniqueAssetInfo[_uniqueId].tokenId = 0;
+        uniqueAssetInfo[_uniqueId].version = 0;
+        uniqueAssetInfo[_uniqueId].creatorLocked = false;
+        delete uniqueAssetInfo[_uniqueId].uniqueAssetUri;
+
+        _deleteTokenRoyalties(_uniqueId);
+    }
+
+    function tokenURI(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
+        if (_version > uniqueAssetInfo[_uniqueId].version) {
+            _version = uniqueAssetInfo[_uniqueId].version;
+        } 
+        return uniqueAssetInfo[_uniqueId].uniqueAssetUri[_version];
+    }
+
+    /**
+    * @dev If the caller is creator and owner of the token, it adds a new version of the unique asset
+    * @param _uniqueId uint256 ID of the token to set its uri
+    * @param _uri string URI to assign
+    */
+    function setUniqueUri(uint256 _uniqueId, string memory _uri) external override {
+        uniqueAssetInfo[_uniqueId].uniqueAssetUri.push(_uri);
+        uniqueAssetInfo[_uniqueId].version++;
+
+        emit UniqueUriUpdated(_uniqueId, uniqueAssetInfo[_uniqueId].version);
+    }
+
+    function verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates, uint256 _originalRoyaltyRate) external pure override returns (bool) {
+        return _verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate);
+    }
+
+    /**
+    * @dev Returns the original asset's receiver address and royalty amount for a token sold at a certain sales price
+    * @param _uniqueId uint256 ID of token to query
+    * @param _salePrice price the asset is to be purchased for
+    */
+    function getRoyalty(uint256 _uniqueId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount) {
+        // calls royaltyInfo() in the original asset's contract
+        (receiver, royaltyAmount) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, _salePrice);
+    }
+
+    function getMultipleRoyalties(uint256 _uniqueId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
+        // grabs the original item's royalty info
+        (address _creator, uint256 _originalRoyaltyAmount) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, _salePrice);
+        
+        address[] memory _receivers;
+        uint24[] memory _rates;
+        // grabs the additional royalties set for the unique token and places them in provisional arrays
+        (_receivers, _rates) = _getMultipleRoyalties(_uniqueId);
+        uint256 length = _getTokenRoyaltiesLength(_uniqueId);
+        
+        receivers = new address[](length + 1);
+        royaltyAmounts = new uint256[](length + 1);
+        // adds the original creator address and royalty amount to arrays of receivers and royalty amounts
+        receivers[0] = _creator;
+        royaltyAmounts[0] = _originalRoyaltyAmount;
+
+        (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, 1e6);
+        // calculates royaltyAmount for each receiver and adds their address and royalty into the two arrays
+        if (_verifyRoyalties(_receivers, _rates, _originalRoyaltyRate)) {
+            for (uint256 i = 0; i < length; ++i) {
+                receivers[i + 1] = _receivers[i];
+                royaltyAmounts[i + 1] = _salePrice * _rates[i] / 1e6;
+            }
+        } else {
+            // if the total royalties exceed 2e5, split the remainder proportionally to the remaining receivers
+            uint256 sum;
+            for (uint256 i = 0; i < length; ++i) {
+                sum += _rates[i];
+            }
+            for (uint256 i = 0; i < length; ++i) {
+                receivers[i + 1] = _receivers[i];
+                royaltyAmounts[i + 1] = (_salePrice * _rates[i] / 1e6) * (2e5 - _originalRoyaltyRate) / sum;
+            }
+        }
+    }
+
+    function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external {
+        (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, 1e6);
+        require(_verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate), "The royalties you have entered are invalid");
+
+        _setTokenRoyalties(_uniqueId, _royaltyReceivers, _royaltyRates);
+    }
+
+    function isCreator(uint256 _uniqueId, address _caller) external view override returns (bool) {
+        return uniqueAssetInfo[_uniqueId].creator == _caller;
+    }
+
+    function isLocked(uint256 _uniqueId) external view override returns (bool) {
+        return uniqueAssetInfo[_uniqueId].creatorLocked;
+    }
+    
+    function getAssetData(uint256 _uniqueId) external view returns (uint256 _tokenId, address _address) {
+        _tokenId = uniqueAssetInfo[_uniqueId].tokenId;
+        _address = uniqueAssetInfo[_uniqueId].contentAddress;
+    }
+
+    uint256[50] private __gap;
+}
+

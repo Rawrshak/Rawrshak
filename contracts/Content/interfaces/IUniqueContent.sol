@@ -9,8 +9,6 @@ interface IUniqueContent {
 
     event Burn(uint256 indexed uniqueId, address operator);
 
-    event UniqueUriUpdated(uint256 indexed uniqueId, uint256 indexed version);
-
     /******** View Functions ********/
     function originalAssetUri(uint256 _uniqueId, uint256 _version) external view returns(string memory);
 
