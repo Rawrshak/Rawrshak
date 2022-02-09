@@ -49,6 +49,15 @@ describe('HasRoyalty Contract Tests', () => {
             expect(tokenFees.rate).to.equal(20000);
             expect(tokenFees.receiver).to.equal(deployerAddress.address);
         });
+        
+        it('Contract royalty rate too high', async () => {
+            await expect(testContract.setContractRoyalty(deployerAddress.address, 200001)).to.be.reverted;
+        });
+
+        it('Invalid contract royalty receiver address', async () => {
+            await expect(testContract.setContractRoyalty(ethers.constants.AddressZero, 10000)).to.be.reverted;
+        });
+
     });
 
     describe("Token Royalty", () => {
@@ -100,7 +109,7 @@ describe('HasRoyalty Contract Tests', () => {
                 .withArgs(ethers.constants.AddressZero, 2, deployerAltAddress.address, 20000);
         });
 
-        it('Set Royalty to Token Id 1 and then revert to using Contract Royalty', async () => {
+        it('Set royalty to Token ID 1 and then reset royalty to zero', async () => {
             // Set token 1 royalties
             var assetRoyalty = [[1, deployerAddress.address, 20000]];
             await testContract.setTokenRoyaltiesBatch(assetRoyalty);
@@ -119,6 +128,26 @@ describe('HasRoyalty Contract Tests', () => {
             expect(tokenFees.rate).to.equal(0);
             expect(tokenFees.receiver).to.equal(deployerAddress.address);
         });
+
+        it('Token royalty rate too high', async () => {
+            var assetRoyalty = [[1, deployerAddress.address, 200001]];
+            await expect(testContract.setTokenRoyaltiesBatch(assetRoyalty)).to.be.reverted;
+        });
+
+        it('Zero address token receiver address', async () => {
+            var assetRoyalty = [[1, ethers.constants.AddressZero, 30000]];
+            var results = await testContract.setTokenRoyaltiesBatch(assetRoyalty);
+
+            expect(results)
+                .to.emit(testContract, 'TokenRoyaltyUpdated')
+                .withArgs(ethers.constants.AddressZero, 1, ethers.constants.AddressZero, 30000);
+            
+            // Should revert to using contract royalty
+            tokenFees = await testContract.getRoyalty(1);
+            expect(tokenFees.rate).to.equal(10000);
+            expect(tokenFees.receiver).to.equal(deployerAddress.address);
+        });
+        
     });
 
 });

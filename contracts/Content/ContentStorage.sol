@@ -19,9 +19,9 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
      */
 
     /***************** Stored Variables *****************/
-    mapping(uint256 => bool) public override ids;
     mapping(uint256 => uint256) public override maxSupply;
     mapping(uint256 => uint256) public override supply;
+    uint256 public override assetCounter;
 
     /******************** Public API ********************/
     function initialize(
@@ -41,7 +41,6 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
         _registerInterface(type(IContentStorage).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
-
      
     /**
     * @dev assigns the address of contentParent and transfers role of DEFAULT_ADMIN_ROLE to the _contentParent parameter
@@ -61,26 +60,28 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     * @param _assets an array of LibAsset.CreateData structure objects
     */
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256[] memory tokenIds = new uint256[](_assets.length);
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(!ids[_assets[i].tokenId], "Token Id already exists.");
-            ids[_assets[i].tokenId] = true;
-            supply[_assets[i].tokenId] = 0;
+            tokenIds[i] = assetCounter;
+            supply[assetCounter] = 0;
 
             // If max supply is set to 0, this means there is no mint limit. Set max supply to uint256.max
             if (_assets[i].maxSupply == 0) {
-                maxSupply[_assets[i].tokenId] = type(uint256).max;
-            } else {
-                maxSupply[_assets[i].tokenId] = _assets[i].maxSupply;
-            }
+                _assets[i].maxSupply = type(uint256).max; 
+            } 
+            maxSupply[assetCounter] = _assets[i].maxSupply;
 
-            _setPublicUri(_assets[i].tokenId, _assets[i].publicDataUri);
-            _setHiddenUri(_assets[i].tokenId, _assets[i].hiddenDataUri);
+            _setPublicUri(assetCounter, _assets[i].publicDataUri);
+            _setHiddenUri(assetCounter, _assets[i].hiddenDataUri);
             
             // if this specific token has a different royalty fees than the contract
-            _setTokenRoyalty(_assets[i].tokenId, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
+            _setTokenRoyalty(assetCounter, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
+
+            // increment asset counter
+            assetCounter++;
         }
 
-        emit AssetsAdded(_parent(), _assets);
+        emit AssetsAdded(_parent(), tokenIds, _assets);
     }
 
     /**
@@ -98,7 +99,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     */
     function setHiddenUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(ids[_assets[i].tokenId], "Invalid Token Id");
+            require(_assets[i].tokenId < assetCounter, "Invalid Token Id");
             _setHiddenUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
@@ -109,7 +110,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     */
     function setPublicUriBatch(LibAsset.AssetUri[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(ids[_assets[i].tokenId], "Invalid Token Id");
+            require(_assets[i].tokenId < assetCounter, "Invalid Token Id");
             _setPublicUri(_assets[i].tokenId, _assets[i].uri);
         }
     }
@@ -132,7 +133,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         // This overwrites the existing array of contract fees.
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(ids[_assets[i].tokenId], "Invalid Token Id");
+            require(_assets[i].tokenId < assetCounter, "Invalid Token Id");
             _setTokenRoyalty(_assets[i].tokenId, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
         }
     }
@@ -166,8 +167,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     * @dev returns the royalty receiver address and rate for a token
     */
     function getRoyalty(uint256 _tokenId) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns (address receiver, uint24 rate) {
-        // If token id doesn't exist or there isn't a royalty fee attached to this specific token, 
-        // _getRoyalty() will return the contract's default royalty fee. However, that can also
+        // If token id doesn't exist, _getRoyalty() will return the contract's default royalty fee. However, that can also
         // be null. In the case of null, there are no royalty fees. 
         return _getRoyalty(_tokenId);
     }

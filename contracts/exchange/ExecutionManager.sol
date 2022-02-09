@@ -44,7 +44,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         LibOrder.AssetData calldata _asset) 
         external override onlyOwner
     {
-        require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input lenght");
+        require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input length");
         
         for (uint256 i = 0; i < _orderIds.length; ++i) {
             if (_amounts[i] > 0) {
@@ -66,7 +66,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         address _token)
         external override onlyOwner
     {
-        require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input lenght");
+        require(_orderIds.length == _paymentPerOrder.length && _orderIds.length == _amounts.length, "Invalid input length");
         
         // send payment from user to escrow
         for (uint256 i = 0; i < _orderIds.length; ++i) {

@@ -6,7 +6,6 @@ library LibAsset {
     bytes32 public constant MINT_DATA_TYPEHASH = keccak256("MintData(address to,uint256[] tokenIds,uint256[] amounts,uint256 nonce,address signer)");
         
     struct CreateData {
-        uint256 tokenId;
         string publicDataUri;
         string hiddenDataUri;
         uint256 maxSupply;
@@ -50,12 +49,23 @@ library LibAsset {
         bool approved;
     }
 
-    struct UniqueContentData {
+    struct UniqueAssetCreateData {
+        address to;
+        address contentAddress;
+        uint256 tokenId;
+        string uniqueAssetUri;
+        address[] royaltyReceivers;
+        uint24[] royaltyRates;
+        bool creatorLocked;
+    }
+
+    struct UniqueAsset {
         address creator;
-        address contentContract;
-        uint256 id;
-        address royaltyReceiver;
-        uint24 royaltyRate;
+        address contentAddress;
+        uint256 tokenId;
+        uint256 version;
+        string[] uniqueAssetUri;
+        bool creatorLocked;
     }
 
     function hashMintData(MintData memory _data) internal pure returns (bytes32) {

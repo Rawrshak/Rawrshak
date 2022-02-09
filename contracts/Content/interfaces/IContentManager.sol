@@ -27,6 +27,4 @@ interface IContentManager {
     function setContractRoyalty(address _receiver, uint24 _rate) external;
     
     function setTokenRoyaltiesBatch(LibAsset.AssetRoyalties[] memory _assets) external;
-    
-    function mintBatch(LibAsset.MintData memory _data) external;
 }
