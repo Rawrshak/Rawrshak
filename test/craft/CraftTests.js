@@ -18,7 +18,7 @@ describe('Craft Contract', () => {
     before(async () => {
         [deployerAddress, craftingSystemAddress, minterAddress, playerAddress] = await ethers.getSigners();
         AccessControlManager = await ethers.getContractFactory("AccessControlManager");
-        TestCraft = await ethers.getContractFactory("TestCraft");
+        Craft = await ethers.getContractFactory("Craft");
         ContentFactory = await ethers.getContractFactory("ContentFactory");
         ContentManager = await ethers.getContractFactory("ContentManager");
         ContentStorage = await ethers.getContractFactory("ContentStorage");
@@ -34,7 +34,7 @@ describe('Craft Contract', () => {
     });
 
     beforeEach(async () => {
-        craft = await upgrades.deployProxy(TestCraft, [1000]);
+        craft = await upgrades.deployProxy(Craft, [1000]);
     });
 
     async function createContentContract() {
@@ -51,13 +51,13 @@ describe('Craft Contract', () => {
 
         // Type LibAsset.CreateData
         var assets = [
-            [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, deployerAddress.address, 0],
-            [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1", 10000, deployerAddress.address, 150],
-            [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, deployerAddress.address, 200],
-            [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, deployerAddress.address, 250],
-            [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, deployerAddress.address, 300],
-            [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, deployerAddress.address, 350],
+            ["arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, deployerAddress.address, 0],
+            ["arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1", 10000, deployerAddress.address, 150],
+            ["arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, deployerAddress.address, 200],
+            ["arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, deployerAddress.address, 250],
+            ["arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, deployerAddress.address, 300],
+            ["arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, deployerAddress.address, 350],
         ];
 
         // Add assets
@@ -69,7 +69,7 @@ describe('Craft Contract', () => {
 
         // Mint assets
         // Type of LibAsset.MintData            
-        var mintData = [playerAddress.address, [1, 2, 3, 4, 5], [10, 10, 10, 10, 10], 0, ethers.constants.AddressZero, []];
+        var mintData = [playerAddress.address, [0, 1, 2, 3, 4], [10, 10, 10, 10, 10], 0, ethers.constants.AddressZero, []];
         await content.mintBatch(mintData);
         
         // Register the craft as a system on the content contract
@@ -85,11 +85,11 @@ describe('Craft Contract', () => {
                 1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
-                    [content.address, 3]
+                    [content.address, 2]
                 ],
                 [1], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 6]
+                    [content.address, 5]
                 ],
                 [1] // array of reward amounts
             ]
@@ -112,12 +112,12 @@ describe('Craft Contract', () => {
                 1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 4]
+                    [content.address, 2],
+                    [content.address, 3]
                 ],
                 [1, 1], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 6]
+                    [content.address, 5]
                 ],
                 [1] // array of reward amounts
             ]
@@ -144,12 +144,12 @@ describe('Craft Contract', () => {
                 1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 4]
+                    [content.address, 2],
+                    [content.address, 3]
                 ],
                 [1, 1], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 6]
+                    [content.address, 5]
                 ],
                 [1] // array of reward amounts
             ],
@@ -157,12 +157,12 @@ describe('Craft Contract', () => {
                 500000, // crafting rate
                 false, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 5]
+                    [content.address, 2],
+                    [content.address, 4]
                 ],
                 [2, 3], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 7]
+                    [content.address, 6]
                 ],
                 [2] // array of reward amounts
             ]
@@ -189,14 +189,14 @@ describe('Craft Contract', () => {
         expect(storedRecipeData.materials.length == 2, "materials length incorrect").to.equal(true);
         expect(storedRecipeData.materials[0].content == content.address, "material 1 content contract incorrect").to.equal(true);
         expect(storedRecipeData.materials[1].content == content.address, "material 2 content contract incorrect").to.equal(true);
-        expect(storedRecipeData.materials[0].tokenId == 3, "material 1 token incorrect").to.equal(true);
-        expect(storedRecipeData.materials[1].tokenId == 5, "material 2 token incorrect").to.equal(true);
+        expect(storedRecipeData.materials[0].tokenId == 2, "material 1 token incorrect").to.equal(true);
+        expect(storedRecipeData.materials[1].tokenId == 4, "material 2 token incorrect").to.equal(true);
         expect(storedRecipeData.materialAmounts.length == 2, "materials amounts length incorrect").to.equal(true);
         expect(storedRecipeData.materialAmounts[0] == 2, "material 1 amount incorrect").to.equal(true);
         expect(storedRecipeData.materialAmounts[1] == 3, "material 2 amount incorrect").to.equal(true);
         expect(storedRecipeData.rewards.length == 1, "rewards length incorrect").to.equal(true);
         expect(storedRecipeData.rewards[0].content == content.address, "rewards content contract incorrect").to.equal(true);
-        expect(storedRecipeData.rewards[0].tokenId == 7, "rewards 1 token incorrect").to.equal(true);
+        expect(storedRecipeData.rewards[0].tokenId == 6, "rewards 1 token incorrect").to.equal(true);
         expect(storedRecipeData.rewardAmounts.length == 1, "reward amounts length incorrect").to.equal(true);
         expect(storedRecipeData.rewardAmounts[0] == 2, "rewards amount incorrect").to.equal(true);
     });
@@ -216,12 +216,12 @@ describe('Craft Contract', () => {
                 5000, // crafting rate
                 false, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 4]
+                    [content.address, 2],
+                    [content.address, 3]
                 ],
                 [1], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 6]
+                    [content.address, 5]
                 ],
                 [1] // array of reward amounts
             ]
@@ -234,12 +234,12 @@ describe('Craft Contract', () => {
                 500000, // crafting rate
                 false, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 4]
+                    [content.address, 2],
+                    [content.address, 3]
                 ],
                 [1, 1], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 6]
+                    [content.address, 5]
                 ],
                 [1, 1] // array of reward amounts
             ]
@@ -252,12 +252,12 @@ describe('Craft Contract', () => {
                 1100000, // crafting rate
                 false, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 4]
+                    [content.address, 2],
+                    [content.address, 3]
                 ],
                 [1, 1], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 6]
+                    [content.address, 5]
                 ],
                 [1] // array of reward amounts
             ]
@@ -282,10 +282,10 @@ describe('Craft Contract', () => {
         await expect(results)
                 .to.emit(craft, 'AssetsCrafted');
         
-        expect(await content.balanceOf(playerAddress.address, 3) == 9, "Material was not burned.").to.equal(true);
-        expect(await content.totalSupply(3) == 9, "Material supply is incorrect.").to.equal(true);
-        expect(await content.balanceOf(playerAddress.address, 6) == 1, "Reward was not burned.").to.equal(true);
-        expect(await content.totalSupply(6) == 1, "Reward supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 2) == 9, "Material was not burned.").to.equal(true);
+        expect(await content.totalSupply(2) == 9, "Material supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 5) == 1, "Reward was not burned.").to.equal(true);
+        expect(await content.totalSupply(5) == 1, "Reward supply is incorrect.").to.equal(true);
     });
 
     it('Craft multiple instances of a recipe', async () => {
@@ -296,12 +296,12 @@ describe('Craft Contract', () => {
                 1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 4]
+                    [content.address, 2],
+                    [content.address, 3]
                 ],
                 [1, 1], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 6]
+                    [content.address, 5]
                 ],
                 [1] // array of reward amounts
             ],
@@ -309,12 +309,12 @@ describe('Craft Contract', () => {
                 1000000, // crafting rate
                 true, // enabled
                 [   // array of material asset data
-                    [content.address, 3],
-                    [content.address, 5]
+                    [content.address, 2],
+                    [content.address, 4]
                 ],
                 [2, 3], // array of material amounts
                 [   // array of reward asset data
-                    [content.address, 7]
+                    [content.address, 6]
                 ],
                 [2] // array of reward amounts
             ]
@@ -335,24 +335,24 @@ describe('Craft Contract', () => {
         await expect(results)
                 .to.emit(craft, 'AssetsCrafted');
         
-        expect(await content.balanceOf(playerAddress.address, 3) == 7, "Material 1 was not burned.").to.equal(true);
-        expect(await content.totalSupply(3) == 7, "Material 1 supply is incorrect.").to.equal(true);
-        expect(await content.balanceOf(playerAddress.address, 4) == 7, "Material 2 was not burned.").to.equal(true);
-        expect(await content.totalSupply(4) == 7, "Material 2 supply is incorrect.").to.equal(true);
-        expect(await content.balanceOf(playerAddress.address, 6) == 3, "Reward was not created.").to.equal(true);
-        expect(await content.totalSupply(6) == 3, "Reward supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 2) == 7, "Material 1 was not burned.").to.equal(true);
+        expect(await content.totalSupply(2) == 7, "Material 1 supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 3) == 7, "Material 2 was not burned.").to.equal(true);
+        expect(await content.totalSupply(3) == 7, "Material 2 supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 5) == 3, "Reward was not created.").to.equal(true);
+        expect(await content.totalSupply(5) == 3, "Reward supply is incorrect.").to.equal(true);
         
         // Craft recipe 2
         var results = await craft.connect(playerAddress).craft(1, 2);
         await expect(results)
                 .to.emit(craft, 'AssetsCrafted');
         
-        expect(await content.balanceOf(playerAddress.address, 3) == 3, "Material 1 was not burned.").to.equal(true);
-        expect(await content.totalSupply(3) == 3, "Material 1 supply is incorrect.").to.equal(true);
-        expect(await content.balanceOf(playerAddress.address, 5) == 4, "Material 2 was not burned.").to.equal(true);
-        expect(await content.totalSupply(5) == 4, "Material 2 supply is incorrect.").to.equal(true);
-        expect(await content.balanceOf(playerAddress.address, 7) == 4, "Reward was not created.").to.equal(true);
-        expect(await content.totalSupply(7) == 4, "Reward supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 2) == 3, "Material 1 was not burned.").to.equal(true);
+        expect(await content.totalSupply(2) == 3, "Material 1 supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 4) == 4, "Material 2 was not burned.").to.equal(true);
+        expect(await content.totalSupply(4) == 4, "Material 2 supply is incorrect.").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 6) == 4, "Reward was not created.").to.equal(true);
+        expect(await content.totalSupply(6) == 4, "Reward supply is incorrect.").to.equal(true);
     });
 
     it('Invalid Craft', async () => {

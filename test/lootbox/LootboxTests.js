@@ -74,13 +74,13 @@ describe('Lootbox Contract', () => {
 
         // Type LibAsset.CreateData
         var assets = [
-            [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, deployerAddress.address, 0],
-            [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1", 10000, deployerAddress.address, 150],
-            [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, deployerAddress.address, 200],
-            [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, deployerAddress.address, 250],
-            [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, deployerAddress.address, 300],
-            [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, deployerAddress.address, 350],
+            ["arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, deployerAddress.address, 0],
+            ["arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1", 10000, deployerAddress.address, 150],
+            ["arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, deployerAddress.address, 200],
+            ["arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, deployerAddress.address, 250],
+            ["arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, deployerAddress.address, 300],
+            ["arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, deployerAddress.address, 350],
         ];
 
         // Add assets
@@ -88,7 +88,7 @@ describe('Lootbox Contract', () => {
 
         // Mint assets
         // Type of LibAsset.MintData
-        var mintData = [playerAddress.address, [1, 2], [10, 10], 0, ethers.constants.AddressZero, []];
+        var mintData = [playerAddress.address, [0, 1], [10, 10], 0, ethers.constants.AddressZero, []];
         
         var approvalPair = [[deployerAddress.address, true]];
         await contentManager.registerOperators(approvalPair);
@@ -122,17 +122,17 @@ describe('Lootbox Contract', () => {
         // Each entry is type LibLootbox.LootboxReward
         rewards = [
             [
-                [ [content.address, 1] /*LibCraft.AssetData*/, fullProb /*probability*/, 1 /*amount*/, 0 /*class*/],
-                [ [content.address, 2] /*LibCraft.AssetData*/, fullProb /*probability*/, 1 /*amount*/, 0 /*class*/]
+                [ [content.address, 0] /*LibCraft.AssetData*/, fullProb /*probability*/, 1 /*amount*/, 0 /*class*/],
+                [ [content.address, 1] /*LibCraft.AssetData*/, fullProb /*probability*/, 1 /*amount*/, 0 /*class*/]
             ],
             [
-                [ [content.address, 3] /*LibCraft.AssetData*/, fullProb /*probability*/, 1 /*amount*/, 0 /*class*/],
-                [ [content.address, 4] /*LibCraft.AssetData*/, halfProb /*probability*/, 1 /*amount*/, 0 /*class*/],
-                [ [content.address, 5] /*LibCraft.AssetData*/, rareProb /*probability*/, 1 /*amount*/, 0 /*class*/]
+                [ [content.address, 2] /*LibCraft.AssetData*/, fullProb /*probability*/, 1 /*amount*/, 0 /*class*/],
+                [ [content.address, 3] /*LibCraft.AssetData*/, halfProb /*probability*/, 1 /*amount*/, 0 /*class*/],
+                [ [content.address, 4] /*LibCraft.AssetData*/, rareProb /*probability*/, 1 /*amount*/, 0 /*class*/]
             ],
             [
-                [ [content.address, 6] /*LibCraft.AssetData*/, halfProb /*probability*/, 1 /*amount*/, 0 /*class*/],
-                [ [content.address, 7] /*LibCraft.AssetData*/, rareProb /*probability*/, 1 /*amount*/, 0 /*class*/]
+                [ [content.address, 5] /*LibCraft.AssetData*/, halfProb /*probability*/, 1 /*amount*/, 0 /*class*/],
+                [ [content.address, 6] /*LibCraft.AssetData*/, rareProb /*probability*/, 1 /*amount*/, 0 /*class*/]
             ],
         ];  
 
@@ -155,8 +155,6 @@ describe('Lootbox Contract', () => {
         var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
 
         var tokenId = updatedBlueprint[0].args.tokenId;
-        console.log("| Blueprint Token Id: " + tokenId);
-        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Make sure we start with no rewards.
         var lootboxRewards = await lootboxStorage.getRewards(tokenId);
@@ -202,7 +200,6 @@ describe('Lootbox Contract', () => {
         var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
 
         var tokenId = updatedBlueprint[0].args.tokenId;
-        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
         var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][0]);
@@ -226,7 +223,6 @@ describe('Lootbox Contract', () => {
         var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
 
         var tokenId = updatedBlueprint[0].args.tokenId;
-        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
         var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[0][0]);
@@ -242,8 +238,8 @@ describe('Lootbox Contract', () => {
         await expect(results).to.emit(lootbox, 'LootboxOpened');
 
         expect(await lootbox.balanceOf(playerAddress.address, tokenId), "Player's Lootbox Amount Incorrect").to.be.equal(0);
-        expect(await content.balanceOf(playerAddress.address, 1), "Asset 1 was not minted").to.be.equal(11);
-        expect(await content.balanceOf(playerAddress.address, 2), "Asset 2 was not minted").to.be.equal(11);
+        expect(await content.balanceOf(playerAddress.address, 0), "Asset 1 was not minted").to.be.equal(11);
+        expect(await content.balanceOf(playerAddress.address, 1), "Asset 2 was not minted").to.be.equal(11);
     });
 
     it('Burn Blueprint 2', async () => {
@@ -254,7 +250,6 @@ describe('Lootbox Contract', () => {
         var updatedBlueprint = receipt.events?.filter((x) => {return x.event == "BlueprintUpdated"});
 
         var tokenId = updatedBlueprint[0].args.tokenId;
-        expect(tokenId, "Id is empty").to.not.equal(0x0);
 
         // Add some rewards.
         var results = await lootboxStorage.connect(managerAddress).addLootboxReward(tokenId, rewards[1][0]);
@@ -279,7 +274,7 @@ describe('Lootbox Contract', () => {
         var lootboxOpenedEvent = receipt.events?.filter((x) => {return x.event == "LootboxOpened"});
 
         expect(await lootbox.balanceOf(playerAddress.address, tokenId), "Player's Lootbox Amount Incorrect").to.be.equal(0);
-        var balanceAsset = await content.balanceOf(playerAddress.address, 3);
+        var balanceAsset = await content.balanceOf(playerAddress.address, 2);
         expect(balanceAsset.valueOf(), "Asset 3 was not minted").to.be.equal(1);
 
         var numAssetsGiven = lootboxOpenedEvent[0].args.numAssetsGiven;
@@ -317,10 +312,10 @@ describe('Lootbox Contract', () => {
 
         expect(await lootbox.balanceOf(playerAddress.address, tokenId), "Player's Lootbox Amount Incorrect").to.be.equal(0);
 
-        var balanceAsset = await content.balanceOf(playerAddress.address, 6);
+        var balanceAsset = await content.balanceOf(playerAddress.address, 5);
         console.log("| balanceof(6):  " + balanceAsset.valueOf().toString());
 
-        var balanceAsset = await content.balanceOf(playerAddress.address, 7);
+        var balanceAsset = await content.balanceOf(playerAddress.address, 6);
         console.log("| balanceof(7):  " + balanceAsset.valueOf().toString());
 
         var numAssetsGiven = lootboxOpenedEvent[0].args.numAssetsGiven.toString();

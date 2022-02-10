@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@rawrshak/rawr-token/contracts/optimism/L2NativeRawrshakERC20Token.sol";
 import "../content/interfaces/IContent.sol";
-import "../exchange/StorageBase.sol";
+import "./StorageBase.sol";
 import "./interfaces/ILootbox.sol";
 import "./interfaces/ILootboxStorageByItem.sol";
 import "../libraries/LibLootbox.sol";

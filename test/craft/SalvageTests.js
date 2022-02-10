@@ -70,13 +70,13 @@ describe('Salvage Contract', () => {
 
         // Type LibAsset.CreateData
         var assets = [
-            [1, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, deployerAddress.address, 20000],
-            [2, "arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, deployerAddress.address, 0],
-            [3, "arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1", 10000, deployerAddress.address, 150],
-            [4, "arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, deployerAddress.address, 200],
-            [5, "arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, deployerAddress.address, 250],
-            [6, "arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, deployerAddress.address, 300],
-            [7, "arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, deployerAddress.address, 350],
+            ["arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 0, deployerAddress.address, 20000],
+            ["arweave.net/tx/public-SalvageItem-1", "arweave.net/tx/private-SalvageItem-1", 100, deployerAddress.address, 0],
+            ["arweave.net/tx/public-Material-1", "arweave.net/tx/private-Material-1", 10000, deployerAddress.address, 150],
+            ["arweave.net/tx/public-Material-2", "arweave.net/tx/private-Material-2", 10000, deployerAddress.address, 200],
+            ["arweave.net/tx/public-Material-3", "arweave.net/tx/private-Material-3", 10000, deployerAddress.address, 250],
+            ["arweave.net/tx/public-Reward-1", "arweave.net/tx/private-Reward-1", 0, deployerAddress.address, 300],
+            ["arweave.net/tx/public-Reward-2", "arweave.net/tx/private-Reward-2", 0, deployerAddress.address, 350],
         ];
 
         // Add assets
@@ -97,7 +97,7 @@ describe('Salvage Contract', () => {
 
         // Mint assets
         // Type of LibAsset.MintData
-        var mintData = [playerAddress.address, [1, 2], [10, 10], 0, ethers.constants.AddressZero, []];
+        var mintData = [playerAddress.address, [0, 1], [10, 10], 0, ethers.constants.AddressZero, []];
         await content.mintBatch(mintData);
 
         // Allow the salvage contract to be able to mint on the lootbox credit token contract.
@@ -116,16 +116,16 @@ describe('Salvage Contract', () => {
         // Type of LibCraft.SalvageableAsset
         initialSalvageableAssetData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 0, // salvage type
                 [ // array
                     [   // SalvageReward
-                        [content.address, 3],
+                        [content.address, 2],
                         1000000,
                         2
                     ],
                     [
-                        [content.address, 4],
+                        [content.address, 3],
                         1000000,
                         1
                     ]
@@ -157,12 +157,12 @@ describe('Salvage Contract', () => {
         expect(receipt.events[0].args[1].toString() != 0x0, "Id is empty.").to.equal(true);
 
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
+        var rewardsData = await salvage.getSalvageRewards([content.address, 0]);
 
         //console.log(storedSalvageableAssetData);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
-        expect(storedSalvageableAssetData.asset.tokenId == 1, "Asset id incorrect").to.equal(true);
+        expect(storedSalvageableAssetData.asset.tokenId == 0, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 0, "Salvage Type incorrect").to.equal(true);
         expect(rewardsData.length == 2, "Rewards length incorrect").to.equal(true);
         for (var i = 0; i < rewardsData.length; ++i) {
@@ -176,16 +176,16 @@ describe('Salvage Contract', () => {
 
         var salvageableAssets = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 0,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 3],
+                        [content.address, 2],
                         1000000,
                         2
                     ],
                     [
-                        [content.address, 4],
+                        [content.address, 3],
                         1000000,
                         1
                     ]
@@ -197,16 +197,16 @@ describe('Salvage Contract', () => {
                 ]
             ],
             [
-                [content.address, 2],
+                [content.address, 1],
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 3],
+                        [content.address, 2],
                         500000,
                         2
                     ],
                     [
-                        [content.address, 5],
+                        [content.address, 4],
                         500000,
                         3
                     ]
@@ -229,10 +229,10 @@ describe('Salvage Contract', () => {
         
         // Test Asset 1
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId1);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
+        var rewardsData = await salvage.getSalvageRewards([content.address, 0]);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
-        expect(storedSalvageableAssetData.asset.tokenId == 1, "Asset id incorrect").to.equal(true);
+        expect(storedSalvageableAssetData.asset.tokenId == 0, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 0, "Salvage Type incorrect").to.equal(true);
         expect(rewardsData.length == 2, "Rewards length incorrect").to.equal(true);
         for (var i = 0; i < rewardsData.length; ++i) {
@@ -242,10 +242,10 @@ describe('Salvage Contract', () => {
         
         // Test Asset 2
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId2);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 2]);
+        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
-        expect(storedSalvageableAssetData.asset.tokenId == 2, "Asset id incorrect").to.equal(true);
+        expect(storedSalvageableAssetData.asset.tokenId == 1, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 1, "Salvage Type incorrect").to.equal(true);
         expect(rewardsData.length == 2, "Rewards length incorrect").to.equal(true);
         for (var i = 0; i < rewardsData.length; ++i) {
@@ -263,11 +263,11 @@ describe('Salvage Contract', () => {
 
         var updatedData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 5],
+                        [content.address, 4],
                         100000,
                         1
                     ]
@@ -283,14 +283,14 @@ describe('Salvage Contract', () => {
         results = await salvage.connect(managerAddress).addSalvageableAssetBatch(updatedData);
         
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
+        var rewardsData = await salvage.getSalvageRewards([content.address, 0]);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
-        expect(storedSalvageableAssetData.asset.tokenId == 1, "Asset id incorrect").to.equal(true);
+        expect(storedSalvageableAssetData.asset.tokenId == 0, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 1, "Salvage Type not updated").to.equal(true);
         expect(rewardsData.length == 1, "Rewards length not updated").to.equal(true);
         expect(rewardsData[0].asset.content == content.address, "Invalid Reward Address").to.equal(true);
-        expect(rewardsData[0].asset.tokenId == 5, "Invalid Reward updated").to.equal(true);
+        expect(rewardsData[0].asset.tokenId == 4, "Invalid Reward updated").to.equal(true);
         expect(rewardsData[0].probability == 100000, "Invalid Reward probability").to.equal(true);
         expect(rewardsData[0].amount == 1, "Invalid Reward probability updated").to.equal(true);
     });
@@ -306,11 +306,11 @@ describe('Salvage Contract', () => {
         
         var invalidData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 3,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 5],
+                        [content.address, 4],
                         100000,
                         1
                     ]
@@ -328,11 +328,11 @@ describe('Salvage Contract', () => {
         // invalid salvage type
         invalidData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 3,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 5],
+                        [content.address, 4],
                         100000,
                         1
                     ]
@@ -349,7 +349,7 @@ describe('Salvage Contract', () => {
         // test invalid reward length 
         invalidData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 1,
                 [],
                 [   // LibLootbox.LootboxCreditReward
@@ -364,11 +364,11 @@ describe('Salvage Contract', () => {
         // invalid probability
         invalidData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 5],
+                        [content.address, 4],
                         1000001,
                         1
                     ]
@@ -384,11 +384,11 @@ describe('Salvage Contract', () => {
 
         invalidData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 5],
+                        [content.address, 4],
                         0,
                         1
                     ]
@@ -405,11 +405,11 @@ describe('Salvage Contract', () => {
         // invalid reward amount
         invalidData = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 1,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 5],
+                        [content.address, 4],
                         1000000,
                         0
                     ]
@@ -441,17 +441,17 @@ describe('Salvage Contract', () => {
         // Approve salvage contract as an operator
         await content.connect(playerAddress).setApprovalForAll(salvage.address, true);
 
-        var results = await salvage.connect(playerAddress).salvage([content.address, 1], 1);
+        var results = await salvage.connect(playerAddress).salvage([content.address, 0], 1);
         await expect(results)
                 .to.emit(salvage, 'AssetSalvaged');
 
-        expect(await content.balanceOf(playerAddress.address, 1) == 9, "Asset was not burned.");
-        expect(await content.totalSupply(1) == 9, "Asset supply is incorrect.");
+        expect(await content.balanceOf(playerAddress.address, 0) == 9, "Asset was not burned.");
+        expect(await content.totalSupply(0) == 9, "Asset supply is incorrect.");
 
-        expect(await content.balanceOf(playerAddress.address, 3) == 2, "Materials Asset 3 was not minted to player").to.equal(true);
-        expect(await content.totalSupply(3) == 2, "Materials Asset 3 supply is incorrect").to.equal(true);
-        expect(await content.balanceOf(playerAddress.address, 4) == 1, "Materials Asset 4 was not minted to player").to.equal(true);
-        expect(await content.totalSupply(4) == 1, "Materials Asset 4 supply is incorrect").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 2) == 2, "Materials Asset 2 was not minted to player").to.equal(true);
+        expect(await content.totalSupply(2) == 2, "Materials Asset 3 supply is incorrect").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 3) == 1, "Materials Asset 3 was not minted to player").to.equal(true);
+        expect(await content.totalSupply(3) == 1, "Materials Asset 3 supply is incorrect").to.equal(true);
     });
 
     it('Salvage multiple instances of the same asset', async () => {
@@ -467,17 +467,17 @@ describe('Salvage Contract', () => {
         // Approve salvage contract as an operator
         await content.connect(playerAddress).setApprovalForAll(salvage.address, true);
 
-        var results = await salvage.connect(playerAddress).salvage([content.address, 1], 5);
+        var results = await salvage.connect(playerAddress).salvage([content.address, 0], 5);
         await expect(results)
                 .to.emit(salvage, 'AssetSalvaged');
 
-        expect(await content.balanceOf(playerAddress.address, 1) == 5, "Asset was not burned.");
-        expect(await content.totalSupply(1) == 5, "Asset supply is incorrect.");
+        expect(await content.balanceOf(playerAddress.address, 0) == 5, "Asset was not burned.");
+        expect(await content.totalSupply(0) == 5, "Asset supply is incorrect.");
 
-        expect(await content.balanceOf(playerAddress.address, 3) == 10, "Materials Asset 3 was not minted to player").to.equal(true);
-        expect(await content.totalSupply(3) == 10, "Materials Asset 3 supply is incorrect").to.equal(true);
-        expect(await content.balanceOf(playerAddress.address, 4) == 5, "Materials Asset 4 was not minted to player").to.equal(true);
-        expect(await content.totalSupply(4) == 5, "Materials Asset 4 supply is incorrect").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 2) == 10, "Materials Asset 2 was not minted to player").to.equal(true);
+        expect(await content.totalSupply(2) == 10, "Materials Asset 3 supply is incorrect").to.equal(true);
+        expect(await content.balanceOf(playerAddress.address, 3) == 5, "Materials Asset 3 was not minted to player").to.equal(true);
+        expect(await content.totalSupply(3) == 5, "Materials Asset 3 supply is incorrect").to.equal(true);
     });
 
     it('Salvage Multiple Asset', async () => {
@@ -485,16 +485,16 @@ describe('Salvage Contract', () => {
 
         var salvageableAssets = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 0,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 3],
+                        [content.address, 2],
                         1000000,
                         2
                     ],
                     [
-                        [content.address, 4],
+                        [content.address, 3],
                         1000000,
                         1
                     ]
@@ -506,16 +506,16 @@ describe('Salvage Contract', () => {
                 ]
             ],
             [
-                [content.address, 2],
+                [content.address, 1],
                 0,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 3],
+                        [content.address, 2],
                         1000000,
                         2
                     ],
                     [
-                        [content.address, 5],
+                        [content.address, 4],
                         1000000,
                         3
                     ]
@@ -538,24 +538,24 @@ describe('Salvage Contract', () => {
         await content.connect(playerAddress).setApprovalForAll(salvage.address, true);
 
         var assetsToSalvage = [
-            [content.address, 1],
-            [content.address, 2]
+            [content.address, 0],
+            [content.address, 1]
         ];
         var amounts = [1, 1];
         var results = await salvage.connect(playerAddress).salvageBatch(assetsToSalvage, amounts);
         await expect(results)
                 .to.emit(salvage, 'AssetSalvagedBatch');
 
+        expect(await content.balanceOf(playerAddress.address, 0) == 9, "Asset 0 was not burned.");
+        expect(await content.totalSupply(0) == 9, "Asset 0 supply is incorrect.");
         expect(await content.balanceOf(playerAddress.address, 1) == 9, "Asset 1 was not burned.");
         expect(await content.totalSupply(1) == 9, "Asset 1 supply is incorrect.");
-        expect(await content.balanceOf(playerAddress.address, 2) == 9, "Asset 2 was not burned.");
-        expect(await content.totalSupply(2) == 9, "Asset 2 supply is incorrect.");
-        expect(await content.balanceOf(playerAddress.address, 3) == 4, "Asset 3 was not burned");
-        expect(await content.totalSupply(3) == 4, "Asset 3 supply is incorrect");
-        expect(await content.balanceOf(playerAddress.address, 4) == 1, "Asset 4 was not burned");
-        expect(await content.totalSupply(4) == 1, "Asset 4 supply is incorrect");
-        expect(await content.balanceOf(playerAddress.address, 5) == 3, "Asset 5 was not burned");
-        expect(await content.totalSupply(5) == 3, "Asset 5 supply is incorrect");
+        expect(await content.balanceOf(playerAddress.address, 2) == 4, "Asset 2 was not burned");
+        expect(await content.totalSupply(2) == 4, "Asset 2 supply is incorrect");
+        expect(await content.balanceOf(playerAddress.address, 3) == 1, "Asset 3 was not burned");
+        expect(await content.totalSupply(3) == 1, "Asset 3 supply is incorrect");
+        expect(await content.balanceOf(playerAddress.address, 4) == 3, "Asset 4 was not burned");
+        expect(await content.totalSupply(4) == 3, "Asset 4 supply is incorrect");
     });
 
     it('Salvage multiple instances of multiple asset', async () => {
@@ -563,16 +563,16 @@ describe('Salvage Contract', () => {
 
         var salvageableAssets = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 0,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 3],
+                        [content.address, 2],
                         1000000,
                         2
                     ],
                     [
-                        [content.address, 4],
+                        [content.address, 3],
                         1000000,
                         1
                     ]
@@ -584,16 +584,16 @@ describe('Salvage Contract', () => {
                 ]
             ],
             [
-                [content.address, 2],
+                [content.address, 1],
                 0,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 3],
+                        [content.address, 2],
                         1000000,
                         2
                     ],
                     [
-                        [content.address, 5],
+                        [content.address, 4],
                         1000000,
                         3
                     ]
@@ -616,23 +616,23 @@ describe('Salvage Contract', () => {
         await content.connect(playerAddress).setApprovalForAll(salvage.address, true);
 
         var assetsToSalvage = [
-            [content.address, 1],
-            [content.address, 2]
+            [content.address, 0],
+            [content.address, 1]
         ];
         var amounts = [5, 7];
         var results = await salvage.connect(playerAddress).salvageBatch(assetsToSalvage, amounts);
         await expect(results).to.emit(salvage, 'AssetSalvagedBatch');
 
-        expect(await content.balanceOf(playerAddress.address, 1) == 5, "Asset 1 was not burned.");
-        expect(await content.totalSupply(1) == 5, "Asset 1 supply is incorrect.");
-        expect(await content.balanceOf(playerAddress.address, 2) == 3, "Asset 2 was not burned.");
-        expect(await content.totalSupply(2) == 4, "Asset 2 supply is incorrect.");
-        expect(await content.balanceOf(playerAddress.address, 3) == 24, "Asset 3 was not burned");
-        expect(await content.totalSupply(3) == 24, "Asset 3 supply is incorrect");
-        expect(await content.balanceOf(playerAddress.address, 4) == 5, "Asset 4 was not burned");
-        expect(await content.totalSupply(4) == 5, "Asset 4 supply is incorrect");
-        expect(await content.balanceOf(playerAddress.address, 5) == 21, "Asset 5 was not burned");
-        expect(await content.totalSupply(5) == 21, "Asset 5 supply is incorrect");
+        expect(await content.balanceOf(playerAddress.address, 0) == 5, "Asset 0 was not burned.");
+        expect(await content.totalSupply(0) == 5, "Asset 0 supply is incorrect.");
+        expect(await content.balanceOf(playerAddress.address, 1) == 3, "Asset 1 was not burned.");
+        expect(await content.totalSupply(1) == 4, "Asset 1 supply is incorrect.");
+        expect(await content.balanceOf(playerAddress.address, 2) == 24, "Asset 2 was not burned");
+        expect(await content.totalSupply(2) == 24, "Asset 2 supply is incorrect");
+        expect(await content.balanceOf(playerAddress.address, 3) == 5, "Asset 3 was not burned");
+        expect(await content.totalSupply(3) == 5, "Asset 3 supply is incorrect");
+        expect(await content.balanceOf(playerAddress.address, 4) == 21, "Asset 4 was not burned");
+        expect(await content.totalSupply(4) == 21, "Asset 4 supply is incorrect");
     });
 
     it('Invalid Salvage Asset', async () => {
@@ -648,21 +648,21 @@ describe('Salvage Contract', () => {
         // no content contract approval for the salvage contract
         await content.connect(playerAddress).setApprovalForAll(salvage.address, false);
 
-        var assetData = [content.address, 1];
+        var assetData = [content.address, 0];
         await expect(salvage.connect(playerAddress).salvage(assetData, 1), "no content contract approval for the salvage contract").to.be.reverted;
         
         // Approve salvage contract as an operator
         await content.connect(playerAddress).setApprovalForAll(salvage.address, true);
         
         // Invalid amount
-        var assetData = [content.address, 1];
+        var assetData = [content.address, 0];
         await expect(salvage.connect(playerAddress).salvage(assetData, 0), "Invalid amount").to.be.reverted;
 
         // invalid user balance
         await expect(salvage.connect(playerAddress).salvage(assetData, 15), "Invalid user balance").to.be.reverted;
         
         // item not salvageable
-        var assetData = [content.address, 3];
+        var assetData = [content.address, 2];
         await expect(salvage.connect(playerAddress).salvage(assetData, 0), "Item not salvageable").to.be.reverted;
     });
 
@@ -674,11 +674,11 @@ describe('Salvage Contract', () => {
 
         var salvageableAssets = [
             [
-                [content.address, 1],
+                [content.address, 0],
                 0,
                 [ // array
                     [   // salvageableasset
-                        [content.address, 3],
+                        [content.address, 2],
                         1000000,
                         2
                     ]
@@ -702,7 +702,7 @@ describe('Salvage Contract', () => {
         await content.connect(playerAddress).setApprovalForAll(salvage.address, true);
 
         var assetsToSalvage = [
-            [content.address, 1]
+            [content.address, 0]
         ];
         var amounts = [1];
         var results = await salvage.connect(playerAddress).salvageBatch(assetsToSalvage, amounts);

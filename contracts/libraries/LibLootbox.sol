@@ -43,7 +43,6 @@ library LibLootbox {
     function verifyLootboxReward(LootboxReward memory _reward) internal pure {
         // Check validity of the lootbox reward asset.
         require(_reward.asset.content != address(0), "Invalid content address");
-        require(_reward.asset.tokenId != 0, "Invalid token id");
         require(_reward.probability > 0 && _reward.probability <= 1000000, "Invalid credit probability.");
         require(_reward.amount > 0, "Invalid credit amount.");
         // Class is optional, so no need to check that here.
@@ -51,7 +50,6 @@ library LibLootbox {
 
     function isLootboxRewardValid(LootboxReward memory _reward) internal pure returns(bool) {
         if(_reward.asset.content != address(0) &&
-           _reward.asset.tokenId != 0 &&
            _reward.probability > 0 && _reward.probability <= 1000000 &&
            _reward.amount > 0)
         {

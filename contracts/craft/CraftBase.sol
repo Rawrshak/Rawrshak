@@ -30,7 +30,7 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
     }
 
     /******************** Public API ********************/
-    function __CraftBase_init_unchained(uint256 _seed) public initializer {
+    function __CraftBase_init_unchained(uint256 _seed) public onlyInitializing {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _pause();
         seed = _seed;

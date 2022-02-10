@@ -20,7 +20,7 @@ abstract contract StorageBase is AccessControlUpgradeable, ERC165StorageUpgradea
     }
 
     /******************** Public API ********************/
-    function __StorageBase_init_unchained() public initializer {
+    function __StorageBase_init_unchained() public onlyInitializing {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

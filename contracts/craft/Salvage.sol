@@ -26,7 +26,7 @@ contract Salvage is ISalvage, CraftBase {
     mapping(uint256 => LibCraft.SalvageableAsset) internal salvageableAssets;
     
     /******************** Public API ********************/
-    function __Salvage_init(uint256 _seed) public initializer {
+    function initialize(uint256 _seed) public initializer {
         __Pausable_init_unchained();
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();

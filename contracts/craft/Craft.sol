@@ -25,7 +25,7 @@ contract Craft is ICraft, CraftBase {
     uint256 public override recipesLength;
 
     /******************** Public API ********************/
-    function __Craft_init(uint256 _seed) public initializer {
+    function initialize(uint256 _seed) public initializer {
         __Pausable_init_unchained();
         __AccessControl_init_unchained();
         __ERC165Storage_init_unchained();
