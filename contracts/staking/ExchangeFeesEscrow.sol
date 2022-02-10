@@ -42,7 +42,7 @@ contract ExchangeFeesEscrow is IExchangeFeesEscrow, EscrowBase {
         __ExchangeFeesEscrow_init_unchained(_resolver);
     }
 
-    function __ExchangeFeesEscrow_init_unchained(address _resolver) internal initializer {
+    function __ExchangeFeesEscrow_init_unchained(address _resolver) internal onlyInitializing {
         _registerInterface(type(IExchangeFeesEscrow).interfaceId);
         resolver = IAddressResolver(_resolver);
         grantRole(MANAGER_ROLE, _msgSender());

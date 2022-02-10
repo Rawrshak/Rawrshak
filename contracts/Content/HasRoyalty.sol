@@ -21,7 +21,7 @@ abstract contract HasRoyalty is ContentSubsystemBase {
     event ContractRoyaltyUpdated(address indexed parent, address receiver, uint24 rate);
 
     /******************** Public API ********************/
-    function __HasRoyalty_init_unchained(address _receiver, uint24 _rate) internal initializer {
+    function __HasRoyalty_init_unchained(address _receiver, uint24 _rate) internal onlyInitializing {
         _setContractRoyaltyHelper(_receiver, _rate);
     }
 

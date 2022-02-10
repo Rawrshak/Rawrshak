@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 abstract contract EIP712Extended is EIP712Upgradeable {
     bytes32 private constant _TYPE_HASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
-    function __EIP712Extended_init_unchained(string memory name, string memory version) internal initializer {
+    function __EIP712Extended_init_unchained(string memory name, string memory version) internal onlyInitializing {
         __EIP712_init_unchained(name, version);
     }
 

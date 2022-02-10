@@ -24,7 +24,7 @@ contract ExecutionManager is IExecutionManager, ManagerBase {
         __ExecutionManager_init_unchained();
     }
 
-    function __ExecutionManager_init_unchained() internal initializer {
+    function __ExecutionManager_init_unchained() internal onlyInitializing {
         _registerInterface(type(IExecutionManager).interfaceId);
     }
 
