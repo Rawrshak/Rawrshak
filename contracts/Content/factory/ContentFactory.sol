@@ -41,7 +41,7 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
         address _contentStorage,
         address _accessControlManager
     )
-        internal initializer
+        internal onlyInitializing
     {
         contractVersion = 0;
 

@@ -24,7 +24,7 @@ contract Orderbook is IOrderbook, ManagerBase {
         __Orderbook_init_unchained();
     }
 
-    function __Orderbook_init_unchained() internal initializer {
+    function __Orderbook_init_unchained() internal onlyInitializing {
         _registerInterface(type(IOrderbook).interfaceId);
         ordersLength = 0;
     }

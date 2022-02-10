@@ -36,7 +36,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         __ContentSubsystemBase_init_unchained();
     }
     
-    function __AccessControlManager_init_unchained() internal initializer
+    function __AccessControlManager_init_unchained() internal onlyInitializing
     {
         _registerInterface(type(IAccessControlManager).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());

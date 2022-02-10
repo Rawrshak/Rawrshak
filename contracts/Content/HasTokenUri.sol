@@ -20,7 +20,7 @@ abstract contract HasTokenUri is ContentSubsystemBase {
     event HiddenUriUpdated(address indexed parent, uint256 indexed id, uint256 indexed version);
 
     /******************** Public API ********************/
-    function __HasTokenUri_init_unchained() internal initializer {
+    function __HasTokenUri_init_unchained() internal onlyInitializing {
     }
 
     /**

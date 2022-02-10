@@ -15,7 +15,7 @@ abstract contract ContentSubsystemBase is IContentSubsystemBase, ERC165StorageUp
     address contentParent;
 
     /******************** Public API ********************/
-    function __ContentSubsystemBase_init_unchained() internal initializer {
+    function __ContentSubsystemBase_init_unchained() internal onlyInitializing {
         _registerInterface(type(IContentSubsystemBase).interfaceId);
     }
     /**

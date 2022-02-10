@@ -74,7 +74,7 @@ contract LiquidityMining is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         address _usdt,
         address _dai,
         address _rawr
-    ) public {
+    ) public onlyInitializing {
         usdc = ERC20Upgradeable(_usdc);
         usdt = ERC20Upgradeable(_usdt);
         dai = ERC20Upgradeable(_dai);

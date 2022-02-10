@@ -40,7 +40,7 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         address _content,
         address _contentStorage,
         address _accessControlManager
-    ) internal initializer {
+    ) internal onlyInitializing {
         _registerInterface(type(IContentManager).interfaceId);
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);

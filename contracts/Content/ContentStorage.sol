@@ -37,7 +37,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
         __ContentSubsystemBase_init_unchained();
         __ContentStorage_init_unchained();
     }
-    function __ContentStorage_init_unchained() internal initializer {
+    function __ContentStorage_init_unchained() internal onlyInitializing {
         _registerInterface(type(IContentStorage).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
