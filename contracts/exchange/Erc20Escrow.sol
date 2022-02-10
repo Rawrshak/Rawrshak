@@ -37,7 +37,7 @@ contract Erc20Escrow is IErc20Escrow, EscrowBase {
         __Erc20Escrow_init_unchained();
     }
 
-    function __Erc20Escrow_init_unchained() internal initializer {
+    function __Erc20Escrow_init_unchained() internal onlyInitializing {
         _registerInterface(type(IErc20Escrow).interfaceId);
     }
 

@@ -32,7 +32,7 @@ contract NftEscrow is INftEscrow, EscrowBase, ERC1155HolderUpgradeable, ERC721Ho
         __NftEscrow_init_unchained();
     }
 
-    function __NftEscrow_init_unchained() internal initializer {
+    function __NftEscrow_init_unchained() internal onlyInitializing {
         _registerInterface(type(INftEscrow).interfaceId);
         _registerInterface(type(IERC721ReceiverUpgradeable).interfaceId);
         _registerInterface(type(IERC1155ReceiverUpgradeable).interfaceId);

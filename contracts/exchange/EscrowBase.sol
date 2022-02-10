@@ -19,7 +19,7 @@ abstract contract EscrowBase is IEscrowBase, AccessControlUpgradeable, ERC165Sto
     event ManagerRegistered(address indexed _manager);
 
     /******************** Public API ********************/
-    function __EscrowBase_init_unchained() internal initializer {
+    function __EscrowBase_init_unchained() internal onlyInitializing {
         _registerInterface(type(IEscrowBase).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }

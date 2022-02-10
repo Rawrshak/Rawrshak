@@ -27,7 +27,7 @@ contract RoyaltyManager is IRoyaltyManager, ManagerBase {
         __RoyaltyManager_init_unchained();
     }
 
-    function __RoyaltyManager_init_unchained() internal initializer {
+    function __RoyaltyManager_init_unchained() internal onlyInitializing {
         _registerInterface(type(IRoyaltyManager).interfaceId);
     }
 

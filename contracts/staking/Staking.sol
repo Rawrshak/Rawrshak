@@ -36,7 +36,7 @@ contract Staking is IStaking, ContextUpgradeable, ERC165StorageUpgradeable {
         __Staking_init_unchained(_token, _resolver);
     }
 
-    function __Staking_init_unchained(address _token, address _resolver) internal initializer {
+    function __Staking_init_unchained(address _token, address _resolver) internal onlyInitializing {
         _registerInterface(type(IStaking).interfaceId);
         token = _token;
         totalStakedTokens = 0;

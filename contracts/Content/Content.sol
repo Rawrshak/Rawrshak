@@ -39,7 +39,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     function __Content_init_unchained(
         address _contentStorage,
         address _accessControlManager)
-        internal initializer
+        internal onlyInitializing
     {
         _registerInterface(type(IContent).interfaceId);
         _registerInterface(type(IERC2981Upgradeable).interfaceId);

@@ -20,7 +20,7 @@ abstract contract HasContractUri is IContractUri, ContentSubsystemBase {
     event ContractUriUpdated(address indexed parent, string uriPrefix);
 
     /******************** Public API ********************/
-    function __HasContractUri_init_unchained(string memory _uri) internal initializer {
+    function __HasContractUri_init_unchained(string memory _uri) internal onlyInitializing {
         contractUri = _uri;
         _registerInterface(type(IContractUri).interfaceId);
     }

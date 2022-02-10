@@ -31,7 +31,7 @@ contract Exchange is IExchange, ContextUpgradeable, OwnableUpgradeable, ERC165St
         __Exchange_init_unchained(_royaltyManager, _orderbook, _executionManager);
     }
 
-    function __Exchange_init_unchained(address _royaltyManager, address _orderbook, address _executionManager) internal initializer {
+    function __Exchange_init_unchained(address _royaltyManager, address _orderbook, address _executionManager) internal onlyInitializing {
         _registerInterface(type(IExchange).interfaceId);
           
         royaltyManager = IRoyaltyManager(_royaltyManager);
