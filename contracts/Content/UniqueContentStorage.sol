@@ -1,29 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 import "./MultipleRoyalties.sol";
 import "./interfaces/IUniqueContentStorage.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-import "../libraries/LibAsset.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
-contract UniqueContentStorage is IUniqueContentStorage, ContextUpgradeable, MultipleRoyalties {
+contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
 
     /***************** Stored Variables *****************/
-
     mapping(uint256 => LibAsset.UniqueAsset) uniqueAssetInfo;
 
-    function setUniqueAssetInfo(LibAsset.UniqueAssetCreateData memory _data, uint256 _uniqueIdsCounter, address _caller) external override {
-        uniqueAssetInfo[_uniqueIdsCounter].creator = _caller;
-        uniqueAssetInfo[_uniqueIdsCounter].contentAddress = _data.contentAddress;
-        uniqueAssetInfo[_uniqueIdsCounter].tokenId = _data.tokenId;
-        uniqueAssetInfo[_uniqueIdsCounter].uniqueAssetUri.push(_data.uniqueAssetUri);
-        uniqueAssetInfo[_uniqueIdsCounter].creatorLocked = _data.creatorLocked;
+    /**
+    * @dev Records the asset info of a newly minted Asset
+    * @param _data LibAsset.UniqueAssetCreateData structure object
+    * @param _uniqueId uint256 ID of token if the new asset
+    * @param _creator the address of who called the mint function
+    */
+    function setUniqueAssetInfo(LibAsset.UniqueAssetCreateData memory _data, uint256 _uniqueId, address _creator) external override {
+        uniqueAssetInfo[_uniqueId].creator = _creator;
+        uniqueAssetInfo[_uniqueId].contentAddress = _data.contentAddress;
+        uniqueAssetInfo[_uniqueId].tokenId = _data.tokenId;
+        uniqueAssetInfo[_uniqueId].uniqueAssetUri.push(_data.uniqueAssetUri);
+        uniqueAssetInfo[_uniqueId].creatorLocked = _data.creatorLocked;
 
-        _setTokenRoyalties(_uniqueIdsCounter, _data.royaltyReceivers, _data.royaltyRates);
+        _setTokenRoyalties(_uniqueId, _data.royaltyReceivers, _data.royaltyRates);
     }
 
+    /**
+    * @dev Deletes the asset info of a burned token
+    * @param _uniqueId uint256 ID of the token to be burned
+    */
     function burnUniqueAssetInfo(uint256 _uniqueId) external override {
         uniqueAssetInfo[_uniqueId].creator = address(0);
         uniqueAssetInfo[_uniqueId].contentAddress = address(0);
@@ -35,6 +41,11 @@ contract UniqueContentStorage is IUniqueContentStorage, ContextUpgradeable, Mult
         _deleteTokenRoyalties(_uniqueId);
     }
 
+    /**
+    * @dev Returns the unique asset uri of a specific version
+    * @param _uniqueId uint256 ID of token to query
+    * @param _version version number of token to query
+    */
     function tokenURI(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
         if (_version > uniqueAssetInfo[_uniqueId].version) {
             _version = uniqueAssetInfo[_uniqueId].version;
@@ -43,7 +54,7 @@ contract UniqueContentStorage is IUniqueContentStorage, ContextUpgradeable, Mult
     }
 
     /**
-    * @dev If the caller is creator and owner of the token, it adds a new version of the unique asset
+    * @dev Records a new version of the unique asset
     * @param _uniqueId uint256 ID of the token to set its uri
     * @param _uri string URI to assign
     */
@@ -54,6 +65,12 @@ contract UniqueContentStorage is IUniqueContentStorage, ContextUpgradeable, Mult
         emit UniqueUriUpdated(_uniqueId, uniqueAssetInfo[_uniqueId].version);
     }
 
+    /**
+    * @dev Verifies whether the sum of the royalties exceed 2e5 and whether the number of royalties and receivers match
+    * @param _royaltyReceivers addresses to receive the royalties
+    * @param _royaltyRates royalty fee percentages
+    * @param _originalRoyaltyRate royalty rate of the original item
+    */
     function verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates, uint256 _originalRoyaltyRate) external pure override returns (bool) {
         return _verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate);
     }
@@ -68,6 +85,11 @@ contract UniqueContentStorage is IUniqueContentStorage, ContextUpgradeable, Mult
         (receiver, royaltyAmount) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, _salePrice);
     }
 
+    /**
+    * @dev Returns an array of receiver addresses and calculated royalty amounts for a token sold at a certain sales price
+    * @param _uniqueId uint256 ID of token to query
+    * @param _salePrice price the asset is to be purchased for
+    */
     function getMultipleRoyalties(uint256 _uniqueId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
         // grabs the original item's royalty info
         (address _creator, uint256 _originalRoyaltyAmount) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, _salePrice);
@@ -103,27 +125,45 @@ contract UniqueContentStorage is IUniqueContentStorage, ContextUpgradeable, Mult
             }
         }
     }
-
-    function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external {
+    
+    /**
+     * @dev If the given royalties are valid, it sets a unique asset's royalties
+     * @param _uniqueId uint256 ID of the unique asset to set the royalties of
+     * @param _royaltyReceivers addresses to receive the royalties
+     * @param _royaltyRates royalty fee percentages
+     */
+    function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external override {
         (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, 1e6);
         require(_verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate), "The royalties you have entered are invalid");
 
         _setTokenRoyalties(_uniqueId, _royaltyReceivers, _royaltyRates);
     }
 
+    /**
+     * @dev Verifies whether the caller is the creator of this token
+     * @param _uniqueId uint256 ID of the token to query
+     * @param _caller address to be vetted
+     */
     function isCreator(uint256 _uniqueId, address _caller) external view override returns (bool) {
         return uniqueAssetInfo[_uniqueId].creator == _caller;
     }
 
+    /**
+     * @dev Verifies whether the unique asset is creator locked
+     * @param _uniqueId uint256 ID of the token to query
+     */
     function isLocked(uint256 _uniqueId) external view override returns (bool) {
         return uniqueAssetInfo[_uniqueId].creatorLocked;
     }
     
-    function getAssetData(uint256 _uniqueId) external view returns (uint256 _tokenId, address _address) {
-        _tokenId = uniqueAssetInfo[_uniqueId].tokenId;
-        _address = uniqueAssetInfo[_uniqueId].contentAddress;
+    /**
+     * @dev Returns the original token Id and content address of a unique asset
+     * @param _uniqueId uint256 ID of token to query
+     */
+    function getAssetData(uint256 _uniqueId) external view override returns (uint256 tokenId, address contentAddress) {
+        tokenId = uniqueAssetInfo[_uniqueId].tokenId;
+        contentAddress = uniqueAssetInfo[_uniqueId].contentAddress;
     }
 
     uint256[50] private __gap;
 }
-

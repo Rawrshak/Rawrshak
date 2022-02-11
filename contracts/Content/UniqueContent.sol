@@ -5,7 +5,6 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpg
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-import "../libraries/LibAsset.sol";
 import "./interfaces/IMultipleRoyalties.sol";
 import "./interfaces/IUniqueContent.sol";
 import "./interfaces/IUniqueContentStorage.sol";
@@ -21,14 +20,6 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
         address _uniqueContentStorage)
         public initializer
     {
-        __UniqueContent_init_unchained(_uniqueContentStorage);
-    }
-
-    function __UniqueContent_init_unchained(
-        address _uniqueContentStorage)
-        internal initializer
-    {   
-        // Todo: Register IUniqueContent interface?
         _registerInterface(type(IMultipleRoyalties).interfaceId);
         _registerInterface(type(IERC2981Upgradeable).interfaceId);
 
@@ -100,13 +91,12 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     */
     function tokenURI(uint256 _uniqueId) public view override returns (string memory) {
         require(_exists(_uniqueId), "Unique Id does not exist");
-
         return uniqueContentStorage.tokenURI(_uniqueId, type(uint256).max);
     }
 
     /**
     * @dev If the caller is creator and owner of the token, it adds a new version of the unique asset
-    * @param _uniqueId uint256 ID of the token to set its uri
+    * @param _uniqueId uint256 ID of the token that gets a new uri
     * @param _uri string URI to assign
     */
     function setUniqueUri(uint256 _uniqueId, string memory _uri) external override {
