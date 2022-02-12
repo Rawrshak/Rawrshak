@@ -11,7 +11,7 @@ interface IContentStorage is IContractUri {
     event AssetsAdded(address indexed parent, uint256[] tokenIds, LibAsset.CreateData[] assets);
 
     /******** View Functions ********/
-    function assetCounter() external view returns (uint256);
+    function exists(uint256 _tokenId) external view returns (bool);
 
     function supply(uint256 _tokenId) external view returns (uint256);
 
