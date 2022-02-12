@@ -104,8 +104,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     * @param _tokenId uint256 ID of token to query
     */
     function uri(uint256 _tokenId) public view override returns (string memory) {
-        uint256 version = contentStorage.getLatestUriVersion(_tokenId, true);
-        return this.uri(_tokenId, version);
+        return contentStorage.uri(_tokenId, type(uint256).max);
     }
 
     /**
@@ -176,7 +175,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     }
 
     function _tokenExists(uint256 _tokenId) internal view returns(bool) {
-        return _tokenId < contentStorage.assetCounter();
+        return contentStorage.exists(_tokenId);
     }
 
     function _updateSupply(uint256 _tokenId, uint256 _newSupply) internal {

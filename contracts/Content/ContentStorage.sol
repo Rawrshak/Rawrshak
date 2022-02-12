@@ -21,7 +21,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     /***************** Stored Variables *****************/
     mapping(uint256 => uint256) public override maxSupply;
     mapping(uint256 => uint256) public override supply;
-    uint256 public override assetCounter;
+    uint256 private assetCounter;
 
     /******************** Public API ********************/
     function initialize(
@@ -41,7 +41,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
         _registerInterface(type(IContentStorage).interfaceId);
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
-     
+
     /**
     * @dev assigns the address of contentParent and transfers role of DEFAULT_ADMIN_ROLE to the _contentParent parameter
     * @param _contentParent address to be granted roles
@@ -183,6 +183,10 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function exists(uint256 _tokenId) external view override returns (bool) {
+        return _tokenId < assetCounter;
     }
 
     uint256[50] private __gap;
