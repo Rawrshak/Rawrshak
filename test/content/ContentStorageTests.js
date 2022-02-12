@@ -25,7 +25,7 @@ describe('ContentStorage Contract Tests', () => {
         
         it('Check ContentStorage Contract Interfaces', async () => {
             // IContentStorage Interface
-            expect(await contentStorage.supportsInterface("0xbc04328a")).to.equal(true);
+            expect(await contentStorage.supportsInterface("0xb8c03b75")).to.equal(true);
 
             // IContentSubsystemBase Interface
             expect(await contentStorage.supportsInterface("0x7460af1d")).to.equal(true);
@@ -85,8 +85,6 @@ describe('ContentStorage Contract Tests', () => {
             await expect(results)
                 .to.emit(contentStorage, 'AssetsAdded');
             
-            expect(await contentStorage.assetCounter())
-                .to.equal(1);
             expect(await contentStorage.supply(0))
                 .to.equal(0);
             expect(await contentStorage.maxSupply(0))
@@ -123,8 +121,6 @@ describe('ContentStorage Contract Tests', () => {
             await expect(results)
                 .to.emit(contentStorage, 'AssetsAdded');
             
-            expect(await contentStorage.assetCounter())
-                .to.equal(2);
             expect(await contentStorage.supply(0))
                 .to.equal(0);
             expect(await contentStorage.maxSupply(1))
