@@ -10,8 +10,6 @@ interface IUniqueContentStorage {
     /******** View Functions ********/
     function tokenURI(uint256 _uniqueId, uint256 _version) external view returns (string memory);
 
-    function verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates, uint256 _originalRoyaltyRate) external pure returns (bool);
-
     function getRoyalty(uint256 _uniqueId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount);
 
     function getMultipleRoyalties(uint256 _uniqueId, uint256 _salePrice) external view returns (address[] memory receivers, uint256[] memory royaltyAmounts);
