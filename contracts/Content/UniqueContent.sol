@@ -18,12 +18,26 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     IUniqueContentStorage uniqueContentStorage;
     uint256 private uniqueIdsCounter;
 
+    using ERC165CheckerUpgradeable for address;
+
     function initialize(
-        address _uniqueContentStorage)
+        address _uniqueContentStorage,
+        string memory _name,
+        string memory _symbol)
         public initializer
     {
-        _registerInterface(type(IMultipleRoyalties).interfaceId);
+        __ERC165_init_unchained();
+        __ERC721_init_unchained(_name, _symbol);
+        __UniqueContent_init_unchained(_uniqueContentStorage);
+    }
+
+    function __UniqueContent_init_unchained(
+        address _uniqueContentStorage)
+        internal onlyInitializing
+    {
+        _registerInterface(type(IUniqueContent).interfaceId);
         _registerInterface(type(IERC2981Upgradeable).interfaceId);
+        _registerInterface(type(IMultipleRoyalties).interfaceId);
 
         uniqueContentStorage = IUniqueContentStorage(_uniqueContentStorage);
     }
@@ -34,8 +48,8 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     */
     function mint(LibAsset.UniqueAssetCreateData memory _data) external override {
         require(
-            (ERC165CheckerUpgradeable.supportsInterface(_data.contentAddress, type(IERC2981Upgradeable).interfaceId)) &&
-            (ERC165CheckerUpgradeable.supportsInterface(_data.contentAddress, type(IERC1155Upgradeable).interfaceId)),
+            (_data.contentAddress.supportsInterface(type(IERC2981Upgradeable).interfaceId)) &&
+            (_data.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)),
             "Error: content contract not supported"
         );
         require((IERC1155Upgradeable(_data.contentAddress).balanceOf(_msgSender(), _data.tokenId)) >= 1, "Error: must have original item");
@@ -43,15 +57,12 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
         require(LibRoyalty.verifyRoyalties(_data.royaltyReceivers, _data.royaltyRates, _originalRoyaltyRate), "Error: royalties are invalid");
         // transfers the original asset to be locked in the unique content contract
         IERC1155Upgradeable(_data.contentAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, 1, "");
+        uniqueContentStorage.setUniqueAssetInfo(_data, uniqueIdsCounter, _msgSender());
+
         // mint() is a mint and transfer function, if _data.to != msgSender, the caller would be sending the token to someone else
         _mint(_data.to, uniqueIdsCounter);
-
-        uniqueContentStorage.setUniqueAssetInfo(_data, uniqueIdsCounter, _msgSender());
         
-        emit Mint(uniqueIdsCounter, _msgSender(), _data);
-
-        // increment uniqueIdsCounter for next minting process
-        uniqueIdsCounter++;
+        emit Mint(uniqueIdsCounter++, _msgSender(), _data);
     }
 
     /** Asset Burning
