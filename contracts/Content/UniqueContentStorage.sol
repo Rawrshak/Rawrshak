@@ -66,16 +66,6 @@ contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
     }
 
     /**
-    * @dev Verifies whether the sum of the royalties exceed 2e5 and whether the number of royalties and receivers match
-    * @param _royaltyReceivers addresses to receive the royalties
-    * @param _royaltyRates royalty fee percentages
-    * @param _originalRoyaltyRate royalty rate of the original item
-    */
-    function verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates, uint256 _originalRoyaltyRate) external pure override returns (bool) {
-        return _verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate);
-    }
-
-    /**
     * @dev Returns the original asset's receiver address and royalty amount for a token sold at a certain sales price
     * @param _uniqueId uint256 ID of token to query
     * @param _salePrice price the asset is to be purchased for
@@ -108,7 +98,7 @@ contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
 
         (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, 1e6);
         // calculates royaltyAmount for each receiver and adds their address and royalty into the two arrays
-        if (_verifyRoyalties(_receivers, _rates, _originalRoyaltyRate)) {
+        if (LibRoyalty.verifyRoyalties(_receivers, _rates, _originalRoyaltyRate)) {
             for (uint256 i = 0; i < length; ++i) {
                 receivers[i + 1] = _receivers[i];
                 royaltyAmounts[i + 1] = _salePrice * _rates[i] / 1e6;
@@ -134,7 +124,7 @@ contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
      */
     function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external override {
         (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, 1e6);
-        require(_verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate), "The royalties you have entered are invalid");
+        require(LibRoyalty.verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate), "Error: royalties are invalid");
 
         _setTokenRoyalties(_uniqueId, _royaltyReceivers, _royaltyRates);
     }
