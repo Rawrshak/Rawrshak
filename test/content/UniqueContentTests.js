@@ -47,7 +47,7 @@ describe('Unique Content Contract Tests', () => {
 
         // launch unique content contracts
         uniqueContentStorage = await upgrades.deployProxy(UniqueContentStorage);
-        uniqueContent = await upgrades.deployProxy(UniqueContent, [uniqueContentStorage.address]);
+        uniqueContent = await upgrades.deployProxy(UniqueContent, [uniqueContentStorage.address, "Expensive Collection", "EC"]);
         
         // Give unique content contract permission to transfer original asset
         await content.connect(creatorAddress).setApprovalForAll(uniqueContent.address, true);
@@ -136,6 +136,7 @@ describe('Unique Content Contract Tests', () => {
             var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [180001], false];
             var uniqueAssetCreateData3 = [playerAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
             var uniqueAssetCreateData4 = [creatorAddress.address, content.address, 1, "arweave.net/tx/unique-uri-1", [], [], false];
+            var uniqueAssetCreateData5 = [creatorAddress.address, contentStorage.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
 
             // invalid royalties
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData)).to.be.reverted;
@@ -145,6 +146,8 @@ describe('Unique Content Contract Tests', () => {
             // // player runs out of assets for second minting process
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData4);
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData4)).to.be.reverted;
+            // contentStorage.address does not support IERC1155 nor IERC2981 
+            await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData5)).to.be.reverted;
         });    
     });
 
