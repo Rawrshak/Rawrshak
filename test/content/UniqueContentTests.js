@@ -47,7 +47,7 @@ describe('Unique Content Contract Tests', () => {
 
         // launch unique content contracts
         uniqueContentStorage = await upgrades.deployProxy(UniqueContentStorage);
-        uniqueContent = await upgrades.deployProxy(UniqueContent, [uniqueContentStorage.address, "Expensive Collection", "EC"]);
+        uniqueContent = await upgrades.deployProxy(UniqueContent, ["Expensive Collection", "EC", uniqueContentStorage.address]);
         
         // Give unique content contract permission to transfer original asset
         await content.connect(creatorAddress).setApprovalForAll(uniqueContent.address, true);

@@ -21,13 +21,14 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     using ERC165CheckerUpgradeable for address;
 
     function initialize(
-        address _uniqueContentStorage,
         string memory _name,
-        string memory _symbol)
+        string memory _symbol,
+        address _uniqueContentStorage)
         public initializer
     {
         __ERC165_init_unchained();
         __ERC721_init_unchained(_name, _symbol);
+        __ERC1155Holder_init_unchained();
         __UniqueContent_init_unchained(_uniqueContentStorage);
     }
 
