@@ -57,9 +57,7 @@ describe('Content Clone Factory Tests', () => {
             expect(await contentFactory.contentManagerExists(contentManager.address)).is.equal(true);
 
             // check if the developer wallet can mint
-            var accessControlManager = await AccessControlManager.attach(await contentManager.accessControlManager());
-            var minter_role = await accessControlManager.MINTER_ROLE();
-            expect(await accessControlManager.hasRole(minter_role, deployerAddress.address)).is.equal(true);
+            expect(await contentManager.isMinter(deployerAddress.address)).is.equal(true);
         });
         
         it('Create Content Contracts from different developers', async () => {

@@ -10,12 +10,11 @@ interface IContentManager {
 
     /******** View Functions ********/
     function content() external view returns(IContent);
-    
-    function contentStorage() external view returns(IContentStorage);
-    
-    function accessControlManager() external view returns(IAccessControlManager);
+
+    function isMinter(address _minter) external view returns(bool);
 
     /******** Mutative Functions ********/
+
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external;
     
     function registerOperators(LibAsset.SystemApprovalPair[] memory _operators) external;

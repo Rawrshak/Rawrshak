@@ -55,7 +55,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     */
     function mintBatch(LibAsset.MintData memory _data) external override {
         // verifies if the caller has the requisite permissions to mint
-        accessControlManager.verifyMint(_data, _msgSender());
+        accessControlManager.verifyMintDataAndIncrementNonce(_data, _msgSender());
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             // checks if the token exists
             require(_tokenExists(_data.tokenIds[i]), "token id missing");

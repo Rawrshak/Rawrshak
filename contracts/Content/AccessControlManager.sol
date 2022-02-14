@@ -59,7 +59,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
     * @param _data LibAsset.MintData structure object
     * @param _caller address of the wallet who is minting
     */
-    function verifyMint(LibAsset.MintData memory _data, address _caller) external override onlyRole(DEFAULT_ADMIN_ROLE) {
+    function verifyMintDataAndIncrementNonce(LibAsset.MintData memory _data, address _caller) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_data.tokenIds.length == _data.amounts.length, "Invalid token input");
 
         // if the caller is the owner address or has a minter role (granted by the owner), continue on.
