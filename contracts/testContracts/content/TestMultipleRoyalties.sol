@@ -14,7 +14,7 @@ contract TestMultipleRoyalties is MultipleRoyalties {
     }
 
     function verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates, uint256 _originalRoyaltyRate) external pure returns (bool) {
-        return _verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate);
+        return LibRoyalty.verifyRoyalties(_royaltyReceivers, _royaltyRates, _originalRoyaltyRate);
     }
 
     function deleteTokenRoyalties(uint256 _uniqueId) external {

@@ -55,22 +55,5 @@ abstract contract MultipleRoyalties{
         emit TokenRoyaltiesUpdated(_uniqueId, royaltyReceivers[_uniqueId], royaltyRates[_uniqueId]);
     }
 
-    /**
-    * @dev Verifies whether the sum of the royalties exceed 2e5 and whether the number of royalties and receivers match
-    * @param _royaltyReceivers addresses to receive the royalties
-    * @param _royaltyRates royalty fee percentages
-    * @param _originalRoyaltyRate royalty rate of the original item
-    */
-    function _verifyRoyalties(address[] memory _royaltyReceivers, uint24[] memory _royaltyRates, uint256 _originalRoyaltyRate) internal pure returns (bool) {
-        if (_royaltyReceivers.length != _royaltyRates.length) {
-            return false;
-        }
-        uint256 sum = _originalRoyaltyRate;
-        for (uint256 i = 0; i < _royaltyReceivers.length; ++i) {
-            sum += _royaltyRates[i];
-        }
-        return (sum <= 2e5);
-    }
-
     uint256[50] private __gap;
 }
