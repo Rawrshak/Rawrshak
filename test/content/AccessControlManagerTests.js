@@ -27,7 +27,7 @@ describe('AccessControlManager Contract Tests', () => {
         
         it('Verify AccessControlManager Contract Interfaces', async () => {
             // IAccessControlManager Interface
-            expect(await manager.supportsInterface("0x41f2c5c6")).to.equal(true);
+            expect(await manager.supportsInterface("0xe492210d")).to.equal(true);
 
             // IAccessControlUpgradeable Interface
             expect(await manager.supportsInterface("0x7965db0b")).to.equal(true);
@@ -74,7 +74,7 @@ describe('AccessControlManager Contract Tests', () => {
     });
     
     describe("Mint Verification", () => {
-        it('VerifyMint() for owner', async () => {
+        it('verifyMintDataAndIncrementNonce() for owner', async () => {
             var minter_role = await manager.MINTER_ROLE();
             var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
             await manager.grantRole(minter_role, deployerAddress.address);
@@ -91,14 +91,14 @@ describe('AccessControlManager Contract Tests', () => {
             const signature = await sign(playerAddress.address, [1], [1], 0, deployerAddress.address, content.address);
             var mintData = [playerAddress.address, [1], [1], 0, deployerAddress.address, signature];
     
-            // deployerAltAddress pretending to be contract address and calling verifyMint()
-            await manager.connect(deployerAltAddress).verifyMint(mintData, deployerAddress.address);
+            // deployerAltAddress pretending to be contract address and calling verifyMintDataAndIncrementNonce()
+            await manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, deployerAddress.address);
 
             // user nonce doesn't matter because caller has minter role
             expect(await manager.userMintNonce(playerAddress.address)).to.equal(0);
         });
     
-        it('VerifyMint() for minter accounts', async () => {
+        it('verifyMintDataAndIncrementNonce() for minter accounts', async () => {
             var minter_role = await manager.MINTER_ROLE();
             var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
             await manager.grantRole(minter_role, minterAddress.address);
@@ -114,15 +114,15 @@ describe('AccessControlManager Contract Tests', () => {
             const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
-            // deployerAltAddress pretending to be contract address and calling verifyMint(); 
+            // deployerAltAddress pretending to be contract address and calling verifyMintDataAndIncrementNonce(); 
             // The caller has the minter role, so it bypasses the check and mints.
-            await manager.connect(deployerAltAddress).verifyMint(mintData, minterAddress.address);
+            await manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, minterAddress.address);
             
             // user nonce doesn't matter because caller has minter role
             expect(await manager.userMintNonce(playerAddress.address)).to.equal(0);
         });
     
-        it('VerifyMint() for from signed message', async () => {
+        it('verifyMintDataAndIncrementNonce() for from signed message', async () => {
             var minter_role = await manager.MINTER_ROLE();
             var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
             await manager.grantRole(minter_role, minterAddress.address);
@@ -139,14 +139,14 @@ describe('AccessControlManager Contract Tests', () => {
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
             // The caller is a player but has a signed message from the minter to mint for them.
-            await manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address);
+            await manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address);
             
             // user nonce changed because user made the call
             expect(await manager.userMintNonce(playerAddress.address)).to.equal(1);
         });
     });
     
-    describe("VerifyMint() failure from signed message", () => {
+    describe("verifyMintDataAndIncrementNonce() failure from signed message", () => {
         it('Minter address does not have minter role', async () => {
             var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
@@ -161,7 +161,7 @@ describe('AccessControlManager Contract Tests', () => {
             var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
-            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+            await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
         });
 
         it('Revoked minter role', async () => {
@@ -181,7 +181,7 @@ describe('AccessControlManager Contract Tests', () => {
             const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
-            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+            await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
         });
         
         it('Invalid Nonce', async () => {
@@ -200,7 +200,7 @@ describe('AccessControlManager Contract Tests', () => {
             var signature = await sign(playerAddress.address, [1], [1], 0, minterAddress.address, content.address);
             var mintData = [playerAddress.address, [1], [1], 0, minterAddress.address, signature];
     
-            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+            await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
         });
 
         it('Signer does not match', async () => {
@@ -218,7 +218,7 @@ describe('AccessControlManager Contract Tests', () => {
 
             var signature = await sign(playerAddress.address, [1], [1], 1, playerAddress.address, content.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
-            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+            await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
         });
 
         it('Invalid caller', async () => {
@@ -236,7 +236,7 @@ describe('AccessControlManager Contract Tests', () => {
             
             var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
             var mintData = [player2Address.address, [1], [1], 1, minterAddress.address, signature];
-            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, player2Address.address)).to.be.reverted;
+            await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, player2Address.address)).to.be.reverted;
         });
 
         it('Invalid mint data', async () => {
@@ -255,11 +255,11 @@ describe('AccessControlManager Contract Tests', () => {
             var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
             // tries to mint more than the signature authorizes
             var mintData = [playerAddress.address, [1], [1000], 1, minterAddress.address, signature];
-            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+            await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
 
             // tries to mint a different asset
             var mintData = [playerAddress.address, [2], [1], 1, minterAddress.address, signature];
-            await expect(manager.connect(deployerAltAddress).verifyMint(mintData, playerAddress.address)).to.be.reverted;
+            await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
         });
     });
 

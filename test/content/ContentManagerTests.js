@@ -54,7 +54,7 @@ describe('Content Manager Contract Tests', () => {
 
         it('Check Supported interfaces', async () => {
             // Content Manager interface
-            expect(await contentManager.supportsInterface("0x007a1753")).to.equal(true);
+            expect(await contentManager.supportsInterface("0xb0684770")).to.equal(true);
         });
     });
 
@@ -137,6 +137,7 @@ describe('Content Manager Contract Tests', () => {
             ];
 
             await contentManager.registerOperators(approvalPairs1);
+            expect(await contentManager.isMinter(craftingSystemAddress.address)).is.equal(false);
             await expect(content.connect(craftingSystemAddress).mintBatch(mintData)).to.be.reverted;
 
             expect(await content.totalSupply(1)).to.equal(0);
@@ -149,6 +150,7 @@ describe('Content Manager Contract Tests', () => {
             ];
 
             await contentManager.registerOperators(approvalPairs2);
+            expect(await contentManager.isMinter(craftingSystemAddress.address)).is.equal(true);
             await content.connect(craftingSystemAddress).mintBatch(mintData);
             expect(await content.totalSupply(1)).to.equal(5);
         });
