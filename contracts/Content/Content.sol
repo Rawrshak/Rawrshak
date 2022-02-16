@@ -77,7 +77,7 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     */
     function burnBatch(LibAsset.BurnData memory _data) external override {
         // checks whether the caller has permission to burn the assets
-        require(_data.account == _msgSender() || isApprovedForAll(_data.account, _msgSender()), "Caller is not approved.");
+        require(_data.account == _msgSender() || (isApprovedForAll(_data.account, _msgSender()) && accessControlManager.isSystemContract(_msgSender())), "Caller is not approved.");
 
         for (uint256 i = 0; i < _data.tokenIds.length; ++i) {
             // checks if the token exists
@@ -145,6 +145,14 @@ contract Content is IContent, IERC2981Upgradeable, ERC1155Upgradeable, ERC165Sto
     */
     function userMintNonce(address _user) external view override returns (uint256) {
         return accessControlManager.userMintNonce(_user);
+    }
+    
+    /**
+    * @dev checks whether this contract has been registered as a system contract (Craft, Salvage, Lootbox)
+    * @param _contract contract address to check for role
+    */
+    function isSystemContract(address _contract) external view override returns(bool) {
+        return accessControlManager.isSystemContract(_contract);
     }
     
     /**

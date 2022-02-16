@@ -23,6 +23,8 @@ interface IContent is IContractUri, IERC1155Upgradeable {
     function contractRoyalty() external view returns (address receiver, uint24 rate);
     
     function userMintNonce(address _user) external view returns (uint256);
+    
+    function isSystemContract(address _contract) external view returns(bool);
 
     /******** Mutative Functions ********/
 

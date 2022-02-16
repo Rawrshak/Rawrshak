@@ -54,7 +54,7 @@ describe('Content Manager Contract Tests', () => {
 
         it('Check Supported interfaces', async () => {
             // Content Manager interface
-            expect(await contentManager.supportsInterface("0xb0684770")).to.equal(true);
+            expect(await contentManager.supportsInterface("0xb946e4ab")).to.equal(true);
         });
     });
 
@@ -153,6 +153,33 @@ describe('Content Manager Contract Tests', () => {
             expect(await contentManager.isMinter(craftingSystemAddress.address)).is.equal(true);
             await content.connect(craftingSystemAddress).mintBatch(mintData);
             expect(await content.totalSupply(1)).to.equal(5);
+        });
+
+        it('Register System contract addresses', async () => {
+            var mintData = [playerAddress.address, [1], [5], 1, ethers.constants.AddressZero, []];
+
+            Craft = await ethers.getContractFactory("Craft");
+            craft = await upgrades.deployProxy(Craft, [0]);
+
+            // craftingSystemAddress should have minter role revoked
+            var systemContractPairs = [
+                [craft.address, true],
+                [craft.address, true],
+                [craft.address, false]
+            ];
+
+            await contentManager.registerSystemContracts(systemContractPairs);
+            expect(await content.isSystemContract(craft.address)).is.equal(false);
+
+            // craftingSystemAddress should have minter role granted
+            systemContractPairs = [
+                [craft.address, false],
+                [craft.address, false],
+                [craft.address, true]
+            ];
+
+            await contentManager.registerSystemContracts(systemContractPairs);
+            expect(await content.isSystemContract(craft.address)).is.equal(true);
         });
 
         it('Edge case parameters', async () => {

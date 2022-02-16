@@ -5,14 +5,12 @@ import "../../libraries/LibCraft.sol";
 
 interface ICraft {
     /******** View Functions ********/
-    function recipesLength() external view returns(uint256);
-
     function recipe(uint256 _id) external view returns(LibCraft.Recipe memory _recipe);
 
     /******** Mutative Functions ********/
     function addRecipeBatch(LibCraft.Recipe[] memory _asset) external;
 
-    function enableRecipe(uint256 _id, bool _enabled) external;
+    function setRecipeEnabled(uint256 _id, bool _enabled) external;
 
     function craft(uint256 _id, uint256 _amount) external;
     

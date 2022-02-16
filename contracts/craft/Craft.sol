@@ -22,7 +22,7 @@ contract Craft is ICraft, CraftBase {
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibCraft.Recipe) recipes;
-    uint256 public override recipesLength;
+    uint256 recipeCounter;
 
     /******************** Public API ********************/
     function initialize(uint256 _seed) public initializer {
@@ -32,7 +32,7 @@ contract Craft is ICraft, CraftBase {
         __CraftBase_init_unchained(_seed);
         _registerInterface(type(ICraft).interfaceId);
 
-        recipesLength = 0;
+        recipeCounter = 0;
     }
 
     function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
@@ -40,49 +40,49 @@ contract Craft is ICraft, CraftBase {
 
         uint256[] memory ids = new uint256[](_recipes.length);
 
+        // Note: This allows for materials and rewards from different contracts, but this contract must be registered
+        // as a system contract on the content contract
         for (uint256 i = 0; i < _recipes.length; ++i) {
             require(_recipes[i].materials.length > 0 && _recipes[i].materials.length == _recipes[i].materialAmounts.length, "Invalid materials length");
             require(_recipes[i].rewards.length > 0 && _recipes[i].rewards.length == _recipes[i].rewardAmounts.length, "Invalid rewards length");
             require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 1000000, "Invalid crafting rate.");
 
-            LibCraft.Recipe storage recipeData = recipes[recipesLength];
-            ids[i] = recipesLength;
+            LibCraft.Recipe storage recipeData = recipes[recipeCounter];
+            ids[i] = recipeCounter;
             recipeData.enabled = _recipes[i].enabled;
             recipeData.craftingRate = _recipes[i].craftingRate;
 
             for (uint256 j = 0; j < _recipes[i].materials.length; ++j) {
-                // Todo: Should we assume that these are content/ERC1155 contracts by default? Can we move
-                //       this check to the UI side?
-                require(_recipes[i].materials[j].content.supportsInterface(type(IContent).interfaceId), "Contract is not a Content Contract");
+                require(_recipes[i].materials[j].content.supportsInterface(type(IContent).interfaceId), "Invalid materials contract interface");
+                require(IContent(_recipes[i].materials[j].content).isSystemContract(address(this)), "Error: Craft not registered");
 
                 recipeData.materials.push(_recipes[i].materials[j]);
                 recipeData.materialAmounts.push(_recipes[i].materialAmounts[j]);
             }
 
             for (uint256 j = 0; j < _recipes[i].rewards.length; ++j) {
-                // Todo: Should we assume that these are content/ERC1155 contracts by default? Can we move
-                //       this check to the UI side?
-                require(_recipes[i].rewards[j].content.supportsInterface(type(IContent).interfaceId), "Contract is not a Content Contract");
+                require(_recipes[i].rewards[j].content.supportsInterface(type(IContent).interfaceId), "Invalid reward contract interface");
+                require(IContent(_recipes[i].rewards[j].content).isSystemContract(address(this)), "Error: Craft not registered");
 
                 recipeData.rewards.push(_recipes[i].rewards[j]);
                 recipeData.rewardAmounts.push(_recipes[i].rewardAmounts[j]);
             }
 
-            recipesLength++;
+            recipeCounter++;
         }
 
         emit RecipeUpdated(_msgSender(), ids, _recipes);
     }
 
-    function enableRecipe(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
-        require(_id < recipesLength, "Recipe doesn't exist");
+    function setRecipeEnabled(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
+        require(_id < recipeCounter, "Recipe doesn't exist");
         recipes[_id].enabled = _enabled;
 
         emit RecipeEnabled(_msgSender(), _id, _enabled);
     }
 
     function craft(uint256 _id, uint256 _amount) external override whenNotPaused() {
-        require(_id < recipesLength && _amount > 0, "Invalid input");
+        require(_id < recipeCounter && _amount > 0, "Invalid input");
         require(recipes[_id].enabled, "Recipe disabled");
         
         // User should call setApprovalForAll() with the craft contract as the operator before calling craft()
@@ -124,14 +124,14 @@ contract Craft is ICraft, CraftBase {
         }
     }
     
-    function _mint(uint256 _id, uint256 _rolls) internal {
+    function _mint(uint256 _id, uint256 _amount) internal {
         LibAsset.MintData memory mintData;
         mintData.to = _msgSender();
         for (uint i = 0; i < recipes[_id].rewards.length; ++i) {
             mintData.tokenIds = new uint256[](1);
             mintData.amounts = new uint256[](1);
             mintData.tokenIds[0] = recipes[_id].rewards[i].tokenId;
-            mintData.amounts[0] = recipes[_id].rewardAmounts[i].mul(_rolls);
+            mintData.amounts[0] = recipes[_id].rewardAmounts[i].mul(_amount);
             IContent(recipes[_id].rewards[i].content).mintBatch(mintData);
         }
     }

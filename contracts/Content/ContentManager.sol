@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "../libraries/LibAsset.sol";
 import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
 import "./interfaces/IAccessControlManager.sol";
+import "../craft/interfaces/ICraft.sol";
 
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
+    using AddressUpgradeable for address;
     
     /******************** Constants ********************/
     /*
@@ -76,6 +79,21 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
                 IAccessControlUpgradeable(address(accessControlManager)).grantRole(accessControlManager.MINTER_ROLE(), _operators[i].operator);
             } else {
                 IAccessControlUpgradeable(address(accessControlManager)).revokeRole(accessControlManager.MINTER_ROLE(), _operators[i].operator);
+            }
+        }
+    }
+    
+    /**
+    * @dev Update a system contract's access roles
+    * @param _contracts array of system contracts whose roles are getting updated
+    */
+    function registerSystemContracts(LibAsset.SystemApprovalPair[] memory _contracts) public override onlyOwner {
+        for (uint256 i = 0; i < _contracts.length; ++i) {
+            require(_contracts[i].operator.isContract(), "Error: not a contract");
+            if (_contracts[i].approved) {
+                IAccessControlUpgradeable(address(accessControlManager)).grantRole(accessControlManager.SYSTEM_CONTRACT_ROLE(), _contracts[i].operator);
+            } else {
+                IAccessControlUpgradeable(address(accessControlManager)).revokeRole(accessControlManager.SYSTEM_CONTRACT_ROLE(), _contracts[i].operator);
             }
         }
     }

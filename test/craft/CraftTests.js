@@ -376,7 +376,7 @@ describe('Craft Contract', () => {
 
         // disable the recipe
         await craft.managerSetPause(true);
-        await craft.enableRecipe(0, false);
+        await craft.setRecipeEnabled(0, false);
         await craft.managerSetPause(false);
         await expect(craft.connect(playerAddress).craft(0, 1), "Invalid id.").to.be.reverted;
     });
