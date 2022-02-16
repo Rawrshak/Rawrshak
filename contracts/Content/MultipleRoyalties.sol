@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../libraries/LibRoyalty.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 
-abstract contract MultipleRoyalties{
+abstract contract MultipleRoyalties is ERC165StorageUpgradeable {
 
     /***************** Stored Variables *****************/
     mapping(uint256 => address[]) private royaltyReceivers;
@@ -11,6 +12,10 @@ abstract contract MultipleRoyalties{
 
     /*********************** Events *********************/
     event TokenRoyaltiesUpdated(uint256 indexed uniqueId, address[] royaltyReceivers, uint24[] royaltyRates);
+
+    /******************** Public API ********************/
+    function __MultipleRoyalties_init_unchained() internal onlyInitializing {
+    }
 
     /**************** Internal Functions ****************/
     /**

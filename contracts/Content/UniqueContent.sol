@@ -14,12 +14,13 @@ import "../libraries/LibRoyalty.sol";
 
 contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable, ERC1155HolderUpgradeable, IERC2981Upgradeable, ERC165StorageUpgradeable {
 
+    using ERC165CheckerUpgradeable for address;
+    
     /***************** Stored Variables *****************/
     IUniqueContentStorage uniqueContentStorage;
     uint256 private uniqueIdsCounter;
 
-    using ERC165CheckerUpgradeable for address;
-
+    /******************** Public API ********************/
     function initialize(
         string memory _name,
         string memory _symbol,
@@ -70,7 +71,7 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     * @dev If the caller is the owner of the token and if the unique asset is not creator locked (or the caller is the creator), it burns the unique asset, returns the original asset, and then deletes the unique asset's token info
     * @param _uniqueId uint256 ID of token to burn
     */
-     function burn(uint256 _uniqueId) external override {
+    function burn(uint256 _uniqueId) external override {
         require(ownerOf(_uniqueId) == _msgSender(), "Error: sender not token owner");
         require(
             uniqueContentStorage.isCreator(_uniqueId, _msgSender()) ||
@@ -93,7 +94,7 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     * @param _uniqueId uint256 ID of token to query original asset uri of
     * @param _version version number of token to query
     */
-     function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
+    function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
         require(_exists(_uniqueId), "Unique Id does not exist");
         (uint256 _tokenId, address _contentAddress) = uniqueContentStorage.getAssetData(_uniqueId);
         return IContent(_contentAddress).uri(_tokenId, _version);

@@ -10,6 +10,17 @@ contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
     /***************** Stored Variables *****************/
     mapping(uint256 => LibAsset.UniqueAsset) uniqueAssetInfo;
 
+    /******************** Public API ********************/
+    function initialize() public initializer {
+        __ERC165_init_unchained();
+        __MultipleRoyalties_init_unchained();
+        __UniqueContentStorage_init_unchained();
+    }
+
+    function __UniqueContentStorage_init_unchained() internal onlyInitializing {
+        _registerInterface(type(IUniqueContentStorage).interfaceId);
+    }
+
     /**
     * @dev Records the asset info of a newly minted Asset
     * @param _data LibAsset.UniqueAssetCreateData structure object
