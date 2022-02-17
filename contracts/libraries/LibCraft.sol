@@ -22,7 +22,7 @@ library LibCraft {
         uint256 tokenId;
     }
 
-    struct SalvageReward {
+    struct SalvageOutput {
         AssetData asset;
         uint24  probability;
         uint256 amount;
@@ -31,7 +31,7 @@ library LibCraft {
     struct SalvageableAsset {
         AssetData asset;
         uint256 salvageType;                            // Todo: maybe make this an enum
-        SalvageReward[] rewards;                        // ERC1155 rewards to potentially be minted (based on probability).
+        SalvageOutput[] outputs;                        // ERC1155  to potentially be minted (based on probability).
         LibLootbox.LootboxCreditReward lootboxCredits;  // This needs to be separate from the rewards because the rewards are ERC1155 and credit is ERC20.
     }
 
@@ -44,16 +44,20 @@ library LibCraft {
         uint256[] rewardAmounts;
     }
 
+    function hashAssetId(AssetData memory _asset) internal pure returns(uint256) {
+        return uint256(keccak256(abi.encodePacked(_asset.content, _asset.tokenId)));
+    }
+
     function verifySalvageableAsset(SalvageableAsset memory _asset) internal pure {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
-        // here, it means we've verified the asset and reward assets correctly.
-        require(_asset.salvageType < uint256(SalvageType.Max), "Invalid Salvage Type");
-        require(_asset.rewards.length > 0, "Invalid rewards length");
-        for (uint256 i = 0; i < _asset.rewards.length; ++i) {
-            require(_asset.rewards[i].probability > 0 && _asset.rewards[i].probability <= 1000000, "Invalid probability");
-            require(_asset.rewards[i].amount > 0, "Invalid reward amount");
-            require(_asset.rewards[i].asset.content != address(0), "Invalid content address");
-            require(_asset.rewards[i].asset.tokenId != 0, "Invalid token id");
+        // here, it means we've verified the asset and output assets correctly.
+        require(_asset.salvageType < uint256(SalvageType.Max), "Error: Invalid Salvage Type");
+        require(_asset.outputs.length > 0, "Error: Invalid outputs length");
+        for (uint256 i = 0; i < _asset.outputs.length; ++i) {
+            require(_asset.outputs[i].probability > 0 && _asset.outputs[i].probability <= 1e6, "Error: Invalid probability");
+            require(_asset.outputs[i].amount > 0, "Error: Invalid reward amount");
+            require(_asset.outputs[i].asset.content != address(0), "Error: Invalid content address");
+            require(_asset.outputs[i].asset.tokenId != 0, "Error: Invalid token id");
         }
 
         // Check validity of the lootbox credit asset. If it was set as this is optional.
@@ -63,13 +67,13 @@ library LibCraft {
         }
     }
 
-    function salvage(SalvageableAsset storage _asset, uint256 rolls) internal view returns(SalvageReward[] memory materials, uint256[] memory amounts) {
+    function salvage(SalvageableAsset storage _asset, uint256 _amount) internal view returns(SalvageOutput[] memory outputAssets, uint256[] memory amounts) {
         // guarantee
         if (SalvageType(_asset.salvageType) == SalvageType.Guarantee) {
-            materials = _asset.rewards;
-            amounts = new uint256[](_asset.rewards.length);
-            for (uint256 i = 0; i < _asset.rewards.length; ++i) {
-                amounts[i] = _asset.rewards[i].amount.mul(rolls);
+            outputAssets = _asset.outputs;
+            amounts = new uint256[](_asset.outputs.length);
+            for (uint256 i = 0; i < _asset.outputs.length; ++i) {
+                amounts[i] = _asset.outputs[i].amount.mul(_amount);
             }
         }
         // } else if (SalvageType(_asset.salvageType) == SalvageType.Random) {

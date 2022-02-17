@@ -96,7 +96,7 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
 
         if(blueprint.hasGuaranteedItems) {
             for (uint256 i = 0; i < rewards.length; ++i) {
-                if(rewards[i].probability >= 1000000) {
+                if(rewards[i].probability >= 1e6) {
                     LibAsset.MintData memory mintData;
                     mintData.to = msg.sender;
                     mintData.tokenIds = new uint256[](1);
@@ -116,9 +116,9 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
             }
 
             // Don't double count guaranteed items.
-            if(rewards[i].probability < 1000000) {
+            if(rewards[i].probability < 1e6) {
                 uint256 randomVal = LibLootbox.random(msg.sender, seed);
-                if (randomVal.mod(1000000) <= rewards[i].probability) {
+                if (randomVal.mod(1e6) <= rewards[i].probability) {
                     LibAsset.MintData memory mintData;
                     mintData.to = msg.sender;
                     mintData.tokenIds = new uint256[](1);

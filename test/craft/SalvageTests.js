@@ -125,7 +125,7 @@ describe('Salvage Contract', () => {
                 [content.address, 0],
                 0, // salvage type
                 [ // array
-                    [   // SalvageReward
+                    [   // SalvageOutput
                         [content.address, 2],
                         1000000,
                         2
@@ -163,17 +163,20 @@ describe('Salvage Contract', () => {
         expect(receipt.events[0].args[1].toString() != 0x0, "Id is empty.").to.equal(true);
 
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 0]);
+        var outputsData = await salvage.getSalvageOutputs([content.address, 0]);
 
         //console.log(storedSalvageableAssetData);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
         expect(storedSalvageableAssetData.asset.tokenId == 0, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 0, "Salvage Type incorrect").to.equal(true);
-        expect(rewardsData.length == 2, "Rewards length incorrect").to.equal(true);
-        for (var i = 0; i < rewardsData.length; ++i) {
-            expect(rewardsData[i].asset.content == content.address, "Invalid Reward Address").to.equal(true);
-            expect(rewardsData[i].probability == 1000000, "Invalid Reward probability").to.equal(true);
+        expect(outputsData.outputAssets.length == 2, "Rewards length incorrect").to.equal(true);
+        for (var i = 0; i < outputsData.outputAssets.length; ++i) {
+            expect(outputsData.outputAssets[i].asset.content == content.address, "Invalid Reward Address").to.equal(true);
+            expect(outputsData.outputAssets[i].probability == 1000000, "Invalid Reward probability").to.equal(true);
+            expect(outputsData.outputLootboxCredits.tokenAddress == lootboxCreditToken.address, "Invalid Lootbox Credit token address").to.equal(true);
+            expect(outputsData.outputLootboxCredits.probability == 1000000, "Invalid Lootbox Credit token probability").to.equal(true);
+            expect(outputsData.outputLootboxCredits.amount == 1, "Invalid Lootbox Credit token reward amount").to.equal(true);
         }
     });
     
@@ -235,28 +238,34 @@ describe('Salvage Contract', () => {
         
         // Test Asset 1
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId1);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 0]);
+        var outputsData = await salvage.getSalvageOutputs([content.address, 0]);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
         expect(storedSalvageableAssetData.asset.tokenId == 0, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 0, "Salvage Type incorrect").to.equal(true);
-        expect(rewardsData.length == 2, "Rewards length incorrect").to.equal(true);
-        for (var i = 0; i < rewardsData.length; ++i) {
-            expect(rewardsData[i].asset.content == content.address, "Invalid Reward Address").to.equal(true);
-            expect(rewardsData[i].probability == 1000000, "Invalid Reward probability").to.equal(true);
+        expect(outputsData.outputAssets.length == 2, "Rewards length incorrect").to.equal(true);
+        for (var i = 0; i < outputsData.outputAssets.length; ++i) {
+            expect(outputsData.outputAssets[i].asset.content == content.address, "Invalid Reward Address").to.equal(true);
+            expect(outputsData.outputAssets[i].probability == 1000000, "Invalid Reward probability").to.equal(true);
+            expect(outputsData.outputLootboxCredits.tokenAddress == lootboxCreditToken.address, "Invalid Lootbox Credit token address").to.equal(true);
+            expect(outputsData.outputLootboxCredits.probability == 1000000, "Invalid Lootbox Credit token probability").to.equal(true);
+            expect(outputsData.outputLootboxCredits.amount == 1, "Invalid Lootbox Credit token reward amount").to.equal(true);
         }
         
         // Test Asset 2
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId2);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 1]);
+        var outputsData = await salvage.getSalvageOutputs([content.address, 1]);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
         expect(storedSalvageableAssetData.asset.tokenId == 1, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 1, "Salvage Type incorrect").to.equal(true);
-        expect(rewardsData.length == 2, "Rewards length incorrect").to.equal(true);
-        for (var i = 0; i < rewardsData.length; ++i) {
-            expect(rewardsData[i].asset.content == content.address, "Invalid Reward Address").to.equal(true);
-            expect(rewardsData[i].probability == 500000, "Invalid Reward probability").to.equal(true);
+        expect(outputsData.outputAssets.length == 2, "Rewards length incorrect").to.equal(true);
+        for (var i = 0; i < outputsData.outputAssets.length; ++i) {
+            expect(outputsData.outputAssets[i].asset.content == content.address, "Invalid Reward Address").to.equal(true);
+            expect(outputsData.outputAssets[i].probability == 500000, "Invalid Reward probability").to.equal(true);
+            expect(outputsData.outputLootboxCredits.tokenAddress == lootboxCreditToken.address, "Invalid Lootbox Credit token address").to.equal(true);
+            expect(outputsData.outputLootboxCredits.probability == 1000000, "Invalid Lootbox Credit token probability").to.equal(true);
+            expect(outputsData.outputLootboxCredits.amount == 1, "Invalid Lootbox Credit token reward amount").to.equal(true);
         }
     });
 
@@ -289,16 +298,19 @@ describe('Salvage Contract', () => {
         results = await salvage.connect(managerAddress).addSalvageableAssetBatch(updatedData);
         
         var storedSalvageableAssetData = await salvage.getSalvageableAssets(assetId);
-        var rewardsData = await salvage.getSalvageRewards([content.address, 0]);
+        var outputsData = await salvage.getSalvageOutputs([content.address, 0]);
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
         expect(storedSalvageableAssetData.asset.tokenId == 0, "Asset id incorrect").to.equal(true);
         expect(storedSalvageableAssetData.salvageType.toNumber() == 1, "Salvage Type not updated").to.equal(true);
-        expect(rewardsData.length == 1, "Rewards length not updated").to.equal(true);
-        expect(rewardsData[0].asset.content == content.address, "Invalid Reward Address").to.equal(true);
-        expect(rewardsData[0].asset.tokenId == 4, "Invalid Reward updated").to.equal(true);
-        expect(rewardsData[0].probability == 100000, "Invalid Reward probability").to.equal(true);
-        expect(rewardsData[0].amount == 1, "Invalid Reward probability updated").to.equal(true);
+        expect(outputsData.outputAssets.length == 1, "Rewards length not updated").to.equal(true);
+        expect(outputsData.outputAssets[0].asset.content == content.address, "Invalid Reward Address").to.equal(true);
+        expect(outputsData.outputAssets[0].asset.tokenId == 4, "Invalid Reward updated").to.equal(true);
+        expect(outputsData.outputAssets[0].probability == 100000, "Invalid Reward probability").to.equal(true);
+        expect(outputsData.outputAssets[0].amount == 1, "Invalid Reward probability updated").to.equal(true);
+        expect(outputsData.outputLootboxCredits.tokenAddress == lootboxCreditToken.address, "Invalid Lootbox Credit token address").to.equal(true);
+        expect(outputsData.outputLootboxCredits.probability == 1000000, "Invalid Lootbox Credit token probability").to.equal(true);
+        expect(outputsData.outputLootboxCredits.amount == 1, "Invalid Lootbox Credit token reward amount").to.equal(true);
     });
 
     it('Failing to Add Salvageable Assets', async () => {

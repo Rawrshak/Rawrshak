@@ -5,7 +5,7 @@ import "../../libraries/LibCraft.sol";
 
 interface ISalvage {
     /******** View Functions ********/
-    function getSalvageRewards(LibCraft.AssetData calldata _asset) external view returns(LibCraft.SalvageReward[] memory rewards);
+    function getSalvageOutputs(LibCraft.AssetData calldata _asset) external view returns(LibCraft.SalvageOutput[] memory outputAssets, LibLootbox.LootboxCreditReward memory outputLootboxCredits);
 
     /******** Mutative Functions ********/
     function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _asset) external;
@@ -18,5 +18,5 @@ interface ISalvage {
     event SalvageableAssetsUpdated(address indexed operator, LibCraft.SalvageableAsset[] assets, uint256[] ids);
     event AssetSalvaged(address indexed user, LibCraft.AssetData asset, uint256 amount);
     event AssetSalvagedBatch(address indexed user, LibCraft.AssetData[] assets, uint256[] amounts);
-    event LootboxCreditEarned(address indexed user, uint256 amount);
+    event LootboxCreditEarned(address indexed user, address tokenAddress, uint256 amount);
 }

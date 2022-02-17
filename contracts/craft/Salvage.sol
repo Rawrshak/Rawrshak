@@ -35,27 +35,26 @@ contract Salvage is ISalvage, CraftBase {
     }
 
     function addSalvageableAssetBatch(LibCraft.SalvageableAsset[] memory _assets) external override whenPaused() checkPermissions(MANAGER_ROLE) {
-        require(_assets.length > 0, "Invalid input length.");
+        require(_assets.length > 0, "Error: Invalid input length");
 
         uint256[] memory ids = new uint256[](_assets.length);
         for (uint256 i = 0; i < _assets.length; ++i) {
-            require(_assets[i].asset.content.supportsInterface(type(IContent).interfaceId), "Asset's Contract is not a Content Contract");
+            require(_assets[i].asset.content.supportsInterface(type(IContent).interfaceId), "Error: Invalid salvage contract interface");
 
             _assets[i].verifySalvageableAsset();
-            uint256 id = _getId(_assets[i].asset.content, _assets[i].asset.tokenId);
+            uint256 id = _assets[i].asset.hashAssetId();
 
             // This will overwrite whatever is there initially
-            salvageableAssets[id].asset.content = _assets[i].asset.content;
-            salvageableAssets[id].asset.tokenId = _assets[i].asset.tokenId;
+            salvageableAssets[id].asset = _assets[i].asset;
             salvageableAssets[id].salvageType = _assets[i].salvageType;
-            if (salvageableAssets[id].rewards.length > 0) {
-                delete salvageableAssets[id].rewards;
+            if (salvageableAssets[id].outputs.length > 0) {
+                delete salvageableAssets[id].outputs;
             }
 
-            for (uint256 j = 0; j < _assets[i].rewards.length; ++j) {
-                require(_assets[i].rewards[j].asset.content.supportsInterface(type(IContent).interfaceId), "Reward's Contract is not a Content Contract");
+            for (uint256 j = 0; j < _assets[i].outputs.length; ++j) {
+                require(_assets[i].outputs[j].asset.content.supportsInterface(type(IContent).interfaceId), "Error: Invalid outputs contract interface");
 
-                salvageableAssets[id].rewards.push(_assets[i].rewards[j]);
+                salvageableAssets[id].outputs.push(_assets[i].outputs[j]);
             }
             salvageableAssets[id].lootboxCredits = _assets[i].lootboxCredits;
             ids[i] = id;
@@ -65,56 +64,50 @@ contract Salvage is ISalvage, CraftBase {
     }
 
     function salvage(LibCraft.AssetData memory _asset, uint256 _amount) public override whenNotPaused() {
-        _validateInput(_asset, _amount);
-
-        uint256 id = _getId(_asset.content, _asset.tokenId);
-        
-        // 4. call salvage(), which should return the assets to mint
-        (LibCraft.SalvageReward[] memory materials, uint256[] memory amounts) = salvageableAssets[id].salvage(_amount);
-
-        _burn(_asset, _amount);
-
-        _mint(materials, amounts);
-
-        // Todo: update this to include the salvage rewards
-        
-        if(salvageableAssets[id].lootboxCredits.tokenAddress != address(0))
-        {
-            LibLootbox.verifyLootboxCreditReward(salvageableAssets[id].lootboxCredits);
-            uint256 lootCredit = LibLootbox.salvageCredit(salvageableAssets[id].lootboxCredits, seed);
-            IL2StandardERC20Latest(salvageableAssets[id].lootboxCredits.tokenAddress).mint(_msgSender(), lootCredit);
-            emit LootboxCreditEarned(_msgSender(), lootCredit);
-        }
+        _salvage(_asset, _amount);
 
         emit AssetSalvaged(_msgSender(), _asset, _amount);
     }
     
 
     function salvageBatch(LibCraft.AssetData[] memory _assets, uint256[] memory _amounts) external override whenNotPaused() {
-        require(_assets.length == _amounts.length && _amounts.length > 0, "Invalid input lengths.");
+        require(_assets.length == _amounts.length && _amounts.length > 0, "Error: Invalid input lengths");
 
         for (uint256 i = 0; i < _assets.length; ++i) {
-            salvage(_assets[i], _amounts[i]);
+            _salvage(_assets[i], _amounts[i]);
         }
         
-        // Todo: update this to include the salvage rewards
         emit AssetSalvagedBatch(_msgSender(), _assets, _amounts);
     }
 
-    function getSalvageRewards(LibCraft.AssetData calldata _asset) external view override returns(LibCraft.SalvageReward[] memory rewards) {
-        rewards = salvageableAssets[_getId(_asset.content, _asset.tokenId)].rewards;
+    function getSalvageOutputs(LibCraft.AssetData calldata _asset) external view override returns(LibCraft.SalvageOutput[] memory outputAssets, LibLootbox.LootboxCreditReward memory outputLootboxCredits) {
+        outputAssets = salvageableAssets[_asset.hashAssetId()].outputs;
+        outputLootboxCredits = salvageableAssets[_asset.hashAssetId()].lootboxCredits;
     }
 
     /**************** Internal Functions ****************/
-    function _getId(address _content, uint256 _tokenId) internal pure returns(uint256) {
-        return uint256(keccak256(abi.encodePacked(_content, _tokenId)));
-    }
 
-    function _validateInput(LibCraft.AssetData memory _asset, uint256 _amount) internal view {
-        // 1. Check if the asset is salvageable
-        require(salvageableAssets[_getId(_asset.content, _asset.tokenId)].rewards.length > 0, "Item not salvageable");
-        // 2. Check amount > 0
-        require(_amount > 0, "Invalid amount");
+    function _salvage(LibCraft.AssetData memory _asset, uint256 _amount) internal {
+        require(salvageableAssets[_asset.hashAssetId()].outputs.length > 0, "Error: Item not salvageable");
+        require(_amount > 0, "Error: Invalid amount");
+
+        uint256 id = _asset.hashAssetId();
+        
+        // 4. call salvage(), which should return the assets to mint
+        (LibCraft.SalvageOutput[] memory outputAssets, uint256[] memory amounts) = salvageableAssets[id].salvage(_amount);
+
+        _burn(_asset, _amount);
+
+        _mint(outputAssets, amounts);
+        
+        if(salvageableAssets[id].lootboxCredits.tokenAddress != address(0))
+        {
+            // Note: The Salvage Contract mus have the MINTER_ROLE in the lootbox credit contract
+            LibLootbox.verifyLootboxCreditReward(salvageableAssets[id].lootboxCredits);
+            uint256 lootCredit = LibLootbox.salvageCredit(salvageableAssets[id].lootboxCredits, seed);
+            IL2StandardERC20Latest(salvageableAssets[id].lootboxCredits.tokenAddress).mint(_msgSender(), lootCredit);
+            emit LootboxCreditEarned(_msgSender(), salvageableAssets[id].lootboxCredits.tokenAddress, lootCredit);
+        }
     }
 
     function _burn(LibCraft.AssetData memory _asset, uint256 _burnAmount) internal {
@@ -128,17 +121,17 @@ contract Salvage is ISalvage, CraftBase {
         IContent(_asset.content).burnBatch(burnData);
     }
 
-    function _mint(LibCraft.SalvageReward[] memory _materials, uint256[] memory _materialAmounts) internal {
+    function _mint(LibCraft.SalvageOutput[] memory _outputAssets, uint256[] memory _materialAmounts) internal {
         // 6. mint the rewards
         // note: rewards can be from different content contracts. I don't know if we should limit this or not.
         LibAsset.MintData memory mintData;
         mintData.to = _msgSender();
-        for (uint i = 0; i < _materials.length; ++i) {
+        for (uint i = 0; i < _outputAssets.length; ++i) {
             mintData.tokenIds = new uint256[](1);
             mintData.amounts = new uint256[](1);
-            mintData.tokenIds[0] = _materials[i].asset.tokenId;
+            mintData.tokenIds[0] = _outputAssets[i].asset.tokenId;
             mintData.amounts[0] = _materialAmounts[i];
-            IContent(_materials[i].asset.content).mintBatch(mintData);
+            IContent(_outputAssets[i].asset.content).mintBatch(mintData);
         }
     }
 

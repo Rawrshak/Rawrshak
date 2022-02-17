@@ -36,7 +36,7 @@ contract Craft is ICraft, CraftBase {
     }
 
     function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
-        require(_recipes.length > 0, "Invalid input length.");
+        require(_recipes.length > 0, "Invalid input length");
 
         uint256[] memory ids = new uint256[](_recipes.length);
 
@@ -45,7 +45,7 @@ contract Craft is ICraft, CraftBase {
         for (uint256 i = 0; i < _recipes.length; ++i) {
             require(_recipes[i].materials.length > 0 && _recipes[i].materials.length == _recipes[i].materialAmounts.length, "Invalid materials length");
             require(_recipes[i].rewards.length > 0 && _recipes[i].rewards.length == _recipes[i].rewardAmounts.length, "Invalid rewards length");
-            require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 1000000, "Invalid crafting rate.");
+            require(_recipes[i].craftingRate > 0 && _recipes[i].craftingRate <= 1e6, "Error: Invalid crafting rate");
 
             LibCraft.Recipe storage recipeData = recipes[recipeCounter];
             ids[i] = recipeCounter;
@@ -53,7 +53,7 @@ contract Craft is ICraft, CraftBase {
             recipeData.craftingRate = _recipes[i].craftingRate;
 
             for (uint256 j = 0; j < _recipes[i].materials.length; ++j) {
-                require(_recipes[i].materials[j].content.supportsInterface(type(IContent).interfaceId), "Invalid materials contract interface");
+                require(_recipes[i].materials[j].content.supportsInterface(type(IContent).interfaceId), "Error: Invalid materials contract interface");
                 require(IContent(_recipes[i].materials[j].content).isSystemContract(address(this)), "Error: Craft not registered");
 
                 recipeData.materials.push(_recipes[i].materials[j]);
@@ -61,7 +61,7 @@ contract Craft is ICraft, CraftBase {
             }
 
             for (uint256 j = 0; j < _recipes[i].rewards.length; ++j) {
-                require(_recipes[i].rewards[j].content.supportsInterface(type(IContent).interfaceId), "Invalid reward contract interface");
+                require(_recipes[i].rewards[j].content.supportsInterface(type(IContent).interfaceId), "Error: Invalid reward contract interface");
                 require(IContent(_recipes[i].rewards[j].content).isSystemContract(address(this)), "Error: Craft not registered");
 
                 recipeData.rewards.push(_recipes[i].rewards[j]);
@@ -75,24 +75,24 @@ contract Craft is ICraft, CraftBase {
     }
 
     function setRecipeEnabled(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
-        require(_id < recipeCounter, "Recipe doesn't exist");
+        require(_id < recipeCounter, "Error: Recipe doesn't exist");
         recipes[_id].enabled = _enabled;
 
         emit RecipeEnabled(_msgSender(), _id, _enabled);
     }
 
     function craft(uint256 _id, uint256 _amount) external override whenNotPaused() {
-        require(_id < recipeCounter && _amount > 0, "Invalid input");
-        require(recipes[_id].enabled, "Recipe disabled");
+        require(_id < recipeCounter && _amount > 0, "Error: Invalid input");
+        require(recipes[_id].enabled, "Error: Recipe disabled");
         
         // User should call setApprovalForAll() with the craft contract as the operator before calling craft()
         _burn(_id, _amount);
         
         // check crafting rate if it's less than 100%, then get a random number
-        if (recipes[_id].craftingRate < 1000000) {
+        if (recipes[_id].craftingRate < 1e6) {
             for (uint256 i = 0; i < _amount; ++i) {
                 seed = LibCraft.random(_msgSender(), seed);
-                if (seed.mod(1000000) > recipes[_id].craftingRate) {
+                if (seed.mod(1e6) > recipes[_id].craftingRate) {
                     // if crafting fails, deduct the number of rolls that failed
                     --_amount;
                 }
