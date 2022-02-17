@@ -94,6 +94,9 @@ describe('Content Contract Tests', () => {
         it("Uri", async () => {
             expect(await content['uri(uint256,uint256)'](0, 0))
                 .to.equal("arweave.net/tx/public-uri-0");
+            
+            expect(await content['uri(uint256)'](0))
+                .to.equal("arweave.net/tx/public-uri-0");
         });
     
         it('Royalty', async () => {

@@ -3,18 +3,19 @@ const { ethers, upgrades } = require("hardhat");
 const { sign } = require("../mint");
 
 describe('Unique Content Contract Tests', () => {
-    var uniqueContent
     var developerAddress, developerAltAddress, creatorAddress, receiverAddress, playerAddress;
-    var AccessControlManager, ContentStorage, Content;
+    var AccessControlManager, ContentStorage, Content, UniqueContentStorage, UniqueContent;
     var content;
     var contentStorage;
     var accessControlManager;
     var asset;
-    var UniqueContent;
+    var uniqueContent;
+    var uniqueContentStorage;
 
     before(async () => {
         [developerAddress, developerAltAddress, creatorAddress, receiverAddress, playerAddress] = await ethers.getSigners();
         UniqueContent = await ethers.getContractFactory("UniqueContent");
+        UniqueContentStorage = await ethers.getContractFactory("UniqueContentStorage");
         AccessControlManager = await ethers.getContractFactory("AccessControlManager");
         ContentStorage = await ethers.getContractFactory("ContentStorage");
         Content = await ethers.getContractFactory("Content");
@@ -44,8 +45,9 @@ describe('Unique Content Contract Tests', () => {
         var mintData = [creatorAddress.address, [0, 1], [2, 1], 1, developerAddress.address, signature];
         await content.connect(creatorAddress).mintBatch(mintData);
 
-        // launch unique content contract
-        uniqueContent = await upgrades.deployProxy(UniqueContent);
+        // launch unique content contracts
+        uniqueContentStorage = await upgrades.deployProxy(UniqueContentStorage);
+        uniqueContent = await upgrades.deployProxy(UniqueContent, ["Expensive Collection", "EC", uniqueContentStorage.address]);
         
         // Give unique content contract permission to transfer original asset
         await content.connect(creatorAddress).setApprovalForAll(uniqueContent.address, true);
@@ -66,9 +68,6 @@ describe('Unique Content Contract Tests', () => {
             results = await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             expect(results)
                 .to.emit(uniqueContent, "Mint");
-            expect(results)
-                .to.emit(uniqueContent, "TokenRoyaltiesUpdated")
-                .withArgs(0, [creatorAddress.address, receiverAddress.address], [15000, 10000]);
             
             // checks whether the original asset has switched hands 
             expect(await content.balanceOf(creatorAddress.address, 0)).to.equal(1);
@@ -78,8 +77,9 @@ describe('Unique Content Contract Tests', () => {
             expect(await uniqueContent.balanceOf(creatorAddress.address)).to.equal(1);
             expect(await uniqueContent.ownerOf(0)).to.equal(creatorAddress.address);
 
-            expect(await uniqueContent["tokenURI(uint256,uint256)"](0,0)).to.equal("arweave.net/tx/unique-uri-0");
-            expect(await uniqueContent.originalAssetUri(0,0)).to.equal("arweave.net/tx/public-uri-0");
+            expect(await uniqueContent["tokenURI(uint256,uint256)"](0, 0)).to.equal("arweave.net/tx/unique-uri-0");
+            expect(await uniqueContent["tokenURI(uint256)"](0)).to.equal("arweave.net/tx/unique-uri-0");
+            expect(await uniqueContent.originalAssetUri(0, 0)).to.equal("arweave.net/tx/public-uri-0");
 
             // check royalty rates by setting _salePrice to 1e6
             var tokenFees = await uniqueContent.multipleRoyaltyInfo(0, 1000000);
@@ -96,14 +96,12 @@ describe('Unique Content Contract Tests', () => {
             results = await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData2);
             expect(results)
                 .to.emit(uniqueContent, "Mint");
-            expect(results)
-                .to.emit(uniqueContent, "TokenRoyaltiesUpdated")
-                .withArgs(1, [], []);
 
             expect(await uniqueContent.balanceOf(creatorAddress.address)).to.equal(2);
-            expect(await uniqueContent["tokenURI(uint256,uint256)"](0,0)).to.equal("arweave.net/tx/unique-uri-0");
-            expect(await uniqueContent["tokenURI(uint256,uint256)"](1,0)).to.equal("arweave.net/tx/unique-uri-1");
-            expect(await uniqueContent.originalAssetUri(1,0)).to.equal("arweave.net/tx/public-uri-1");
+            expect(await uniqueContent["tokenURI(uint256,uint256)"](0, 0)).to.equal("arweave.net/tx/unique-uri-0");
+            expect(await uniqueContent["tokenURI(uint256,uint256)"](1, 0)).to.equal("arweave.net/tx/unique-uri-1");
+            expect(await uniqueContent["tokenURI(uint256)"](1)).to.equal("arweave.net/tx/unique-uri-1");
+            expect(await uniqueContent.originalAssetUri(1, 0)).to.equal("arweave.net/tx/public-uri-1");
             
             var tokenFees = await uniqueContent.multipleRoyaltyInfo(1, 1000000);
             expect(tokenFees[0][0]).to.equal(developerAltAddress.address);
@@ -138,6 +136,7 @@ describe('Unique Content Contract Tests', () => {
             var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [180001], false];
             var uniqueAssetCreateData3 = [playerAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
             var uniqueAssetCreateData4 = [creatorAddress.address, content.address, 1, "arweave.net/tx/unique-uri-1", [], [], false];
+            var uniqueAssetCreateData5 = [creatorAddress.address, contentStorage.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
 
             // invalid royalties
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData)).to.be.reverted;
@@ -147,6 +146,8 @@ describe('Unique Content Contract Tests', () => {
             // // player runs out of assets for second minting process
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData4);
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData4)).to.be.reverted;
+            // contentStorage.address does not support IERC1155 nor IERC2981 
+            await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData5)).to.be.reverted;
         });    
     });
 
@@ -168,7 +169,7 @@ describe('Unique Content Contract Tests', () => {
             await expect(uniqueContent.ownerOf(0)).to.be.reverted; // non-existent token
 
             await expect(uniqueContent["tokenURI(uint256,uint256)"](0,0)).to.be.reverted;
-            await expect(uniqueContent.originalAssetUri(0,0)).to.be.reverted;
+            await expect(uniqueContent.originalAssetUri(0, 0)).to.be.reverted;
             await expect(uniqueContent.royaltyInfo(0, 50000)).to.be.reverted;
             await expect(uniqueContent.multipleRoyaltyInfo(0, 50000)).to.be.reverted;
 
@@ -184,8 +185,8 @@ describe('Unique Content Contract Tests', () => {
             expect(await uniqueContent.balanceOf(playerAddress.address)).to.equal(0);
             await expect(uniqueContent.ownerOf(1)).to.be.reverted; // non-existent token
 
-            await expect(uniqueContent["tokenURI(uint256,uint256)"](1,0)).to.be.reverted;
-            await expect(uniqueContent.originalAssetUri(1,0)).to.be.reverted;
+            await expect(uniqueContent["tokenURI(uint256,uint256)"](1, 0)).to.be.reverted;
+            await expect(uniqueContent.originalAssetUri(1, 0)).to.be.reverted;
             await expect(uniqueContent.royaltyInfo(1, 50000)).to.be.reverted;
             await expect(uniqueContent.multipleRoyaltyInfo(1, 50000)).to.be.reverted;
         });
@@ -241,23 +242,21 @@ describe('Unique Content Contract Tests', () => {
 
             await contentStorage.setPublicUriBatch([[0, "arweave.net/tx/public-uri-0v2"]]);
 
-            expect(await uniqueContent.originalAssetUri(0,0)).to.equal("arweave.net/tx/public-uri-0");
-            expect(await uniqueContent.originalAssetUri(0,1)).to.equal("arweave.net/tx/public-uri-0v2");
-            expect(await uniqueContent.originalAssetUri(0,100)).to.equal("arweave.net/tx/public-uri-0v2");
+            expect(await uniqueContent.originalAssetUri(0, 0)).to.equal("arweave.net/tx/public-uri-0");
+            expect(await uniqueContent.originalAssetUri(0, 1)).to.equal("arweave.net/tx/public-uri-0v2");
+            expect(await uniqueContent.originalAssetUri(0, 100)).to.equal("arweave.net/tx/public-uri-0v2");
         });
 
-        it('Update unique asset uri', async () => {
+        it('Set unique asset uri', async () => {
             var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000], false];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
 
-            await expect(uniqueContent.connect(creatorAddress).setUniqueUri(0,"arweave.net/tx/unique-uri-0v2"))
-                .to.emit(uniqueContent, "UniqueUriUpdated")
-                .withArgs(0,1);
+            await uniqueContent.connect(creatorAddress).setUniqueUri(0,"arweave.net/tx/unique-uri-0v2");
             
-            expect(await uniqueContent["tokenURI(uint256,uint256)"](0,0)).to.equal("arweave.net/tx/unique-uri-0");
-            expect(await uniqueContent["tokenURI(uint256,uint256)"](0,1)).to.equal("arweave.net/tx/unique-uri-0v2");
+            expect(await uniqueContent["tokenURI(uint256,uint256)"](0, 0)).to.equal("arweave.net/tx/unique-uri-0");
+            expect(await uniqueContent["tokenURI(uint256,uint256)"](0, 1)).to.equal("arweave.net/tx/unique-uri-0v2");
             expect(await uniqueContent["tokenURI(uint256)"](0)).to.equal("arweave.net/tx/unique-uri-0v2");
-            expect(await uniqueContent["tokenURI(uint256,uint256)"](0,100)).to.equal("arweave.net/tx/unique-uri-0v2");
+            expect(await uniqueContent["tokenURI(uint256,uint256)"](0, 100)).to.equal("arweave.net/tx/unique-uri-0v2");
         });
 
         it('Invalid set unique asset uri', async () => {
@@ -282,102 +281,39 @@ describe('Unique Content Contract Tests', () => {
     describe("Royalty Tests", () => {
         // Note: Original asset 0's royalty receiver is developerAddress and has a rate of 20,000
         // The content contract's royalty receiver is developerAltAddress and has a rate of 12,000
-        it('Calculate multiple royalty amounts', async () => {
+        it('Query royalties', async () => {
             var receivers = [creatorAddress.address, receiverAddress.address];
-            var rates = [10000, 5000];
+            var rates = [5000, 5000];
             var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", receivers, rates, false];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
+
+            var tokenFees = await uniqueContent.royaltyInfo(0, 50000);
+            expect(tokenFees.receiver).to.equal(developerAddress.address);
+            expect(tokenFees.royaltyAmount).to.equal(1000);
+
             var tokenFees = await uniqueContent.multipleRoyaltyInfo(0, 100000);
             expect(tokenFees[0][0]).to.equal(developerAddress.address);
             expect(tokenFees[0][1]).to.equal(creatorAddress.address);
             expect(tokenFees[0][2]).to.equal(receiverAddress.address);
     
             expect(tokenFees[1][0]).to.equal(2000);
-            expect(tokenFees[1][1]).to.equal(1000);
+            expect(tokenFees[1][1]).to.equal(500);
             expect(tokenFees[1][2]).to.equal(500);
         });
 
-        it('Query original item royalty', async () => {
+        it('Set token royalties', async () => {
             var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", [], [], false];
-            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 1, "", [creatorAddress.address], [10000], false];
 
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
-
-            var tokenFees = await uniqueContent.royaltyInfo(0, 1000000);
-            expect(tokenFees.receiver).to.equal(developerAddress.address);
-            expect(tokenFees.royaltyAmount).to.equal(20000);
-
-            await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData2);
-
-            tokenFees = await uniqueContent.royaltyInfo(1, 1000000);
-            // token royalty from contract royalty
-            expect(tokenFees.receiver).to.equal(developerAltAddress.address);
-            expect(tokenFees.royaltyAmount).to.equal(12000);
-        });
-        
-        it('Update original item royalty', async () => {
-            var receivers = [creatorAddress.address, receiverAddress.address];
-            var rates = [10000, 5000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", receivers, rates, false];
-
-            await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
-
-            var tokenFees = await uniqueContent.royaltyInfo(0, 1000000);
-            expect(tokenFees.receiver).to.equal(developerAddress.address);
-            expect(tokenFees.royaltyAmount).to.equal(20000);
-
-            await contentStorage.setTokenRoyaltiesBatch([[0, developerAltAddress.address, 15000]]);
-
-            var tokenFees2 = await uniqueContent.royaltyInfo(0, 1000000);
-            expect(tokenFees2.receiver).to.equal(developerAltAddress.address);
-            expect(tokenFees2.royaltyAmount).to.equal(15000);
+            
+            await uniqueContent.connect(creatorAddress).setTokenRoyalties(0, [creatorAddress.address], [5000]);
 
             var tokenFees = await uniqueContent.multipleRoyaltyInfo(0, 100000);
-            expect(tokenFees[0][0]).to.equal(developerAltAddress.address);
+            expect(tokenFees[0][0]).to.equal(developerAddress.address);
             expect(tokenFees[0][1]).to.equal(creatorAddress.address);
-            expect(tokenFees[0][2]).to.equal(receiverAddress.address);
     
-            expect(tokenFees[1][0]).to.equal(1500);
-            expect(tokenFees[1][1]).to.equal(1000);
-            expect(tokenFees[1][2]).to.equal(500);
-        });
-
-        it('Original royalty update pushes total over limit', async () => {
-            var receivers = [creatorAddress.address, receiverAddress.address, playerAddress.address];
-            var rates = [60000, 30000, 10000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", receivers, rates, false];
-
-            await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
-
-            var tokenFees = await uniqueContent.royaltyInfo(0, 1000000);
-            expect(tokenFees.receiver).to.equal(developerAddress.address);
-            expect(tokenFees.royaltyAmount).to.equal(20000);
-
-            // original royalty updates pushes total to 20,000 over the limit of 2e5
-            await contentStorage.setTokenRoyaltiesBatch([[0, developerAltAddress.address, 120000]]);
-
-            var tokenFees2 = await uniqueContent.multipleRoyaltyInfo(0, 20000);
-            expect(tokenFees2[0][0]).to.equal(developerAltAddress.address);
-            expect(tokenFees2[0][1]).to.equal(creatorAddress.address);
-            expect(tokenFees2[0][2]).to.equal(receiverAddress.address);
-            expect(tokenFees2[0][3]).to.equal(playerAddress.address);
-            expect(tokenFees2[1][0]).to.equal(2400);
-            // remaining royalties have to be split
-            expect(tokenFees2[1][1]).to.equal(960);
-            expect(tokenFees2[1][2]).to.equal(480);
-            expect(tokenFees2[1][3]).to.equal(160);
-
-            await contentStorage.setTokenRoyaltiesBatch([[0, developerAddress.address, 199995]]);
-
-            var tokenFees3 = await uniqueContent.multipleRoyaltyInfo(0, 1000000);
-            expect(tokenFees3[0][0]).to.equal(developerAddress.address);
-            expect(tokenFees3[0][1]).to.equal(creatorAddress.address);
-            expect(tokenFees3[0][2]).to.equal(receiverAddress.address);
-            expect(tokenFees3[0][3]).to.equal(playerAddress.address);
-            expect(tokenFees3[1][0]).to.equal(199995);
-            expect(tokenFees3[1][1]).to.equal(3);
-            expect(tokenFees3[1][2]).to.equal(1);
-            expect(tokenFees3[1][3]).to.equal(0);
+            expect(tokenFees[1][0]).to.equal(2000);
+            expect(tokenFees[1][1]).to.equal(500);   
         });
 
         it('Invalid set token royalties', async () => {
