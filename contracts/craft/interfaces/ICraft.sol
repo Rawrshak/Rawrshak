@@ -15,7 +15,7 @@ interface ICraft {
     function craft(uint256 _id, uint256 _amount) external;
     
     /*********************** Events *********************/
-    event RecipeUpdated(address indexed operator, uint256[] ids, LibCraft.Recipe[] recipes);
+    event RecipeAdded(address indexed operator, uint256[] ids, LibCraft.Recipe[] recipes);
     event RecipeEnabled(address indexed operator, uint256 indexed id, bool enabled);
     event RecipeCraftingRateUpdated(address indexed operator, uint256 indexed id, uint256 craftingRate);
     event AssetsCrafted(address indexed user, uint256 indexed id, uint256 amountSucceeded);

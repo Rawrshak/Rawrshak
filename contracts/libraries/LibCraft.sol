@@ -52,7 +52,6 @@ library LibCraft {
         // No need to check the validity of the contract. All registered contracts are Content contracts. If we get
         // here, it means we've verified the asset and output assets correctly.
         require(_asset.salvageType < uint256(SalvageType.Max), "Error: Invalid Salvage Type");
-        require(_asset.outputs.length > 0, "Error: Invalid outputs length");
         for (uint256 i = 0; i < _asset.outputs.length; ++i) {
             require(_asset.outputs[i].probability > 0 && _asset.outputs[i].probability <= 1e6, "Error: Invalid probability");
             require(_asset.outputs[i].amount > 0, "Error: Invalid reward amount");

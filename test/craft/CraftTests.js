@@ -131,7 +131,7 @@ describe('Craft Contract', () => {
 
         var results = await craft.addRecipeBatch(newRecipe);
         await expect(results)
-                .to.emit(craft, 'RecipeUpdated');
+                .to.emit(craft, 'RecipeAdded');
         var storedRecipeData = await craft.recipe(0);
         
         expect(storedRecipeData.craftingRate == 1000000, "crafting rate incorrect").to.equal(true);
@@ -176,7 +176,7 @@ describe('Craft Contract', () => {
         
         var results = await craft.addRecipeBatch(newRecipe);
         await expect(results)
-                .to.emit(craft, 'RecipeUpdated');
+                .to.emit(craft, 'RecipeAdded');
         var storedRecipeData = await craft.recipe(0);
         
         // check recipe 0
@@ -276,7 +276,7 @@ describe('Craft Contract', () => {
 
         var results = await craft.addRecipeBatch(initialRecipe);
         await expect(results)
-                .to.emit(craft, 'RecipeUpdated');
+                .to.emit(craft, 'RecipeAdded');
 
         // unpause the salvage contract so we can start salvaging assets
         await craft.managerSetPause(false);
@@ -328,7 +328,7 @@ describe('Craft Contract', () => {
 
         var results = await craft.addRecipeBatch(newRecipe);
         await expect(results)
-                .to.emit(craft, 'RecipeUpdated');
+                .to.emit(craft, 'RecipeAdded');
 
         // unpause the salvage contract so we can start salvaging assets
         await craft.managerSetPause(false);
@@ -366,7 +366,7 @@ describe('Craft Contract', () => {
 
         var results = await craft.addRecipeBatch(initialRecipe);
         await expect(results)
-                .to.emit(craft, 'RecipeUpdated');
+                .to.emit(craft, 'RecipeAdded');
 
         await expect(craft.connect(playerAddress).craft(1, 1), "Player has not approved craft as an operator yet.").to.be.reverted;
 

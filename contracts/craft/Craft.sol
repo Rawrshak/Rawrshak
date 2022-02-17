@@ -35,6 +35,10 @@ contract Craft is ICraft, CraftBase {
         recipeCounter = 0;
     }
 
+    /**
+    * @dev register a list of new crafting recipes; Recipes cannot be updated, only disabled/enabled
+    * @param _recipes an array of Craft Recipes
+    */
     function addRecipeBatch(LibCraft.Recipe[] memory _recipes) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(_recipes.length > 0, "Invalid input length");
 
@@ -71,9 +75,14 @@ contract Craft is ICraft, CraftBase {
             recipeCounter++;
         }
 
-        emit RecipeUpdated(_msgSender(), ids, _recipes);
+        emit RecipeAdded(_msgSender(), ids, _recipes);
     }
 
+    /**
+    * @dev enable or disable a craft recipe
+    * @param _id the ID of the craft recipe to be enabled/disabled
+    * @param _enabled whether to enable/disable a recipe
+    */
     function setRecipeEnabled(uint256 _id, bool _enabled) external override whenPaused() checkPermissions(MANAGER_ROLE) {
         require(_id < recipeCounter, "Error: Recipe doesn't exist");
         recipes[_id].enabled = _enabled;
@@ -81,6 +90,11 @@ contract Craft is ICraft, CraftBase {
         emit RecipeEnabled(_msgSender(), _id, _enabled);
     }
 
+    /**
+    * @dev craft a new asset
+    * @param _id the ID of the craft recipe to be crafted
+    * @param _amount the amount of instances of the new asset to craft
+    */
     function craft(uint256 _id, uint256 _amount) external override whenNotPaused() {
         require(_id < recipeCounter && _amount > 0, "Error: Invalid input");
         require(recipes[_id].enabled, "Error: Recipe disabled");
@@ -106,6 +120,10 @@ contract Craft is ICraft, CraftBase {
         emit AssetsCrafted(_msgSender(), _id, _amount);
     }
 
+    /**
+    * @dev Get the craft recipe information
+    * @param _id the ID of the craft recipe to query
+    */
     function recipe(uint256 _id) external view override returns(LibCraft.Recipe memory _recipe) {
         // will return empty if it doesn't exist
         return recipes[_id];
