@@ -66,20 +66,6 @@ library LibCraft {
         }
     }
 
-    function salvage(SalvageableAsset storage _asset, uint256 _amount) internal view returns(SalvageOutput[] memory outputAssets, uint256[] memory amounts) {
-        // guarantee
-        if (SalvageType(_asset.salvageType) == SalvageType.Guarantee) {
-            outputAssets = _asset.outputs;
-            amounts = new uint256[](_asset.outputs.length);
-            for (uint256 i = 0; i < _asset.outputs.length; ++i) {
-                amounts[i] = _asset.outputs[i].amount.mul(_amount);
-            }
-        }
-        // } else if (SalvageType(_asset.salvageType) == SalvageType.Random) {
-        //     // todo: Random 
-        // }
-    }
-
     function random(address _sender, uint256 _seed) internal view returns (uint256) {
         return uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), _sender, _seed)));
     }

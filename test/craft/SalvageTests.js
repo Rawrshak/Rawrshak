@@ -402,7 +402,7 @@ describe('Salvage Contract', () => {
 
         expect(storedSalvageableAssetData.asset.content == content.address, "Asset content address incorrect").to.equal(true);
         expect(storedSalvageableAssetData.asset.tokenId == 0, "Asset id incorrect").to.equal(true);
-        expect(storedSalvageableAssetData.salvageType.toNumber() == 1, "Salvage Type not updated").to.equal(true);
+        expect(storedSalvageableAssetData.salvageType.toNumber() == 0, "Salvage Type not updated").to.equal(true);
         expect(outputsData.outputAssets.length == 1, "Rewards length not updated").to.equal(true);
         expect(outputsData.outputAssets[0].asset.content == content.address, "Invalid Reward Address").to.equal(true);
         expect(outputsData.outputAssets[0].asset.tokenId == 4, "Invalid Reward updated").to.equal(true);

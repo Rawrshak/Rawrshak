@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";    
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -17,6 +18,7 @@ import "hardhat/console.sol";
 
 contract Salvage is ISalvage, CraftBase {
     using AddressUpgradeable for address;
+    using SafeMathUpgradeable for uint256;
     using ERC165CheckerUpgradeable for address;
     using EnumerableSetUpgradeable for *;
     using LibCraft for *;
@@ -112,7 +114,29 @@ contract Salvage is ISalvage, CraftBase {
 
         uint256 id = _asset.hashAssetId();
         
-        (LibCraft.SalvageOutput[] memory outputAssets, uint256[] memory amounts) = salvageableAssets[id].salvage(_amount);
+        LibCraft.SalvageOutput[] memory outputAssets;
+        uint256[] memory amounts;
+
+        if (LibCraft.SalvageType(salvageableAssets[id].salvageType) == LibCraft.SalvageType.Guarantee) {
+            outputAssets = salvageableAssets[id].outputs;
+            amounts = new uint256[](salvageableAssets[id].outputs.length);
+            for (uint256 i = 0; i < salvageableAssets[id].outputs.length; ++i) {
+                amounts[i] = salvageableAssets[id].outputs[i].amount.mul(_amount);
+            }
+        } else if (LibCraft.SalvageType(salvageableAssets[id].salvageType) == LibCraft.SalvageType.Random) {
+            outputAssets = salvageableAssets[id].outputs;
+            amounts = new uint256[](salvageableAssets[id].outputs.length);
+            
+            // Get the number of passing rolls
+            for (uint256 i = 0; i < _amount; ++i) {
+                for (uint256 j = 0; j < salvageableAssets[id].outputs.length; ++j) {
+                    seed = LibCraft.random(_msgSender(), seed);
+                    if (seed.mod(1e6) > (1e6 - salvageableAssets[id].outputs[j].probability)) {
+                        amounts[j] += salvageableAssets[id].outputs[j].amount;
+                    }
+                }
+            }
+        }
 
         _burn(_asset, _amount);
 
