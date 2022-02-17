@@ -110,6 +110,12 @@ describe('Salvage Contract', () => {
         // Register manager
         await salvage.registerManager(managerAddress.address);
 
+        var salvageApprovalPair = [
+            [salvage.address, true]
+        ];
+
+        await contentManager.registerSystemContracts(salvageApprovalPair);
+
         // approve player
         await content.connect(playerAddress).setApprovalForAll(salvage.address, true);
         

@@ -80,6 +80,12 @@ describe('Craft Contract', () => {
         //await craft.registerManager(contentManager.address);
         await craft.registerManager(deployerAddress.address);
         
+        var craftApprovalPair = [
+            [craft.address, true]
+        ];
+
+        await contentManager.registerSystemContracts(craftApprovalPair);
+        
         initialRecipe = [
             [
                 1000000, // crafting rate
