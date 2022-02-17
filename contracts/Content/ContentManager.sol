@@ -19,8 +19,8 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
 
     /***************** Stored Variables *****************/
     IContent public override content;
-    IContentStorage public override contentStorage;
-    IAccessControlManager public override accessControlManager;
+    IContentStorage contentStorage;
+    IAccessControlManager accessControlManager;
 
     /******************** Public API ********************/
     
@@ -45,6 +45,14 @@ contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpg
         content = IContent(_content);
         contentStorage = IContentStorage(_contentStorage);
         accessControlManager = IAccessControlManager(_accessControlManager);
+    }
+    
+    /**
+    * @dev checks whether or not the address passed has the Minter role
+    * @param _minter address of the minter
+    */
+    function isMinter(address _minter) external view override returns(bool) {
+        return IAccessControlUpgradeable(address(accessControlManager)).hasRole(accessControlManager.MINTER_ROLE(), _minter);
     }
     
     /**

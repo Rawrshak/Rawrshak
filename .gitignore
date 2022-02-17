@@ -23,3 +23,6 @@ yarn.lock
 cache
 artifacts
 typechain
+
+# environment data file
+.env
