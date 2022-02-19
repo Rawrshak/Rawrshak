@@ -39,6 +39,11 @@ contract UniqueContentFactory is ContextUpgradeable, OwnableUpgradeable {
         updateContracts(_uniqueContent, _uniqueContentStorage);
     }
 
+    /**
+    * @dev Allows the owner to update the addresses of the contract implementations that the clones point to
+    * @param _uniqueContent address of the new unique content contract implementation
+    * @param _uniqueContentStorage address of the new unique content storage contract implementation
+    */
     function updateContracts(
         address _uniqueContent,
         address _uniqueContentStorage
@@ -59,10 +64,19 @@ contract UniqueContentFactory is ContextUpgradeable, OwnableUpgradeable {
         uniqueContentStorageImplementation = _uniqueContentStorage;
     }
 
+    /**
+    * @dev Checks whether the given unique content proxy contract exists
+    * @param _uniqueContent address of the unique content contract
+    */
     function contentExists(address _uniqueContent) public view returns(bool) {
         return uniqueContentContracts.contains(_uniqueContent);
     }
 
+    /**
+    * @dev Creates and deploys clones of the unique content contracts and initializes the token collection's name and symbol
+    * @param _name name of the token collection
+    * @param _symbol shorthand name for the token collection
+    */
     function createContracts(
         string memory _name,
         string memory _symbol

@@ -49,6 +49,13 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
         updateContracts(_content, _contentManager, _contentStorage, _accessControlManager);
     }
 
+    /**
+    * @dev Allows the owner to update the addresses of the contract implementations that the clones point to
+    * @param _content address of the new content contract implementation
+    * @param _contentManager address of the new content manager contract implementation
+    * @param _contentStorage address of the new content storage contract implementation
+    * @param _accessControlManager  address of the new access control manager contract implementation
+    */
     function updateContracts(
         address _content,
         address _contentManager,
@@ -75,14 +82,28 @@ contract ContentFactory is ContextUpgradeable, OwnableUpgradeable {
         accessControlManagerImplementation = _accessControlManager;
     }
 
+    /**
+    * @dev Checks whether the given content proxy contract exists
+    * @param _content address of content contract
+    */
     function contentExists(address _content) public view returns(bool) {
         return contentContracts.contains(_content);
     }
 
+    /**
+    * @dev Checks whether the given content manager proxy contract exists
+    * @param _contentManager address of content manager contract
+    */
     function contentManagerExists(address _contentManager) public view returns(bool) {
         return contentManagerContracts.contains(_contentManager);
     }
 
+    /**
+    * @dev Creates and deploys clones of the content contracts and initializes their royalties and contract uri
+    * @param _contractRoyaltyAccount the address of the contract's default royalty receiver
+    * @param _contractRoyaltyRate the default contract royalty fee
+    * @param _contractUri string contract information uri
+    */
     function createContracts(
         address _contractRoyaltyAccount,
         uint24 _contractRoyaltyRate,
