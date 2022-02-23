@@ -59,6 +59,7 @@ contract Craft is ICraft, CraftBase {
             for (uint256 j = 0; j < _recipes[i].materials.length; ++j) {
                 require(_recipes[i].materials[j].content.supportsInterface(type(IContent).interfaceId), "Error: Invalid materials contract interface");
                 require(IContent(_recipes[i].materials[j].content).isSystemContract(address(this)), "Error: Craft not registered");
+                require(_recipes[i].materialAmounts[j] > 0, "Error: Invalid amounts");
 
                 recipeData.materials.push(_recipes[i].materials[j]);
                 recipeData.materialAmounts.push(_recipes[i].materialAmounts[j]);
@@ -67,6 +68,7 @@ contract Craft is ICraft, CraftBase {
             for (uint256 j = 0; j < _recipes[i].rewards.length; ++j) {
                 require(_recipes[i].rewards[j].content.supportsInterface(type(IContent).interfaceId), "Error: Invalid reward contract interface");
                 require(IContent(_recipes[i].rewards[j].content).isSystemContract(address(this)), "Error: Craft not registered");
+                require(_recipes[i].rewardAmounts[j] > 0, "Error: Invalid amounts");
 
                 recipeData.rewards.push(_recipes[i].rewards[j]);
                 recipeData.rewardAmounts.push(_recipes[i].rewardAmounts[j]);
