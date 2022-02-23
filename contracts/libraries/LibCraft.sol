@@ -54,9 +54,8 @@ library LibCraft {
         require(_asset.salvageType < uint256(SalvageType.Max), "Error: Invalid Salvage Type");
         for (uint256 i = 0; i < _asset.outputs.length; ++i) {
             require(_asset.outputs[i].probability > 0 && _asset.outputs[i].probability <= 1e6, "Error: Invalid probability");
-            require(_asset.outputs[i].amount > 0, "Error: Invalid reward amount");
+            require(_asset.outputs[i].amount > 0, "Error: Invalid output amount");
             require(_asset.outputs[i].asset.content != address(0), "Error: Invalid content address");
-            require(_asset.outputs[i].asset.tokenId != 0, "Error: Invalid token id");
         }
 
         // Check validity of the lootbox credit asset. If it was set as this is optional.

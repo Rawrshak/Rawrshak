@@ -92,7 +92,6 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         return hasRole(SYSTEM_CONTRACT_ROLE, _contract);
     }
 
-
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }

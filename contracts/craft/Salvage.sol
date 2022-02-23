@@ -22,7 +22,6 @@ contract Salvage is ISalvage, CraftBase {
     using ERC165CheckerUpgradeable for address;
     using EnumerableSetUpgradeable for *;
     using LibCraft for *;
-
     
     /***************** Stored Variables *****************/
     mapping(uint256 => LibCraft.SalvageableAsset) internal salvageableAssets;
@@ -131,7 +130,7 @@ contract Salvage is ISalvage, CraftBase {
             for (uint256 i = 0; i < _amount; ++i) {
                 for (uint256 j = 0; j < salvageableAssets[id].outputs.length; ++j) {
                     seed = LibCraft.random(_msgSender(), seed);
-                    if (seed.mod(1e6) > (1e6 - salvageableAssets[id].outputs[j].probability)) {
+                    if (seed.mod(1e6) <= salvageableAssets[id].outputs[j].probability) {
                         amounts[j] += salvageableAssets[id].outputs[j].amount;
                     }
                 }
