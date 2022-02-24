@@ -122,9 +122,7 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
     }
 
     function clearLootboxRewards(uint256 _tokenId) external override checkPermissions(MANAGER_ROLE) {
-        for(uint i = 0; i < lootboxRewards[_tokenId].length; i++) {
-            delete lootboxRewards[_tokenId][i];
-        }
+        delete lootboxRewards[_tokenId];
         lootboxBlueprints[_tokenId].hasGuaranteedItems = false;
         emit BlueprintRewardsCleared(msg.sender, _tokenId);
     }
