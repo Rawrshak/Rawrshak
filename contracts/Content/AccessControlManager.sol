@@ -22,6 +22,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
      */
     // bytes4 private constant INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E;
     bytes32 public constant override MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant override SYSTEM_CONTRACT_ROLE = keccak256("SYSTEM_CONTRACT_ROLE");
 
     /***************** Stored Variables *****************/
     // Rawrshak system addresses that are approved to interact with this contract
@@ -63,7 +64,7 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         require(_data.tokenIds.length == _data.amounts.length, "Invalid token input");
 
         // if the caller is the owner address or has a minter role (granted by the owner), continue on.
-        if (hasRole(MINTER_ROLE, _caller) || hasRole(DEFAULT_ADMIN_ROLE, _caller)) {
+        if (hasRole(MINTER_ROLE, _caller) || hasRole(SYSTEM_CONTRACT_ROLE, _caller) || hasRole(DEFAULT_ADMIN_ROLE, _caller)) {
             return;
         }
 
@@ -81,6 +82,14 @@ contract AccessControlManager is IAccessControlManager, ContentSubsystemBase, Ac
         
         // Increment user nonce
         userMintNonce[_data.to]++;
+    }
+    
+    /**
+    * @dev checks whether this contract has been registered as a system contract (Craft, Salvage, Lootbox)
+    * @param _contract contract address to check for role
+    */
+    function isSystemContract(address _contract) external view override onlyRole(DEFAULT_ADMIN_ROLE) returns(bool) {
+        return hasRole(SYSTEM_CONTRACT_ROLE, _contract);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlUpgradeable, ERC165StorageUpgradeable) returns (bool) {

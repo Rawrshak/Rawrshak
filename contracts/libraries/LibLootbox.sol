@@ -36,21 +36,21 @@ library LibLootbox {
     function verifyLootboxCreditReward(LootboxCreditReward memory _reward) internal pure {
         // Check validity of the lootbox credit asset.
         require(_reward.tokenAddress != address(0), "Invalid Credit Token Address");
-        require(_reward.probability > 0 && _reward.probability <= 1000000, "Invalid credit probability.");
+        require(_reward.probability > 0 && _reward.probability <= 1e6, "Invalid credit probability.");
         require(_reward.amount > 0, "Invalid credit amount.");
     }
 
     function verifyLootboxReward(LootboxReward memory _reward) internal pure {
         // Check validity of the lootbox reward asset.
         require(_reward.asset.content != address(0), "Invalid content address");
-        require(_reward.probability > 0 && _reward.probability <= 1000000, "Invalid credit probability.");
+        require(_reward.probability > 0 && _reward.probability <= 1e6, "Invalid credit probability.");
         require(_reward.amount > 0, "Invalid credit amount.");
         // Class is optional, so no need to check that here.
     }
 
     function isLootboxRewardValid(LootboxReward memory _reward) internal pure returns(bool) {
         if(_reward.asset.content != address(0) &&
-           _reward.probability > 0 && _reward.probability <= 1000000 &&
+           _reward.probability > 0 && _reward.probability <= 1e6 &&
            _reward.amount > 0)
         {
             return true;
@@ -65,7 +65,7 @@ library LibLootbox {
 
     function checkForGuaranteedItems(LibLootbox.LootboxReward[] memory _rewards) internal pure returns(bool) {
         for (uint256 i = 0; i < _rewards.length; ++i) {
-            if(_rewards[i].probability >= 1000000)
+            if(_rewards[i].probability >= 1e6)
             {
                 return true;
             }
@@ -73,16 +73,16 @@ library LibLootbox {
         return false;
     }
 
-    function salvageCredit(LootboxCreditReward storage _reward, uint256 _seed) internal view returns(uint256 amount) {
+    function salvageCredit(LootboxCreditReward storage _reward, address _sender, uint256 _seed) internal view returns(uint256 amount) {
         verifyLootboxCreditReward(_reward);
         amount = 0;
-        if(_reward.probability == 1000000) {
+        if(_reward.probability == 1e6) {
             amount = _reward.amount;
         }
         else
         {
-            uint256 randomVal = random(msg.sender, _seed);
-            if (randomVal.mod(1000000) <= _reward.probability) {
+            uint256 randomVal = random(_sender, _seed);
+            if (randomVal.mod(1e6) <= _reward.probability) {
                 amount = _reward.amount;
             }
         }

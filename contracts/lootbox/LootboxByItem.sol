@@ -53,7 +53,7 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
 
     function registerStorage(address _storage) external override checkPermissions(DEFAULT_ADMIN_ROLE) {
         dataStorage = ILootboxStorageByItem(_storage);
-        emit StorageRegistered(msg.sender, _storage);
+        emit StorageRegistered(_msgSender(), _storage);
     }
 
     function managerSetPause(bool _setPause) external override checkPermissions(MANAGER_ROLE) {
@@ -70,18 +70,16 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         uint256 cost = dataStorage.getCost(_tokenId);
         require(cost != 0, "Zero cost");
         cost = SafeMathUpgradeable.mul(cost, _amount);
-        require(L2NativeRawrshakERC20Token(lootboxCreditAddress).balanceOf(msg.sender) >= cost, "Not enough credit");
-
-        bool enabled = dataStorage.getEnabled(_tokenId);
-        require(enabled, "Lootbox not enabled");
+        require(L2NativeRawrshakERC20Token(lootboxCreditAddress).balanceOf(_msgSender()) >= cost, "Not enough credit");
+        require(dataStorage.getEnabled(_tokenId), "Lootbox not enabled");
 
         // 2) Grab the required LootboxCredit amount from the user and burn it.
-        IL2StandardERC20Latest(lootboxCreditAddress).burn(msg.sender, cost);
+        IL2StandardERC20Latest(lootboxCreditAddress).burn(_msgSender(), cost);
 
         // 3) Send the lootbox(es) to the caller.
-        _mint(msg.sender, _tokenId, _amount, "");
+        _mint(_msgSender(), _tokenId, _amount, "");
 
-        emit LootboxCreated(msg.sender, _tokenId, _amount);
+        emit LootboxCreated(_msgSender(), _tokenId, _amount);
     }
 
     // Burns a lootbox and sends any rewards within to the caller.
@@ -96,9 +94,9 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
 
         if(blueprint.hasGuaranteedItems) {
             for (uint256 i = 0; i < rewards.length; ++i) {
-                if(rewards[i].probability >= 1000000) {
+                if(rewards[i].probability >= 1e6) {
                     LibAsset.MintData memory mintData;
-                    mintData.to = msg.sender;
+                    mintData.to = _msgSender();
                     mintData.tokenIds = new uint256[](1);
                     mintData.amounts = new uint256[](1);
                     mintData.tokenIds[0] = rewards[i].asset.tokenId;
@@ -116,11 +114,11 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
             }
 
             // Don't double count guaranteed items.
-            if(rewards[i].probability < 1000000) {
-                uint256 randomVal = LibLootbox.random(msg.sender, seed);
-                if (randomVal.mod(1000000) <= rewards[i].probability) {
+            if(rewards[i].probability < 1e6) {
+                uint256 randomVal = LibLootbox.random(_msgSender(), seed);
+                if (randomVal.mod(1e6) <= rewards[i].probability) {
                     LibAsset.MintData memory mintData;
-                    mintData.to = msg.sender;
+                    mintData.to = _msgSender();
                     mintData.tokenIds = new uint256[](1);
                     mintData.amounts = new uint256[](1);
                     mintData.tokenIds[0] = rewards[i].asset.tokenId;
@@ -133,9 +131,9 @@ contract LootboxByItem is ILootbox, ERC1155Upgradeable, AccessControlUpgradeable
         }
         
         // Last but not least, burn our lootbox.
-        _burn(msg.sender, _tokenId, 1);
+        _burn(_msgSender(), _tokenId, 1);
 
-        emit LootboxOpened(msg.sender, _tokenId, numTotalAssetsGiven);
+        emit LootboxOpened(_msgSender(), _tokenId, numTotalAssetsGiven);
     }
 
     // Interface support

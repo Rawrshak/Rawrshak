@@ -27,7 +27,7 @@ describe('AccessControlManager Contract Tests', () => {
         
         it('Verify AccessControlManager Contract Interfaces', async () => {
             // IAccessControlManager Interface
-            expect(await manager.supportsInterface("0xe492210d")).to.equal(true);
+            expect(await manager.supportsInterface("0x533525fc")).to.equal(true);
 
             // IAccessControlUpgradeable Interface
             expect(await manager.supportsInterface("0x7965db0b")).to.equal(true);
@@ -70,6 +70,22 @@ describe('AccessControlManager Contract Tests', () => {
 
             await manager.revokeRole(minter_role, minterAddress.address);
             expect(await manager.hasRole(minter_role, minterAddress.address)).to.equal(false);
+        });
+        
+        it('Add and Remove System Contract', async () => {
+            var system_contract_role = await manager.SYSTEM_CONTRACT_ROLE();
+
+            Craft = await ethers.getContractFactory("Craft");
+            craft = await upgrades.deployProxy(Craft, [0]);
+
+            await manager.grantRole(system_contract_role, craft.address);
+            expect(await manager.hasRole(system_contract_role, craft.address)).to.equal(true);
+            expect(await manager.isSystemContract(craft.address)).to.equal(true);
+
+            await manager.revokeRole(system_contract_role, craft.address);
+            expect(await manager.hasRole(system_contract_role, craft.address)).to.equal(false);
+            expect(await manager.isSystemContract(craft.address)).to.equal(false);
+
         });
     });
     

@@ -25,7 +25,7 @@ abstract contract CraftBase is ICraftBase, AccessControlUpgradeable, PausableUpg
         
     /********************* Modifiers ********************/
     modifier checkPermissions(bytes32 _role) {
-        require(hasRole(_role, msg.sender), "Invalid permissions.");
+        require(hasRole(_role, _msgSender()), "Invalid permissions.");
         _;
     }
 

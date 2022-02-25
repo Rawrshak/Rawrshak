@@ -51,7 +51,7 @@ describe('Content Contract Tests', () => {
             expect(await content.supportsInterface("0xd9b67a26")).to.equal(true);
 
             // IContent Interface
-            expect(await content.supportsInterface("0x6a3af2b5")).to.equal(true);
+            expect(await content.supportsInterface("0x79869ffe")).to.equal(true);
 
             // IContractUri Interface
             expect(await content.supportsInterface("0xc0e24d5e")).to.equal(true);
@@ -198,8 +198,7 @@ describe('Content Contract Tests', () => {
             expect(await content.connect(playerAddress).totalSupply(0)).to.equal(5);
             expect(await content.connect(playerAddress).totalSupply(1)).to.equal(50);
     
-            await content.connect(playerAddress).setApprovalForAll(craftingSystemAddress.address, true);
-            await content.connect(craftingSystemAddress).burnBatch(burnData);
+            await content.connect(playerAddress).burnBatch(burnData);
             expect(await content.connect(playerAddress).totalSupply(0)).to.equal(0);
             expect(await content.connect(playerAddress).totalSupply(1)).to.equal(25);
             
