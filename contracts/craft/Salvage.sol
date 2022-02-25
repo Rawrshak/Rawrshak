@@ -149,7 +149,7 @@ contract Salvage is ISalvage, CraftBase {
         {
             // Note: The Salvage Contract mus have the MINTER_ROLE in the lootbox credit contract
             LibLootbox.verifyLootboxCreditReward(salvageableAssets[id].lootboxCredits);
-            uint256 lootCredit = LibLootbox.salvageCredit(salvageableAssets[id].lootboxCredits, seed);
+            uint256 lootCredit = LibLootbox.salvageCredit(salvageableAssets[id].lootboxCredits, _msgSender(), seed);
             IL2StandardERC20Latest(salvageableAssets[id].lootboxCredits.tokenAddress).mint(_msgSender(), lootCredit);
             emit LootboxCreditEarned(_msgSender(), salvageableAssets[id].lootboxCredits.tokenAddress, lootCredit);
         }

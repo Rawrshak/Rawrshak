@@ -93,24 +93,24 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
         newBlueprint.cost = _blueprint.cost;
         newBlueprint.maxAssetsGiven = _blueprint.maxAssetsGiven;
         newBlueprint.hasGuaranteedItems = _blueprint.hasGuaranteedItems;
-        emit BlueprintUpdated(msg.sender, tokenId, newBlueprint);
+        emit BlueprintUpdated(_msgSender(), tokenId, newBlueprint);
     }
 
     function setBlueprintEnabled(uint256 _tokenId, bool _enabled) external override checkPermissions(MANAGER_ROLE) {
         lootboxBlueprints[_tokenId].enabled = _enabled;
-        emit BlueprintEnabled(msg.sender, _tokenId, _enabled);
+        emit BlueprintEnabled(_msgSender(), _tokenId, _enabled);
     }
 
     function setBlueprintCost(uint256 _tokenId, uint256 _cost) external override checkPermissions(MANAGER_ROLE) {
         require(_cost > 0, "Invalid cost");
         lootboxBlueprints[_tokenId].cost = _cost;
-        emit BlueprintCostUpdated(msg.sender, _tokenId, _cost);
+        emit BlueprintCostUpdated(_msgSender(), _tokenId, _cost);
     }
 
     function setMaxRewardAssetsGiven(uint256 _tokenId, uint16 _maxAssetsGiven) external override checkPermissions(MANAGER_ROLE) {
         require(_maxAssetsGiven > 0, "Assets Given Cannot Be Zero");
         lootboxBlueprints[_tokenId].maxAssetsGiven = _maxAssetsGiven;
-        emit BlueprintMaxRewardsUpdated(msg.sender, _tokenId, _maxAssetsGiven);
+        emit BlueprintMaxRewardsUpdated(_msgSender(), _tokenId, _maxAssetsGiven);
     }
 
     function addLootboxReward(uint256 _tokenId, LibLootbox.LootboxReward memory _reward) external override checkPermissions(MANAGER_ROLE) {
@@ -118,13 +118,13 @@ contract LootboxStorageByItem is ILootboxStorageByItem, AccessControlUpgradeable
         LibLootbox.LootboxReward[] storage rewardArray = lootboxRewards[_tokenId];
         rewardArray.push(_reward);
         lootboxBlueprints[_tokenId].hasGuaranteedItems = LibLootbox.checkForGuaranteedItems(rewardArray);
-        emit BlueprintRewardAdded(msg.sender, _tokenId, _reward);
+        emit BlueprintRewardAdded(_msgSender(), _tokenId, _reward);
     }
 
     function clearLootboxRewards(uint256 _tokenId) external override checkPermissions(MANAGER_ROLE) {
         delete lootboxRewards[_tokenId];
         lootboxBlueprints[_tokenId].hasGuaranteedItems = false;
-        emit BlueprintRewardsCleared(msg.sender, _tokenId);
+        emit BlueprintRewardsCleared(_msgSender(), _tokenId);
     }
     /******************** End of Mutative Functions ********************/
 

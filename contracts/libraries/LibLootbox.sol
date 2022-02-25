@@ -73,7 +73,7 @@ library LibLootbox {
         return false;
     }
 
-    function salvageCredit(LootboxCreditReward storage _reward, uint256 _seed) internal view returns(uint256 amount) {
+    function salvageCredit(LootboxCreditReward storage _reward, address _sender, uint256 _seed) internal view returns(uint256 amount) {
         verifyLootboxCreditReward(_reward);
         amount = 0;
         if(_reward.probability == 1e6) {
@@ -81,7 +81,7 @@ library LibLootbox {
         }
         else
         {
-            uint256 randomVal = random(msg.sender, _seed);
+            uint256 randomVal = random(_sender, _seed);
             if (randomVal.mod(1e6) <= _reward.probability) {
                 amount = _reward.amount;
             }
