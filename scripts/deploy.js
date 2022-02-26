@@ -17,68 +17,11 @@ async function main() {
     resolver = await upgrades.deployProxy(AddressResolver, []);
     console.log("AddressResolver deployed to:", resolver.address);
     console.log("\n");
-    
-
-    console.log("Deploying Exchange Contracts");
-    NftEscrow = await ethers.getContractFactory("NftEscrow");
-    Erc20Escrow = await ethers.getContractFactory("Erc20Escrow");
-    ExecutionManager = await ethers.getContractFactory("ExecutionManager");
-    Orderbook = await ethers.getContractFactory("Orderbook");
-    RoyaltyManager = await ethers.getContractFactory("RoyaltyManager");
-    Exchange = await ethers.getContractFactory("Exchange");
-    ExchangeFeesEscrow = await ethers.getContractFactory("ExchangeFeesEscrow");
-    
-    // Deploy Internal Exchange contracts
-    nftEscrow = await upgrades.deployProxy(NftEscrow, []);
-    tokenEscrow = await upgrades.deployProxy(Erc20Escrow, []);
-    feesEscrow = await upgrades.deployProxy(ExchangeFeesEscrow, [resolver.address]);
-    orderbook = await upgrades.deployProxy(Orderbook, [resolver.address]);
-    executionManager = await upgrades.deployProxy(ExecutionManager, [resolver.address]);
-    royaltyManager = await upgrades.deployProxy(RoyaltyManager, [resolver.address]);
-
-    var addresses = [
-        tokenEscrow.address,
-        nftEscrow.address,
-        feesEscrow.address,
-        orderbook.address,
-        executionManager.address,
-        royaltyManager.address,
-    ];
-
-    var escrowIds = [
-        "0x29a264aa",
-        "0x87d4498b",
-        "0x7f170836",
-        "0xd9ff7618",
-        "0x018869a9",
-        "0x2c7e992e"
-    ];
-    await resolver.registerAddress(escrowIds, addresses);
-
-    // Register the managers
-    await nftEscrow.registerManager(executionManager.address);
-    await tokenEscrow.registerManager(executionManager.address);
-    await tokenEscrow.registerManager(royaltyManager.address);
-    await feesEscrow.registerManager(royaltyManager.address);
-
-    // Deploy Exchange contract
-    exchange = await upgrades.deployProxy(Exchange, [royaltyManager.address, orderbook.address, executionManager.address]);
-    
-    // set ownership of managers to exchange contract
-    await royaltyManager.transferOwnership(exchange.address);
-    await orderbook.transferOwnership(exchange.address);
-    await executionManager.transferOwnership(exchange.address);
-    
-    // Add RAWR token as a supported payment option
-    await exchange.addSupportedToken(rawr.address);
-
-    console.log("Exchange deployed to:", exchange.address);
-    console.log("\n");
 
     console.log("Deploying Staking Contracts");
     Staking = await ethers.getContractFactory("Staking");
     staking = await upgrades.deployProxy(Staking, [rawr.address, resolver.address]);
-    await feesEscrow.registerManager(staking.address);
+    // await feesEscrow.registerManager(staking.address);
     console.log("Staking deployed to:", staking.address);
     console.log("\n");
 
@@ -104,16 +47,13 @@ async function main() {
     console.log("\n");
 
     // setting up resolver addresses
-    // register the exchange contracts on the address resolver
     var addresses = [
-        exchange.address,
         staking.address,
         contentFactory.address,
         rawr.address
     ];
 
     var escrowIds = [
-        "0xeef64103",
         "0x1b48faca",
         "0xdb337f7d",
         "0x3d13c043"
