@@ -8,10 +8,16 @@ describe('Address Resolver Contract tests', () => {
     before(async () => {
         [deployerAddress] = await ethers.getSigners();
         AddressResolver = await ethers.getContractFactory("AddressResolver");
+        MockToken = await ethers.getContractFactory("MockToken");
+        ContentFactory = await ethers.getContractFactory("ContentFactory");
     });
 
     beforeEach(async () => {
         resolver = await upgrades.deployProxy(AddressResolver, []);
+        rawr = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
+
+        // Initialize Content Clone Factory
+        contentFactory = await upgrades.deployProxy(ContentFactory, [deployerAddress.address, deployerAddress.address, deployerAddress.address, deployerAddress.address]);
     });
 
     describe("Basic Tests", () => {
@@ -25,41 +31,31 @@ describe('Address Resolver Contract tests', () => {
     });
 
     describe("Register Contracts", () => {
-        it('Register a single contract', async () => {
-            NftEscrow = await ethers.getContractFactory("NftEscrow");
-            nftEscrow = await upgrades.deployProxy(NftEscrow, []);
-    
+        it('Register a single contract', async () => {    
             // CONTRACT_NFT_ESCROW
-            var ids = ["0x87d4498b"];
-            var addresses = [nftEscrow.address];
+            var ids = ["0x3d13c043"];
+            var addresses = [rawr.address];
     
             await expect(await resolver.registerAddress(ids, addresses))
                 .to.emit(resolver, 'AddressRegistered');
 
-            expect(await resolver.getAddress("0x87d4498b")).to.equal(nftEscrow.address);
+            expect(await resolver.getAddress("0x3d13c043")).to.equal(rawr.address);
         });
     
         it('Register multiple contracts', async () => {
-            NftEscrow = await ethers.getContractFactory("NftEscrow");
-            nftEscrow = await upgrades.deployProxy(NftEscrow, []);
-            Erc20Escrow = await ethers.getContractFactory("Erc20Escrow");
-            escrowToken = await upgrades.deployProxy(Erc20Escrow, []);
-    
-            var ids = ["0x87d4498b", "0x29a264aa"];
-            var addresses = [nftEscrow.address, escrowToken.address];
+            var ids = ["0x3d13c043", "0xdb337f7d"];
+            var addresses = [rawr.address, contentFactory.address];
     
             await expect(await resolver.registerAddress(ids, addresses))
                 .to.emit(resolver, 'AddressRegistered');
     
-            expect(await resolver.getAddress("0x87d4498b")).to.equal(nftEscrow.address);
-            expect(await resolver.getAddress("0x29a264aa")).to.equal(escrowToken.address);
+            expect(await resolver.getAddress("0x3d13c043")).to.equal(rawr.address);
+            expect(await resolver.getAddress("0xdb337f7d")).to.equal(contentFactory.address);
         });
      
         it('Register test input length mismatch', async () => {
-            var ids = ["0x87d4498b", "0x29a264aa"];
-            NftEscrow = await ethers.getContractFactory("NftEscrow");
-            nftEscrow = await upgrades.deployProxy(NftEscrow, []);
-            var addresses = [nftEscrow.address];
+            var ids = ["0x3d13c043", "0xdb337f7d"];
+            var addresses = [rawr.address];
             
             await expect(resolver.registerAddress(ids, addresses)).to.be.reverted;
             await expect(resolver.registerAddress([], addresses)).to.be.reverted;

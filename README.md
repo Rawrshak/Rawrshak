@@ -75,11 +75,11 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
         npm install -g json-server
 
 ## Other Helpful tools
-### [truffle-contract-size](https://www.npmjs.com/package/truffle-contract-size) 
+### [Hardhat Contract Sizer](https://www.npmjs.com/package/hardhat-contract-sizer) 
     Displays the contract size for all or a selection of your smart contracts in kilobytes. The limit for a smart 
     contract is roughly 24.5 kb, so this is a good tool to use to figure out if we need to cut down on the smart 
     contract size. 
-    Install: npm install truffle-contract-size
+    Install: yarn add --dev hardhat-contract-sizer
 
 
 # Quick-start Guide
@@ -89,7 +89,7 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
     2. Download and install Node JS, NPM, yarn, Truffle, Ganache, OpenZeppelin, and Visual Studio Code
     3. Install Solidity extension in Visual Studio Code
 
-    Everything should be configured properly. If you have any issues, contact [Christian](gcbsumid@gmail.com)
+    Everything should be configured properly. If you have any issues, contact [Christian](christian@rawrshak.io)
 
 ### Hardhat Commands
     npx hardhat compile
@@ -117,4 +117,4 @@ Rawrshak Token are the platform currency that will be used for Governance and tr
         words.
     
 ## To set up the local graph node:
-    1. refer to the [Rawrshak Graph Node project](https://github.com/gcbsumid/rawrshak-graphnode) for instructions
+    1. refer to the [Rawrshak Graph Node project](https://github.com/rawrshak/subgraphs) for instructions

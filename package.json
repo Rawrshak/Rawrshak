@@ -1,27 +1,31 @@
 {
-  "name": "rawrshak",
+  "name": "@rawrshak/rawr-content",
   "version": "1.0.0",
-  "description": "This project will contain the implementation of the Rawrshak Smart Contracts",
+  "description": "This project will contain the implementation of the Rawrshak Content Contracts",
   "main": "index.js",
   "scripts": {
     "server": "npx hardhat node",
     "compile": "npx hardhat compile",
+    "clean": "npx hardhat clean",
+    "size": "npx hardhat size-contracts",
     "test": "npx hardhat test",
     "deploy:local": "npx hardhat run --network localhost scripts/deploy.js",
-    "demo:local": "npx hardhat run --network localhost scripts/distribute_rawr_tokens.js && npx hardhat run --network localhost scripts/subgraph_ipfs_data.js",
-    "exchange:local": "npx hardhat run --network localhost scripts/exchange_data.js"
+    "demo:local": "npx hardhat run --network localhost scripts/distribute_rawr_tokens.js && npx hardhat run --network localhost scripts/subgraph_ipfs_data.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gcbsumid/Rawrshak.git"
+    "url": "git+https://github.com/rawrshak/Rawrshak.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/rawrshak"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gcbsumid/Rawrshak/issues"
+    "url": "https://github.com/rawrshak/Rawrshak/issues"
   },
-  "homepage": "https://github.com/gcbsumid/Rawrshak#readme",
+  "homepage": "https://github.com/rawrshak/Rawrshak#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
@@ -35,12 +39,13 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.1",
     "hardhat": "^2.6.7",
+    "hardhat-contract-sizer": "^2.5.0",
     "typechain": "^5.2.0",
     "web3": "^1.5.3"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
-    "bn.js": "^5.2.0",
-    "@rawrshak/rawr-token": "^1.0.0"
+    "@rawrshak/rawr-token": "^1.0.0",
+    "bn.js": "^5.2.0"
   }
 }
