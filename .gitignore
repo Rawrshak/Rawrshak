@@ -18,6 +18,7 @@ data
 
 # yarn
 yarn.lock
+yarn-error.log
 
 # hardhat folders
 cache
