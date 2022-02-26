@@ -1,7 +1,7 @@
 {
-  "name": "rawrshak",
+  "name": "@rawrshak/rawr-content",
   "version": "1.0.0",
-  "description": "This project will contain the implementation of the Rawrshak Smart Contracts",
+  "description": "This project will contain the implementation of the Rawrshak Content Contracts",
   "main": "index.js",
   "scripts": {
     "server": "npx hardhat node",
@@ -12,15 +12,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gcbsumid/Rawrshak.git"
+    "url": "git+https://github.com/rawrshak/Rawrshak.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/rawrshak"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/gcbsumid/Rawrshak/issues"
+    "url": "https://github.com/rawrshak/Rawrshak/issues"
   },
-  "homepage": "https://github.com/gcbsumid/Rawrshak#readme",
+  "homepage": "https://github.com/rawrshak/Rawrshak#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
