@@ -92,7 +92,8 @@ contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
     * @param _salePrice price the asset is to be purchased for
     */
     function getMultipleRoyalties(uint256 _uniqueId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
-        // grabs the original item's royalty info
+        // grab the original item's royalty info
+        // note: we assume here that the original royalty rate of the asset is less than or equal to 100 percent
         (address _creator, uint256 _originalRoyaltyAmount) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, _salePrice);
 
         address[] memory _receivers;
@@ -108,8 +109,10 @@ contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
         royaltyAmounts[0] = _originalRoyaltyAmount;
 
         (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, 1e6);
+        // if it's greater than 20 percent ignore the remaining royalties
+        if (_originalRoyaltyRate > 2e5) {}
+        else if (LibRoyalty.verifyRoyalties(_receivers, _rates, _originalRoyaltyRate)) {
         // calculates royaltyAmount for each receiver and adds their address and royalty into the two arrays
-        if (LibRoyalty.verifyRoyalties(_receivers, _rates, _originalRoyaltyRate)) {
             for (uint256 i = 0; i < length; ++i) {
                 receivers[i + 1] = _receivers[i];
                 royaltyAmounts[i + 1] = _salePrice * _rates[i] / 1e6;
