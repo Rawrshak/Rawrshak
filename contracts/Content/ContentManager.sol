@@ -10,7 +10,6 @@ import "./interfaces/IContent.sol";
 import "./interfaces/IContentStorage.sol";
 import "./interfaces/IContentManager.sol";
 import "./interfaces/IAccessControlManager.sol";
-import "../craft/interfaces/ICraft.sol";
 
 contract ContentManager is IContentManager, OwnableUpgradeable, ERC165StorageUpgradeable {
     using AddressUpgradeable for address;

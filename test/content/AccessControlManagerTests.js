@@ -4,11 +4,11 @@ const { sign } = require("../mint");
 
 describe('AccessControlManager Contract Tests', () => {
     var manager;
-    var deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address;
+    var deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address, craftAddress;
     var AccessControlManager, ContentStorage, Content;
 
     before(async () => {
-        [deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address] = await ethers.getSigners();
+        [deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address, craftAddress] = await ethers.getSigners();
         AccessControlManager = await ethers.getContractFactory("AccessControlManager");
         ContentStorage = await ethers.getContractFactory("ContentStorage");
         Content = await ethers.getContractFactory("Content");
@@ -75,16 +75,13 @@ describe('AccessControlManager Contract Tests', () => {
         it('Add and Remove System Contract', async () => {
             var system_contract_role = await manager.SYSTEM_CONTRACT_ROLE();
 
-            Craft = await ethers.getContractFactory("Craft");
-            craft = await upgrades.deployProxy(Craft, [0]);
+            await manager.grantRole(system_contract_role, craftAddress.address);
+            expect(await manager.hasRole(system_contract_role, craftAddress.address)).to.equal(true);
+            expect(await manager.isSystemContract(craftAddress.address)).to.equal(true);
 
-            await manager.grantRole(system_contract_role, craft.address);
-            expect(await manager.hasRole(system_contract_role, craft.address)).to.equal(true);
-            expect(await manager.isSystemContract(craft.address)).to.equal(true);
-
-            await manager.revokeRole(system_contract_role, craft.address);
-            expect(await manager.hasRole(system_contract_role, craft.address)).to.equal(false);
-            expect(await manager.isSystemContract(craft.address)).to.equal(false);
+            await manager.revokeRole(system_contract_role, craftAddress.address);
+            expect(await manager.hasRole(system_contract_role, craftAddress.address)).to.equal(false);
+            expect(await manager.isSystemContract(craftAddress.address)).to.equal(false);
 
         });
     });
