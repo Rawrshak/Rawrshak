@@ -110,7 +110,7 @@ contract UniqueContentStorage is IUniqueContentStorage, MultipleRoyalties {
 
         (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(uniqueAssetInfo[_uniqueId].contentAddress).royaltyInfo(uniqueAssetInfo[_uniqueId].tokenId, 1e6);
         // if it's greater than 20 percent ignore the remaining royalties
-        if (_originalRoyaltyRate > 2e5) {}
+        if (_originalRoyaltyRate >= 2e5) {}
         else if (LibRoyalty.verifyRoyalties(_receivers, _rates, _originalRoyaltyRate)) {
         // calculates royaltyAmount for each receiver and adds their address and royalty into the two arrays
             for (uint256 i = 0; i < length; ++i) {

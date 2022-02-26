@@ -13,7 +13,7 @@ import "./interfaces/IUniqueContentStorage.sol";
 import "./interfaces/IContent.sol";
 import "../libraries/LibRoyalty.sol";
 
-contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable,IERC2981Upgradeable, ERC165StorageUpgradeable {
+contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable, IERC2981Upgradeable, ERC165StorageUpgradeable {
 
     using ERC165CheckerUpgradeable for address;
     
