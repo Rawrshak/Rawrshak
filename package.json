@@ -8,7 +8,7 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "deploy:local": "npx hardhat run --network localhost scripts/deploy.js",
-    "demo:local": "npx hardhat run --network localhost scripts/distribute_rawr_tokens.js && npx hardhat run --network localhost scripts/subgraph_ipfs_data.js",
+    "demo:local": "npx hardhat run --network localhost scripts/distribute_rawr_tokens.js && npx hardhat run --network localhost scripts/subgraph_ipfs_data.js"
   },
   "repository": {
     "type": "git",
