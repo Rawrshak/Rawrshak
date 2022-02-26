@@ -6,6 +6,8 @@
   "scripts": {
     "server": "npx hardhat node",
     "compile": "npx hardhat compile",
+    "clean": "npx hardhat clean",
+    "size": "npx hardhat size-contracts",
     "test": "npx hardhat test",
     "deploy:local": "npx hardhat run --network localhost scripts/deploy.js",
     "demo:local": "npx hardhat run --network localhost scripts/distribute_rawr_tokens.js && npx hardhat run --network localhost scripts/subgraph_ipfs_data.js"
@@ -37,12 +39,13 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.1",
     "hardhat": "^2.6.7",
+    "hardhat-contract-sizer": "^2.5.0",
     "typechain": "^5.2.0",
     "web3": "^1.5.3"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
-    "bn.js": "^5.2.0",
-    "@rawrshak/rawr-token": "^1.0.0"
+    "@rawrshak/rawr-token": "^1.0.0",
+    "bn.js": "^5.2.0"
   }
 }
