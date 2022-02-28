@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/IERC1155MetadataURIUpgradeable.sol";
 import "./interfaces/IMultipleRoyalties.sol";
 import "./interfaces/IUniqueContent.sol";
 import "./interfaces/IUniqueContentStorage.sol";
@@ -110,14 +111,16 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     * @param _uniqueId uint256 ID of token to query original asset uri of
     * @param _version version number of token to query
     */
-    function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
+    function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory uri) {
         require(_exists(_uniqueId), "Unique Id does not exist");
         (uint256 _tokenId, address _contentAddress) = uniqueContentStorage.getAssetData(_uniqueId);
 
-        if (_contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) {
+        if (_contentAddress.supportsInterface(type(IContent).interfaceId)) {
             return IContent(_contentAddress).uri(_tokenId, _version);
-        } else {
+        } else if (_contentAddress.supportsInterface(type(IERC721MetadataUpgradeable).interfaceId)) {
             return IERC721MetadataUpgradeable(_contentAddress).tokenURI(_tokenId);
+        } else if (_contentAddress.supportsInterface(type(IERC1155MetadataURIUpgradeable).interfaceId)) {
+            return IERC1155MetadataURIUpgradeable(_contentAddress).uri(_tokenId);
         }
     }
 

@@ -157,6 +157,22 @@ describe('Unique Content Storage Contract Tests', () => {
             expect(tokenFees[1][0]).to.equal(1500);
             expect(tokenFees[1][1]).to.equal(1000);
             expect(tokenFees[1][2]).to.equal(500);
+
+            // set to 20000
+            await contentStorage.setTokenRoyaltiesBatch([[0, developerAltAddress.address, 200000]]);
+
+            var tokenFees4 = await uniqueContentStorage.getRoyalty(0, 1000000);
+            expect(tokenFees4.receiver).to.equal(developerAltAddress.address);
+            expect(tokenFees4.royaltyAmount).to.equal(200000);
+
+            var tokenFees3 = await uniqueContentStorage.getMultipleRoyalties(0, 100000);
+            expect(tokenFees3[0][0]).to.equal(developerAltAddress.address);
+            expect(tokenFees3[0][1]).to.equal(ethers.constants.AddressZero);
+            expect(tokenFees3[0][2]).to.equal(ethers.constants.AddressZero);
+
+            expect(tokenFees3[1][0]).to.equal(20000);
+            expect(tokenFees3[1][1]).to.equal(0);
+            expect(tokenFees3[1][2]).to.equal(0);
         });
 
         it('Original royalty update pushes total over limit', async () => {
