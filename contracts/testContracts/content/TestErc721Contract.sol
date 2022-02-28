@@ -36,7 +36,7 @@ contract TestErc721Contract is IERC2981Upgradeable, ERC721Upgradeable, ERC165Sto
     }
 
     function mint(address _to, address _receiver, uint24 _rate, string memory _uri) external {
-        require(_rate <= 2e5, "Invalid Fee Rate");
+        require(_rate <= 1e6, "Invalid Fee Rate");
         tokenRoyalty[assetCounter].receiver = _receiver;
         tokenRoyalty[assetCounter].rate = _rate;
         uris[assetCounter] = _uri;

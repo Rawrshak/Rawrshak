@@ -21,6 +21,7 @@ describe('Unique ERC 721 Content Tests', () => {
 
         // creatorAddress mints an ERC721 token
         await sampleContract.connect(creatorAddress).mint(creatorAddress.address, developerAddress.address, 5000, "arweave.net/tx/public-uri-0");
+        await sampleContract.connect(creatorAddress).mint(creatorAddress.address, developerAddress.address, 200001, "arweave.net/tx/public-uri-0");
 
         // launch unique content contracts
         uniqueContentStorage = await upgrades.deployProxy(UniqueContentStorage);
@@ -41,14 +42,14 @@ describe('Unique ERC 721 Content Tests', () => {
             var rates = [15000, 10000];
             var uniqueAssetCreateData = [creatorAddress.address, sampleContract.address, 0, "arweave.net/tx/unique-uri-0", receivers, rates, true];
 
-            expect(await sampleContract.balanceOf(creatorAddress.address)).to.equal(1);
+            expect(await sampleContract.balanceOf(creatorAddress.address)).to.equal(2);
 
             results = await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             expect(results)
                 .to.emit(uniqueContent, "Mint");
             
             // checks whether the original asset has switched hands 
-            expect(await sampleContract.balanceOf(creatorAddress.address)).to.equal(0);
+            expect(await sampleContract.balanceOf(creatorAddress.address)).to.equal(1);
             expect(await sampleContract.balanceOf(uniqueContent.address)).to.equal(1);
 
             // checks whether the unique asset was minted to creatorAddress
@@ -71,7 +72,7 @@ describe('Unique ERC 721 Content Tests', () => {
 
         it('Invalid mint', async () => {            
             var uniqueAssetCreateData = [creatorAddress.address, sampleContract.address, 0, "arweave.net/tx/unique-uri-0", [], [], true];
-
+            // mint unique asset
             results = await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             expect(results)
                 .to.emit(uniqueContent, "Mint");
@@ -79,6 +80,11 @@ describe('Unique ERC 721 Content Tests', () => {
             var uniqueAssetCreateData2 = [creatorAddress.address, uniqueContent.address, 0, "arweave.net/tx/unique-uri-1", [], [], true];
             // try to create a unique asset from a unique asset
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData2)).to.be.reverted;
+
+            // cannot mint unique assets from assets with a royalty rate over 2e5
+            var uniqueAssetCreateData3 = [creatorAddress.address, sampleContract.address, 1, "arweave.net/tx/unique-uri-0", [], [], true];
+
+            await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData3)).to.be.reverted;
         });
     
         it('Burn function', async () => {
