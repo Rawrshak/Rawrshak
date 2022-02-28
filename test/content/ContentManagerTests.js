@@ -156,30 +156,28 @@ describe('Content Manager Contract Tests', () => {
         });
 
         it('Register System contract addresses', async () => {
-            var mintData = [playerAddress.address, [1], [5], 1, ethers.constants.AddressZero, []];
-
-            Craft = await ethers.getContractFactory("Craft");
-            craft = await upgrades.deployProxy(Craft, [0]);
+            MockContract = await ethers.getContractFactory("MockContract");
+            mockContract = await upgrades.deployProxy(MockContract, []);
 
             // craftingSystemAddress should have minter role revoked
             var systemContractPairs = [
-                [craft.address, true],
-                [craft.address, true],
-                [craft.address, false]
+                [mockContract.address, true],
+                [mockContract.address, true],
+                [mockContract.address, false]
             ];
 
             await contentManager.registerSystemContracts(systemContractPairs);
-            expect(await content.isSystemContract(craft.address)).is.equal(false);
+            expect(await content.isSystemContract(mockContract.address)).is.equal(false);
 
             // craftingSystemAddress should have minter role granted
             systemContractPairs = [
-                [craft.address, false],
-                [craft.address, false],
-                [craft.address, true]
+                [mockContract.address, false],
+                [mockContract.address, false],
+                [mockContract.address, true]
             ];
 
             await contentManager.registerSystemContracts(systemContractPairs);
-            expect(await content.isSystemContract(craft.address)).is.equal(true);
+            expect(await content.isSystemContract(mockContract.address)).is.equal(true);
         });
 
         it('Edge case parameters', async () => {

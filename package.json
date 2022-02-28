@@ -1,6 +1,6 @@
 {
   "name": "@rawrshak/rawr-content",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This project will contain the implementation of the Rawrshak Content Contracts",
   "main": "index.js",
   "scripts": {
