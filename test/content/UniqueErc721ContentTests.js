@@ -187,10 +187,8 @@ describe('Unique ERC 721 Content Tests', () => {
             expect(tokenFees[1][0]).to.equal(50000);
 
             // there should not be any additional royalties
-            expect(tokenFees[0][1]).to.equal(undefined);
-            expect(tokenFees[0][2]).to.equal(undefined);
-            expect(tokenFees[1][1]).to.equal(undefined);
-            expect(tokenFees[1][2]).to.equal(undefined);
+            expect(tokenFees[0].length).to.equal(1);
+            expect(tokenFees[1].length).to.equal(1);
         });
     });
 });

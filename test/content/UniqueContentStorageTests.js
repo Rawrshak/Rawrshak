@@ -233,13 +233,9 @@ describe('Unique Content Storage Contract Tests', () => {
 
             var tokenFees2 = await uniqueContentStorage.getMultipleRoyalties(0, 200000);
             expect(tokenFees2[0][0]).to.equal(developerAddress.address);
-            expect(tokenFees2[0][1]).to.equal(undefined);
-            expect(tokenFees2[0][2]).to.equal(undefined);
-            expect(tokenFees2[0][3]).to.equal(undefined);
+            expect(tokenFees2[0].length).to.equal(1);
             expect(tokenFees2[1][0]).to.equal(40000);
-            expect(tokenFees2[1][1]).to.equal(undefined);
-            expect(tokenFees2[1][2]).to.equal(undefined);
-            expect(tokenFees2[1][3]).to.equal(undefined);
+            expect(tokenFees2[1].length).to.equal(1);
 
             // update royalty rate to over 200000
             await sampleContract.setTokenRoyalty(0, developerAddress.address, 300000);
@@ -250,13 +246,9 @@ describe('Unique Content Storage Contract Tests', () => {
 
             var tokenFees3 = await uniqueContentStorage.getMultipleRoyalties(0, 50000);
             expect(tokenFees3[0][0]).to.equal(developerAddress.address);
-            expect(tokenFees3[0][1]).to.equal(undefined);
-            expect(tokenFees3[0][2]).to.equal(undefined);
-            expect(tokenFees3[0][3]).to.equal(undefined);
+            expect(tokenFees3[0].length).to.equal(1);
             expect(tokenFees3[1][0]).to.equal(15000);
-            expect(tokenFees3[1][1]).to.equal(undefined);
-            expect(tokenFees3[1][2]).to.equal(undefined);
-            expect(tokenFees3[1][3]).to.equal(undefined);
+            expect(tokenFees3[1].length).to.equal(1);
         });
     });
 });
