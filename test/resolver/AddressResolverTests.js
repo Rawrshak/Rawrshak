@@ -9,15 +9,15 @@ describe('Address Resolver Contract tests', () => {
         [deployerAddress] = await ethers.getSigners();
         AddressResolver = await ethers.getContractFactory("AddressResolver");
         MockToken = await ethers.getContractFactory("MockToken");
-        ContentFactory = await ethers.getContractFactory("ContentFactory");
+        CollectionFactory = await ethers.getContractFactory("CollectionFactory");
     });
 
     beforeEach(async () => {
         resolver = await upgrades.deployProxy(AddressResolver, []);
         rawr = await upgrades.deployProxy(MockToken, ["Rawrshak Token", "RAWR"]);
 
-        // Initialize Content Clone Factory
-        contentFactory = await upgrades.deployProxy(ContentFactory, [deployerAddress.address, deployerAddress.address, deployerAddress.address, deployerAddress.address]);
+        // Initialize Collection Clone Factory
+        collectionFactory = await upgrades.deployProxy(CollectionFactory, [deployerAddress.address, deployerAddress.address, deployerAddress.address, deployerAddress.address]);
     });
 
     describe("Basic Tests", () => {
@@ -44,13 +44,13 @@ describe('Address Resolver Contract tests', () => {
     
         it('Register multiple contracts', async () => {
             var ids = ["0x3d13c043", "0xdb337f7d"];
-            var addresses = [rawr.address, contentFactory.address];
+            var addresses = [rawr.address, collectionFactory.address];
     
             await expect(await resolver.registerAddress(ids, addresses))
                 .to.emit(resolver, 'AddressRegistered');
     
             expect(await resolver.getAddress("0x3d13c043")).to.equal(rawr.address);
-            expect(await resolver.getAddress("0xdb337f7d")).to.equal(contentFactory.address);
+            expect(await resolver.getAddress("0xdb337f7d")).to.equal(collectionFactory.address);
         });
      
         it('Register test input length mismatch', async () => {

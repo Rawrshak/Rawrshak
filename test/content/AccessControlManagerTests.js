@@ -5,13 +5,13 @@ const { sign } = require("../mint");
 describe('AccessControlManager Contract Tests', () => {
     var manager;
     var deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address, craftAddress;
-    var AccessControlManager, ContentStorage, Content;
+    var AccessControlManager, CollectionStorage, Collection;
 
     before(async () => {
         [deployerAddress, deployerAltAddress, minterAddress, playerAddress, player2Address, craftAddress] = await ethers.getSigners();
         AccessControlManager = await ethers.getContractFactory("AccessControlManager");
-        ContentStorage = await ethers.getContractFactory("ContentStorage");
-        Content = await ethers.getContractFactory("Content");
+        CollectionStorage = await ethers.getContractFactory("CollectionStorage");
+        Collection = await ethers.getContractFactory("Collection");
     });
 
     beforeEach(async () => {
@@ -32,33 +32,33 @@ describe('AccessControlManager Contract Tests', () => {
             // IAccessControlUpgradeable Interface
             expect(await manager.supportsInterface("0x7965db0b")).to.equal(true);
 
-            // IContentSubsystemBase Interface
+            // ICollectionSubsystemBase Interface
             expect(await manager.supportsInterface("0x7460af1d")).to.equal(true);
         });
     
         it('Change Parent and check roles', async () => {
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
 
-            var results = await manager.setParent(content.address);
+            var results = await manager.setParent(collection.address);
 
             await expect(results)
                 .to.emit(manager, 'ParentSet')
-                .withArgs(content.address);
+                .withArgs(collection.address);
     
-            var default_admin_role = await contentStorage.DEFAULT_ADMIN_ROLE();
-            expect(await manager.hasRole(default_admin_role, content.address)).to.equal(true);
+            var default_admin_role = await collectionStorage.DEFAULT_ADMIN_ROLE();
+            expect(await manager.hasRole(default_admin_role, collection.address)).to.equal(true);
             
             // deployer is not the default admin anymore
             expect(await manager.hasRole(default_admin_role, deployerAddress.address)).to.equal(false);
         });
     
         it('Invalid SetParent()', async () => {
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
             
             // caller doesn't have the default admin role
-            await expect(manager.connect(playerAddress).setParent(content.address)).to.be.reverted;
+            await expect(manager.connect(playerAddress).setParent(collection.address)).to.be.reverted;
         });
         
         it('Add and Remove Minter Address', async () => {
@@ -93,15 +93,15 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.grantRole(minter_role, deployerAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
     
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
             
-            // Sign where the verifying contract address is the contentContractAddress
-            const signature = await sign(playerAddress.address, [1], [1], 0, deployerAddress.address, content.address);
+            // Sign where the verifying contract address is the collectionContractAddress
+            const signature = await sign(playerAddress.address, [1], [1], 0, deployerAddress.address, collection.address);
             var mintData = [playerAddress.address, [1], [1], 0, deployerAddress.address, signature];
     
             // deployerAltAddress pretending to be contract address and calling verifyMintDataAndIncrementNonce()
@@ -117,14 +117,14 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.grantRole(minter_role, minterAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
            
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
             
-            const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, collection.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
             // deployerAltAddress pretending to be contract address and calling verifyMintDataAndIncrementNonce(); 
@@ -141,14 +141,14 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.grantRole(minter_role, minterAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
             
-            const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, collection.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
             // The caller is a player but has a signed message from the minter to mint for them.
@@ -164,14 +164,14 @@ describe('AccessControlManager Contract Tests', () => {
             var default_admin_role = await manager.DEFAULT_ADMIN_ROLE();
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
             
-            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, collection.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
             await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
@@ -184,14 +184,14 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.revokeRole(minter_role, minterAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
             
-            const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            const signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, collection.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
     
             await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
@@ -203,14 +203,14 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.grantRole(minter_role, minterAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
 
-            var signature = await sign(playerAddress.address, [1], [1], 0, minterAddress.address, content.address);
+            var signature = await sign(playerAddress.address, [1], [1], 0, minterAddress.address, collection.address);
             var mintData = [playerAddress.address, [1], [1], 0, minterAddress.address, signature];
     
             await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
@@ -222,14 +222,14 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.grantRole(minter_role, minterAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
 
-            var signature = await sign(playerAddress.address, [1], [1], 1, playerAddress.address, content.address);
+            var signature = await sign(playerAddress.address, [1], [1], 1, playerAddress.address, collection.address);
             var mintData = [playerAddress.address, [1], [1], 1, minterAddress.address, signature];
             await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;
         });
@@ -240,14 +240,14 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.grantRole(minter_role, minterAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
             
-            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, collection.address);
             var mintData = [player2Address.address, [1], [1], 1, minterAddress.address, signature];
             await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, player2Address.address)).to.be.reverted;
         });
@@ -258,14 +258,14 @@ describe('AccessControlManager Contract Tests', () => {
             await manager.grantRole(minter_role, minterAddress.address);
             await manager.grantRole(default_admin_role, deployerAltAddress.address);
             
-            // Set Content Contract as parent & verifying contract
-            var contentStorage = await upgrades.deployProxy(ContentStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
-            var content = await upgrades.deployProxy(Content, [contentStorage.address, manager.address]);
+            // Set Collection Contract as parent & verifying contract
+            var collectionStorage = await upgrades.deployProxy(CollectionStorage, [deployerAddress.address, 10000, "arweave.net/tx-contract-uri"]);
+            var collection = await upgrades.deployProxy(Collection, [collectionStorage.address, manager.address]);
     
-            // Setting the parent to the content contract revokes the DEFAULT_ADMIN_ROLE from the owner
-            await manager.setParent(content.address);
+            // Setting the parent to the collection contract revokes the DEFAULT_ADMIN_ROLE from the owner
+            await manager.setParent(collection.address);
             
-            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, content.address);
+            var signature = await sign(playerAddress.address, [1], [1], 1, minterAddress.address, collection.address);
             // tries to mint more than the signature authorizes
             var mintData = [playerAddress.address, [1], [1000], 1, minterAddress.address, signature];
             await expect(manager.connect(deployerAltAddress).verifyMintDataAndIncrementNonce(mintData, playerAddress.address)).to.be.reverted;

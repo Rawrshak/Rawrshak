@@ -51,7 +51,7 @@ library LibAsset {
 
     struct UniqueAssetCreateData {
         address to;
-        address contentAddress;
+        address collectionAddress;
         bool creatorLocked;
         uint256 tokenId;
         string uniqueAssetUri;
@@ -61,7 +61,7 @@ library LibAsset {
 
     struct UniqueAsset {
         address creator;
-        address contentAddress;
+        address collectionAddress;
         bool creatorLocked;
         uint256 tokenId;
         uint256 version;

@@ -25,31 +25,31 @@ async function main() {
     console.log("Staking deployed to:", staking.address);
     console.log("\n");
 
-    // Content Contracts
-    console.log("Deploying Content Contracts");
+    // Collection Contracts
+    console.log("Deploying Collection Contracts");
     
     AccessControlManager = await ethers.getContractFactory("AccessControlManager");
-    ContentStorage = await ethers.getContractFactory("ContentStorage");
-    Content = await ethers.getContractFactory("Content");
-    ContentManager = await ethers.getContractFactory("ContentManager");
-    ContentFactory = await ethers.getContractFactory("ContentFactory");
+    CollectionStorage = await ethers.getContractFactory("CollectionStorage");
+    Collection = await ethers.getContractFactory("Collection");
+    CollectionManager = await ethers.getContractFactory("CollectionManager");
+    CollectionFactory = await ethers.getContractFactory("CollectionFactory");
 
     // Deploy Implementation contracts
     accessControlManagerImpl = await AccessControlManager.deploy();
-    contentImpl = await Content.deploy();
-    contentStorageImpl = await ContentStorage.deploy();
-    contentManagerImpl = await ContentManager.deploy();
+    collectionImpl = await Collection.deploy();
+    collectionStorageImpl = await CollectionStorage.deploy();
+    collectionManagerImpl = await CollectionManager.deploy();
 
-    // Initialize Content Clone Factory
-    contentFactory = await upgrades.deployProxy(ContentFactory, [contentImpl.address, contentManagerImpl.address, contentStorageImpl.address, accessControlManagerImpl.address]);
+    // Initialize Collection Clone Factory
+    collectionFactory = await upgrades.deployProxy(CollectionFactory, [collectionImpl.address, collectionManagerImpl.address, collectionStorageImpl.address, accessControlManagerImpl.address]);
 
-    console.log("ContentFactory deployed to:", contentFactory.address);
+    console.log("CollectionFactory deployed to:", collectionFactory.address);
     console.log("\n");
 
     // setting up resolver addresses
     var addresses = [
         staking.address,
-        contentFactory.address,
+        collectionFactory.address,
         rawr.address
     ];
 

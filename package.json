@@ -1,7 +1,7 @@
 {
-  "name": "@rawrshak/rawr-content",
+  "name": "@rawrshak/rawr-contracts",
   "version": "1.0.1",
-  "description": "This project will contain the implementation of the Rawrshak Content Contracts",
+  "description": "This project will contain the implementation of the Rawrshak Collection Contracts",
   "main": "index.js",
   "scripts": {
     "server": "npx hardhat node",
