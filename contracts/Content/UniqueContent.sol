@@ -5,14 +5,16 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpg
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165StorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/IERC1155MetadataURIUpgradeable.sol";
 import "./interfaces/IMultipleRoyalties.sol";
 import "./interfaces/IUniqueContent.sol";
 import "./interfaces/IUniqueContentStorage.sol";
 import "./interfaces/IContent.sol";
 import "../libraries/LibRoyalty.sol";
 
-contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable, ERC1155HolderUpgradeable, IERC2981Upgradeable, ERC165StorageUpgradeable {
+contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable, IERC2981Upgradeable, ERC165StorageUpgradeable {
 
     using ERC165CheckerUpgradeable for address;
     
@@ -29,6 +31,7 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     {
         __ERC165_init_unchained();
         __ERC721_init_unchained(_name, _symbol);
+        __ERC721Holder_init_unchained();
         __ERC1155Holder_init_unchained();
         __UniqueContent_init_unchained(_uniqueContentStorage);
     }
@@ -51,14 +54,25 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     function mint(LibAsset.UniqueAssetCreateData memory _data) external override {
         require(
             (_data.contentAddress.supportsInterface(type(IERC2981Upgradeable).interfaceId)) &&
-            (_data.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)),
+            // avoids the possibility of creating a unique asset out of a unique asset
+            !(_data.contentAddress.supportsInterface(type(IUniqueContent).interfaceId)) &&
+            ((_data.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) ||
+            (_data.contentAddress.supportsInterface(type(IERC721Upgradeable).interfaceId))),
             "Error: content contract not supported"
         );
-        require((IERC1155Upgradeable(_data.contentAddress).balanceOf(_msgSender(), _data.tokenId)) >= 1, "Error: must have original item");
         (, uint256 _originalRoyaltyRate) = IERC2981Upgradeable(_data.contentAddress).royaltyInfo(_data.tokenId, 1e6);
         require(LibRoyalty.verifyRoyalties(_data.royaltyReceivers, _data.royaltyRates, _originalRoyaltyRate), "Error: royalties are invalid");
-        // transfers the original asset to be locked in the unique content contract
-        IERC1155Upgradeable(_data.contentAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, 1, "");
+
+        if (_data.contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) {
+            require((IERC1155Upgradeable(_data.contentAddress).balanceOf(_msgSender(), _data.tokenId)) >= 1, "Error: must have original item");
+            // transfers the original asset to be locked in the unique content contract
+            IERC1155Upgradeable(_data.contentAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, 1, "");
+
+        } else {
+            require((IERC721Upgradeable(_data.contentAddress).ownerOf(_data.tokenId)) == _msgSender(), "Error: must have original item");
+            // transfers the original asset to be locked in the unique content contract
+            IERC721Upgradeable(_data.contentAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, "");
+        }   
         uniqueContentStorage.setUniqueAssetInfo(_data, uniqueIdsCounter, _msgSender());
 
         // mint() is a mint and transfer function, if _data.to != msgSender, the caller would be sending the token to someone else
@@ -79,13 +93,16 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
             "Error: burning of token disabled"
         );
         _burn(_uniqueId);
-
         (uint256 _tokenId, address _contentAddress) = uniqueContentStorage.getAssetData(_uniqueId);
         uniqueContentStorage.burnUniqueAssetInfo(_uniqueId);
 
-        // transfers original asset back to caller
-        IERC1155Upgradeable(_contentAddress).safeTransferFrom(address(this), _msgSender(), _tokenId, 1, "");
-
+        if (_contentAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) {
+            // transfers original asset back to caller
+            IERC1155Upgradeable(_contentAddress).safeTransferFrom(address(this), _msgSender(), _tokenId, 1, "");
+        } else {
+            // transfers original asset back to caller
+            IERC721Upgradeable(_contentAddress).safeTransferFrom(address(this), _msgSender(), _tokenId, "");
+        }
         emit Burn(_uniqueId, _msgSender());
     }
 
@@ -94,10 +111,17 @@ contract UniqueContent is IUniqueContent, IMultipleRoyalties, ERC721Upgradeable,
     * @param _uniqueId uint256 ID of token to query original asset uri of
     * @param _version version number of token to query
     */
-    function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
+    function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory uri) {
         require(_exists(_uniqueId), "Unique Id does not exist");
         (uint256 _tokenId, address _contentAddress) = uniqueContentStorage.getAssetData(_uniqueId);
-        return IContent(_contentAddress).uri(_tokenId, _version);
+
+        if (_contentAddress.supportsInterface(type(IContent).interfaceId)) {
+            return IContent(_contentAddress).uri(_tokenId, _version);
+        } else if (_contentAddress.supportsInterface(type(IERC721MetadataUpgradeable).interfaceId)) {
+            return IERC721MetadataUpgradeable(_contentAddress).tokenURI(_tokenId);
+        } else if (_contentAddress.supportsInterface(type(IERC1155MetadataURIUpgradeable).interfaceId)) {
+            return IERC1155MetadataURIUpgradeable(_contentAddress).uri(_tokenId);
+        }
     }
 
     /**

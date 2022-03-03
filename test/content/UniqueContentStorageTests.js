@@ -4,10 +4,11 @@ const { sign } = require("../mint");
 
 describe('Unique Content Storage Contract Tests', () => {
     var developerAddress, developerAltAddress, creatorAddress, receiverAddress, playerAddress;
-    var AccessControlManager, ContentStorage, Content, UniqueContentStorage;
+    var AccessControlManager, ContentStorage, Content, UniqueContentStorage, Erc721Contract;
     var content;
     var contentStorage;
     var accessControlManager;
+    var sampleContract;
     var asset;
     var uniqueContentStorage;
 
@@ -17,6 +18,7 @@ describe('Unique Content Storage Contract Tests', () => {
         AccessControlManager = await ethers.getContractFactory("AccessControlManager");
         ContentStorage = await ethers.getContractFactory("ContentStorage");
         Content = await ethers.getContractFactory("Content");
+        Erc721Contract = await ethers.getContractFactory("TestErc721Contract");
         asset = [
             ["arweave.net/tx/public-uri-0", "", ethers.constants.MaxUint256, developerAddress.address, 20000],
             ["arweave.net/tx/public-uri-1", "", 100, ethers.constants.AddressZero, 0],
@@ -27,6 +29,7 @@ describe('Unique Content Storage Contract Tests', () => {
         accessControlManager = await upgrades.deployProxy(AccessControlManager, []);
         contentStorage = await upgrades.deployProxy(ContentStorage, [developerAltAddress.address, 12000, "arweave.net/tx-contract-uri"]);
         content = await upgrades.deployProxy(Content, [contentStorage.address, accessControlManager.address]);
+        sampleContract = await upgrades.deployProxy(Erc721Contract, ["Affordable Collection", "AC"]);
 
         await contentStorage.grantRole(await contentStorage.DEFAULT_ADMIN_ROLE(), content.address);
 
@@ -36,6 +39,9 @@ describe('Unique Content Storage Contract Tests', () => {
 
         // launch unique content storage contract
         uniqueContentStorage = await upgrades.deployProxy(UniqueContentStorage);
+
+        // creatorAddress mints an ERC721 token
+        await sampleContract.connect(creatorAddress).mint(creatorAddress.address, developerAddress.address, 5000, "arweave.net/tx/public-uri-100");
     });
 
     describe("Unique Asset Info", () => {
@@ -195,6 +201,54 @@ describe('Unique Content Storage Contract Tests', () => {
             expect(tokenFees3[1][1]).to.equal(3);
             expect(tokenFees3[1][2]).to.equal(1);
             expect(tokenFees3[1][3]).to.equal(0);
+        });
+
+        it('Update royalty to equal 2e5 and over 2e5', async () => {
+            var receivers = [creatorAddress.address, receiverAddress.address, playerAddress.address];
+            var rates = [40000, 30000, 20000];
+            var uniqueAssetCreateData = [creatorAddress.address, sampleContract.address, 0, "", receivers, rates, false];
+
+            await uniqueContentStorage.setUniqueAssetInfo(uniqueAssetCreateData, 0, creatorAddress.address);
+
+            var tokenFee = await uniqueContentStorage.getRoyalty(0, 1000000);
+            expect(tokenFee.receiver).to.equal(developerAddress.address);
+            expect(tokenFee.royaltyAmount).to.equal(5000);
+
+            var tokenFees = await uniqueContentStorage.getMultipleRoyalties(0, 100000);
+            expect(tokenFees[0][0]).to.equal(developerAddress.address);
+            expect(tokenFees[0][1]).to.equal(creatorAddress.address);
+            expect(tokenFees[0][2]).to.equal(receiverAddress.address);
+            expect(tokenFees[0][3]).to.equal(playerAddress.address);
+            expect(tokenFees[1][0]).to.equal(500);
+            expect(tokenFees[1][1]).to.equal(4000);
+            expect(tokenFees[1][2]).to.equal(3000);
+            expect(tokenFees[1][3]).to.equal(2000);
+
+            // update royalty rate to 200000
+            await sampleContract.setTokenRoyalty(0, developerAddress.address, 200000);
+
+            var tokenFee2 = await uniqueContentStorage.getRoyalty(0, 1000000);
+            expect(tokenFee2.receiver).to.equal(developerAddress.address);
+            expect(tokenFee2.royaltyAmount).to.equal(200000);
+
+            var tokenFees2 = await uniqueContentStorage.getMultipleRoyalties(0, 200000);
+            expect(tokenFees2[0][0]).to.equal(developerAddress.address);
+            expect(tokenFees2[0].length).to.equal(1);
+            expect(tokenFees2[1][0]).to.equal(40000);
+            expect(tokenFees2[1].length).to.equal(1);
+
+            // update royalty rate to over 200000
+            await sampleContract.setTokenRoyalty(0, developerAddress.address, 300000);
+
+            var tokenFee3 = await uniqueContentStorage.getRoyalty(0, 1000000);
+            expect(tokenFee3.receiver).to.equal(developerAddress.address);
+            expect(tokenFee3.royaltyAmount).to.equal(300000);
+
+            var tokenFees3 = await uniqueContentStorage.getMultipleRoyalties(0, 50000);
+            expect(tokenFees3[0][0]).to.equal(developerAddress.address);
+            expect(tokenFees3[0].length).to.equal(1);
+            expect(tokenFees3[1][0]).to.equal(15000);
+            expect(tokenFees3[1].length).to.equal(1);
         });
     });
 });

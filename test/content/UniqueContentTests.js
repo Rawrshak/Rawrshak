@@ -146,7 +146,7 @@ describe('Unique Content Contract Tests', () => {
             // // player runs out of assets for second minting process
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData4);
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData4)).to.be.reverted;
-            // contentStorage.address does not support IERC1155 nor IERC2981 
+            // contentStorage.address does not support IERC1155, IERC721, nor IERC2981 
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData5)).to.be.reverted;
         });    
     });
@@ -172,6 +172,10 @@ describe('Unique Content Contract Tests', () => {
             await expect(uniqueContent.originalAssetUri(0, 0)).to.be.reverted;
             await expect(uniqueContent.royaltyInfo(0, 50000)).to.be.reverted;
             await expect(uniqueContent.multipleRoyaltyInfo(0, 50000)).to.be.reverted;
+
+            // checks whether the original asset has returned to msg.sender
+            expect(await content.balanceOf(creatorAddress.address, 0)).to.equal(2);
+            expect(await content.balanceOf(uniqueContent.address, 0)).to.equal(0);
 
             // (albiet not the creator) an owner can burn an asset that isn't locked. data.to != minter
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData2);
