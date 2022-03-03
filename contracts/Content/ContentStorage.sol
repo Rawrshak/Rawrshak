@@ -61,26 +61,25 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     */
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256[] memory tokenIds = new uint256[](_assets.length);
+        uint256 counter = assetCounter;
         for (uint256 i = 0; i < _assets.length; ++i) {
-            tokenIds[i] = assetCounter;
-            supply[assetCounter] = 0;
+            tokenIds[i] = counter;
+            supply[counter] = 0;
 
             // If max supply is set to 0, this means there is no mint limit. Set max supply to uint256.max
             if (_assets[i].maxSupply == 0) {
                 _assets[i].maxSupply = type(uint256).max; 
             } 
-            maxSupply[assetCounter] = _assets[i].maxSupply;
+            maxSupply[counter] = _assets[i].maxSupply;
 
-            _setPublicUri(assetCounter, _assets[i].publicDataUri);
-            _setHiddenUri(assetCounter, _assets[i].hiddenDataUri);
+            _setPublicUri(counter, _assets[i].publicDataUri);
+            _setHiddenUri(counter, _assets[i].hiddenDataUri);
             
             // if this specific token has a different royalty fees than the contract
-            _setTokenRoyalty(assetCounter, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
-
             // increment asset counter
-            assetCounter++;
+            _setTokenRoyalty(counter++, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
         }
-
+        assetCounter = counter;
         emit AssetsAdded(_parent(), tokenIds, _assets);
     }
 

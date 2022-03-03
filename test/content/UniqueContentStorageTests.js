@@ -42,7 +42,7 @@ describe('Unique Content Storage Contract Tests', () => {
         it('Set and Burn info', async () => {            
             var receivers = [creatorAddress.address, receiverAddress.address];
             var rates = [15000, 10000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", receivers, rates, true];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, true, 0, "arweave.net/tx/unique-uri-0", receivers, rates];
 
             // record info
             expect(await uniqueContentStorage.setUniqueAssetInfo(uniqueAssetCreateData, 0, creatorAddress.address))
@@ -81,7 +81,7 @@ describe('Unique Content Storage Contract Tests', () => {
 
     describe("Uri Tests", () => {
         it('Update unique asset uri', async () => {
-            var uniqueAssetCreateData = [playerAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
+            var uniqueAssetCreateData = [playerAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [], []];
             await uniqueContentStorage.setUniqueAssetInfo(uniqueAssetCreateData, 0, playerAddress.address);
 
             await expect(uniqueContentStorage.connect(playerAddress).setUniqueUri(0,"arweave.net/tx/unique-uri-0v2"))
@@ -100,7 +100,7 @@ describe('Unique Content Storage Contract Tests', () => {
         it('Calculate multiple royalty amounts', async () => {
             var receivers = [creatorAddress.address, receiverAddress.address];
             var rates = [10000, 5000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", receivers, rates, false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", receivers, rates];
             await uniqueContentStorage.setUniqueAssetInfo(uniqueAssetCreateData, 0, creatorAddress.address);
 
             var tokenFees = await uniqueContentStorage.getMultipleRoyalties(0, 100000);
@@ -114,8 +114,8 @@ describe('Unique Content Storage Contract Tests', () => {
         });
 
         it('Query original item royalty', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", [], [], false];
-            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 1, "", [creatorAddress.address], [10000], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "", [], []];
+            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, false, 1, "", [creatorAddress.address], [10000]];
 
             await uniqueContentStorage.setUniqueAssetInfo(uniqueAssetCreateData, 0, creatorAddress.address);
 
@@ -135,7 +135,7 @@ describe('Unique Content Storage Contract Tests', () => {
         it('Update original item royalty', async () => {
             var receivers = [creatorAddress.address, receiverAddress.address];
             var rates = [10000, 5000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", receivers, rates, false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "", receivers, rates];
 
             await uniqueContentStorage.setUniqueAssetInfo(uniqueAssetCreateData, 0, creatorAddress.address);
 
@@ -162,7 +162,7 @@ describe('Unique Content Storage Contract Tests', () => {
         it('Original royalty update pushes total over limit', async () => {
             var receivers = [creatorAddress.address, receiverAddress.address, playerAddress.address];
             var rates = [60000, 30000, 10000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", receivers, rates, false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "", receivers, rates];
 
             await uniqueContentStorage.setUniqueAssetInfo(uniqueAssetCreateData, 0, creatorAddress.address);
 

@@ -52,21 +52,21 @@ library LibAsset {
     struct UniqueAssetCreateData {
         address to;
         address contentAddress;
+        bool creatorLocked;
         uint256 tokenId;
         string uniqueAssetUri;
         address[] royaltyReceivers;
         uint24[] royaltyRates;
-        bool creatorLocked;
     }
 
     struct UniqueAsset {
         address creator;
         address contentAddress;
+        bool creatorLocked;
         uint256 tokenId;
         uint256 version;
         string[] uniqueAssetUri;
-        bool creatorLocked;
-    }
+    }  
 
     function hashMintData(MintData memory _data) internal pure returns (bytes32) {
         return keccak256(abi.encode(
