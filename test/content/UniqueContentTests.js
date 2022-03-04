@@ -61,7 +61,7 @@ describe('Unique Content Contract Tests', () => {
         it('Mint function', async () => {            
             var receivers = [creatorAddress.address, receiverAddress.address];
             var rates = [15000, 10000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", receivers, rates, true];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, true, 0, "arweave.net/tx/unique-uri-0", receivers, rates];
 
             expect(await content.balanceOf(creatorAddress.address, 0)).to.equal(2);
 
@@ -91,7 +91,7 @@ describe('Unique Content Contract Tests', () => {
             expect(tokenFees[1][2]).to.equal(10000);
 
             // mint an asset with no royalties
-            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 1, "arweave.net/tx/unique-uri-1", [], [], false];
+            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, false, 1, "arweave.net/tx/unique-uri-1", [], []];
 
             results = await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData2);
             expect(results)
@@ -112,7 +112,7 @@ describe('Unique Content Contract Tests', () => {
         });
 
         it('Mint to a different address', async () => {
-            var uniqueAssetCreateData = [playerAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
+            var uniqueAssetCreateData = [playerAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [], []];
             
             expect(await content.balanceOf(creatorAddress.address, 0)).to.equal(2);
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
@@ -132,11 +132,11 @@ describe('Unique Content Contract Tests', () => {
         });
 
         it('Invalid mints', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [1], false];
-            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [180001], false];
-            var uniqueAssetCreateData3 = [playerAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
-            var uniqueAssetCreateData4 = [creatorAddress.address, content.address, 1, "arweave.net/tx/unique-uri-1", [], [], false];
-            var uniqueAssetCreateData5 = [creatorAddress.address, contentStorage.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [], [1]];
+            var uniqueAssetCreateData2 = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [180001]];
+            var uniqueAssetCreateData3 = [playerAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [], []];
+            var uniqueAssetCreateData4 = [creatorAddress.address, content.address, false, 1, "arweave.net/tx/unique-uri-1", [], []];
+            var uniqueAssetCreateData5 = [creatorAddress.address, contentStorage.address, false, 0, "arweave.net/tx/unique-uri-0", [], []];
 
             // invalid royalties
             await expect(uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData)).to.be.reverted;
@@ -153,8 +153,8 @@ describe('Unique Content Contract Tests', () => {
 
     describe("Burn Tokens", () => {
         it('Burn function', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000], true];
-            var uniqueAssetCreateData2 = [playerAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, true, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
+            var uniqueAssetCreateData2 = [playerAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [], []];
 
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             expect(await uniqueContent.balanceOf(creatorAddress.address)).to.equal(1);
@@ -196,8 +196,8 @@ describe('Unique Content Contract Tests', () => {
         });
 
         it('Invalid burns', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], false];
-            var lockedAssetData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [], [], true];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [], []];
+            var lockedAssetData = [creatorAddress.address, content.address, true, 0, "arweave.net/tx/unique-uri-0", [], []];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             await uniqueContent.connect(creatorAddress).mint(lockedAssetData);
 
@@ -215,7 +215,7 @@ describe('Unique Content Contract Tests', () => {
 
     describe("Transfer Tokens", () => {
         it('Transfer assets', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
 
             expect(await uniqueContent.balanceOf(creatorAddress.address)).to.equal(1);
@@ -232,7 +232,7 @@ describe('Unique Content Contract Tests', () => {
         });
         
         it('Invalid transfer', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             
             await expect(uniqueContent.connect(playerAddress)["safeTransferFrom(address,address,uint256)"](creatorAddress.address, playerAddress.address, 0)).to.be.reverted;
@@ -241,7 +241,7 @@ describe('Unique Content Contract Tests', () => {
 
     describe("Uri Tests", () => {
         it('Update original asset uri', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
 
             await contentStorage.setPublicUriBatch([[0, "arweave.net/tx/public-uri-0v2"]]);
@@ -252,7 +252,7 @@ describe('Unique Content Contract Tests', () => {
         });
 
         it('Set unique asset uri', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
 
             await uniqueContent.connect(creatorAddress).setUniqueUri(0,"arweave.net/tx/unique-uri-0v2");
@@ -264,7 +264,7 @@ describe('Unique Content Contract Tests', () => {
         });
 
         it('Invalid set unique asset uri', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             
             await expect(uniqueContent.connect(creatorAddress).setUniqueUri(100, "arweave.net/tx/unique-uri-100")).to.be.reverted;
@@ -288,7 +288,7 @@ describe('Unique Content Contract Tests', () => {
         it('Query royalties', async () => {
             var receivers = [creatorAddress.address, receiverAddress.address];
             var rates = [5000, 5000];
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "arweave.net/tx/unique-uri-0", receivers, rates, false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "arweave.net/tx/unique-uri-0", receivers, rates];
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
 
             var tokenFees = await uniqueContent.royaltyInfo(0, 50000);
@@ -306,7 +306,7 @@ describe('Unique Content Contract Tests', () => {
         });
 
         it('Set token royalties', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", [], [], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "", [], []];
 
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             
@@ -321,7 +321,7 @@ describe('Unique Content Contract Tests', () => {
         });
 
         it('Invalid set token royalties', async () => {
-            var uniqueAssetCreateData = [creatorAddress.address, content.address, 0, "", [], [], false];
+            var uniqueAssetCreateData = [creatorAddress.address, content.address, false, 0, "", [], []];
 
             await uniqueContent.connect(creatorAddress).mint(uniqueAssetCreateData);
             var receivers = [developerAltAddress.address, creatorAddress.address, receiverAddress.address];
