@@ -61,6 +61,7 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
     */
     function addAssetBatch(LibAsset.CreateData[] memory _assets) external override onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256[] memory tokenIds = new uint256[](_assets.length);
+        // add a provisional counter to use in for loop
         uint256 counter = assetCounter;
         for (uint256 i = 0; i < _assets.length; ++i) {
             tokenIds[i] = counter;
@@ -76,9 +77,10 @@ contract ContentStorage is IContentStorage, AccessControlUpgradeable, HasRoyalty
             _setHiddenUri(counter, _assets[i].hiddenDataUri);
             
             // if this specific token has a different royalty fees than the contract
-            // increment asset counter
+            // increment provisional counter
             _setTokenRoyalty(counter++, _assets[i].royaltyReceiver, _assets[i].royaltyRate);
         }
+        // update assetCounter
         assetCounter = counter;
         emit AssetsAdded(_parent(), tokenIds, _assets);
     }
