@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../../libraries/LibAsset.sol";
 
-interface IUniqueCollection {
+interface IPersonalizedAssets {
     /*********************** Events *********************/
-    event Mint(uint256 indexed uniqueId, address operator, LibAsset.UniqueAssetCreateData data);
+    event Mint(uint256 indexed uniqueId, address operator, LibAsset.PersonalizedAssetCreateData data);
 
     event Burn(uint256 indexed uniqueId, address operator);
 
@@ -15,7 +15,7 @@ interface IUniqueCollection {
     function tokenURI(uint256 _uniqueId, uint256 _version) external view returns(string memory);
 
     /******** Mutative Functions ********/
-    function mint(LibAsset.UniqueAssetCreateData memory _data) external;
+    function mint(LibAsset.PersonalizedAssetCreateData memory _data) external;
 
     function burn(uint256 _uniqueId) external;
 

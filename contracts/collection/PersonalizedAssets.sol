@@ -9,53 +9,53 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/IERC1155MetadataURIUpgradeable.sol";
 import "./interfaces/IMultipleRoyalties.sol";
-import "./interfaces/IUniqueCollection.sol";
-import "./interfaces/IUniqueCollectionStorage.sol";
+import "./interfaces/IPersonalizedAssets.sol";
+import "./interfaces/IPersonalizedAssetsStorage.sol";
 import "./interfaces/ICollection.sol";
 import "../libraries/LibRoyalty.sol";
 
-contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable, IERC2981Upgradeable, ERC165StorageUpgradeable {
+contract PersonalizedAssets is IPersonalizedAssets, IMultipleRoyalties, ERC721Upgradeable, ERC1155HolderUpgradeable, ERC721HolderUpgradeable, IERC2981Upgradeable, ERC165StorageUpgradeable {
 
     using ERC165CheckerUpgradeable for address;
     
     /***************** Stored Variables *****************/
-    IUniqueCollectionStorage uniqueCollectionStorage;
+    IPersonalizedAssetsStorage personalizedAssetsStorage;
     uint256 private uniqueIdsCounter;
 
     /******************** Public API ********************/
     function initialize(
         string memory _name,
         string memory _symbol,
-        address _uniqueCollectionStorage)
+        address _personalizedAssetsStorage)
         public initializer
     {
         __ERC165_init_unchained();
         __ERC721_init_unchained(_name, _symbol);
         __ERC721Holder_init_unchained();
         __ERC1155Holder_init_unchained();
-        __UniqueCollection_init_unchained(_uniqueCollectionStorage);
+        __PersonalizedAssets_init_unchained(_personalizedAssetsStorage);
     }
 
-    function __UniqueCollection_init_unchained(
-        address _uniqueCollectionStorage)
+    function __PersonalizedAssets_init_unchained(
+        address _personalizedAssetsStorage)
         internal onlyInitializing
     {
-        _registerInterface(type(IUniqueCollection).interfaceId);
+        _registerInterface(type(IPersonalizedAssets).interfaceId);
         _registerInterface(type(IERC2981Upgradeable).interfaceId);
         _registerInterface(type(IMultipleRoyalties).interfaceId);
 
-        uniqueCollectionStorage = IUniqueCollectionStorage(_uniqueCollectionStorage);
+        personalizedAssetsStorage = IPersonalizedAssetsStorage(_personalizedAssetsStorage);
     }
     
     /** Asset Minting
-    * @dev If the royalties are valid and if the caller has the original item in their wallet, it takes the original asset, mints the unique asset and updates mappings
-    * @param _data LibAsset.UniqueAssetCreateData structure object
+    * @dev If the royalties are valid and if the caller has the original item in their wallet, it takes the original asset, mints the personalized asset and updates mappings
+    * @param _data LibAsset.PersonalizedAssetCreateData structure object
     */
-    function mint(LibAsset.UniqueAssetCreateData memory _data) external override {
+    function mint(LibAsset.PersonalizedAssetCreateData memory _data) external override {
         require(
             (_data.collectionAddress.supportsInterface(type(IERC2981Upgradeable).interfaceId)) &&
-            // avoids the possibility of creating a unique asset out of a unique asset
-            !(_data.collectionAddress.supportsInterface(type(IUniqueCollection).interfaceId)) &&
+            // avoids the possibility of creating a personalized asset out of a personalized asset
+            !(_data.collectionAddress.supportsInterface(type(IPersonalizedAssets).interfaceId)) &&
             ((_data.collectionAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) ||
             (_data.collectionAddress.supportsInterface(type(IERC721Upgradeable).interfaceId))),
             "Error: collection contract not supported"
@@ -65,15 +65,15 @@ contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgrad
 
         if (_data.collectionAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) {
             require((IERC1155Upgradeable(_data.collectionAddress).balanceOf(_msgSender(), _data.tokenId)) >= 1, "Error: must have original item");
-            // transfers the original asset to be locked in the unique collection contract
+            // transfers the original asset to be locked in the personalized assets contract
             IERC1155Upgradeable(_data.collectionAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, 1, "");
 
         } else {
             require((IERC721Upgradeable(_data.collectionAddress).ownerOf(_data.tokenId)) == _msgSender(), "Error: must have original item");
-            // transfers the original asset to be locked in the unique collection contract
+            // transfers the original asset to be locked in the personalized assets contract
             IERC721Upgradeable(_data.collectionAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, "");
         }   
-        uniqueCollectionStorage.setUniqueAssetInfo(_data, uniqueIdsCounter, _msgSender());
+        personalizedAssetsStorage.setPersonalizedAssetInfo(_data, uniqueIdsCounter, _msgSender());
 
         // mint() is a mint and transfer function, if _data.to != msgSender, the caller would be sending the token to someone else
         _mint(_data.to, uniqueIdsCounter);
@@ -82,19 +82,19 @@ contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgrad
     }
 
     /** Asset Burning
-    * @dev If the caller is the owner of the token and if the unique asset is not creator locked (or the caller is the creator), it burns the unique asset, returns the original asset, and then deletes the unique asset's token info
+    * @dev If the caller is the owner of the token and if the personalized asset is not creator locked (or the caller is the creator), it burns the personalized asset, returns the original asset, and then deletes the personalized asset's token info
     * @param _uniqueId uint256 ID of token to burn
     */
     function burn(uint256 _uniqueId) external override {
         require(ownerOf(_uniqueId) == _msgSender(), "Error: sender not token owner");
         require(
-            uniqueCollectionStorage.isCreator(_uniqueId, _msgSender()) ||
-            !uniqueCollectionStorage.isLocked(_uniqueId),
+            personalizedAssetsStorage.isCreator(_uniqueId, _msgSender()) ||
+            !personalizedAssetsStorage.isLocked(_uniqueId),
             "Error: burning of token disabled"
         );
         _burn(_uniqueId);
-        (uint256 _tokenId, address _collectionAddress) = uniqueCollectionStorage.getAssetData(_uniqueId);
-        uniqueCollectionStorage.burnUniqueAssetInfo(_uniqueId);
+        (uint256 _tokenId, address _collectionAddress) = personalizedAssetsStorage.getAssetData(_uniqueId);
+        personalizedAssetsStorage.burnPersonalizedAssetInfo(_uniqueId);
 
         if (_collectionAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) {
             // transfers original asset back to caller
@@ -107,13 +107,13 @@ contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgrad
     }
 
     /**
-    * @dev Returns the uri of a specific version of the original asset the unique asset is based on
+    * @dev Returns the uri of a specific version of the original asset the personalized asset is based on
     * @param _uniqueId uint256 ID of token to query original asset uri of
     * @param _version version number of token to query
     */
     function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory uri) {
         require(_exists(_uniqueId), "Unique Id does not exist");
-        (uint256 _tokenId, address _collectionAddress) = uniqueCollectionStorage.getAssetData(_uniqueId);
+        (uint256 _tokenId, address _collectionAddress) = personalizedAssetsStorage.getAssetData(_uniqueId);
 
         if (_collectionAddress.supportsInterface(type(ICollection).interfaceId)) {
             return ICollection(_collectionAddress).uri(_tokenId, _version);
@@ -125,34 +125,34 @@ contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgrad
     }
 
     /**
-    * @dev Returns the unique asset uri of a specific version
+    * @dev Returns the personalized asset uri of a specific version
     * @param _uniqueId uint256 ID of token to query
     * @param _version version number of token to query
     */
     function tokenURI(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
         require(_exists(_uniqueId), "Unique Id does not exist");
-        return uniqueCollectionStorage.tokenURI(_uniqueId, _version);
+        return personalizedAssetsStorage.tokenURI(_uniqueId, _version);
     }
 
     /**
-    * @dev Returns the latest version of the unique asset uri
+    * @dev Returns the latest version of the personalized asset uri
     * @param _uniqueId uint256 ID of token to query
     */
     function tokenURI(uint256 _uniqueId) public view override returns (string memory) {
         require(_exists(_uniqueId), "Unique Id does not exist");
-        return uniqueCollectionStorage.tokenURI(_uniqueId, type(uint256).max);
+        return personalizedAssetsStorage.tokenURI(_uniqueId, type(uint256).max);
     }
 
     /**
-    * @dev If the caller is creator and owner of the token, it adds a new version of the unique asset
+    * @dev If the caller is creator and owner of the token, it adds a new version of the personalized asset
     * @param _uniqueId uint256 ID of the token that gets a new uri
     * @param _uri string URI to assign
     */
     function setUniqueUri(uint256 _uniqueId, string memory _uri) external override {
         require(_exists(_uniqueId), "Unique Id does not exist");
         require(ownerOf(_uniqueId) == _msgSender(), "Error: sender not token owner");
-        require(uniqueCollectionStorage.isCreator(_uniqueId, _msgSender()), "Error: sender not token creator");
-        uniqueCollectionStorage.setUniqueUri(_uniqueId, _uri);
+        require(personalizedAssetsStorage.isCreator(_uniqueId, _msgSender()), "Error: sender not token creator");
+        personalizedAssetsStorage.setUniqueUri(_uniqueId, _uri);
     }
 
     /**
@@ -162,7 +162,7 @@ contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgrad
     */
     function royaltyInfo(uint256 _uniqueId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount){
         require(_exists(_uniqueId), "Unique Id does not exist");
-        (receiver, royaltyAmount) = uniqueCollectionStorage.getRoyalty(_uniqueId, _salePrice);
+        (receiver, royaltyAmount) = personalizedAssetsStorage.getRoyalty(_uniqueId, _salePrice);
     }
 
     /**
@@ -172,7 +172,7 @@ contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgrad
     */
     function multipleRoyaltyInfo(uint256 _uniqueId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
         require(_exists(_uniqueId), "Unique Id does not exist");
-        (receivers, royaltyAmounts) = uniqueCollectionStorage.getMultipleRoyalties(_uniqueId, _salePrice);
+        (receivers, royaltyAmounts) = personalizedAssetsStorage.getMultipleRoyalties(_uniqueId, _salePrice);
     }
 
     /**
@@ -183,8 +183,8 @@ contract UniqueCollection is IUniqueCollection, IMultipleRoyalties, ERC721Upgrad
      */
     function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external override {
         require(_exists(_uniqueId), "Unique Id does not exist");
-        require(uniqueCollectionStorage.isCreator(_uniqueId, _msgSender()), "Error: sender not token creator");
-        uniqueCollectionStorage.setTokenRoyalties(_uniqueId, _royaltyReceivers, _royaltyRates);
+        require(personalizedAssetsStorage.isCreator(_uniqueId, _msgSender()), "Error: sender not token creator");
+        personalizedAssetsStorage.setTokenRoyalties(_uniqueId, _royaltyReceivers, _royaltyRates);
     }
 
     // Interface support

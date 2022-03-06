@@ -49,23 +49,23 @@ library LibAsset {
         bool approved;
     }
 
-    struct UniqueAssetCreateData {
+    struct PersonalizedAssetCreateData {
         address to;
         address collectionAddress;
         bool creatorLocked;
         uint256 tokenId;
-        string uniqueAssetUri;
+        string personalizedAssetUri;
         address[] royaltyReceivers;
         uint24[] royaltyRates;
     }
 
-    struct UniqueAsset {
+    struct PersonalizedAsset {
         address creator;
         address collectionAddress;
         bool creatorLocked;
         uint256 tokenId;
         uint256 version;
-        string[] uniqueAssetUri;
+        string[] personalizedAssetUri;
     }  
 
     function hashMintData(MintData memory _data) internal pure returns (bytes32) {

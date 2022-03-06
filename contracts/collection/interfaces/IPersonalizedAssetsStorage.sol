@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../../libraries/LibAsset.sol";
 
-interface IUniqueCollectionStorage {
+interface IPersonalizedAssetsStorage {
     /*********************** Events *********************/
     event UniqueUriUpdated(uint256 indexed uniqueId, uint256 indexed version);
 
@@ -21,9 +21,9 @@ interface IUniqueCollectionStorage {
     function getAssetData(uint256 _uniqueId) external view returns (uint256 tokenId, address collectionAddress);
 
     /******** Mutative Functions ********/
-    function setUniqueAssetInfo(LibAsset.UniqueAssetCreateData memory _data, uint256 _uniqueId, address _caller) external;
+    function setPersonalizedAssetInfo(LibAsset.PersonalizedAssetCreateData memory _data, uint256 _uniqueId, address _caller) external;
 
-    function burnUniqueAssetInfo(uint256 _uniqueId) external;
+    function burnPersonalizedAssetInfo(uint256 _uniqueId) external;
 
     function setUniqueUri(uint256 _uniqueId, string memory _uri) external;
 
