@@ -8,24 +8,24 @@ interface IPersonalizedAssetsStorage {
     event UniqueUriUpdated(uint256 indexed uniqueId, uint256 indexed version);
 
     /******** View Functions ********/
-    function tokenURI(uint256 _uniqueId, uint256 _version) external view returns (string memory);
+    function tokenURI(uint256 _paTokenId, uint256 _version) external view returns (string memory);
 
-    function getRoyalty(uint256 _uniqueId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount);
+    function getRoyalty(uint256 _paTokenId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount);
 
-    function getMultipleRoyalties(uint256 _uniqueId, uint256 _salePrice) external view returns (address[] memory receivers, uint256[] memory royaltyAmounts);
+    function getMultipleRoyalties(uint256 _paTokenId, uint256 _salePrice) external view returns (address[] memory receivers, uint256[] memory royaltyAmounts);
 
-    function isCreator(uint256 _uniqueId, address _caller) external view returns (bool);
+    function isCreator(uint256 _paTokenId, address _caller) external view returns (bool);
 
-    function isLocked(uint256 _uniqueId) external view returns (bool);
+    function isLocked(uint256 _paTokenId) external view returns (bool);
 
-    function getAssetData(uint256 _uniqueId) external view returns (uint256 tokenId, address collectionAddress);
+    function getAssetData(uint256 _paTokenId) external view returns (uint256 tokenId, address collectionAddress);
 
     /******** Mutative Functions ********/
-    function setPersonalizedAssetInfo(LibAsset.PersonalizedAssetCreateData memory _data, uint256 _uniqueId, address _caller) external;
+    function setPersonalizedAssetInfo(LibAsset.PersonalizedAssetCreateData memory _data, uint256 _paTokenId, address _caller) external;
 
-    function burnPersonalizedAssetInfo(uint256 _uniqueId) external;
+    function burnPersonalizedAssetInfo(uint256 _paTokenId) external;
 
-    function setUniqueUri(uint256 _uniqueId, string memory _uri) external;
+    function setPersonalizedAssetUri(uint256 _paTokenId, string memory _uri) external;
 
-    function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external;
+    function setTokenRoyalties(uint256 _paTokenId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external;
 }

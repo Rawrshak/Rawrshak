@@ -10,16 +10,16 @@ interface IPersonalizedAssets {
     event Burn(uint256 indexed uniqueId, address operator);
 
     /******** View Functions ********/
-    function originalAssetUri(uint256 _uniqueId, uint256 _version) external view returns(string memory);
+    function originalAssetUri(uint256 _paTokenId, uint256 _version) external view returns(string memory);
 
-    function tokenURI(uint256 _uniqueId, uint256 _version) external view returns(string memory);
+    function tokenURI(uint256 _paTokenId, uint256 _version) external view returns(string memory);
 
     /******** Mutative Functions ********/
     function mint(LibAsset.PersonalizedAssetCreateData memory _data) external;
 
-    function burn(uint256 _uniqueId) external;
+    function burn(uint256 _paTokenId) external;
 
-    function setUniqueUri(uint256 _uniqueId, string memory _uri) external;
+    function setPersonalizedAssetUri(uint256 _paTokenId, string memory _uri) external;
 
-    function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external;
+    function setTokenRoyalties(uint256 _paTokenId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external;
 }

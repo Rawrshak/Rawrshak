@@ -83,18 +83,18 @@ contract PersonalizedAssets is IPersonalizedAssets, IMultipleRoyalties, ERC721Up
 
     /** Asset Burning
     * @dev If the caller is the owner of the token and if the personalized asset is not creator locked (or the caller is the creator), it burns the personalized asset, returns the original asset, and then deletes the personalized asset's token info
-    * @param _uniqueId uint256 ID of token to burn
+    * @param _paTokenId uint256 ID of token to burn
     */
-    function burn(uint256 _uniqueId) external override {
-        require(ownerOf(_uniqueId) == _msgSender(), "Error: sender not token owner");
+    function burn(uint256 _paTokenId) external override {
+        require(ownerOf(_paTokenId) == _msgSender(), "Error: sender not token owner");
         require(
-            personalizedAssetsStorage.isCreator(_uniqueId, _msgSender()) ||
-            !personalizedAssetsStorage.isLocked(_uniqueId),
+            personalizedAssetsStorage.isCreator(_paTokenId, _msgSender()) ||
+            !personalizedAssetsStorage.isLocked(_paTokenId),
             "Error: burning of token disabled"
         );
-        _burn(_uniqueId);
-        (uint256 _tokenId, address _collectionAddress) = personalizedAssetsStorage.getAssetData(_uniqueId);
-        personalizedAssetsStorage.burnPersonalizedAssetInfo(_uniqueId);
+        _burn(_paTokenId);
+        (uint256 _tokenId, address _collectionAddress) = personalizedAssetsStorage.getAssetData(_paTokenId);
+        personalizedAssetsStorage.burnPersonalizedAssetInfo(_paTokenId);
 
         if (_collectionAddress.supportsInterface(type(IERC1155Upgradeable).interfaceId)) {
             // transfers original asset back to caller
@@ -103,17 +103,17 @@ contract PersonalizedAssets is IPersonalizedAssets, IMultipleRoyalties, ERC721Up
             // transfers original asset back to caller
             IERC721Upgradeable(_collectionAddress).safeTransferFrom(address(this), _msgSender(), _tokenId, "");
         }
-        emit Burn(_uniqueId, _msgSender());
+        emit Burn(_paTokenId, _msgSender());
     }
 
     /**
     * @dev Returns the uri of a specific version of the original asset the personalized asset is based on
-    * @param _uniqueId uint256 ID of token to query original asset uri of
+    * @param _paTokenId uint256 ID of token to query original asset uri of
     * @param _version version number of token to query
     */
-    function originalAssetUri(uint256 _uniqueId, uint256 _version) external view override returns (string memory uri) {
-        require(_exists(_uniqueId), "Unique Id does not exist");
-        (uint256 _tokenId, address _collectionAddress) = personalizedAssetsStorage.getAssetData(_uniqueId);
+    function originalAssetUri(uint256 _paTokenId, uint256 _version) external view override returns (string memory uri) {
+        require(_exists(_paTokenId), "Token Id does not exist");
+        (uint256 _tokenId, address _collectionAddress) = personalizedAssetsStorage.getAssetData(_paTokenId);
 
         if (_collectionAddress.supportsInterface(type(ICollection).interfaceId)) {
             return ICollection(_collectionAddress).uri(_tokenId, _version);
@@ -126,65 +126,65 @@ contract PersonalizedAssets is IPersonalizedAssets, IMultipleRoyalties, ERC721Up
 
     /**
     * @dev Returns the personalized asset uri of a specific version
-    * @param _uniqueId uint256 ID of token to query
+    * @param _paTokenId uint256 ID of token to query
     * @param _version version number of token to query
     */
-    function tokenURI(uint256 _uniqueId, uint256 _version) external view override returns (string memory) {
-        require(_exists(_uniqueId), "Unique Id does not exist");
-        return personalizedAssetsStorage.tokenURI(_uniqueId, _version);
+    function tokenURI(uint256 _paTokenId, uint256 _version) external view override returns (string memory) {
+        require(_exists(_paTokenId), "Token Id does not exist");
+        return personalizedAssetsStorage.tokenURI(_paTokenId, _version);
     }
 
     /**
     * @dev Returns the latest version of the personalized asset uri
-    * @param _uniqueId uint256 ID of token to query
+    * @param _paTokenId uint256 ID of token to query
     */
-    function tokenURI(uint256 _uniqueId) public view override returns (string memory) {
-        require(_exists(_uniqueId), "Unique Id does not exist");
-        return personalizedAssetsStorage.tokenURI(_uniqueId, type(uint256).max);
+    function tokenURI(uint256 _paTokenId) public view override returns (string memory) {
+        require(_exists(_paTokenId), "Token Id does not exist");
+        return personalizedAssetsStorage.tokenURI(_paTokenId, type(uint256).max);
     }
 
     /**
     * @dev If the caller is creator and owner of the token, it adds a new version of the personalized asset
-    * @param _uniqueId uint256 ID of the token that gets a new uri
+    * @param _paTokenId uint256 ID of the token that gets a new uri
     * @param _uri string URI to assign
     */
-    function setUniqueUri(uint256 _uniqueId, string memory _uri) external override {
-        require(_exists(_uniqueId), "Unique Id does not exist");
-        require(ownerOf(_uniqueId) == _msgSender(), "Error: sender not token owner");
-        require(personalizedAssetsStorage.isCreator(_uniqueId, _msgSender()), "Error: sender not token creator");
-        personalizedAssetsStorage.setUniqueUri(_uniqueId, _uri);
+    function setPersonalizedAssetUri(uint256 _paTokenId, string memory _uri) external override {
+        require(_exists(_paTokenId), "Token Id does not exist");
+        require(ownerOf(_paTokenId) == _msgSender(), "Error: sender not token owner");
+        require(personalizedAssetsStorage.isCreator(_paTokenId, _msgSender()), "Error: sender not token creator");
+        personalizedAssetsStorage.setPersonalizedAssetUri(_paTokenId, _uri);
     }
 
     /**
     * @dev Returns the original asset's receiver address and royalty amount for a token sold at a certain sales price
-    * @param _uniqueId uint256 ID of token to query
+    * @param _paTokenId uint256 ID of token to query
     * @param _salePrice price the asset is to be purchased for
     */
-    function royaltyInfo(uint256 _uniqueId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount){
-        require(_exists(_uniqueId), "Unique Id does not exist");
-        (receiver, royaltyAmount) = personalizedAssetsStorage.getRoyalty(_uniqueId, _salePrice);
+    function royaltyInfo(uint256 _paTokenId, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount){
+        require(_exists(_paTokenId), "Token Id does not exist");
+        (receiver, royaltyAmount) = personalizedAssetsStorage.getRoyalty(_paTokenId, _salePrice);
     }
 
     /**
     * @dev Returns an array of receiver addresses and royalty amounts for a token sold at a certain sales price
-    * @param _uniqueId uint256 ID of token to query
+    * @param _tokenId uint256 ID of token to query
     * @param _salePrice price the asset is to be purchased for
     */
-    function multipleRoyaltyInfo(uint256 _uniqueId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
-        require(_exists(_uniqueId), "Unique Id does not exist");
-        (receivers, royaltyAmounts) = personalizedAssetsStorage.getMultipleRoyalties(_uniqueId, _salePrice);
+    function multipleRoyaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
+        require(_exists(_tokenId), "Token Id does not exist");
+        (receivers, royaltyAmounts) = personalizedAssetsStorage.getMultipleRoyalties(_tokenId, _salePrice);
     }
 
     /**
      * @dev If the caller is the creator of the token, and the royalties are valid, it sets a specific token's royalties
-     * @param _uniqueId uint256 ID of the token to set royalties of
+     * @param _paTokenId uint256 ID of the token to set royalties of
      * @param _royaltyReceivers array of addresses to receive the royalties
      * @param _royaltyRates array of royalty fee percentages
      */
-    function setTokenRoyalties(uint256 _uniqueId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external override {
-        require(_exists(_uniqueId), "Unique Id does not exist");
-        require(personalizedAssetsStorage.isCreator(_uniqueId, _msgSender()), "Error: sender not token creator");
-        personalizedAssetsStorage.setTokenRoyalties(_uniqueId, _royaltyReceivers, _royaltyRates);
+    function setTokenRoyalties(uint256 _paTokenId, address[] memory _royaltyReceivers, uint24[] memory _royaltyRates) external override {
+        require(_exists(_paTokenId), "Token Id does not exist");
+        require(personalizedAssetsStorage.isCreator(_paTokenId, _msgSender()), "Error: sender not token creator");
+        personalizedAssetsStorage.setTokenRoyalties(_paTokenId, _royaltyReceivers, _royaltyRates);
     }
 
     // Interface support

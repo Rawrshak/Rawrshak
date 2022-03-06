@@ -255,7 +255,7 @@ describe('Unique Collection Contract Tests', () => {
             var personalizedAssetCreateData = [creatorAddress.address, collection.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
             await personalizedAssets.connect(creatorAddress).mint(personalizedAssetCreateData);
 
-            await personalizedAssets.connect(creatorAddress).setUniqueUri(0,"arweave.net/tx/unique-uri-0v2");
+            await personalizedAssets.connect(creatorAddress).setPersonalizedAssetUri(0,"arweave.net/tx/unique-uri-0v2");
             
             expect(await personalizedAssets["tokenURI(uint256,uint256)"](0, 0)).to.equal("arweave.net/tx/unique-uri-0");
             expect(await personalizedAssets["tokenURI(uint256,uint256)"](0, 1)).to.equal("arweave.net/tx/unique-uri-0v2");
@@ -267,18 +267,18 @@ describe('Unique Collection Contract Tests', () => {
             var personalizedAssetCreateData = [creatorAddress.address, collection.address, false, 0, "arweave.net/tx/unique-uri-0", [creatorAddress.address], [20000]];
             await personalizedAssets.connect(creatorAddress).mint(personalizedAssetCreateData);
             
-            await expect(personalizedAssets.connect(creatorAddress).setUniqueUri(100, "arweave.net/tx/unique-uri-100")).to.be.reverted;
-            await expect(personalizedAssets.connect(playerAddress).setUniqueUri(0, "arweave.net/tx/unique-uri-0")).to.be.reverted;
+            await expect(personalizedAssets.connect(creatorAddress).setPersonalizedAssetUri(100, "arweave.net/tx/unique-uri-100")).to.be.reverted;
+            await expect(personalizedAssets.connect(playerAddress).setPersonalizedAssetUri(0, "arweave.net/tx/unique-uri-0")).to.be.reverted;
 
             //transfers asset to another player and that player attempts to set unique uri
             await personalizedAssets.connect(creatorAddress)["safeTransferFrom(address,address,uint256)"](creatorAddress.address, playerAddress.address, 0);
             
             expect(await personalizedAssets.ownerOf(0)).to.equal(playerAddress.address);
-            await expect(personalizedAssets.connect(playerAddress).setUniqueUri(0, "arweave.net/tx/unique-uri-0v2")).to.be.reverted;
+            await expect(personalizedAssets.connect(playerAddress).setPersonalizedAssetUri(0, "arweave.net/tx/unique-uri-0v2")).to.be.reverted;
             expect(await personalizedAssets["tokenURI(uint256)"](0)).to.equal("arweave.net/tx/unique-uri-0");
             
             // creator can no longer set personalized asset uri if they no longer own that asset
-            await expect(personalizedAssets.connect(creatorAddress).setUniqueUri(0, "arweave.net/tx/unique-uri-0v2")).to.be.reverted;
+            await expect(personalizedAssets.connect(creatorAddress).setPersonalizedAssetUri(0, "arweave.net/tx/unique-uri-0v2")).to.be.reverted;
         });
     });
     

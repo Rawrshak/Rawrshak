@@ -3,5 +3,5 @@ pragma solidity ^0.8.0;
 
 interface IMultipleRoyalties {
     /******** View Functions ********/
-    function multipleRoyaltyInfo(uint256 _uniqueId, uint256 _saleprice) external view returns(address[] memory, uint256[] memory);
+    function multipleRoyaltyInfo(uint256 _tokenId, uint256 _saleprice) external view returns(address[] memory, uint256[] memory);
 }
