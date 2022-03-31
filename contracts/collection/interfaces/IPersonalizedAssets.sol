@@ -5,9 +5,9 @@ import "../../libraries/LibAsset.sol";
 
 interface IPersonalizedAssets {
     /*********************** Events *********************/
-    event Mint(uint256 indexed uniqueId, address operator, LibAsset.PersonalizedAssetCreateData data);
+    event Mint(uint256 indexed paTokenId, address operator, LibAsset.PersonalizedAssetCreateData data);
 
-    event Burn(uint256 indexed uniqueId, address operator);
+    event Burn(uint256 indexed paTokenId, address operator);
 
     /******** View Functions ********/
     function originalAssetUri(uint256 _paTokenId, uint256 _version) external view returns(string memory);

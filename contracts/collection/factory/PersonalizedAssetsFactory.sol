@@ -16,7 +16,7 @@ contract PersonalizedAssetsFactory is ContextUpgradeable, OwnableUpgradeable {
 
     EnumerableSetUpgradeable.AddressSet personalizedAssetsContracts;
 
-    event UniqueContractsDeployed(address indexed personalizedAssets);
+    event PersonalizedContractsDeployed(address indexed personalizedAssets);
 
     function initialize(
         address _personalizedAssets,
@@ -90,6 +90,6 @@ contract PersonalizedAssetsFactory is ContextUpgradeable, OwnableUpgradeable {
         // Store collection contracts
         personalizedAssetsContracts.add(address(personalizedAssets));
 
-        emit UniqueContractsDeployed(address(personalizedAssets));
+        emit PersonalizedContractsDeployed(address(personalizedAssets));
     }
 }

@@ -17,7 +17,7 @@ contract AccessControlManager is IAccessControlManager, CollectionSubsystemBase,
     
     /******************** Constants ********************/
     /*
-     * IAccessControlManager Interface: 0x41f2c5c6
+     * IAccessControlManager Interface: 0x533525fc
      * IAccessControlUpgradeable Interface: 0x7965db0b
      */
     // bytes4 private constant INTERFACE_ID_ACCESS_CONTROL_MANAGER = 0xDC54FD6E;
@@ -73,7 +73,7 @@ contract AccessControlManager is IAccessControlManager, CollectionSubsystemBase,
         // this is to prevent minting replay attacks
         require(_data.nonce == userMintNonce[_data.to] + 1, "Invalid caller nonce");
 
-        // Verifying Contract must be there collection contract parent of this control manager
+        // Verifying Contract must be the collection contract parent of this control manager
         bytes32 hashData = _hashTypedDataV4(LibAsset.hashMintData(_data), _parent());
         require(hashData.recover(_data.signature) == _data.signer, "Invalid Signature");
 

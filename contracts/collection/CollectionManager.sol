@@ -16,7 +16,7 @@ contract CollectionManager is ICollectionManager, OwnableUpgradeable, ERC165Stor
     
     /******************** Constants ********************/
     /*
-     * ICollectionManager Interface: 0x250b1d27
+     * ICollectionManager Interface: 0x4eea5bfa
      */
 
     /***************** Stored Variables *****************/

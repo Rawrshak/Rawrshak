@@ -5,7 +5,7 @@ import "../../libraries/LibAsset.sol";
 
 interface IPersonalizedAssetsStorage {
     /*********************** Events *********************/
-    event UniqueUriUpdated(uint256 indexed uniqueId, uint256 indexed version);
+    event PersonalizedUriUpdated(uint256 indexed uniqueId, uint256 indexed version);
 
     /******** View Functions ********/
     function tokenURI(uint256 _paTokenId, uint256 _version) external view returns (string memory);

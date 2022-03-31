@@ -91,7 +91,7 @@ describe('Unique Collection Storage Contract Tests', () => {
             await personalizedAssetsStorage.setPersonalizedAssetInfo(personalizedAssetCreateData, 0, playerAddress.address);
 
             await expect(personalizedAssetsStorage.connect(playerAddress).setPersonalizedAssetUri(0,"arweave.net/tx/unique-uri-0v2"))
-                .to.emit(personalizedAssetsStorage, "UniqueUriUpdated")
+                .to.emit(personalizedAssetsStorage, "PersonalizedUriUpdated")
                 .withArgs(0, 1);
 
             expect(await personalizedAssetsStorage.tokenURI(0, 0)).to.equal("arweave.net/tx/unique-uri-0");

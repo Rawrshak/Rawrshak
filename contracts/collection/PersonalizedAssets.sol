@@ -20,7 +20,7 @@ contract PersonalizedAssets is IPersonalizedAssets, IMultipleRoyalties, ERC721Up
     
     /***************** Stored Variables *****************/
     IPersonalizedAssetsStorage personalizedAssetsStorage;
-    uint256 private uniqueIdsCounter;
+    uint256 private idsCounter;
 
     /******************** Public API ********************/
     function initialize(
@@ -73,12 +73,12 @@ contract PersonalizedAssets is IPersonalizedAssets, IMultipleRoyalties, ERC721Up
             // transfers the original asset to be locked in the personalized assets contract
             IERC721Upgradeable(_data.collectionAddress).safeTransferFrom(_msgSender(), address(this), _data.tokenId, "");
         }   
-        personalizedAssetsStorage.setPersonalizedAssetInfo(_data, uniqueIdsCounter, _msgSender());
+        personalizedAssetsStorage.setPersonalizedAssetInfo(_data, idsCounter, _msgSender());
 
         // mint() is a mint and transfer function, if _data.to != msgSender, the caller would be sending the token to someone else
-        _mint(_data.to, uniqueIdsCounter);
+        _mint(_data.to, idsCounter);
         
-        emit Mint(uniqueIdsCounter++, _msgSender(), _data);
+        emit Mint(idsCounter++, _msgSender(), _data);
     }
 
     /** Asset Burning
@@ -167,12 +167,12 @@ contract PersonalizedAssets is IPersonalizedAssets, IMultipleRoyalties, ERC721Up
 
     /**
     * @dev Returns an array of receiver addresses and royalty amounts for a token sold at a certain sales price
-    * @param _tokenId uint256 ID of token to query
+    * @param _paTokenId uint256 ID of token to query
     * @param _salePrice price the asset is to be purchased for
     */
-    function multipleRoyaltyInfo(uint256 _tokenId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
-        require(_exists(_tokenId), "Token Id does not exist");
-        (receivers, royaltyAmounts) = personalizedAssetsStorage.getMultipleRoyalties(_tokenId, _salePrice);
+    function multipleRoyaltyInfo(uint256 _paTokenId, uint256 _salePrice) external view override returns (address[] memory receivers, uint256[] memory royaltyAmounts) {
+        require(_exists(_paTokenId), "Token Id does not exist");
+        (receivers, royaltyAmounts) = personalizedAssetsStorage.getMultipleRoyalties(_paTokenId, _salePrice);
     }
 
     /**

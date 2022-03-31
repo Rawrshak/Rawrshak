@@ -14,7 +14,7 @@ contract Collection is ICollection, IERC2981Upgradeable, ERC1155Upgradeable, ERC
     /******************** Constants ********************/
     /*
      * ERC1155 interface == 0xd9b67a26
-     * ICollection == 0x6a3af2b5
+     * ICollection == 0x79869ffe
      * IContractUri == 0xc0e24d5e
      * IERC2981Upgradeable == 0x2a55205a
      */
@@ -125,7 +125,7 @@ contract Collection is ICollection, IERC2981Upgradeable, ERC1155Upgradeable, ERC
     }
     
     /**
-    * @dev returns the largest amount of an token allowed to be in circulation
+    * @dev returns the largest amount of a token allowed to be in circulation
     * @param _tokenId uint256 ID of token to query
     */
     function maxSupply(uint256 _tokenId) external view override returns (uint256) {

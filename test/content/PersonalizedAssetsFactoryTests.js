@@ -36,9 +36,9 @@ describe('Unique Collection Clone Factory Tests', () => {
             // deploy contracts
             var tx = await personalizedAssetsFactory.createContracts(name, symbol);
             var receipt = await tx.wait();
-            var deployedContracts = receipt.events?.filter((x) => {return x.event == "UniqueContractsDeployed"});
+            var deployedContracts = receipt.events?.filter((x) => {return x.event == "PersonalizedContractsDeployed"});
 
-            // To figure out which log contains the UniqueContractsDeployed event
+            // To figure out which log contains the PersonalizedContractsDeployed event
             personalizedAssets = await PersonalizedAssets.attach(deployedContracts[0].args.personalizedAssets);
 
             expect(personalizedAssets.address).not.equal(personalizedAssetsImpl.address);
@@ -59,7 +59,7 @@ describe('Unique Collection Clone Factory Tests', () => {
             // developer 1 launches contracts
             var tx = await personalizedAssetsFactory.connect(developer1Address).createContracts(name1, symbol1);
             var receipt = await tx.wait();
-            var deployedContracts = receipt.events?.filter((x) => {return x.event == "UniqueContractsDeployed"});
+            var deployedContracts = receipt.events?.filter((x) => {return x.event == "PersonalizedContractsDeployed"});
 
             // To figure out which log contains the UniqueContractDeployed event
             dev1PersonalizedAssets = await PersonalizedAssets.attach(deployedContracts[0].args.personalizedAssets);
@@ -67,7 +67,7 @@ describe('Unique Collection Clone Factory Tests', () => {
             // developer 2 launches contracts
             tx = await personalizedAssetsFactory.connect(developer2Address).createContracts(name2, symbol2);
             receipt = await tx.wait();
-            deployedContracts = receipt.events?.filter((x) => {return x.event == "UniqueContractsDeployed"});
+            deployedContracts = receipt.events?.filter((x) => {return x.event == "PersonalizedContractsDeployed"});
 
             // To figure out which log contains the ContractDeployed event
             dev2PersonalizedAssets = await PersonalizedAssets.attach(deployedContracts[0].args.personalizedAssets);

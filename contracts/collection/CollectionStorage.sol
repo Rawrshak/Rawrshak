@@ -13,7 +13,7 @@ contract CollectionStorage is ICollectionStorage, AccessControlUpgradeable, HasR
     /******************** Constants ********************/
     /*
      * IContractUri: 0xc0e24d5e
-     * ICollectionStorage: 0xac73f1f1
+     * ICollectionStorage: 0xb8c03b75
      * ICollectionSubsystemBase: 0x7460af1d
      * IAccessControlUpgradeable: 0x7965db0b
      */

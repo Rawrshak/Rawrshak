@@ -24,7 +24,7 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
     /**
     * @dev Records the asset info of a newly minted Asset
     * @param _data LibAsset.PersonalizedAssetCreateData structure object
-    * @param _paTokenId uint256 ID of token if the new asset
+    * @param _paTokenId uint256 ID of token of the new asset
     * @param _creator the address of who called the mint function
     */
     function setPersonalizedAssetInfo(LibAsset.PersonalizedAssetCreateData memory _data, uint256 _paTokenId, address _creator) external override {
@@ -53,7 +53,7 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
     }
 
     /**
-    * @dev Returns the unique asset uri of a specific version
+    * @dev Returns the personalized asset uri of a specific version
     * @param _paTokenId uint256 ID of token to query
     * @param _version version number of token to query
     */
@@ -65,7 +65,7 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
     }
 
     /**
-    * @dev Records a new version of the unique asset
+    * @dev Records a new version of the personalized asset
     * @param _paTokenId uint256 ID of the token to set its uri
     * @param _uri string URI to assign
     */
@@ -73,7 +73,7 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
         assetInfo[_paTokenId].personalizedAssetUri.push(_uri);
         assetInfo[_paTokenId].version++;
 
-        emit UniqueUriUpdated(_paTokenId, assetInfo[_paTokenId].version);
+        emit PersonalizedUriUpdated(_paTokenId, assetInfo[_paTokenId].version);
     }
 
     /**
@@ -101,7 +101,7 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
         if (_originalRoyaltyRate < 2e5) {
             address[] memory _receivers;
             uint24[] memory _rates;
-            // grabs the additional royalties set for the unique token and places them in provisional arrays
+            // grabs the additional royalties set for the personalized token and places them in provisional arrays
             (_receivers, _rates) = _getMultipleRoyalties(_paTokenId);
             uint256 length = _getTokenRoyaltiesLength(_paTokenId);
 
@@ -136,8 +136,8 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
     }
 
     /**
-     * @dev If the given royalties are valid, it sets a unique asset's royalties
-     * @param _paTokenId uint256 ID of the unique asset to set the royalties of
+     * @dev If the given royalties are valid, it sets a personalized asset's royalties
+     * @param _paTokenId uint256 ID of the personalized asset to set the royalties of
      * @param _royaltyReceivers addresses to receive the royalties
      * @param _royaltyRates royalty fee percentages
      */
@@ -158,7 +158,7 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
     }
 
     /**
-     * @dev Verifies whether the unique asset is creator locked
+     * @dev Verifies whether the personalized asset is creator locked
      * @param _paTokenId uint256 ID of the token to query
      */
     function isLocked(uint256 _paTokenId) external view override returns (bool) {
@@ -166,7 +166,7 @@ contract PersonalizedAssetsStorage is IPersonalizedAssetsStorage, MultipleRoyalt
     }
 
     /**
-     * @dev Returns the original token Id and collection address of a unique asset
+     * @dev Returns the original token Id and collection address of a personalized asset
      * @param _paTokenId uint256 ID of token to query
      */
     function getAssetData(uint256 _paTokenId) external view override returns (uint256 tokenId, address collectionAddress) {
