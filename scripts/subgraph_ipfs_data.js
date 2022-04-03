@@ -1,7 +1,7 @@
 const { ethers, upgrades } = require("hardhat");
 
-var Content;
-var ContentManager;
+var Collection;
+var CollectionManager;
 
 async function deployContract(factory, developer, rate, uri) {
 
@@ -10,16 +10,16 @@ async function deployContract(factory, developer, rate, uri) {
     var deployedContracts = receipt.events?.filter((x) => {return x.event == "ContractsDeployed"});
 
     // To figure out which log contains the ContractDeployed event
-    var content = await Content.attach(deployedContracts[0].args.content);
-    var contentManager = await ContentManager.attach(deployedContracts[0].args.contentManager);
+    var collection = await Collection.attach(deployedContracts[0].args.collection);
+    var collectionManager = await CollectionManager.attach(deployedContracts[0].args.collectionManager);
 
     var approvalPair = [[developer.address, true]];
-    await contentManager.connect(developer).registerOperators(approvalPair);
+    await collectionManager.connect(developer).registerOperators(approvalPair);
 
-    return {content, contentManager};
+    return {collection, collectionManager};
 }
 
-async function addRawrshakAssets(content, contentManager, developer) {
+async function addRawrshakAssets(collection, collectionManager, developer) {
     var asset = [
         ["QmTgLKGxFapNAaKSoaXZkx3vq9xiarfag3cjcByUywzf7h", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Apprentice Title
         ["QmX1Epc144wovBa3i8LVy6JoVxUpVjuA7nQvDmigo8NAx7", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Creator Title
@@ -30,14 +30,14 @@ async function addRawrshakAssets(content, contentManager, developer) {
     ];
 
     // add assets
-    await contentManager.connect(developer).addAssetBatch(asset);
+    await collectionManager.connect(developer).addAssetBatch(asset);
     
     // mint some assets
     var mintData = [developer.address, [0,1,2,3,4,5], [100,100,100,100,10,2], 0, ethers.constants.AddressZero, []];
-    await content.connect(developer).mintBatch(mintData);
+    await collection.connect(developer).mintBatch(mintData);
 }
 
-async function addScreamFortress2Assets(content, contentManager, developer) {
+async function addScreamFortress2Assets(collection, collectionManager, developer) {
     var asset = [
         ["QmPdzEWnW1PAxm4LFe5pRw3g5kNee8oKKtbs92sVekMce4", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Demoman
         ["QmPC6iFFc1ewqVCcfPyyG4YssL6zwX9DW2VQDD5K6P3PLD", "", ethers.constants.MaxUint256, ethers.constants.AddressZero, 0],   // Engineer
@@ -51,14 +51,14 @@ async function addScreamFortress2Assets(content, contentManager, developer) {
     ];
 
     // add assets
-    await contentManager.connect(developer).addAssetBatch(asset);
+    await collectionManager.connect(developer).addAssetBatch(asset);
     
     // mint some assets
     var mintData = [developer.address, [0,1,2,3,4,5,6,7,8], [100,100,100,100,100,100,100,100,100], 0, ethers.constants.AddressZero, []];
-    await content.connect(developer).mintBatch(mintData);
+    await collection.connect(developer).mintBatch(mintData);
 }
 
-async function addFightBuddyAssets(content, contentManager, developer) {
+async function addFightBuddyAssets(collection, collectionManager, developer) {
     var asset = [
         ["QmPFJoS7UKXmmXeA4HMes1K5GRNM2QQ94hf6dSUqH3i2wF", "", 1000, developer.address, 10000],         // Nikolai
         ["Qma3cwsq1kqcAP6zudnr1WyWWkXhVnYa1wgRAun8op9nGa", "", 1000, developer.address, 20000],         // Didier
@@ -67,14 +67,14 @@ async function addFightBuddyAssets(content, contentManager, developer) {
     ];
 
     // add assets
-    await contentManager.connect(developer).addAssetBatch(asset);
+    await collectionManager.connect(developer).addAssetBatch(asset);
     
     // mint some assets
     var mintData = [developer.address, [0,1,2,3], [100,100,100,10], 0, ethers.constants.AddressZero, []];
-    await content.connect(developer).mintBatch(mintData);
+    await collection.connect(developer).mintBatch(mintData);
 }
 
-async function addSuperScaryHorrorGameAssets(content, contentManager, developer) {
+async function addSuperScaryHorrorGameAssets(collection, collectionManager, developer) {
     var asset = [
         ["QmXnMAmDwKuMsmWLc6dnccwaGqLMXyGHBjEvC9oHePNvFX", "", 10000, ethers.constants.AddressZero, 0], // Scary Terry
         ["QmfMoQt1LGs7PN5UYP2kikkuYpHJiFHGx2EHCPaEuLZ7Kt", "", 50, ethers.constants.AddressZero, 0],    // Casper the Ghost
@@ -83,11 +83,11 @@ async function addSuperScaryHorrorGameAssets(content, contentManager, developer)
     ];
 
     // add assets
-    await contentManager.connect(developer).addAssetBatch(asset);
+    await collectionManager.connect(developer).addAssetBatch(asset);
     
     // mint some assets
     var mintData = [developer.address, [0,1,2,3], [1000,50,50,25], 0, ethers.constants.AddressZero, []];
-    await content.connect(developer).mintBatch(mintData);
+    await collection.connect(developer).mintBatch(mintData);
 }
 
 async function main() {
@@ -109,31 +109,31 @@ async function main() {
     var balance = await deployer.getBalance();
     console.log(`Account Balance: ${balance.toString()}\n`);
 
-    // Get Content Contract Factory 
-    Content = await ethers.getContractFactory("Content");
-    ContentManager = await ethers.getContractFactory("ContentManager");
-    const ContentFactory = await ethers.getContractFactory("ContentFactory");
-    const factory = ContentFactory.attach("0xf5059a5D33d5853360D16C683c16e67980206f36");
+    // Get Collection Contract Factory 
+    Collection = await ethers.getContractFactory("Collection");
+    CollectionManager = await ethers.getContractFactory("CollectionManager");
+    const CollectionFactory = await ethers.getContractFactory("CollectionFactory");
+    const factory = CollectionFactory.attach("0xf5059a5D33d5853360D16C683c16e67980206f36");
 
     // Note: for the URI, the developer has to add "https://ipfs.io/ipfs/" before downloading from ipfs
     // Developer 1 Rawrshak and Scream Fortress 2 Contract
     var addresses = await deployContract(factory, dev1, 10000, "QmQigPDu4wChRtrdgnbCFJFuYHD55sioFztdu1r9bME46o");
-    console.log(`Rawrshak Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
-    await addRawrshakAssets(addresses.content, addresses.contentManager, dev1);
+    console.log(`Rawrshak Contracts: Collection[ ${addresses.collection.address} ], CollectionManager[ ${addresses.collectionManager.address} ]\n`);
+    await addRawrshakAssets(addresses.collection, addresses.collectionManager, dev1);
 
     var addresses = await deployContract(factory, dev1, 10000, "QmP3Hnw72H4w7s4XEEa12vHAa7EYXSCGEd2KPcScrMvx9z");
-    console.log(`ScreamFortress2 Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
-    await addScreamFortress2Assets(addresses.content, addresses.contentManager, dev1);
+    console.log(`ScreamFortress2 Contracts: Collection[ ${addresses.collection.address} ], CollectionManager[ ${addresses.collectionManager.address} ]\n`);
+    await addScreamFortress2Assets(addresses.collection, addresses.collectionManager, dev1);
     
     // Developer 2 Deploys A Contract
     addresses = await deployContract(factory, dev2, 20000, "QmSkixBkwkEoMzEVcWsDxaYxVhEJDiatPjAEvHaJY383Ks");
-    console.log(`FightBuddy Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
-    await addFightBuddyAssets(addresses.content, addresses.contentManager, dev2);
+    console.log(`FightBuddy Contracts: Collection[ ${addresses.collection.address} ], CollectionManager[ ${addresses.collectionManager.address} ]\n`);
+    await addFightBuddyAssets(addresses.collection, addresses.collectionManager, dev2);
     
     // Developer 3 Deploys A Contract
     addresses = await deployContract(factory, dev3, 15000, "QmY1cxbALonbMiSTWnnQooCJqKDcAMs69nqhmBP8jSyQP8");
-    console.log(`SuperScaryHorrorGame Contracts: Content[ ${addresses.content.address} ], ContentManager[ ${addresses.contentManager.address} ]\n`);
-    await addSuperScaryHorrorGameAssets(addresses.content, addresses.contentManager, dev3);
+    console.log(`SuperScaryHorrorGame Contracts: Collection[ ${addresses.collection.address} ], CollectionManager[ ${addresses.collectionManager.address} ]\n`);
+    await addSuperScaryHorrorGameAssets(addresses.collection, addresses.collectionManager, dev3);
 
     balance = await deployer.getBalance();
     balance = web3.utils.fromWei(balance.toString(), 'ether');

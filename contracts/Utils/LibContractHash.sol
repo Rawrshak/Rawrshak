@@ -13,7 +13,7 @@ library LibContractHash {
     bytes4 constant public CONTRACT_EXECUTION_MANAGER = 0x018869a9;
     bytes4 constant public CONTRACT_ROYALTY_MANAGER = 0x2c7e992e;
     
-    bytes4 constant public CONTRACT_CONTENT_FACTORY = 0xdb337f7d;
+    bytes4 constant public CONTRACT_COLLECTION_FACTORY = 0xaff3d314;
     bytes4 constant public CONTRACT_STAKING = 0x1b48faca;
     bytes4 constant public CONTRACT_EXCHANGE_FEE_ESCROW = 0x7f170836;
 
